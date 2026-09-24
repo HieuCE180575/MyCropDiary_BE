@@ -13,19 +13,98 @@ Khung Spring Boot theo UC và package diagram của MyCropDiary.
 
 ```text
 com.mycropdiary.api
+
 ├── config
+│
 ├── security
+│
 ├── controller
+│   ├── auth
+│   ├── farm
+│   ├── farmregistration
+│   ├── farmmember
+│   ├── productionarea
+│   ├── plot
+│   ├── environmentalassessment
+│   ├── cropseason
+│   ├── task
+│   ├── farmingactivity
+│   ├── material
+│   ├── purchase
+│   ├── expense
+│   ├── harvesttraceability
+│   ├── training
+│   ├── vietgapchecklist
+│   ├── internalassessment
+│   ├── knowledge
+│   ├── report
+│   ├── ai
+│   └── admin
+│
 ├── dto
 │   ├── auth
 │   ├── common
-│   └── farm
+│   ├── farm
+│   ├── farmregistration
+│   ├── farmmember
+│   ├── productionarea
+│   ├── plot
+│   ├── cropseason
+│   ├── farmingactivity
+│   ├── material
+│   ├── purchase
+│   ├── expense
+│   ├── harvesttraceability
+│   ├── knowledge
+│   ├── report
+│   └── ai
+│
 ├── service
+│   ├── auth
+│   │   └── AuthService.java
+│   │
+│   ├── farm
+│   │   └── FarmService.java
+│   │
+│   ├── farmregistration
+│   │   └── FarmRegistrationService.java
+│   │
+│   ├── knowledge
+│   │   └── KnowledgeService.java
+│   │
+│   ├── expense
+│   │   └── ExpenseService.java
+│   │
 │   └── impl
+│       ├── AuthServiceImpl.java
+│       ├── FarmServiceImpl.java
+│       ├── FarmRegistrationServiceImpl.java
+│       ├── KnowledgeServiceImpl.java
+│       └── ExpenseServiceImpl.java
+│
 ├── repository
+│   ├── auth
+│   ├── farm
+│   ├── farmregistration
+│   ├── farmmember
+│   ├── productionarea
+│   ├── plot
+│   ├── cultivation
+│   ├── expense
+│   └── knowledge
+│
 ├── mapper
+│
 ├── entity
+│   ├── account
+│   ├── farm
+│   ├── cultivation
+│   ├── knowledge
+│   ├── expense
+│   └── common
+│
 ├── exception
+│
 └── util
 ```
 
