@@ -40,6 +40,9 @@ public class KnowledgeArticle {
     @Column(name = "Status", nullable = false, length = 20)
     private KnowledgeStatus status = KnowledgeStatus.DRAFT;
 
+    @Column(name = "IsPublic")
+    private Boolean isPublic = true;
+
     @Column(name = "PublishedAt")
     private LocalDateTime publishedAt;
 
@@ -64,6 +67,9 @@ public class KnowledgeArticle {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
+        if (this.isPublic == null) {
+            this.isPublic = true;
+        }
     }
 
     @PreUpdate
@@ -165,5 +171,13 @@ public class KnowledgeArticle {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
     }
 }

@@ -3,13 +3,14 @@ package com.mycropdiary.api.repository.knowledge;
 import com.mycropdiary.api.entity.knowledge.KnowledgeArticle;
 import com.mycropdiary.api.entity.knowledge.KnowledgeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface KnowledgeArticleRepository extends JpaRepository<KnowledgeArticle, Long> {
+public interface KnowledgeArticleRepository extends JpaRepository<KnowledgeArticle, Long>, JpaSpecificationExecutor<KnowledgeArticle> {
 
     List<KnowledgeArticle> findByStatus(KnowledgeStatus status);
 
