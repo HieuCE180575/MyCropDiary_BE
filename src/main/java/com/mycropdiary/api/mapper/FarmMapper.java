@@ -1,11 +1,9 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.farm.FarmMemberResponse;
-import com.mycropdiary.api.dto.farm.FarmResponse;
-import com.mycropdiary.api.dto.farm.FarmSummaryResponse;
-import com.mycropdiary.api.dto.farm.StaffAreaAssignmentResponse;
+import com.mycropdiary.api.dto.farm.*;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
+import com.mycropdiary.api.entity.ProductionArea;
 import com.mycropdiary.api.entity.StaffAreaAssignment;
 import org.springframework.stereotype.Component;
 
@@ -69,6 +67,20 @@ public class FarmMapper {
                 assignment.getStartDate(),
                 assignment.getEndDate(),
                 assignment.isActive()
+        );
+    }
+
+    public ProductionAreaResponse toProductionAreaResponse(ProductionArea area) {
+        return new ProductionAreaResponse(
+                area.getId(),
+                area.getFarm().getId(),
+                area.getAreaCode(),
+                area.getAreaName(),
+                area.getAreaM2(),
+                area.getDescription(),
+                area.getStatus(),
+                area.getCreatedAt(),
+                area.getUpdatedAt()
         );
     }
 }

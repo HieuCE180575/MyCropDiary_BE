@@ -16,6 +16,8 @@ public interface FarmMemberRepository extends JpaRepository<FarmMember, Long> {
     List<FarmMember> findByUserIdAndStatus(Long userId, String status);
 
     boolean existsByFarmIdAndUserIdAndStatus(Long farmId, Long userId, String status);
+    boolean existsByFarmIdAndFarmRoleAndStatus(Long farmId, String farmRole, String status);
+    long countByFarmIdAndFarmRoleAndStatus(Long farmId, String farmRole, String status);
 
     @Query("SELECT fm.farmRole FROM FarmMember fm WHERE fm.farm.id = :farmId AND fm.user.id = :userId AND fm.status = 'ACTIVE'")
     Optional<String> findActiveRoleInFarm(@Param("farmId") Long farmId, @Param("userId") Long userId);

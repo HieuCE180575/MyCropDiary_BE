@@ -18,4 +18,7 @@ public interface FarmService {
     List<FarmMemberResponse> getFarmMembers(Long currentUserId, Long farmId);
     void removeMember(Long currentUserId, Long farmId, Long memberId);
     StaffAreaAssignmentResponse assignStaffToArea(Long currentUserId, Long farmId, Long memberId, AssignStaffAreaRequest request);
+
+    ProductionAreaResponse createProductionArea(Long currentUserId, Long farmId, CreateProductionAreaRequest request);
+    List<ProductionAreaResponse> getProductionAreas(Long currentUserId, Long farmId);
 }

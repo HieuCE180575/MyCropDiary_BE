@@ -103,4 +103,21 @@ public class FarmController {
         StaffAreaAssignmentResponse assignment = farmService.assignStaffToArea(currentUserId, farmId, memberId, request);
         return ApiResponse.ok("Staff assigned to production area successfully", assignment);
     }
+
+    @PostMapping("/{farmId}/production-areas")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<ProductionAreaResponse> createProductionArea(
+            @PathVariable Long farmId,
+            @Valid @RequestBody CreateProductionAreaRequest request) {
+        Long currentUserId = securityUtils.getCurrentUserId();
+        ProductionAreaResponse response = farmService.createProductionArea(currentUserId, farmId, request);
+        return ApiResponse.ok("Production area created successfully", response);
+    }
+
+    @GetMapping("/{farmId}/production-areas")
+    public ApiResponse<List<ProductionAreaResponse>> getProductionAreas(@PathVariable Long farmId) {
+        Long currentUserId = securityUtils.getCurrentUserId();
+        List<ProductionAreaResponse> areas = farmService.getProductionAreas(currentUserId, farmId);
+        return ApiResponse.ok("Production areas list", areas);
+    }
 }

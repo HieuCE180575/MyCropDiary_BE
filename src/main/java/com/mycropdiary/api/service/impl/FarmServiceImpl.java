@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -51,11 +52,39 @@ public class FarmServiceImpl implements FarmService {
         this.farmAccessGuard = farmAccessGuard;
     }
 
+    private void validateCoordinates(BigDecimal latitude, BigDecimal longitude) {
+        if (latitude == null && longitude == null) {
+            return;
+        }
+        if (latitude == null || longitude == null) {
+            throw new IllegalArgumentException("Both latitude and longitude must be provided together");
+        }
+        if (latitude.doubleValue() < -90.0 || latitude.doubleValue() > 90.0) {
+            throw new IllegalArgumentException("Latitude must be between -90 and 90 degrees");
+        }
+        if (longitude.doubleValue() < -180.0 || longitude.doubleValue() > 180.0) {
+            throw new IllegalArgumentException("Longitude must be between -180 and 180 degrees");
+        }
+    }
+
+    private void validateProductionAreaTotalSize(Long farmId, BigDecimal farmTotalArea, BigDecimal newAreaSize, Long excludeAreaId) {
+        if (farmTotalArea == null || newAreaSize == null) {
+            return;
+        }
+        BigDecimal existingSum = productionAreaRepository.sumActiveAreaM2ByFarmId(farmId, excludeAreaId);
+        BigDecimal projectedTotal = existingSum.add(newAreaSize);
+        if (projectedTotal.compareTo(farmTotalArea) > 0) {
+            throw new IllegalArgumentException("Total production area (" + projectedTotal + " m2) exceeds farm total area (" + farmTotalArea + " m2)");
+        }
+    }
+
     @Override
     public FarmResponse createFarm(Long currentUserId, CreateFarmRequest request) {
         if (farmRepository.existsByFarmCode(request.farmCode())) {
             throw new IllegalArgumentException("Farm code already exists: " + request.farmCode());
         }
+
+        validateCoordinates(request.latitude(), request.longitude());
 
         AppUser currentUser = appUserRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
@@ -132,6 +161,15 @@ public class FarmServiceImpl implements FarmService {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farm not found with ID: " + farmId));
 
+        validateCoordinates(request.latitude(), request.longitude());
+
+        if (request.totalAreaM2() != null) {
+            BigDecimal activeAreasSum = productionAreaRepository.sumActiveAreaM2ByFarmId(farmId, null);
+            if (activeAreasSum.compareTo(request.totalAreaM2()) > 0) {
+                throw new IllegalArgumentException("Cannot reduce farm area to " + request.totalAreaM2() + " m2 because active production areas sum up to " + activeAreasSum + " m2");
+            }
+        }
+
         farm.setFarmName(request.farmName());
         farm.setAddressLine(request.addressLine());
         farm.setProvince(request.province());
@@ -176,6 +214,13 @@ public class FarmServiceImpl implements FarmService {
             throw new IllegalArgumentException("User is already a member of this farm");
         }
 
+        if ("OWNER".equalsIgnoreCase(request.farmRole())) {
+            boolean hasActiveOwner = farmMemberRepository.existsByFarmIdAndFarmRoleAndStatus(farmId, "OWNER", "ACTIVE");
+            if (hasActiveOwner) {
+                throw new IllegalStateException("Farm already has an active OWNER. Transfer ownership before assigning a new OWNER.");
+            }
+        }
+
         FarmMember member = new FarmMember(farm, targetUser, request.farmRole(), request.jobTitle(), LocalDate.now(), "ACTIVE");
         member = farmMemberRepository.save(member);
 
@@ -202,6 +247,13 @@ public class FarmServiceImpl implements FarmService {
             throw new IllegalArgumentException("Member ID does not belong to Farm ID: " + farmId);
         }
 
+        if ("OWNER".equalsIgnoreCase(member.getFarmRole()) && "ACTIVE".equalsIgnoreCase(member.getStatus())) {
+            long activeOwners = farmMemberRepository.countByFarmIdAndFarmRoleAndStatus(farmId, "OWNER", "ACTIVE");
+            if (activeOwners <= 1) {
+                throw new IllegalStateException("Cannot deactivate the sole active OWNER of the farm. Transfer ownership first.");
+            }
+        }
+
         member.setStatus("INACTIVE");
         member.setLeftAt(LocalDate.now());
         farmMemberRepository.save(member);
@@ -225,9 +277,12 @@ public class FarmServiceImpl implements FarmService {
             throw new IllegalArgumentException("Production area does not belong to Farm ID: " + farmId);
         }
 
-        FarmMember assigner = farmMemberRepository.findByFarmIdAndUserId(farmId, currentUserId).orElse(null);
-
         LocalDate startDate = request.startDate() != null ? request.startDate() : LocalDate.now();
+        if (request.endDate() != null && request.endDate().isBefore(startDate)) {
+            throw new IllegalArgumentException("Assignment end date cannot be before start date");
+        }
+
+        FarmMember assigner = farmMemberRepository.findByFarmIdAndUserId(farmId, currentUserId).orElse(null);
 
         StaffAreaAssignment assignment = new StaffAreaAssignment(
                 member,
@@ -240,5 +295,45 @@ public class FarmServiceImpl implements FarmService {
 
         assignment = staffAreaAssignmentRepository.save(assignment);
         return farmMapper.toAssignmentResponse(assignment);
+    }
+
+    @Override
+    public ProductionAreaResponse createProductionArea(Long currentUserId, Long farmId, CreateProductionAreaRequest request) {
+        farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
+
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Farm not found with ID: " + farmId));
+
+        if (productionAreaRepository.existsByFarmIdAndAreaCode(farmId, request.areaCode())) {
+            throw new IllegalArgumentException("Production area code already exists in this farm: " + request.areaCode());
+        }
+
+        validateProductionAreaTotalSize(farmId, farm.getTotalAreaM2(), request.areaM2(), null);
+
+        ProductionArea area = new ProductionArea(farm, request.areaCode(), request.areaName(), request.areaM2(), request.description(), "ACTIVE");
+        area = productionAreaRepository.save(area);
+
+        return farmMapper.toProductionAreaResponse(area);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductionAreaResponse> getProductionAreas(Long currentUserId, Long farmId) {
+        FarmMember member = farmAccessGuard.requireFarmMember(currentUserId, farmId);
+        String role = farmAccessGuard.getUserRoleInFarm(currentUserId, farmId);
+
+        if ("OWNER".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role)) {
+            return productionAreaRepository.findByFarmIdAndStatus(farmId, "ACTIVE").stream()
+                    .map(farmMapper::toProductionAreaResponse)
+                    .toList();
+        }
+
+        // Staff: only get assigned production areas
+        List<StaffAreaAssignment> assignments = staffAreaAssignmentRepository.findByFarmMemberIdAndActiveTrue(member.getId());
+        return assignments.stream()
+                .map(StaffAreaAssignment::getProductionArea)
+                .filter(area -> "ACTIVE".equalsIgnoreCase(area.getStatus()))
+                .map(farmMapper::toProductionAreaResponse)
+                .toList();
     }
 }
