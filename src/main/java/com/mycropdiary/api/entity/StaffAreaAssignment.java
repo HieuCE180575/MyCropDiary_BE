@@ -3,6 +3,9 @@ package com.mycropdiary.api.entity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
+/**
+ * Entity biểu diễn bảng dbo.StaffAreaAssignment (Phân công nhân viên STAFF phụ trách Vùng sản xuất).
+ */
 @Entity
 @Table(name = "StaffAreaAssignment", schema = "dbo")
 public class StaffAreaAssignment extends BaseEntity {

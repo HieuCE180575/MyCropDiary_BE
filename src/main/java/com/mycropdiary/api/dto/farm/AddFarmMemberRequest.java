@@ -4,6 +4,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
+/**
+ * DTO yêu cầu thêm thành viên mới vào trang trại.
+ */
 public record AddFarmMemberRequest(
         @NotBlank(message = "User email is required")
         @Email(message = "Must be a valid email format")

@@ -3,6 +3,9 @@ package com.mycropdiary.api.dto.farm;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+/**
+ * DTO phản hồi thông tin chi tiết Vùng sản xuất.
+ */
 public record ProductionAreaResponse(
         Long id,
         Long farmId,

@@ -25,6 +25,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Lớp triển khai các dịch vụ nghiệp vụ cốt lõi cho module Farm Core.
+ * Quản lý trang trại, thành viên, vùng sản xuất, phân quyền và kiểm soát Business Rules.
+ */
 @Service
 @Transactional
 public class FarmServiceImpl implements FarmService {
@@ -52,6 +56,10 @@ public class FarmServiceImpl implements FarmService {
         this.farmAccessGuard = farmAccessGuard;
     }
 
+    /**
+     * BR-03: Kiểm tra tính hợp lệ của tọa độ địa lý (Latitude & Longitude).
+     * Yêu cầu hoặc cùng null, hoặc cùng có giá trị nằm trong dải cho phép (-90..90, -180..180).
+     */
     private void validateCoordinates(BigDecimal latitude, BigDecimal longitude) {
         if (latitude == null && longitude == null) {
             return;
@@ -67,6 +75,9 @@ public class FarmServiceImpl implements FarmService {
         }
     }
 
+    /**
+     * BR-04: Kiểm tra tổng diện tích các vùng sản xuất active không được vượt quá diện tích tổng của trang trại.
+     */
     private void validateProductionAreaTotalSize(Long farmId, BigDecimal farmTotalArea, BigDecimal newAreaSize, Long excludeAreaId) {
         if (farmTotalArea == null || newAreaSize == null) {
             return;
@@ -78,6 +89,9 @@ public class FarmServiceImpl implements FarmService {
         }
     }
 
+    /**
+     * Tạo trang trại mới và tự động thiết lập quyền OWNER cho người tạo.
+     */
     @Override
     public FarmResponse createFarm(Long currentUserId, CreateFarmRequest request) {
         if (farmRepository.existsByFarmCode(request.farmCode())) {
@@ -103,13 +117,16 @@ public class FarmServiceImpl implements FarmService {
         );
         farm = farmRepository.save(farm);
 
-        // Creator automatically becomes the Farm OWNER
+        // Người tạo tự động trở thành Farm OWNER
         FarmMember ownerMember = new FarmMember(farm, currentUser, "OWNER", "Farm Owner", LocalDate.now(), "ACTIVE");
         farmMemberRepository.save(ownerMember);
 
         return farmMapper.toResponse(farm, "OWNER");
     }
 
+    /**
+     * Lấy chi tiết trang trại theo ID. Kiểm tra quyền xem của thành viên trang trại.
+     */
     @Override
     @Transactional(readOnly = true)
     public FarmResponse getFarmById(Long currentUserId, Long farmId) {
@@ -122,6 +139,9 @@ public class FarmServiceImpl implements FarmService {
         return farmMapper.toResponse(farm, role);
     }
 
+    /**
+     * Tìm kiếm và phân trang danh sách các trang trại trong scope truy cập của người dùng.
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<FarmSummaryResponse> searchFarms(Long currentUserId, String keyword, String status, String province, Pageable pageable) {
@@ -137,6 +157,9 @@ public class FarmServiceImpl implements FarmService {
         });
     }
 
+    /**
+     * Lấy toàn bộ danh sách trang trại mà người dùng có quyền truy cập.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<FarmSummaryResponse> findAllAccessibleFarms(Long currentUserId) {
@@ -154,6 +177,9 @@ public class FarmServiceImpl implements FarmService {
                 .toList();
     }
 
+    /**
+     * Cập nhật thông tin trang trại. Yêu cầu quyền OWNER hoặc ADMIN.
+     */
     @Override
     public FarmResponse updateFarm(Long currentUserId, Long farmId, UpdateFarmRequest request) {
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
@@ -189,6 +215,9 @@ public class FarmServiceImpl implements FarmService {
         return farmMapper.toResponse(farm, role);
     }
 
+    /**
+     * Vô hiệu hóa (Soft delete) trang trại sang trạng thái INACTIVE.
+     */
     @Override
     public void deleteFarm(Long currentUserId, Long farmId) {
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
@@ -200,6 +229,9 @@ public class FarmServiceImpl implements FarmService {
         farmRepository.save(farm);
     }
 
+    /**
+     * BR-01: Thêm thành viên mới vào trang trại. Kiểm tra quy tắc duy nhất 1 Active OWNER.
+     */
     @Override
     public FarmMemberResponse addMember(Long currentUserId, Long farmId, AddFarmMemberRequest request) {
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
@@ -227,6 +259,9 @@ public class FarmServiceImpl implements FarmService {
         return farmMapper.toMemberResponse(member);
     }
 
+    /**
+     * Lấy danh sách thành viên trang trại đang hoạt động.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<FarmMemberResponse> getFarmMembers(Long currentUserId, Long farmId) {
@@ -236,6 +271,9 @@ public class FarmServiceImpl implements FarmService {
                 .toList();
     }
 
+    /**
+     * BR-02: Vô hiệu hóa thành viên khỏi trang trại. Không cho phép xóa Active OWNER duy nhất.
+     */
     @Override
     public void removeMember(Long currentUserId, Long farmId, Long memberId) {
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
@@ -259,6 +297,9 @@ public class FarmServiceImpl implements FarmService {
         farmMemberRepository.save(member);
     }
 
+    /**
+     * BR-06: Phân công nhân viên (STAFF) quản lý Vùng sản xuất. Kiểm tra ngày bắt đầu và kết thúc.
+     */
     @Override
     public StaffAreaAssignmentResponse assignStaffToArea(Long currentUserId, Long farmId, Long memberId, AssignStaffAreaRequest request) {
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
@@ -297,6 +338,9 @@ public class FarmServiceImpl implements FarmService {
         return farmMapper.toAssignmentResponse(assignment);
     }
 
+    /**
+     * BR-04 & BR-05: Tạo Vùng sản xuất mới trong trang trại. Kiểm tra mã duy nhất và tổng diện tích.
+     */
     @Override
     public ProductionAreaResponse createProductionArea(Long currentUserId, Long farmId, CreateProductionAreaRequest request) {
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
@@ -316,6 +360,9 @@ public class FarmServiceImpl implements FarmService {
         return farmMapper.toProductionAreaResponse(area);
     }
 
+    /**
+     * BR-07: Lấy danh sách các vùng sản xuất. STAFF chỉ nhìn thấy các vùng được phân công; OWNER/ADMIN xem tất cả.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<ProductionAreaResponse> getProductionAreas(Long currentUserId, Long farmId) {
@@ -328,7 +375,7 @@ public class FarmServiceImpl implements FarmService {
                     .toList();
         }
 
-        // Staff: only get assigned production areas
+        // Với Staff: chỉ lấy danh sách các vùng được phân công trong StaffAreaAssignment
         List<StaffAreaAssignment> assignments = staffAreaAssignmentRepository.findByFarmMemberIdAndActiveTrue(member.getId());
         return assignments.stream()
                 .map(StaffAreaAssignment::getProductionArea)

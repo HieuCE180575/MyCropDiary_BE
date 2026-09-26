@@ -3,6 +3,9 @@ package com.mycropdiary.api.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
+/**
+ * Entity biểu diễn bảng dbo.ProductionArea (Vùng sản xuất thuộc Trang trại).
+ */
 @Entity
 @Table(name = "ProductionArea", schema = "dbo", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"FarmID", "AreaCode"})

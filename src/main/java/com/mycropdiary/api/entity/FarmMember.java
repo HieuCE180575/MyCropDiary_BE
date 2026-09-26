@@ -3,6 +3,9 @@ package com.mycropdiary.api.entity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
+/**
+ * Entity biểu diễn bảng dbo.FarmMember (Thành viên trang trại: OWNER hoặc STAFF).
+ */
 @Entity
 @Table(name = "FarmMember", schema = "dbo", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"FarmID", "UserID"})

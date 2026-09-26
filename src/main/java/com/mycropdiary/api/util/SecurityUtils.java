@@ -7,6 +7,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+/**
+ * Tiện ích hỗ trợ trích xuất thông tin người dùng đang đăng nhập từ Spring Security Context.
+ */
 @Component
 public class SecurityUtils {
     private final AppUserRepository appUserRepository;
@@ -15,6 +18,11 @@ public class SecurityUtils {
         this.appUserRepository = appUserRepository;
     }
 
+    /**
+     * Lấy ID người dùng hiện tại từ đối tượng Authentication trong SecurityContext.
+     *
+     * @return ID người dùng đang đăng nhập (Mặc định 1L nếu đang chạy dev/skeleton chưa xác thực)
+     */
     public Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
@@ -32,6 +40,6 @@ public class SecurityUtils {
                         .orElse(1L);
             }
         }
-        return 1L; // Default fallback for dev/testing skeleton
+        return 1L; // Giá trị mặc định hỗ trợ chạy thử nghiệm dev skeleton
     }
 }

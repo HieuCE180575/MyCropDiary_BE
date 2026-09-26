@@ -6,6 +6,19 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO yêu cầu tạo mới trang trại.
+ *
+ * @param farmCode Mã trang trại (Duy nhất, tối đa 30 ký tự)
+ * @param farmName Tên trang trại (Tối đa 200 ký tự)
+ * @param addressLine Địa chỉ chi tiết
+ * @param province Tỉnh/Thành phố
+ * @param district Quận/Huyện
+ * @param ward Phường/Xã
+ * @param latitude Vĩ độ (-90 đến 90)
+ * @param longitude Kinh độ (-180 đến 180)
+ * @param totalAreaM2 Tổng diện tích tính bằng m2 (> 0)
+ */
 public record CreateFarmRequest(
         @NotBlank(message = "Farm code is required")
         @Size(max = 30, message = "Farm code must not exceed 30 characters")

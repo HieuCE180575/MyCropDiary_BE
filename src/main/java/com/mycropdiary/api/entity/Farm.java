@@ -3,6 +3,9 @@ package com.mycropdiary.api.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
+/**
+ * Entity biểu diễn bảng dbo.Farm (Thông tin Trang trại).
+ */
 @Entity
 @Table(name = "Farm", schema = "dbo")
 public class Farm extends BaseEntity {

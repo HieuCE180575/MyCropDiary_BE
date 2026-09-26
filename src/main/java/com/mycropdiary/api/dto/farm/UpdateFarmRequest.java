@@ -6,6 +6,19 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO yêu cầu cập nhật thông tin trang trại.
+ *
+ * @param farmName Tên trang trại
+ * @param addressLine Địa chỉ chi tiết
+ * @param province Tỉnh/Thành phố
+ * @param district Quận/Huyện
+ * @param ward Phường/Xã
+ * @param latitude Vĩ độ
+ * @param longitude Kinh độ
+ * @param totalAreaM2 Tổng diện tích (m2)
+ * @param status Trạng thái (ACTIVE, INACTIVE)
+ */
 public record UpdateFarmRequest(
         @NotBlank(message = "Farm name is required")
         @Size(max = 200, message = "Farm name must not exceed 200 characters")

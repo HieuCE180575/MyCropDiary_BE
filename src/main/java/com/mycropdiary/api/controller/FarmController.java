@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controller quản lý REST API cho module Farm Core (Trang trại, Thành viên, Vùng sản xuất).
+ */
 @RestController
 @RequestMapping("/api/v1/farms")
 public class FarmController {
@@ -24,6 +27,12 @@ public class FarmController {
         this.securityUtils = securityUtils;
     }
 
+    /**
+     * Tạo mới trang trại. Người tạo sẽ tự động được cấp quyền OWNER.
+     *
+     * @param request Thông tin trang trại mới
+     * @return Kết quả tạo trang trại kèm vai trò OWNER
+     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<FarmResponse> createFarm(@Valid @RequestBody CreateFarmRequest request) {
@@ -32,6 +41,12 @@ public class FarmController {
         return ApiResponse.ok("Farm created successfully", response);
     }
 
+    /**
+     * Lấy chi tiết thông tin trang trại theo ID. Yêu cầu quyền truy cập (Thành viên trang trại hoặc Admin).
+     *
+     * @param farmId Mã ID trang trại
+     * @return Chi tiết trang trại kèm vai trò của người dùng hiện tại
+     */
     @GetMapping("/{farmId}")
     public ApiResponse<FarmResponse> getFarmById(@PathVariable Long farmId) {
         Long currentUserId = securityUtils.getCurrentUserId();
@@ -39,6 +54,15 @@ public class FarmController {
         return ApiResponse.ok("Farm details", response);
     }
 
+    /**
+     * Tìm kiếm và lọc danh sách trang trại mà người dùng có quyền truy cập (Có phân trang).
+     *
+     * @param keyword Từ khóa tìm kiếm theo tên hoặc mã trang trại
+     * @param status Lọc theo trạng thái (ACTIVE, INACTIVE)
+     * @param province Lọc theo tỉnh/thành phố
+     * @param pageable Cấu hình phân trang
+     * @return Danh sách trang trại phân trang
+     */
     @GetMapping
     public ApiResponse<PageResponse<FarmSummaryResponse>> searchFarms(
             @RequestParam(required = false) String keyword,
@@ -50,6 +74,13 @@ public class FarmController {
         return ApiResponse.ok("Accessible farms list", page);
     }
 
+    /**
+     * Cập nhật thông tin trang trại. Yêu cầu quyền Farm OWNER hoặc System ADMIN.
+     *
+     * @param farmId Mã ID trang trại
+     * @param request Thông tin cập nhật
+     * @return Chi tiết trang trại sau khi cập nhật
+     */
     @PutMapping("/{farmId}")
     public ApiResponse<FarmResponse> updateFarm(
             @PathVariable Long farmId,
@@ -59,6 +90,12 @@ public class FarmController {
         return ApiResponse.ok("Farm updated successfully", response);
     }
 
+    /**
+     * Vô hiệu hóa (Soft Delete) trang trại. Yêu cầu quyền Farm OWNER hoặc System ADMIN.
+     *
+     * @param farmId Mã ID trang trại
+     * @return Thông báo thành công
+     */
     @DeleteMapping("/{farmId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ApiResponse<Void> deleteFarm(@PathVariable Long farmId) {
@@ -67,6 +104,12 @@ public class FarmController {
         return ApiResponse.ok("Farm deactivated successfully", null);
     }
 
+    /**
+     * Lấy danh sách thành viên đang hoạt động trong trang trại.
+     *
+     * @param farmId Mã ID trang trại
+     * @return Danh sách thành viên trang trại
+     */
     @GetMapping("/{farmId}/members")
     public ApiResponse<List<FarmMemberResponse>> getFarmMembers(@PathVariable Long farmId) {
         Long currentUserId = securityUtils.getCurrentUserId();
@@ -74,6 +117,13 @@ public class FarmController {
         return ApiResponse.ok("Farm members list", members);
     }
 
+    /**
+     * Thêm thành viên mới vào trang trại. Kiểm tra quy tắc 1 Active Owner. Yêu cầu quyền OWNER hoặc ADMIN.
+     *
+     * @param farmId Mã ID trang trại
+     * @param request Thông tin thành viên mới (Email, Vai trò, Chức danh)
+     * @return Thông tin thành viên vừa thêm
+     */
     @PostMapping("/{farmId}/members")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<FarmMemberResponse> addMember(
@@ -84,6 +134,13 @@ public class FarmController {
         return ApiResponse.ok("Farm member added successfully", member);
     }
 
+    /**
+     * Xóa/Vô hiệu hóa thành viên khỏi trang trại. Kiểm tra quy tắc bảo vệ Owner duy nhất.
+     *
+     * @param farmId Mã ID trang trại
+     * @param memberId Mã ID thành viên cần xóa
+     * @return Thông báo thành công
+     */
     @DeleteMapping("/{farmId}/members/{memberId}")
     public ApiResponse<Void> removeMember(
             @PathVariable Long farmId,
@@ -93,6 +150,14 @@ public class FarmController {
         return ApiResponse.ok("Farm member removed successfully", null);
     }
 
+    /**
+     * Phân công nhân viên (STAFF) quản lý một Vùng sản xuất. Yêu cầu quyền OWNER hoặc ADMIN.
+     *
+     * @param farmId Mã ID trang trại
+     * @param memberId Mã ID thành viên (Staff)
+     * @param request Thông tin phân công (Vùng sản xuất, Ngày bắt đầu, Ngày kết thúc)
+     * @return Thông tin phân công sau khi lưu
+     */
     @PostMapping("/{farmId}/members/{memberId}/assignments")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<StaffAreaAssignmentResponse> assignStaffToArea(
@@ -104,6 +169,13 @@ public class FarmController {
         return ApiResponse.ok("Staff assigned to production area successfully", assignment);
     }
 
+    /**
+     * Tạo Vùng sản xuất mới trong trang trại. Kiểm tra tổng diện tích không vượt quá diện tích trang trại.
+     *
+     * @param farmId Mã ID trang trại
+     * @param request Thông tin vùng sản xuất (Mã, Tên, Diện tích)
+     * @return Thông tin vùng sản xuất vừa tạo
+     */
     @PostMapping("/{farmId}/production-areas")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ProductionAreaResponse> createProductionArea(
@@ -114,6 +186,13 @@ public class FarmController {
         return ApiResponse.ok("Production area created successfully", response);
     }
 
+    /**
+     * Lấy danh sách vùng sản xuất của trang trại.
+     * STAFF chỉ nhìn thấy các vùng được phân công; OWNER/ADMIN nhìn thấy tất cả.
+     *
+     * @param farmId Mã ID trang trại
+     * @return Danh sách vùng sản xuất theo phạm vi quyền
+     */
     @GetMapping("/{farmId}/production-areas")
     public ApiResponse<List<ProductionAreaResponse>> getProductionAreas(@PathVariable Long farmId) {
         Long currentUserId = securityUtils.getCurrentUserId();

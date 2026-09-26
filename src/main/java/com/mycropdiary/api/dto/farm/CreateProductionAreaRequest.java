@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO yêu cầu tạo mới Vùng sản xuất.
+ */
 public record CreateProductionAreaRequest(
         @NotBlank(message = "Area code is required")
         @Size(max = 30, message = "Area code must not exceed 30 characters")

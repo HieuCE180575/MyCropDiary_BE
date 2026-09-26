@@ -7,8 +7,14 @@ import com.mycropdiary.api.entity.ProductionArea;
 import com.mycropdiary.api.entity.StaffAreaAssignment;
 import org.springframework.stereotype.Component;
 
+/**
+ * Lớp chuyển đổi dữ liệu (Mapper) giữa các JPA Entities và DTOs của Module Farm Core.
+ */
 @Component
 public class FarmMapper {
+    /**
+     * Chuyển đổi Entity Farm sang FarmSummaryResponse DTO (Danh sách tóm tắt).
+     */
     public FarmSummaryResponse toSummary(Farm farm, String userRole) {
         return new FarmSummaryResponse(
                 farm.getId(),
@@ -22,6 +28,9 @@ public class FarmMapper {
         );
     }
 
+    /**
+     * Chuyển đổi Entity Farm sang FarmResponse DTO (Chi tiết trang trại).
+     */
     public FarmResponse toResponse(Farm farm, String userRole) {
         return new FarmResponse(
                 farm.getId(),
@@ -42,6 +51,9 @@ public class FarmMapper {
         );
     }
 
+    /**
+     * Chuyển đổi Entity FarmMember sang FarmMemberResponse DTO (Thông tin thành viên).
+     */
     public FarmMemberResponse toMemberResponse(FarmMember member) {
         return new FarmMemberResponse(
                 member.getId(),
@@ -56,6 +68,9 @@ public class FarmMapper {
         );
     }
 
+    /**
+     * Chuyển đổi Entity StaffAreaAssignment sang StaffAreaAssignmentResponse DTO (Phân công nhân viên).
+     */
     public StaffAreaAssignmentResponse toAssignmentResponse(StaffAreaAssignment assignment) {
         return new StaffAreaAssignmentResponse(
                 assignment.getId(),
@@ -70,6 +85,9 @@ public class FarmMapper {
         );
     }
 
+    /**
+     * Chuyển đổi Entity ProductionArea sang ProductionAreaResponse DTO (Vùng sản xuất).
+     */
     public ProductionAreaResponse toProductionAreaResponse(ProductionArea area) {
         return new ProductionAreaResponse(
                 area.getId(),
