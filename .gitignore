@@ -4,3 +4,7 @@ target/
 *.iml
 *.log
 .env
+docs/
+.agent
+bin/
+AGENTS.md
