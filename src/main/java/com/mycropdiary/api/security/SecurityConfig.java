@@ -21,7 +21,13 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/api/v1/auth/**").permitAll()
+                        .requestMatchers(
+                                "/actuator/health",
+                                "/api/v1/auth/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/knowledge/**").permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults()) // TODO: replace with JWT bearer authentication.
