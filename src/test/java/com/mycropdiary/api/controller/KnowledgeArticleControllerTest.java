@@ -21,6 +21,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Unit Test cho tầng Controller của KnowledgeArticle (API Endpoint Testing).
+ * Sử dụng WebMvcTest và MockMvc để kiểm tra đường dẫn HTTP, tham số và dữ liệu JSON trả về.
+ */
 @WebMvcTest(KnowledgeArticleController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class KnowledgeArticleControllerTest {
@@ -31,8 +35,11 @@ class KnowledgeArticleControllerTest {
     @MockitoBean
     private KnowledgeArticleService knowledgeArticleService;
 
+    /**
+     * Test API lấy danh sách bài viết public thành công (HTTP Status 200 OK)
+     */
     @Test
-    @DisplayName("GET /api/v1/knowledge/articles returns public articles list")
+    @DisplayName("GET /api/v1/knowledge/articles - Trả về danh sách bài viết công khai thành công")
     void getPublicArticles_Success() throws Exception {
         KnowledgeArticleResponseDTO dto = new KnowledgeArticleResponseDTO(
                 1L,
@@ -64,8 +71,11 @@ class KnowledgeArticleControllerTest {
                 .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
+    /**
+     * Test API xem chi tiết bài viết public thành công (HTTP Status 200 OK)
+     */
     @Test
-    @DisplayName("GET /api/v1/knowledge/articles/{id} returns article detail")
+    @DisplayName("GET /api/v1/knowledge/articles/{id} - Trả về chi tiết bài viết thành công")
     void getPublicArticleById_Success() throws Exception {
         KnowledgeArticleResponseDTO dto = new KnowledgeArticleResponseDTO(
                 1L,
@@ -91,8 +101,11 @@ class KnowledgeArticleControllerTest {
                 .andExpect(jsonPath("$.data.title").value("Tomato Cultivation Guide"));
     }
 
+    /**
+     * Test API xem chi tiết bài viết thất bại khi ID không tồn tại hoặc bị ẩn (HTTP Status 404 Not Found)
+     */
     @Test
-    @DisplayName("GET /api/v1/knowledge/articles/{id} returns 404 when not found or not public")
+    @DisplayName("GET /api/v1/knowledge/articles/{id} - Trả về lỗi 404 khi không tìm thấy hoặc bài viết bị ẩn")
     void getPublicArticleById_NotFound() throws Exception {
         when(knowledgeArticleService.getPublicArticleById(99L))
                 .thenThrow(new ResourceNotFoundException("Knowledge article not found with id: 99"));

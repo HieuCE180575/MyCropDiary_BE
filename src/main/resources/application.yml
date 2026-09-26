@@ -2,11 +2,13 @@ spring:
   application:
     name: mycropdiary-backend
   profiles:
-    default: local
+    default: sqlserver
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 
 server:
   port: ${SERVER_PORT:8080}
