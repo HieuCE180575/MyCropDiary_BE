@@ -34,13 +34,27 @@ Các module UC cần phát triển tiếp: `auth-profile`, `farm-registration`, 
 `farming-activities`, `materials`, `purchases`, `expenses`, `harvest-traceability`,
 `training`, `vietgap-checklists`, `internal-assessments`, `reports`, `ai`, `admin`.
 
-## Chạy local
+## Chạy local (Development)
 
-```bash
-mvn spring-boot:run
+Có thể chạy trực tiếp bằng Maven Wrapper đi kèm dự án (không cần cài đặt Maven trước):
+
+**Trên Windows (PowerShell / Command Prompt):**
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-Local sử dụng H2 in-memory. Health check: `GET http://localhost:8080/actuator/health`.
+**Trên Linux / macOS (Bash):**
+```bash
+./mvnw spring-boot:run
+```
+
+*(Hoặc dùng lệnh `mvn spring-boot:run` nếu máy đã cài Maven sẵn)*
+
+Local mặc định sử dụng H2 in-memory:
+- **Swagger UI (Interactive API Docs & Test):** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- **OpenAPI JSON Spec:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+- **H2 Console:** [http://localhost:8080/h2-console](http://localhost:8080/h2-console) (JDBC URL: `jdbc:h2:mem:mycropdiary`, User: `sa`, Password: *(trống)*)
+- **Health check:** [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
 
 ## Chạy với SQL Server
 

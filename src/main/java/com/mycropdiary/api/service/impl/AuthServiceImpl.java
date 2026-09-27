@@ -19,9 +19,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HexFormat;
 import java.util.List;
 
 // [AI_CHANGE] Root cause: Cần triển khai nghiệp vụ đăng ký (tạo User PENDING + OTP), xác thực OTP, đăng nhập JWT
@@ -46,6 +50,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Value("${app.otp.length}")
     private int otpLength;
+
+    // [AI_CHANGE] Root cause: Gmail SMTP yêu cầu header From để tránh lỗi hostname local hoặc bị từ chối
+    // [AI_CHANGE] Mechanism: Inject cấu hình spring.mail.username làm địa chỉ From mặc định
+    @Value("${spring.mail.username:}")
+    private String mailFrom;
 
     public AuthServiceImpl(AppUserRepository appUserRepository,
                            AccountTokenRepository accountTokenRepository,
@@ -178,16 +187,29 @@ public class AuthServiceImpl implements AuthService {
                 user.getId(), user.getEmail(), user.getSystemRole());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
-        // [AI_CHANGE] Lưu hash refresh token vào DB để có thể thu hồi khi logout
+        // [AI_CHANGE] Root cause: BCrypt chỉ nhận tối đa 72 bytes. Refresh Token (JWT) có độ dài > 150 bytes,
+        //             dẫn tới lỗi IllegalArgumentException: password cannot be more than 72 bytes.
+        // [AI_CHANGE] Mechanism: Dùng SHA-256 băm Refresh Token thành chuỗi hex 64 ký tự an toàn và cho phép query trực tiếp
         AccountToken refreshTokenEntity = AccountToken.createRefreshToken(
                 user,
-                passwordEncoder.encode(refreshToken),
+                hashToken(refreshToken),
                 Instant.now().plusMillis(jwtTokenProvider.getRefreshTokenExpirationMs())
         );
         accountTokenRepository.save(refreshTokenEntity);
 
         return AuthResponse.of(accessToken, refreshToken,
                 user.getId(), user.getEmail(), user.getFullName(), user.getSystemRole());
+    }
+
+    // [AI_CHANGE] Cryptographic SHA-256 hash cho high-entropy tokens (Refresh Token)
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Thuật toán SHA-256 không khả dụng", e);
+        }
     }
 
     private String generateOtp() {
@@ -218,6 +240,9 @@ public class AuthServiceImpl implements AuthService {
     private void sendOtpEmail(String toEmail, String fullName, String otp) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            if (mailFrom != null && !mailFrom.isBlank()) {
+                message.setFrom(mailFrom);
+            }
             message.setTo(toEmail);
             message.setSubject("[MyCropDiary] Mã xác thực tài khoản (OTP)");
             message.setText(String.format(

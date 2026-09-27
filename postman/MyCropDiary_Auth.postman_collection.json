@@ -1,7 +1,8 @@
 {
   "info": {
-    "name": "MyCropDiary Auth - Register & OTP",
-    "description": "Postman collection cho chức năng đăng ký, gửi lại OTP và xác thực OTP của MyCropDiary Backend.",
+    "_postman_id": "c1f7b889-4d6f-4a3e-9e77-8d2b63519d50",
+    "name": "MyCropDiary - Auth & OTP Test Suite",
+    "description": "Bộ kiểm thử tự động toàn diện cho Module Đăng ký và Xác thực OTP (UC-03, UC-04) của MyCropDiary Backend. Bao gồm Happy Path, Resend OTP Flow, và đầy đủ Validation / Negative Test Cases.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -11,27 +12,52 @@
       "type": "string"
     },
     {
-      "key": "fullName",
-      "value": "Nguyen Van A",
+      "key": "mailhogUrl",
+      "value": "http://localhost:8025",
       "type": "string"
     },
     {
       "key": "email",
-      "value": "testuser@example.com",
+      "value": "farmer_test@mycropdiary.com",
+      "type": "string"
+    },
+    {
+      "key": "resendEmail",
+      "value": "resend_test@mycropdiary.com",
+      "type": "string"
+    },
+    {
+      "key": "pendingOtpEmail",
+      "value": "pending_test@mycropdiary.com",
+      "type": "string"
+    },
+    {
+      "key": "fullName",
+      "value": "Nguyễn Văn Nông Dân",
       "type": "string"
     },
     {
       "key": "phoneNumber",
-      "value": "0901234567",
+      "value": "0912345678",
       "type": "string"
     },
     {
       "key": "password",
-      "value": "Abc12345",
+      "value": "NongDan@2026",
       "type": "string"
     },
     {
       "key": "otp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "firstOtp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newOtp",
       "value": "",
       "type": "string"
     },
@@ -48,216 +74,1269 @@
   ],
   "item": [
     {
-      "name": "1. Register account",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"fullName\": \"{{fullName}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"password\": \"{{password}}\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/auth/register",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "register"
-          ]
-        }
-      },
-      "event": [
+      "name": "01. Flow Đăng ký & Kích hoạt (Happy Path)",
+      "description": "Kiểm thử luồng chuẩn từ khi tạo tài khoản PENDING, chặn đăng nhập trước khi xác thực, trích xuất OTP tự động từ MailHog, xác thực OTP thành công và đăng nhập.",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 201 or 200\", function () {\n  pm.expect(pm.response.code).to.be.oneOf([200, 201]);\n});\n",
-              "const json = pm.response.json();\n",
-              "console.log('Register response:', json);\n"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ]
-    },
-    {
-      "name": "2. Resend OTP",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/auth/resend-otp?email={{email}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "resend-otp"
-          ],
-          "query": [
+          "name": "1.1 Đăng ký tài khoản mới (Register)",
+          "event": [
             {
-              "key": "email",
-              "value": "{{email}}"
-            }
-          ]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Resend OTP success\", function () {\n  pm.expect(pm.response.code).to.be.oneOf([200, 201]);\n});\n"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ]
-    },
-    {
-      "name": "3. Get OTP from MailHog",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:8025/api/v2/messages?limit=10",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8025",
-          "path": [
-            "api",
-            "v2",
-            "messages"
-          ],
-          "query": [
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Tự động tạo email ngẫu nhiên để mọi lần chạy test đều độc lập",
+                  "const timestamp = Date.now();",
+                  "const dynamicEmail = `farmer_${timestamp}@mycropdiary.com`;",
+                  "pm.collectionVariables.set('email', dynamicEmail);",
+                  "console.log('==> [Happy Path] Đang đăng ký với email mới:', dynamicEmail);"
+                ],
+                "type": "text/javascript"
+              }
+            },
             {
-              "key": "limit",
-              "value": "10"
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Thời gian phản hồi nhanh (< 2000ms)', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "",
+                  "pm.test('ApiResponse trả về success = true và thông điệp chuẩn', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('object');",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.message).to.eql('Đăng ký thành công. Vui lòng kiểm tra email để nhận mã OTP xác thực.');",
+                  "    pm.expect(json.data).to.be.an('object');",
+                  "    pm.expect(json.data.email).to.eql(pm.collectionVariables.get('email'));",
+                  "    pm.expect(json.timestamp).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
             }
-          ]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"MailHog returns messages\", function () {\n  pm.response.to.have.status(200);\n});\n",
-              "const messages = pm.response.json();\n",
-              "if (Array.isArray(messages) && messages.length > 0) {\n  const latest = messages[0];\n  const body = latest.Content && latest.Content.Body ? latest.Content.Body : (latest.content && latest.content.body ? latest.content.body : '');\n  const match = body.match(/Mã xác thực \\(OTP\\) của bạn là:\\s*(\\d{6})/i) || body.match(/(\\d{6})/);\n  if (match) {\n    pm.environment.set('otp', match[1]);\n    console.log('Captured OTP:', match[1]);\n  } else {\n    console.log('Could not parse OTP from email body:', body);\n  }\n} else {\n  console.log('No messages found in MailHog');\n}\n"
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "type": "text/javascript"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"{{fullName}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "1.2 Thử đăng nhập khi CHƯA xác thực OTP (Mong đợi 403 Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 403 Forbidden do tài khoản PENDING', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('Thông báo lỗi tài khoản chưa được kích hoạt', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.include('Tài khoản chưa được kích hoạt');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "1.3 Lấy mã OTP tự động từ MailHog",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Kết nối thành công tới MailHog (200 OK)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const resJson = pm.response.json();",
+                  "let messages = [];",
+                  "if (Array.isArray(resJson)) {",
+                  "    messages = resJson;",
+                  "} else if (resJson && Array.isArray(resJson.items)) {",
+                  "    messages = resJson.items;",
+                  "} else if (resJson && Array.isArray(resJson.messages)) {",
+                  "    messages = resJson.messages;",
+                  "}",
+                  "",
+                  "pm.test('MailHog có danh sách email đã nhận', function () {",
+                  "    pm.expect(messages.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "const targetEmail = pm.collectionVariables.get('email');",
+                  "const matchedMsg = messages.find(m => {",
+                  "    const toHeader = m.Content && m.Content.Headers && m.Content.Headers.To ? JSON.stringify(m.Content.Headers.To) : '';",
+                  "    const toList = m.To ? JSON.stringify(m.To) : '';",
+                  "    return toHeader.includes(targetEmail) || toList.includes(targetEmail);",
+                  "}) || messages[0];",
+                  "",
+                  "pm.test('Trích xuất thành công mã OTP 6 chữ số từ email', function () {",
+                  "    pm.expect(matchedMsg, 'Không tìm thấy email tương ứng trong MailHog').to.not.be.undefined;",
+                  "    const body = matchedMsg.Content && matchedMsg.Content.Body ? matchedMsg.Content.Body : '';",
+                  "    const match = body.match(/Mã xác thực \\(OTP\\) của bạn là:\\s*(\\d{6})/i) || body.match(/(\\d{6})/);",
+                  "    pm.expect(match, 'Không trích xuất được 6 số OTP trong nội dung').to.not.be.null;",
+                  "    const otpCode = match[1];",
+                  "    pm.collectionVariables.set('otp', otpCode);",
+                  "    if (pm.environment.name) {",
+                  "        pm.environment.set('otp', otpCode);",
+                  "    }",
+                  "    console.log('==> [Happy Path] Đã bắt được mã OTP:', otpCode);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{mailhogUrl}}/api/v2/messages?limit=10",
+              "host": [
+                "{{mailhogUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "1.4 Xác thực OTP thành công (Verify OTP)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test('Tài khoản đã được kích hoạt thành công', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.message).to.eql('Xác thực OTP thành công. Tài khoản đã được kích hoạt.');",
+                  "});",
+                  "",
+                  "pm.test('Nhận AuthResponse chứa JWT Token và thông tin User', function () {",
+                  "    pm.expect(json.data).to.be.an('object');",
+                  "    pm.expect(json.data.accessToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(json.data.refreshToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(json.data.tokenType).to.eql('Bearer');",
+                  "    pm.expect(json.data.email).to.eql(pm.collectionVariables.get('email'));",
+                  "    pm.expect(json.data.fullName).to.eql(pm.collectionVariables.get('fullName'));",
+                  "    pm.expect(json.data.role).to.be.a('string');",
+                  "",
+                  "    // Lưu token cho các API sau",
+                  "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "    if (pm.environment.name) {",
+                  "        pm.environment.set('accessToken', json.data.accessToken);",
+                  "        pm.environment.set('refreshToken', json.data.refreshToken);",
+                  "    }",
+                  "    console.log('==> [Happy Path] Token đã lưu thành công.');",
+                  "});",
+                  "",
+                  "pm.test('Access Token có cấu trúc JWT hợp lệ (Header.Payload.Signature)', function () {",
+                  "    const parts = json.data.accessToken.split('.');",
+                  "    pm.expect(parts.length).to.eql(3);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"otp\": \"{{otp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "1.5 Đăng nhập sau khi kích hoạt (Login Success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test('Đăng nhập thành công khi tài khoản đã ACTIVE', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.message).to.eql('Đăng nhập thành công.');",
+                  "    pm.expect(json.data.accessToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(json.data.email).to.eql(pm.collectionVariables.get('email'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
           }
         }
       ]
     },
     {
-      "name": "4. Verify OTP",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"{{email}}\",\n  \"otp\": \"{{otp}}\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+      "name": "02. Flow Gửi lại mã OTP (Resend OTP Flow)",
+      "description": "Kiểm thử nghiệp vụ gửi lại OTP: OTP cũ phải bị vô hiệu hóa (revoked) ngay khi sinh OTP mới, xác thực bằng OTP cũ sẽ thất bại và xác thực bằng OTP mới sẽ thành công.",
+      "item": [
+        {
+          "name": "2.1 Đăng ký tài khoản mới cho luồng Resend",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = Date.now();",
+                  "const resendEmail = `resend_${timestamp}@mycropdiary.com`;",
+                  "pm.collectionVariables.set('resendEmail', resendEmail);",
+                  "console.log('==> [Resend Flow] Email:', resendEmail);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn Resend\",\n  \"email\": \"{{resendEmail}}\",\n  \"phoneNumber\": \"0988776655\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             }
           }
         },
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "verify-otp"
-          ]
-        }
-      },
-      "event": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Verify OTP success\", function () {\n  pm.expect(pm.response.code).to.be.oneOf([200, 201]);\n});\n",
-              "const json = pm.response.json();\n",
-              "if (json && json.data) {\n  if (json.data.accessToken) pm.environment.set('accessToken', json.data.accessToken);\n  if (json.data.refreshToken) pm.environment.set('refreshToken', json.data.refreshToken);\n}\n",
-              "console.log('Verify OTP response:', json);\n"
+          "name": "2.2 Lấy mã OTP lần 1 từ MailHog",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('MailHog trả về 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const resJson = pm.response.json();",
+                  "const messages = resJson.items || resJson.messages || resJson;",
+                  "const targetEmail = pm.collectionVariables.get('resendEmail');",
+                  "const matchedMsg = messages.find(m => {",
+                  "    const toHeader = m.Content && m.Content.Headers && m.Content.Headers.To ? JSON.stringify(m.Content.Headers.To) : '';",
+                  "    const toList = m.To ? JSON.stringify(m.To) : '';",
+                  "    return toHeader.includes(targetEmail) || toList.includes(targetEmail);",
+                  "}) || messages[0];",
+                  "",
+                  "const body = matchedMsg.Content && matchedMsg.Content.Body ? matchedMsg.Content.Body : '';",
+                  "const match = body.match(/Mã xác thực \\(OTP\\) của bạn là:\\s*(\\d{6})/i) || body.match(/(\\d{6})/);",
+                  "pm.expect(match).to.not.be.null;",
+                  "pm.collectionVariables.set('firstOtp', match[1]);",
+                  "console.log('==> [Resend Flow] Mã OTP lần 1:', match[1]);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{mailhogUrl}}/api/v2/messages?limit=10",
+              "host": [
+                "{{mailhogUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.3 Gửi lại mã OTP (Resend OTP)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Gửi lại OTP thành công', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.message).to.eql('Mã OTP mới đã được gửi tới email của bạn.');",
+                  "    pm.expect(json.data.email).to.eql(pm.collectionVariables.get('resendEmail'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/resend-otp?email={{resendEmail}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "resend-otp"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{resendEmail}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.4 Lấy mã OTP lần 2 từ MailHog",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('MailHog trả về 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const resJson = pm.response.json();",
+                  "const messages = resJson.items || resJson.messages || resJson;",
+                  "const targetEmail = pm.collectionVariables.get('resendEmail');",
+                  "// Lấy thư mới nhất gửi đến email này",
+                  "const matchedMsg = messages.find(m => {",
+                  "    const toHeader = m.Content && m.Content.Headers && m.Content.Headers.To ? JSON.stringify(m.Content.Headers.To) : '';",
+                  "    const toList = m.To ? JSON.stringify(m.To) : '';",
+                  "    return toHeader.includes(targetEmail) || toList.includes(targetEmail);",
+                  "}) || messages[0];",
+                  "",
+                  "const body = matchedMsg.Content && matchedMsg.Content.Body ? matchedMsg.Content.Body : '';",
+                  "const match = body.match(/Mã xác thực \\(OTP\\) của bạn là:\\s*(\\d{6})/i) || body.match(/(\\d{6})/);",
+                  "pm.expect(match).to.not.be.null;",
+                  "const newOtp = match[1];",
+                  "pm.collectionVariables.set('newOtp', newOtp);",
+                  "console.log('==> [Resend Flow] Mã OTP lần 2:', newOtp);",
+                  "console.log('==> [Resend Flow] So sánh OTP cũ (' + pm.collectionVariables.get('firstOtp') + ') vs mới (' + newOtp + ')');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{mailhogUrl}}/api/v2/messages?limit=10",
+              "host": [
+                "{{mailhogUrl}}"
+              ],
+              "path": [
+                "api",
+                "v2",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.5 Xác thực bằng mã OTP cũ (Mong đợi lỗi 400 - OTP đã bị thu hồi)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Mã OTP cũ không thể sử dụng sau khi đã resend', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.eql('Mã OTP không chính xác. Vui lòng kiểm tra lại.');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "type": "text/javascript"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{resendEmail}}\",\n  \"otp\": \"{{firstOtp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.6 Xác thực bằng mã OTP mới (Mong đợi 200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Kích hoạt thành công với OTP mới', function () {",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.data.accessToken).to.be.a('string').and.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{resendEmail}}\",\n  \"otp\": \"{{newOtp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
           }
         }
       ]
     },
     {
-      "name": "5. Login with email + password",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+      "name": "03. Validation - Đăng ký (Register Validation)",
+      "description": "Kiểm thử các ràng buộc dữ liệu đầu vào và ngoại lệ nghiệp vụ khi đăng ký: trùng email, sai định dạng email, để trống trường bắt buộc, mật khẩu quá ngắn.",
+      "item": [
+        {
+          "name": "3.1 Đăng ký với Email đã tồn tại trong hệ thống",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi email đã được sử dụng', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.eql('Email đã được sử dụng. Vui lòng dùng email khác.');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"{{fullName}}\",\n  \"email\": \"{{email}}\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             }
           }
         },
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/auth/login",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "auth",
-            "login"
-          ]
-        }
-      },
-      "event": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Login success\", function () {\n  pm.response.to.have.status(200);\n});\n",
-              "const json = pm.response.json();\n",
-              "if (json && json.data) {\n  if (json.data.accessToken) pm.environment.set('accessToken', json.data.accessToken);\n  if (json.data.refreshToken) pm.environment.set('refreshToken', json.data.refreshToken);\n}\n",
-              "console.log('Login response:', json);\n"
+          "name": "3.2 Đăng ký với Email sai định dạng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi định dạng email', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.include('Email không đúng định dạng');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "type": "text/javascript"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn Sai Email\",\n  \"email\": \"dinh_dang_email_khong_hop_le\",\n  \"phoneNumber\": \"0912345678\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3.3 Đăng ký với Họ tên để trống",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi họ tên không được để trống', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.include('Họ tên không được để trống');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"   \",\n  \"email\": \"valid_{{$timestamp}}@mycropdiary.com\",\n  \"phoneNumber\": \"0912345678\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3.4 Đăng ký với Mật khẩu quá ngắn (< 8 ký tự)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi độ dài mật khẩu', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.include('Mật khẩu phải từ 8 đến 100 ký tự');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn Ngắn Pass\",\n  \"email\": \"short_pass_{{$timestamp}}@mycropdiary.com\",\n  \"phoneNumber\": \"0912345678\",\n  \"password\": \"12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3.5 Đăng ký với Mật khẩu để trống",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi mật khẩu không được để trống', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.include('Mật khẩu');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn Trống Pass\",\n  \"email\": \"empty_pass_{{$timestamp}}@mycropdiary.com\",\n  \"phoneNumber\": \"0912345678\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Validation - Xác thực OTP (Verify OTP Validation)",
+      "description": "Kiểm thử các trường hợp xác thực OTP thất bại: mã OTP sai, mã OTP sai định dạng (thiếu chữ số), email không tồn tại trong hệ thống, và tài khoản đã được kích hoạt trước đó.",
+      "item": [
+        {
+          "name": "4.1 Chuẩn bị: Đăng ký tài khoản PENDING để test sai OTP",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = Date.now();",
+                  "const pendingEmail = `pending_otp_${timestamp}@mycropdiary.com`;",
+                  "pm.collectionVariables.set('pendingOtpEmail', pendingEmail);",
+                  "console.log('==> [OTP Validation] Email chờ xác thực:', pendingEmail);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Test Sai OTP\",\n  \"email\": \"{{pendingOtpEmail}}\",\n  \"phoneNumber\": \"0911223344\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4.2 Xác thực OTP sai mã (6 số không khớp)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi mã OTP không chính xác', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.eql('Mã OTP không chính xác. Vui lòng kiểm tra lại.');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{pendingOtpEmail}}\",\n  \"otp\": \"000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4.3 Xác thực OTP sai định dạng (không đủ 6 chữ số)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi OTP phải gồm 6 chữ số', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.include('Mã OTP phải gồm 6 chữ số');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{pendingOtpEmail}}\",\n  \"otp\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4.4 Xác thực OTP với Email không tồn tại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi không tìm thấy tài khoản', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.eql('Không tìm thấy tài khoản với email này.');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"khong_ton_tai_{{$timestamp}}@mycropdiary.com\",\n  \"otp\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4.5 Xác thực OTP cho tài khoản ĐÃ kích hoạt",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi tài khoản đã kích hoạt trước đó', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.eql('Tài khoản đã được kích hoạt trước đó.');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"otp\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Validation - Gửi lại OTP (Resend OTP Validation)",
+      "description": "Kiểm thử các ngoại lệ khi yêu cầu gửi lại OTP: email không tồn tại hoặc tài khoản đã ở trạng thái ACTIVE.",
+      "item": [
+        {
+          "name": "5.1 Gửi lại OTP cho Email không tồn tại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi không tìm thấy tài khoản', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.eql('Không tìm thấy tài khoản với email này.');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/resend-otp?email=khong_ton_tai_{{$timestamp}}@mycropdiary.com",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "resend-otp"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "khong_ton_tai_{{$timestamp}}@mycropdiary.com"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.2 Gửi lại OTP cho tài khoản ĐÃ kích hoạt",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code là 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Báo lỗi tài khoản đã kích hoạt, không cần OTP', function () {",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.message).to.eql('Tài khoản đã được kích hoạt, không cần xác thực OTP.');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/resend-otp?email={{email}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "resend-otp"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{email}}"
+                }
+              ]
+            }
           }
         }
       ]

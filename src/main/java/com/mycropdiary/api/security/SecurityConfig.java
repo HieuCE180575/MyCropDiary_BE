@@ -36,7 +36,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/actuator/health",
                                 "/api/v1/auth/**",
-                                "/h2-console/**"
+                                "/h2-console/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/knowledge/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/modules").permitAll()

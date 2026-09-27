@@ -18,6 +18,10 @@ spring:
     properties:
       mail.smtp.auth: ${MAIL_AUTH:false}
       mail.smtp.starttls.enable: ${MAIL_STARTTLS_ENABLE:false}
+      mail.smtp.starttls.required: ${MAIL_STARTTLS_REQUIRED:false}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
 
 server:
   port: ${SERVER_PORT:8080}
@@ -44,4 +48,17 @@ app:
   otp:
     expiration-minutes: ${OTP_EXPIRATION_MINUTES:15}
     length: ${OTP_LENGTH:6}
+
+# [AI_CHANGE] Swagger / OpenAPI 3 configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+
 
