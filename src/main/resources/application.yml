@@ -10,6 +10,8 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
@@ -60,5 +62,3 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: alpha
     display-request-duration: true
-
-

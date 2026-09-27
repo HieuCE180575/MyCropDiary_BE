@@ -16,7 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 // [AI_CHANGE] Root cause: Thay thế HTTP Basic authentication bằng JWT Bearer Token
 // [AI_CHANGE] Mechanism: Đăng ký JwtAuthenticationFilter trước UsernamePasswordAuthenticationFilter,
-//             bỏ httpBasic(), cho phép /api/v1/auth/** và /h2-console/** không cần xác thực
+//             bỏ httpBasic(), cho phép /api/v1/auth/**, /h2-console/**, Swagger và Knowledge public
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
