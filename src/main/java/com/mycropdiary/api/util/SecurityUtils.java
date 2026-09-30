@@ -71,6 +71,8 @@ public class SecurityUtils {
      * Lấy ID người dùng hiện tại từ đối tượng Authentication trong SecurityContext.
      * Mặc định trả về 1L nếu không có người dùng đăng nhập (hỗ trợ dev/skeleton test).
      */
+    // [AI_CHANGE] Root cause: Cần tương thích cả bảo mật JWT lẫn dev test khi gọi getCurrentUserId()
+    // [AI_CHANGE] Mechanism: Đọc từ getCurrentUserIdOptional(), fallback 1L cho legacy calls, ném AccessDeniedException khi dùng getRequiredCurrentUserId()
     public Long getCurrentUserId() {
         return getCurrentUserIdOptional().orElse(1L);
     }

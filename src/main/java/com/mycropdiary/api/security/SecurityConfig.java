@@ -1,8 +1,10 @@
 package com.mycropdiary.api.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -13,6 +15,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
 // [AI_CHANGE] Root cause: Thay thế HTTP Basic authentication bằng JWT Bearer Token
 // [AI_CHANGE] Mechanism: Đăng ký JwtAuthenticationFilter trước UsernamePasswordAuthenticationFilter,
@@ -43,7 +48,29 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/knowledge/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/modules").permitAll()
+                        // [AI_CHANGE] Root cause: Admin API phải được bảo vệ tường minh ở HTTP filter level (defense-in-depth)
+                        // [AI_CHANGE] Mechanism: Chặn mọi request tới /api/v1/admin/** nếu không có ROLE_ADMIN,
+                        //             kết hợp với @PreAuthorize ở Controller tạo bảo vệ 2 lớp
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
+                // [AI_CHANGE] Root cause: Tránh trả về 403 mặc định rỗng hoặc HTML khi không có token / sai quyền
+                // [AI_CHANGE] Mechanism: Custom EntryPoint trả 401 Unauthorized và AccessDeniedHandler trả 403 Forbidden với ApiResponse JSON chuẩn
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                            String body = "{\"success\":false,\"message\":\"Yêu cầu chưa được xác thực. Vui lòng cung cấp JWT token hợp lệ.\",\"data\":null,\"timestamp\":\"" + Instant.now() + "\"}";
+                            response.getWriter().write(body);
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                            String body = "{\"success\":false,\"message\":\"Bạn không có quyền truy cập tài nguyên này (yêu cầu vai trò ADMIN).\",\"data\":null,\"timestamp\":\"" + Instant.now() + "\"}";
+                            response.getWriter().write(body);
+                        })
+                )
                 // [AI_CHANGE] Cho phép iframe H2 console trong local dev
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 // [AI_CHANGE] Đăng ký JWT filter thay vì httpBasic

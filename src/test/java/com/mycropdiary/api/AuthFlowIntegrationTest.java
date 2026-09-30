@@ -18,9 +18,12 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.springframework.test.context.ActiveProfiles;
+
 // [AI_CHANGE] Root cause: Kiểm tra lỗi BCrypt 72 bytes khi verify OTP và issue tokens
 // [AI_CHANGE] Mechanism: Chạy toàn bộ flow đăng ký -> tìm OTP -> xác thực OTP -> cấp Access & Refresh tokens
 @SpringBootTest
+@ActiveProfiles("local")
 class AuthFlowIntegrationTest {
 
     @Autowired

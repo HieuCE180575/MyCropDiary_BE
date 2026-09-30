@@ -1,11 +1,11 @@
 spring:
   application:
     name: mycropdiary-backend
-  profiles:
-    default: local
   config:
     import:
       - optional:file:.env[.properties]
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
   jpa:
     open-in-view: false
     hibernate:

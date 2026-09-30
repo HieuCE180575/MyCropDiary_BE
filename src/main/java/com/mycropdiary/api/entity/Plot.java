@@ -10,7 +10,9 @@ import java.math.BigDecimal;
 @Table(name = "Plot", schema = "dbo", uniqueConstraints = {
         @UniqueConstraint(name = "UQ_Plot_Code", columnNames = {"ProductionAreaID", "PlotCode"})
 })
-public class Plot extends BaseEntity {
+// [AI_CHANGE] Root cause: Bảng dbo.Plot trong SQL Server không có cột CreatedAt/UpdatedAt, kế thừa BaseEntity gây lỗi "Invalid column name 'CreatedAt'".
+// [AI_CHANGE] Mechanism: Bỏ kế thừa BaseEntity để khớp 100% với bảng dbo.Plot.
+public class Plot {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PlotID")

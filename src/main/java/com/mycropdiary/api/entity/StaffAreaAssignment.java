@@ -8,7 +8,7 @@ import java.time.LocalDate;
  */
 @Entity
 @Table(name = "StaffAreaAssignment", schema = "dbo")
-public class StaffAreaAssignment extends BaseEntity {
+public class StaffAreaAssignment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "AssignmentID")

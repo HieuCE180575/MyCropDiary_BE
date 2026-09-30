@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @Table(name = "FarmMember", schema = "dbo", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"FarmID", "UserID"})
 })
-public class FarmMember extends BaseEntity {
+public class FarmMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "FarmMemberID")

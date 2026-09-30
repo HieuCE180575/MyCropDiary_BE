@@ -35,9 +35,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.test.context.ActiveProfiles;
 import static org.junit.jupiter.api.Assertions.*;
 
+// [AI_CHANGE] Root cause: Thiếu @ActiveProfiles("local") khiến test chạy trực tiếp vào SQL Server production/dev DB thay vì H2 in-memory.
+// [AI_CHANGE] Mechanism: Bổ sung @ActiveProfiles("local") đồng bộ với các test khác trong dự án.
 @SpringBootTest
+@ActiveProfiles("local")
 @Transactional
 class FarmCoreAndStaffServiceTest {
 
@@ -95,8 +99,9 @@ class FarmCoreAndStaffServiceTest {
         staffUser = userRepository.save(new AppUser("staff@farm.com", "hash", "Nhan Vien A", "0907654321", "USER", "ACTIVE"));
         outsiderUser = userRepository.save(new AppUser("outsider@farm.com", "hash", "Nguoi Ngoai", "0911223344", "USER", "ACTIVE"));
 
-        // 2. Tạo farm
-        farm = farmRepository.save(new Farm("FARM01", "Trang Trai Xanh"));
+        // [AI_CHANGE] Root cause: Bảng dbo.Farm yêu cầu AddressLine NOT NULL, gọi constructor 2 tham số khiến AddressLine bị null.
+        // [AI_CHANGE] Mechanism: Dùng constructor đầy đủ thông tin địa chỉ để tránh lỗi DataIntegrityViolation.
+        farm = farmRepository.save(new Farm("FARM01", "Trang Trai Xanh", "123 Duong Nong Nghiep", "Lam Dong", "Da Lat", "Phuong 1", new BigDecimal("50000.00")));
 
         // 3. Tạo farm members
         ownerMember = farmMemberRepository.save(new FarmMember(farm, ownerUser, "OWNER", "Chu trang trai", "ACTIVE"));
