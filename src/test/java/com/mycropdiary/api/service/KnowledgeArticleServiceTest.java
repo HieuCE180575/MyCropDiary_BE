@@ -68,7 +68,7 @@ class KnowledgeArticleServiceTest {
     @Test
     @DisplayName("UC-01: Guest can view public knowledge articles with pagination")
     void getPublicArticles_Success() {
-        Page<KnowledgeArticle> page = new PageImpl<>(List.of(publicArticle));
+        Page<KnowledgeArticle> page = new PageImpl<>(List.of(publicArticle), org.springframework.data.domain.PageRequest.of(0, 10), 1);
         when(knowledgeArticleRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
         PageResponse<KnowledgeArticleResponseDTO> response = knowledgeArticleService.getPublicArticles(0, 10, null, null);

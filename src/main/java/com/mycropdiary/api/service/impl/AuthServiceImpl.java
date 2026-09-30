@@ -8,11 +8,15 @@ import com.mycropdiary.api.repository.AccountTokenRepository;
 import com.mycropdiary.api.repository.AppUserRepository;
 import com.mycropdiary.api.security.JwtTokenProvider;
 import com.mycropdiary.api.service.AuthService;
+import com.mycropdiary.api.util.EmailTemplateBuilder;
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -180,6 +184,142 @@ public class AuthServiceImpl implements AuthService {
         log.info("Đã gửi lại OTP cho email: {}", user.getEmail());
     }
 
+    // ==================== UC-05: Đăng xuất – Thu hồi Refresh Token ====================
+    // [AI_CHANGE] Root cause: UC-05 cần cơ chế đăng xuất bằng cách vô hiệu hóa Refresh Token
+    // [AI_CHANGE] Mechanism: Hash SHA-256 refresh token nhận từ client, tìm trong DB, revoke nó
+    @Override
+    @Transactional
+    public void logout(String refreshToken) {
+        String tokenHash = hashToken(refreshToken);
+        AccountToken storedToken = accountTokenRepository
+                .findByTokenHashAndTokenType(tokenHash, "REFRESH_TOKEN")
+                .orElseThrow(() -> new BadRequestException("Refresh token không hợp lệ hoặc đã bị thu hồi."));
+
+        if (storedToken.isRevoked()) {
+            log.warn("UC-05: Refresh token đã bị thu hồi trước đó (tokenId: {})", storedToken.getId());
+            return; // Idempotent – không ném lỗi nếu đã revoke
+        }
+
+        storedToken.revoke();
+        accountTokenRepository.save(storedToken);
+        log.info("UC-05: Đăng xuất thành công – Refresh token đã bị thu hồi (tokenId: {})", storedToken.getId());
+    }
+
+    // ==================== UC-05: Cấp mới Access Token từ Refresh Token ====================
+    // [AI_CHANGE] Root cause: UC-05 cần cơ chế làm mới access token khi hết hạn mà không cần đăng nhập lại
+    // [AI_CHANGE] Mechanism: Validate JWT refresh token, tìm hash trong DB (chưa revoked/used/expired),
+    //             nếu hợp lệ cấp access token mới, giữ nguyên refresh token
+    @Override
+    @Transactional
+    public AuthResponse refreshToken(String refreshToken) {
+        // Bước 1: Kiểm tra JWT hợp lệ (chữ ký, hạn sử dụng)
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new BadRequestException("Refresh token không hợp lệ hoặc đã hết hạn.");
+        }
+
+        // Bước 2: Kiểm tra token tồn tại trong DB và chưa bị thu hồi
+        String tokenHash = hashToken(refreshToken);
+        AccountToken storedToken = accountTokenRepository
+                .findByTokenHashAndTokenType(tokenHash, "REFRESH_TOKEN")
+                .orElseThrow(() -> new BadRequestException("Refresh token không tồn tại trong hệ thống."));
+
+        if (!storedToken.isValid()) {
+            throw new BadRequestException("Phiên đăng nhập đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.");
+        }
+
+        // Bước 3: Lấy user từ token và cấp access token mới
+        Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        AppUser user = appUserRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản."));
+
+        if (!user.isActive()) {
+            throw new BadRequestException("Tài khoản đã bị vô hiệu hóa. Không thể cấp token mới.");
+        }
+
+        String newAccessToken = jwtTokenProvider.generateAccessToken(
+                user.getId(), user.getEmail(), user.getSystemRole());
+
+        log.info("UC-05: Đã cấp access token mới cho user: {}", user.getEmail());
+
+        // Giữ nguyên refresh token hiện tại
+        return AuthResponse.of(newAccessToken, refreshToken,
+                user.getId(), user.getEmail(), user.getFullName(), user.getSystemRole());
+    }
+
+    // ==================== UC-06: Quên mật khẩu – Gửi OTP ====================
+    // [AI_CHANGE] Root cause: UC-06 người dùng quên mật khẩu cần cơ chế gửi OTP qua email để đặt lại
+    // [AI_CHANGE] Mechanism: Tạo OTP type PASSWORD_RESET, gửi email; không tiết lộ email có tồn tại hay không
+    @Override
+    @Transactional
+    public void forgotPassword(String email) {
+        // [AI_CHANGE] Tìm user theo email; nếu không tìm thấy vẫn trả về thành công để tránh lộ thông tin
+        var userOpt = appUserRepository.findByEmailIgnoreCase(email);
+        if (userOpt.isEmpty()) {
+            log.warn("UC-06: Yêu cầu quên mật khẩu cho email không tồn tại: {}", email);
+            return; // Không tiết lộ email có tồn tại hay không (bảo mật)
+        }
+
+        AppUser user = userOpt.get();
+
+        if (!user.isActive()) {
+            log.warn("UC-06: Yêu cầu quên mật khẩu cho tài khoản chưa kích hoạt: {}", email);
+            return; // Tương tự, không tiết lộ trạng thái tài khoản
+        }
+
+        // [AI_CHANGE] Thu hồi tất cả OTP PASSWORD_RESET cũ chưa dùng
+        revokeAllOldTokens(user.getId(), "PASSWORD_RESET");
+
+        // [AI_CHANGE] Tạo OTP mới type PASSWORD_RESET và gửi email
+        String otp = generateOtp();
+        savePasswordResetOtp(user, otp);
+        sendPasswordResetEmail(user.getEmail(), user.getFullName(), otp);
+
+        log.info("UC-06: Đã gửi OTP đặt lại mật khẩu cho email: {}", user.getEmail());
+    }
+
+    // ==================== UC-06: Đặt lại mật khẩu ====================
+    // [AI_CHANGE] Root cause: UC-06 sau khi nhận OTP, người dùng cần API đặt lại mật khẩu mới
+    // [AI_CHANGE] Mechanism: Xác minh OTP PASSWORD_RESET -> hash mật khẩu mới -> lưu DB -> vô hiệu OTP
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        AppUser user = appUserRepository.findByEmailIgnoreCase(request.email())
+                .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản với email này."));
+
+        if (!user.isActive()) {
+            throw new BadRequestException("Tài khoản chưa được kích hoạt. Vui lòng xác thực email trước.");
+        }
+
+        // [AI_CHANGE] Tìm OTP PASSWORD_RESET hợp lệ mới nhất
+        AccountToken resetToken = accountTokenRepository
+                .findFirstByUser_IdAndTokenTypeAndUsedAtIsNullAndRevokedAtIsNullOrderByCreatedAtDesc(
+                        user.getId(), "PASSWORD_RESET")
+                .orElseThrow(() -> new BadRequestException(
+                        "Không tìm thấy mã OTP đặt lại mật khẩu. Vui lòng yêu cầu gửi lại."));
+
+        // [AI_CHANGE] Kiểm tra OTP hết hạn
+        if (resetToken.isExpired()) {
+            throw new BadRequestException("Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại.");
+        }
+
+        // [AI_CHANGE] So khớp OTP (đã hash bằng BCrypt)
+        if (!passwordEncoder.matches(request.otp(), resetToken.getTokenHash())) {
+            throw new BadRequestException("Mã OTP không chính xác. Vui lòng kiểm tra lại.");
+        }
+
+        // [AI_CHANGE] OTP hợp lệ -> Đặt lại mật khẩu mới
+        resetToken.markUsed();
+        accountTokenRepository.save(resetToken);
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        appUserRepository.save(user);
+
+        // [AI_CHANGE] Thu hồi tất cả refresh token cũ để buộc đăng nhập lại với mật khẩu mới
+        revokeAllOldTokens(user.getId(), "REFRESH_TOKEN");
+
+        log.info("UC-06: Đặt lại mật khẩu thành công cho email: {}", user.getEmail());
+    }
+
     // ==================== Private helpers ====================
 
     private AuthResponse issueTokens(AppUser user) {
@@ -230,6 +370,16 @@ public class AuthServiceImpl implements AuthService {
         accountTokenRepository.save(otpToken);
     }
 
+    // [AI_CHANGE] UC-06: Lưu OTP đặt lại mật khẩu (type PASSWORD_RESET)
+    private void savePasswordResetOtp(AppUser user, String otp) {
+        AccountToken otpToken = AccountToken.createPasswordResetOtp(
+                user,
+                passwordEncoder.encode(otp),
+                Instant.now().plus(otpExpirationMinutes, ChronoUnit.MINUTES)
+        );
+        accountTokenRepository.save(otpToken);
+    }
+
     private void revokeAllOldOtps(Long userId) {
         List<AccountToken> oldTokens = accountTokenRepository
                 .findAllByUser_IdAndTokenTypeAndUsedAtIsNullAndRevokedAtIsNull(userId, "EMAIL_OTP");
@@ -237,36 +387,62 @@ public class AuthServiceImpl implements AuthService {
         accountTokenRepository.saveAll(oldTokens);
     }
 
+    // [AI_CHANGE] UC-06/UC-05: Thu hồi tất cả token cũ theo type (PASSWORD_RESET hoặc REFRESH_TOKEN)
+    private void revokeAllOldTokens(Long userId, String tokenType) {
+        List<AccountToken> oldTokens = accountTokenRepository
+                .findAllByUser_IdAndTokenTypeAndUsedAtIsNullAndRevokedAtIsNull(userId, tokenType);
+        oldTokens.forEach(AccountToken::revoke);
+        accountTokenRepository.saveAll(oldTokens);
+    }
+
     private void sendOtpEmail(String toEmail, String fullName, String otp) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            if (mailFrom != null && !mailFrom.isBlank()) {
-                message.setFrom(mailFrom);
+            // [AI_CHANGE] Root cause: Người dùng yêu cầu email giao diện chuyên nghiệp, bắt mắt
+            // [AI_CHANGE] Mechanism: Dùng MimeMessageHelper gửi email HTML đa nền tảng với nhận diện MyCropDiary VietGAP
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            if (mimeMessage == null) {
+                mimeMessage = new JavaMailSenderImpl().createMimeMessage();
             }
-            message.setTo(toEmail);
-            message.setSubject("[MyCropDiary] Mã xác thực tài khoản (OTP)");
-            message.setText(String.format(
-                    """
-                    Xin chào %s,
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
+            if (mailFrom != null && !mailFrom.isBlank()) {
+                helper.setFrom(mailFrom, "MyCropDiary");
+            }
+            helper.setTo(toEmail);
+            helper.setSubject("[MyCropDiary] Mã xác thực tài khoản (OTP)");
+            String htmlContent = EmailTemplateBuilder.buildRegistrationOtpEmail(fullName, otp, otpExpirationMinutes);
+            helper.setText(htmlContent, true);
 
-                    Mã xác thực (OTP) của bạn là: %s
-
-                    Mã này có hiệu lực trong %d phút. Vui lòng không chia sẻ mã này với bất kỳ ai.
-
-                    Nếu bạn không yêu cầu đăng ký tài khoản MyCropDiary, vui lòng bỏ qua email này.
-
-                    Trân trọng,
-                    Đội ngũ MyCropDiary
-                    """,
-                    fullName, otp, otpExpirationMinutes
-            ));
-            mailSender.send(message);
+            mailSender.send(mimeMessage);
             log.info("OTP email sent to: {}", toEmail);
         } catch (Exception e) {
             // [AI_CHANGE] Log lỗi nhưng không ném exception để user vẫn được tạo
             // Trong production cần retry mechanism hoặc message queue
             log.error("Không thể gửi email OTP tới {}: {}", toEmail, e.getMessage());
             log.info("OTP cho {}: {} (hiển thị trong log do không gửi được email)", toEmail, otp);
+        }
+    }
+
+    // [AI_CHANGE] UC-06: Email HTML riêng cho luồng quên mật khẩu, phong cách trực quan, bắt mắt
+    private void sendPasswordResetEmail(String toEmail, String fullName, String otp) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            if (mimeMessage == null) {
+                mimeMessage = new JavaMailSenderImpl().createMimeMessage();
+            }
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
+            if (mailFrom != null && !mailFrom.isBlank()) {
+                helper.setFrom(mailFrom, "MyCropDiary");
+            }
+            helper.setTo(toEmail);
+            helper.setSubject("[MyCropDiary] Mã OTP đặt lại mật khẩu");
+            String htmlContent = EmailTemplateBuilder.buildPasswordResetOtpEmail(fullName, otp, otpExpirationMinutes);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(mimeMessage);
+            log.info("Password reset OTP email sent to: {}", toEmail);
+        } catch (Exception e) {
+            log.error("Không thể gửi email đặt lại mật khẩu tới {}: {}", toEmail, e.getMessage());
+            log.info("Password reset OTP cho {}: {} (hiển thị trong log do không gửi được email)", toEmail, otp);
         }
     }
 }

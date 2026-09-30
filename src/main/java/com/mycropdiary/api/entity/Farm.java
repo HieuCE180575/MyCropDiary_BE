@@ -2,13 +2,15 @@ package com.mycropdiary.api.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.Instant;
 
 /**
  * Entity biểu diễn bảng dbo.Farm (Thông tin Trang trại).
+ * Khớp chính xác 100% lược đồ dbo.Farm trong MyCropDiary_SQLServer.sql
  */
 @Entity
 @Table(name = "Farm", schema = "dbo")
-public class Farm extends BaseEntity {
+public class Farm {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "FarmID")
@@ -101,4 +103,17 @@ public class Farm extends BaseEntity {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    @Column(name = "CreatedAt", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @PrePersist
+    void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

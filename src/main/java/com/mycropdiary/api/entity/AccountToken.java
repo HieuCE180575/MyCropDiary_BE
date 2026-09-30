@@ -59,6 +59,18 @@ public class AccountToken {
         return token;
     }
 
+    // [AI_CHANGE] Root cause: UC-06 cần OTP riêng cho luồng quên mật khẩu (PASSWORD_RESET)
+    // [AI_CHANGE] Mechanism: Factory method tạo token type PASSWORD_RESET, tách biệt với EMAIL_OTP đăng ký
+    public static AccountToken createPasswordResetOtp(AppUser user, String otpHash, Instant expiresAt) {
+        AccountToken token = new AccountToken();
+        token.user = user;
+        token.tokenHash = otpHash;
+        token.tokenType = "PASSWORD_RESET";
+        token.expiresAt = expiresAt;
+        token.createdAt = Instant.now();
+        return token;
+    }
+
     // --- Getters ---
     public Long getId() { return id; }
     public AppUser getUser() { return user; }

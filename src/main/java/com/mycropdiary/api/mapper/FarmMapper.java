@@ -46,7 +46,7 @@ public class FarmMapper {
                 farm.getTotalAreaM2(),
                 farm.getStatus(),
                 farm.getCreatedAt(),
-                farm.getUpdatedAt(),
+                null,
                 userRole
         );
     }
@@ -98,7 +98,7 @@ public class FarmMapper {
                 area.getDescription(),
                 area.getStatus(),
                 area.getCreatedAt(),
-                area.getUpdatedAt()
+                null
         );
     }
 }

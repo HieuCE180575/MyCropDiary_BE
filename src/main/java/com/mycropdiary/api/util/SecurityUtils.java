@@ -21,25 +21,47 @@ public class SecurityUtils {
     /**
      * Lấy ID người dùng hiện tại từ đối tượng Authentication trong SecurityContext.
      *
-     * @return ID người dùng đang đăng nhập (Mặc định 1L nếu đang chạy dev/skeleton chưa xác thực)
+     * @return ID người dùng đang đăng nhập
+     * @throws IllegalStateException nếu chưa đăng nhập hoặc không xác định được userId
      */
+    // [AI_CHANGE] Root cause: Fallback return 1L cực kỳ nguy hiểm — user anonymous bị coi như user ID 1 (có thể là Admin)
+    // [AI_CHANGE] Mechanism: Bỏ fallback, ném exception rõ ràng khi chưa xác thực; JwtAuthenticationFilter
+    //             đặt principal là Long userId nên ưu tiên đọc trực tiếp từ principal
     public Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
-            Object principal = authentication.getPrincipal();
-            String username = null;
-            if (principal instanceof UserDetails userDetails) {
-                username = userDetails.getUsername();
-            } else if (principal instanceof String principalName) {
-                username = principalName;
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new IllegalStateException("Không tìm thấy thông tin xác thực. Vui lòng đăng nhập.");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        // [AI_CHANGE] JwtAuthenticationFilter đặt principal = userId (Long)
+        if (principal instanceof Long userId) {
+            return userId;
+        }
+
+        // [AI_CHANGE] Fallback: nếu principal là String (userId dạng String từ JWT subject)
+        if (principal instanceof String principalStr) {
+            try {
+                return Long.parseLong(principalStr);
+            } catch (NumberFormatException ignored) {
+                // Không phải số -> thử tìm theo email
             }
 
-            if (username != null) {
-                return appUserRepository.findByEmailIgnoreCase(username)
-                        .map(AppUser::getId)
-                        .orElse(1L);
-            }
+            return appUserRepository.findByEmailIgnoreCase(principalStr)
+                    .map(AppUser::getId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Không tìm thấy tài khoản cho principal: " + principalStr));
         }
-        return 1L; // Giá trị mặc định hỗ trợ chạy thử nghiệm dev skeleton
+
+        if (principal instanceof UserDetails userDetails) {
+            return appUserRepository.findByEmailIgnoreCase(userDetails.getUsername())
+                    .map(AppUser::getId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Không tìm thấy tài khoản cho username: " + userDetails.getUsername()));
+        }
+
+        throw new IllegalStateException("Không thể xác định ID người dùng từ SecurityContext.");
     }
 }
