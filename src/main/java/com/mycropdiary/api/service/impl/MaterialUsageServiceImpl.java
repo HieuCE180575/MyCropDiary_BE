@@ -65,6 +65,9 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
         // 3. Kiểm tra trạng thái mùa vụ (CropSeason)
         CropSeason season = activity.getCropSeason();
+        if (season == null) {
+            throw new BadRequestException("Hoạt động canh tác không thuộc mùa vụ hợp lệ.");
+        }
         String seasonStatus = season.getStatus();
         if (seasonStatus != null && ("COMPLETED".equalsIgnoreCase(seasonStatus)
                 || "CANCELLED".equalsIgnoreCase(seasonStatus)
@@ -83,7 +86,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
         // 6. Validate Material belongs to the same Farm
         Farm farm = season.getFarm();
-        if (!material.getFarm().getId().equals(farm.getId())) {
+        if (farm == null || material.getFarm() == null || !material.getFarm().getId().equals(farm.getId())) {
             throw new BadRequestException("Vật tư không thuộc trang trại của hoạt động canh tác này.");
         }
 
@@ -96,7 +99,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         if (request.unit() == null || request.unit().trim().isEmpty()) {
             throw new BadRequestException("Đơn vị tính không được để trống.");
         }
-        if (!material.getUnit().equalsIgnoreCase(request.unit().trim())) {
+        if (material.getUnit() != null && !material.getUnit().equalsIgnoreCase(request.unit().trim())) {
             throw new BadRequestException("Đơn vị tính (" + request.unit().trim() + ") không khớp với đơn vị tính của vật tư (" + material.getUnit() + ").");
         }
 
