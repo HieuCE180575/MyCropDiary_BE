@@ -57,6 +57,12 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(message);
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ApiResponse<Void> handleMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException exception) {
+        return ApiResponse.error("Định dạng dữ liệu gửi lên không hợp lệ (ví dụ: ngày giờ, JSON sai cú pháp).");
+    }
+
     // [AI_CHANGE] Root cause: AuthService ném BadRequestException cho các lỗi nghiệp vụ (email trùng, OTP sai)
     @ExceptionHandler(BadRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

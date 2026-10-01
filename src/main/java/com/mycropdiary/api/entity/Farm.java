@@ -16,6 +16,20 @@ public class Farm {
     @Column(name = "FarmID")
     private Long id;
 
+    @Column(name = "CreatedAt", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @PrePersist
+    void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return createdAt; }
+
     @Column(name = "RegistrationID")
     private Long registrationId;
 
@@ -113,17 +127,4 @@ public class Farm {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-
-    @Column(name = "CreatedAt", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @PrePersist
-    void onCreate() {
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
-    }
-
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

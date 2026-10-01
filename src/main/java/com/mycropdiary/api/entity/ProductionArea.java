@@ -18,6 +18,20 @@ public class ProductionArea {
     @Column(name = "ProductionAreaID")
     private Long id;
 
+    @Column(name = "CreatedAt", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @PrePersist
+    void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return createdAt; }
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "FarmID", nullable = false)
     private Farm farm;
@@ -70,17 +84,4 @@ public class ProductionArea {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-
-    @Column(name = "CreatedAt", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @PrePersist
-    void onCreate() {
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
-    }
-
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

@@ -1,6 +1,5 @@
 package com.mycropdiary.api.entity.cultivation;
 
-import com.mycropdiary.api.entity.BaseEntity;
 import com.mycropdiary.api.entity.ProductionArea;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -12,7 +11,7 @@ import java.math.BigDecimal;
 @Table(name = "Plot", schema = "dbo", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"ProductionAreaID", "PlotCode"})
 })
-public class Plot extends BaseEntity {
+public class Plot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
