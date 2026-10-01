@@ -1,5 +1,6 @@
 package com.mycropdiary.api.dto.common;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.domain.Page;
 import java.util.List;
 
@@ -19,10 +20,12 @@ public record PageResponse<T>(
     /**
      * Alias method for items to maintain compatibility with Spring Page naming convention.
      */
+    @JsonIgnore
     public List<T> content() {
         return items;
     }
 
+    @JsonIgnore
     public List<T> getContent() {
         return items;
     }

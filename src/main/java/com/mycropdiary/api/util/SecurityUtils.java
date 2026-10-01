@@ -48,7 +48,6 @@ public class SecurityUtils {
             if (principal instanceof Number num) {
                 return Optional.of(num.longValue());
             }
-
             String username = null;
             if (principal instanceof UserDetails userDetails) {
                 username = userDetails.getUsername();
