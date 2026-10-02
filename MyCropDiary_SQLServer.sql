@@ -946,3 +946,484 @@ GO
 
 SELECT N'MyCropDiary database schema created successfully.' AS Result;
 GO
+
+/*==============================================================
+  10. DỮ LIỆU MẪU (SAMPLE / SEED DATA) ĐỂ TEST TOÀN BỘ CÁC API
+  
+  MẬT KHẨU ĐĂNG NHẬP CHUNG: Password@123
+  HASH BCRYPT: $2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC
+  MÃ OTP MẶC ĐỊNH TEST VERIFY / RESET-PASS: 123456
+  HASH BCRYPT CỦA OTP: $2a$10$0pPbCigvJwUsf6/sskJIe.SwZ2mNtfIFaXiXTCF1kCjTwmXi6ghqO
+
+  DANH SÁCH TÀI KHOẢN MẪU:
+  1. Quản trị hệ thống:       admin@cropdiary.com           (Role: ADMIN, Status: ACTIVE)
+  2. Chủ trang trại 1:        owner1@dalatfarm.com          (Role: USER,  Status: ACTIVE - FarmID: 1)
+  3. Chủ trang trại 2:        owner2@mekongfarm.com         (Role: USER,  Status: ACTIVE - FarmID: 2)
+  4. Nhân viên kỹ thuật 1:    staff1@dalatfarm.com          (Role: USER,  Status: ACTIVE - FarmID: 1)
+  5. Nhân viên kỹ thuật 2:    staff2@dalatfarm.com          (Role: USER,  Status: ACTIVE - FarmID: 1)
+  6. Tài khoản chờ xác thực:  pending.user@cropdiary.com    (Role: USER,  Status: PENDING - Test verify OTP: 123456)
+  7. Tài khoản quên mật khẩu: resetpass.user@cropdiary.com  (Role: USER,  Status: ACTIVE - Test reset pass OTP: 123456)
+  8. Tài khoản bị khóa:       locked.user@cropdiary.com     (Role: USER,  Status: LOCKED - Test lock error)
+  9. Người nộp đơn trang trại: applicant@newfarm.com        (Role: USER,  Status: ACTIVE - Có đơn chờ Admin duyệt)
+  10. Nhân viên mới được mời: invited.staff@dalatfarm.com   (Role: USER,  Status: ACTIVE - Status trong Farm: INVITED)
+==============================================================*/
+
+PRINT N'Starting sample data insertion...';
+GO
+
+-- 10.1 Xóa dữ liệu cũ theo thứ tự ngược lại ràng buộc khóa ngoại (để có thể chạy script nhiều lần)
+DELETE FROM dbo.AIFeedbackReply;
+DELETE FROM dbo.AIFeedback;
+DELETE FROM dbo.AIMessage;
+DELETE FROM dbo.AIConversation;
+DELETE FROM dbo.KnowledgeArticle;
+DELETE FROM dbo.ProductionReport;
+DELETE FROM dbo.TrainingAttendance;
+DELETE FROM dbo.TrainingRecord;
+DELETE FROM dbo.InternalAssessmentItem;
+DELETE FROM dbo.InternalAssessment;
+DELETE FROM dbo.AssessmentCriterion;
+DELETE FROM dbo.ChecklistResult;
+DELETE FROM dbo.ChecklistRun;
+DELETE FROM dbo.ChecklistRule;
+DELETE FROM dbo.ProductSale;
+DELETE FROM dbo.HarvestActivitySource;
+DELETE FROM dbo.HarvestRecord;
+DELETE FROM dbo.Expense;
+DELETE FROM dbo.MaterialUsage;
+DELETE FROM dbo.InputPurchaseDetail;
+DELETE FROM dbo.InputPurchase;
+DELETE FROM dbo.Material;
+DELETE FROM dbo.Supplier;
+DELETE FROM dbo.ActivityWorker;
+DELETE FROM dbo.FarmingActivity;
+DELETE FROM dbo.FarmTaskWorker;
+DELETE FROM dbo.FarmTask;
+DELETE FROM dbo.CropSeason;
+DELETE FROM dbo.CropCategory;
+DELETE FROM dbo.PlotConditionObservation;
+DELETE FROM dbo.SoilAssessment;
+DELETE FROM dbo.WaterAssessment;
+DELETE FROM dbo.AreaRiskAssessment;
+DELETE FROM dbo.PlotWaterSource;
+DELETE FROM dbo.WaterSource;
+DELETE FROM dbo.Plot;
+DELETE FROM dbo.StaffAreaAssignment;
+DELETE FROM dbo.ProductionArea;
+DELETE FROM dbo.FarmWorker;
+DELETE FROM dbo.FarmMember;
+DELETE FROM dbo.Farm;
+DELETE FROM dbo.FarmRegistration;
+DELETE FROM dbo.AccountToken;
+DELETE FROM dbo.AppUser;
+GO
+
+-- 10.2 Bảng AppUser
+SET IDENTITY_INSERT dbo.AppUser ON;
+INSERT INTO dbo.AppUser (
+    UserID, Email, PasswordHash, FullName, PhoneNumber, SystemRole, AccountStatus, EmailVerifiedAt, CreatedAt, UpdatedAt
+) VALUES 
+(1, 'admin@cropdiary.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Quản Trị Viên Hệ Thống', '0901234567', 'ADMIN', 'ACTIVE', '2025-01-01 08:00:00', '2025-01-01 08:00:00', '2025-01-01 08:00:00'),
+(2, 'owner1@dalatfarm.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Trần Văn Chủ Nông Trại Đà Lạt', '0912345678', 'USER', 'ACTIVE', '2025-01-02 08:00:00', '2025-01-02 08:00:00', '2025-01-02 08:00:00'),
+(3, 'owner2@mekongfarm.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Lê Thị Chủ Vườn Miền Tây', '0923456789', 'USER', 'ACTIVE', '2025-01-03 08:00:00', '2025-01-03 08:00:00', '2025-01-03 08:00:00'),
+(4, 'staff1@dalatfarm.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Nguyễn Kỹ Thuật Viên Đà Lạt', '0934567890', 'USER', 'ACTIVE', '2025-01-04 08:00:00', '2025-01-04 08:00:00', '2025-01-04 08:00:00'),
+(5, 'staff2@dalatfarm.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Hoàng Quản Lý Vùng Trồng', '0945678901', 'USER', 'ACTIVE', '2025-01-04 09:00:00', '2025-01-04 09:00:00', '2025-01-04 09:00:00'),
+(6, 'pending.user@cropdiary.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Phạm Đăng Ký Chờ Kích Hoạt', '0956789012', 'USER', 'PENDING', NULL, '2026-02-01 10:00:00', '2026-02-01 10:00:00'),
+(7, 'resetpass.user@cropdiary.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Vũ Yêu Cầu Đặt Lại Mật Khẩu', '0967890123', 'USER', 'ACTIVE', '2025-01-05 10:00:00', '2025-01-05 10:00:00', '2025-01-05 10:00:00'),
+(8, 'locked.user@cropdiary.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Đặng Tài Khoản Đang Bị Khóa', '0978901234', 'USER', 'LOCKED', '2025-01-06 11:00:00', '2025-01-06 11:00:00', '2025-01-06 11:00:00'),
+(9, 'applicant@newfarm.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Bùi Văn Nộp Đơn Trang Trại', '0989012345', 'USER', 'ACTIVE', '2025-01-07 14:00:00', '2025-01-07 14:00:00', '2025-01-07 14:00:00'),
+(10, 'invited.staff@dalatfarm.com', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', N'Triệu Kỹ Thuật Viên Được Mời', '0990123456', 'USER', 'ACTIVE', '2025-01-08 15:00:00', '2025-01-08 15:00:00', '2025-01-08 15:00:00');
+SET IDENTITY_INSERT dbo.AppUser OFF;
+GO
+
+-- 10.3 Bảng AccountToken (Hỗ trợ test Verify OTP, Reset Password và Refresh Token)
+SET IDENTITY_INSERT dbo.AccountToken ON;
+INSERT INTO dbo.AccountToken (
+    TokenID, UserID, TokenHash, TokenType, ExpiresAt, UsedAt, RevokedAt, CreatedAt
+) VALUES 
+(1, 6, '$2a$10$0pPbCigvJwUsf6/sskJIe.SwZ2mNtfIFaXiXTCF1kCjTwmXi6ghqO', 'EMAIL_OTP', '2026-12-31 23:59:59', NULL, NULL, '2026-02-01 10:00:00'),
+(2, 7, '$2a$10$0pPbCigvJwUsf6/sskJIe.SwZ2mNtfIFaXiXTCF1kCjTwmXi6ghqO', 'PASSWORD_RESET', '2026-12-31 23:59:59', NULL, NULL, '2026-02-01 10:00:00'),
+(3, 2, '4d03923010b9d997d4c885bb4a123984e1b802613d508c909e7f722a46e1074e', 'REFRESH_TOKEN', '2026-12-31 23:59:59', NULL, NULL, '2026-02-01 10:00:00');
+SET IDENTITY_INSERT dbo.AccountToken OFF;
+GO
+
+-- 10.4 Bảng FarmRegistration (Đơn đăng ký mở trang trại)
+SET IDENTITY_INSERT dbo.FarmRegistration ON;
+INSERT INTO dbo.FarmRegistration (
+    RegistrationID, ApplicantUserID, FarmName, AddressLine, Province, District, Ward, Description, DocumentUrl, Status, HandlerUserID, SubmittedAt, HandledAt, RejectionReason
+) VALUES 
+(1, 2, N'Trang Trại Rau Củ Sạch Đà Lạt', N'123 Đường Mai Anh Đào, Phường 8', N'Tỉnh Lâm Đồng', N'Thành phố Đà Lạt', N'Phường 8', N'Trang trại chuyên canh rau thủy canh và củ quả theo tiêu chuẩn VietGAP', N'https://storage.cropdiary.com/docs/reg-dalat-2025.pdf', 'APPROVED', 1, '2025-01-03 08:30:00', '2025-01-05 09:00:00', NULL),
+(2, 3, N'Hợp Tác Xã Cây Ăn Trái Mekong Delta', N'456 Quốc lộ 1A, Xã Long An', N'Tỉnh Tiền Giang', N'Huyện Châu Thành', N'Xã Long An', N'Vùng chuyên canh sầu riêng Ri6 và bưởi da xanh chất lượng xuất khẩu', N'https://storage.cropdiary.com/docs/reg-mekong-2025.pdf', 'APPROVED', 1, '2025-01-08 14:00:00', '2025-01-10 10:00:00', NULL),
+(3, 9, N'Nông Trại Hữu Cơ Xanh Ba Vì', N'Thôn Yên Sơn, Xã Ba Vì', N'Thành phố Hà Nội', N'Huyện Ba Vì', N'Xã Ba Vì', N'Đơn đăng ký trang trại trồng rau hữu cơ và dược liệu sạch (Dùng để test API Admin Duyệt/Từ chối)', N'https://storage.cropdiary.com/docs/reg-bavi-2026.pdf', 'PENDING', NULL, '2026-02-15 08:00:00', NULL, NULL),
+(4, 9, N'Khu Canh Tác Thử Nghiệm Bến Cát', N'Khu phố 3, Phường Mỹ Phước', N'Tỉnh Bình Dương', N'Thị xã Bến Cát', N'Phường Mỹ Phước', N'Dự án trồng nấm công nghệ cao', N'https://storage.cropdiary.com/docs/reg-bencat-2025.pdf', 'REJECTED', 1, '2025-01-11 09:30:00', '2025-01-12 16:00:00', N'Hồ sơ chưa có giấy chứng nhận quyền sử dụng đất nông nghiệp hợp lệ.');
+SET IDENTITY_INSERT dbo.FarmRegistration OFF;
+GO
+
+-- 10.5 Bảng Farm (Trang trại đã được tạo)
+SET IDENTITY_INSERT dbo.Farm ON;
+INSERT INTO dbo.Farm (
+    FarmID, RegistrationID, FarmCode, FarmName, AddressLine, Province, District, Ward, Latitude, Longitude, TotalAreaM2, Status, CreatedAt
+) VALUES 
+(1, 1, 'FARM-DL-001', N'Trang Trại Rau Củ Sạch Đà Lạt', N'123 Đường Mai Anh Đào, Phường 8', N'Tỉnh Lâm Đồng', N'Thành phố Đà Lạt', N'Phường 8', 11.954500, 108.445200, 25000.00, 'ACTIVE', '2025-01-05 09:15:00'),
+(2, 2, 'FARM-MK-002', N'Hợp Tác Xã Cây Ăn Trái Mekong Delta', N'456 Quốc lộ 1A, Xã Long An', N'Tỉnh Tiền Giang', N'Huyện Châu Thành', N'Xã Long An', 10.375600, 106.331200, 50000.00, 'ACTIVE', '2025-01-10 10:30:00');
+SET IDENTITY_INSERT dbo.Farm OFF;
+GO
+
+-- 10.6 Bảng FarmMember (Thành viên trang trại - OWNER & STAFF)
+SET IDENTITY_INSERT dbo.FarmMember ON;
+INSERT INTO dbo.FarmMember (
+    FarmMemberID, FarmID, UserID, FarmRole, JobTitle, JoinedAt, LeftAt, Status
+) VALUES 
+(1, 1, 2, 'OWNER', N'Chủ Trang Trại kiêm Giám Đốc', '2025-01-05', NULL, 'ACTIVE'),
+(2, 1, 4, 'STAFF', N'Kỹ Sư Nông Học Phụ Trách Dinh Dưỡng', '2025-01-10', NULL, 'ACTIVE'),
+(3, 1, 5, 'STAFF', N'Kỹ Thuật Viên Giám Sát Nhà Màng', '2025-01-10', NULL, 'ACTIVE'),
+(4, 1, 10, 'STAFF', N'Kỹ Thuật Viên Tập Sự', '2026-02-01', NULL, 'INVITED'),
+(5, 2, 3, 'OWNER', N'Chủ Vườn & Trưởng Hợp Tác Xã', '2025-01-10', NULL, 'ACTIVE');
+SET IDENTITY_INSERT dbo.FarmMember OFF;
+GO
+
+-- 10.7 Bảng FarmWorker (Công nhân lao động tại nông trại)
+SET IDENTITY_INSERT dbo.FarmWorker ON;
+INSERT INTO dbo.FarmWorker (
+    FarmWorkerID, FarmID, WorkerCode, FullName, PhoneNumber, DateOfBirth, HireDate, Status, Notes
+) VALUES 
+(1, 1, 'CN-DL-01', N'Nguyễn Văn Nam', '0981112233', '1988-05-12', '2025-02-01', 'ACTIVE', N'Chuyên vận hành pha dung dịch thủy canh'),
+(2, 1, 'CN-DL-02', N'Trần Thị Bích', '0982223344', '1992-09-20', '2025-02-01', 'ACTIVE', N'Chuyên chăm sóc, thụ phấn và thu hoạch'),
+(3, 1, 'CN-DL-03', N'Lê Văn Cường', '0983334455', '1985-11-03', '2025-03-15', 'ACTIVE', N'Vận hành cơ giới hóa và hệ thống tưới tự động'),
+(4, 2, 'CN-MK-01', N'Phạm Văn Út', '0984445566', '1982-01-18', '2025-02-10', 'ACTIVE', N'Công nhân chuyên tỉa cành và bao trái sầu riêng');
+SET IDENTITY_INSERT dbo.FarmWorker OFF;
+GO
+
+-- 10.8 Bảng ProductionArea (Khu vực / Phân khu sản xuất)
+SET IDENTITY_INSERT dbo.ProductionArea ON;
+INSERT INTO dbo.ProductionArea (
+    ProductionAreaID, FarmID, AreaCode, AreaName, AreaM2, Description, Status, CreatedAt
+) VALUES 
+(1, 1, 'KV-RAU-LA', N'Khu Vực Rau Lá Thủy Canh', 10000.00, N'Hệ thống nhà kính chuyên canh xà lách và rau ăn lá công nghệ NFT', 'ACTIVE', '2025-01-12 08:00:00'),
+(2, 1, 'KV-CU-QUA', N'Khu Vực Củ Quả Nhà Màng', 12000.00, N'Nhà màng Israel trồng dưa lưới Ichiba và cà chua bi trên giá thể xơ dừa', 'ACTIVE', '2025-01-12 08:30:00'),
+(3, 1, 'KV-SO-CHE', N'Khu Nhà Kho & Sơ Chế Đóng Gói', 3000.00, N'Khu vực sơ chế nông sản, kho lạnh và đóng gói tem truy xuất', 'ACTIVE', '2025-01-12 09:00:00'),
+(4, 2, 'KV-CAY-TRAI', N'Khu Vực Vườn Cây Ăn Trái Xuất Khẩu', 50000.00, N'Vườn sầu riêng Ri6 và bưởi da xanh đạt chuẩn GlobalGAP', 'ACTIVE', '2025-01-15 08:00:00');
+SET IDENTITY_INSERT dbo.ProductionArea OFF;
+GO
+
+-- 10.9 Bảng StaffAreaAssignment (Phân công nhân viên phụ trách khu vực)
+SET IDENTITY_INSERT dbo.StaffAreaAssignment ON;
+INSERT INTO dbo.StaffAreaAssignment (
+    AssignmentID, FarmMemberID, ProductionAreaID, AssignedByMemberID, StartDate, EndDate, IsActive
+) VALUES 
+(1, 2, 1, 1, '2025-01-15', NULL, 1),
+(2, 3, 2, 1, '2025-01-15', NULL, 1),
+(3, 2, 2, 1, '2025-06-01', '2025-12-31', 0);
+SET IDENTITY_INSERT dbo.StaffAreaAssignment OFF;
+GO
+
+-- 10.10 Bảng Plot (Lô đất / Nhà trồng)
+SET IDENTITY_INSERT dbo.Plot ON;
+INSERT INTO dbo.Plot (
+    PlotID, ProductionAreaID, PlotCode, PlotName, AreaM2, Latitude, Longitude, BoundaryGeoJson, Status
+) VALUES 
+(1, 1, 'LOH-01', N'Lô H1 - Xà Lách Thủy Canh', 3000.00, 11.954800, 108.445500, '{"type":"Polygon","coordinates":[[[108.4450,11.9540],[108.4460,11.9540],[108.4460,11.9550],[108.4450,11.9550],[108.4450,11.9540]]]}', 'IN_USE'),
+(2, 1, 'LOH-02', N'Lô H2 - Cải Bó Xôi & Cải Kale', 3500.00, 11.955200, 108.446000, '{"type":"Polygon","coordinates":[[[108.4460,11.9540],[108.4470,11.9540],[108.4470,11.9550],[108.4460,11.9550],[108.4460,11.9540]]]}', 'AVAILABLE'),
+(3, 2, 'LOG-01', N'Lô G1 - Dưa Lưới Ichiba Nhật', 4000.00, 11.956000, 108.447000, '{"type":"Polygon","coordinates":[[[108.4470,11.9550],[108.4485,11.9550],[108.4485,11.9565],[108.4470,11.9565],[108.4470,11.9550]]]}', 'IN_USE'),
+(4, 2, 'LOG-02', N'Lô G2 - Cà Chua Cherry Vàng', 4000.00, 11.956500, 108.447500, '{"type":"Polygon","coordinates":[[[108.4485,11.9550],[108.4500,11.9550],[108.4500,11.9565],[108.4485,11.9565],[108.4485,11.9550]]]}', 'RESTING'),
+(5, 4, 'LOM-01', N'Lô M1 - Sầu Riêng Ri6 Chín Sớm', 25000.00, 10.375800, 106.331500, '{"type":"Polygon","coordinates":[[[106.3310,10.3750],[106.3330,10.3750],[106.3330,10.3770],[106.3310,10.3770],[106.3310,10.3750]]]}', 'IN_USE');
+SET IDENTITY_INSERT dbo.Plot OFF;
+GO
+
+-- 10.11 Bảng WaterSource & PlotWaterSource (Nguồn nước tưới)
+SET IDENTITY_INSERT dbo.WaterSource ON;
+INSERT INTO dbo.WaterSource (
+    WaterSourceID, FarmID, SourceCode, SourceName, SourceType, Description, Status
+) VALUES 
+(1, 1, 'WS-DL-01', N'Giếng Khoan Tầng Sâu Số 1', 'WELL', N'Nguồn cấp nước chính qua hệ thống lọc RO phục vụ bồn dinh dưỡng thủy canh', 'ACTIVE'),
+(2, 1, 'WS-DL-02', N'Hồ Thu Gom Nước Mưa & Hồ Lắng', 'RESERVOIR', N'Hồ dung tích 2500m3 lót bạt HDPE thu nước mái nhà kính', 'ACTIVE'),
+(3, 2, 'WS-MK-01', N'Kênh Thủy Lợi Sông Tiền', 'RIVER', N'Trạm bơm tưới tiêu ngọt hóa có giám sát độ mặn', 'ACTIVE');
+SET IDENTITY_INSERT dbo.WaterSource OFF;
+GO
+
+INSERT INTO dbo.PlotWaterSource (PlotID, WaterSourceID, IsPrimary) VALUES 
+(1, 1, 1),
+(2, 1, 1),
+(3, 2, 1),
+(4, 2, 1),
+(5, 3, 1);
+GO
+
+-- 10.12 Đánh giá nguy cơ, kiểm nghiệm nguồn nước và thổ nhưỡng
+SET IDENTITY_INSERT dbo.AreaRiskAssessment ON;
+INSERT INTO dbo.AreaRiskAssessment (
+    AreaRiskAssessmentID, ProductionAreaID, ConductedByMemberID, AssessmentDate, RiskType, RiskLevel, Findings, MitigationAction, NextReviewDate
+) VALUES 
+(1, 1, 2, '2026-01-15', 'SOIL_WATER_CONTAMINATION', 'LOW', N'Khu vực nhà kính biệt lập với khu chăn nuôi, độ dốc thoát nước tốt, không có dấu hiệu nhiễm bẩn hóa chất.', N'Duy trì hàng rào cách ly và rãnh thoát lũ xung quanh nhà kính.', '2026-07-15');
+SET IDENTITY_INSERT dbo.AreaRiskAssessment OFF;
+GO
+
+SET IDENTITY_INSERT dbo.WaterAssessment ON;
+INSERT INTO dbo.WaterAssessment (
+    WaterAssessmentID, WaterSourceID, ConductedByMemberID, AssessmentDate, LaboratoryName, PH, EColiCFU, ResultStatus, ResultJson, EvidenceUrl, Notes
+) VALUES 
+(1, 1, 2, '2026-01-20', N'Trung tâm Kỹ thuật Tiêu chuẩn Đo lường Chất lượng 3 (QUATEST 3)', 6.80, 0.00, 'PASS', '{"heavyMetals":{"Pb":"undetected","Cd":"undetected","As":"undetected"},"coliform":0}', N'https://storage.cropdiary.com/reports/water-test-2026.pdf', N'Đạt tiêu chuẩn QCVN 39:2011/BTNMT về chất lượng nước tưới tiêu.');
+SET IDENTITY_INSERT dbo.WaterAssessment OFF;
+GO
+
+SET IDENTITY_INSERT dbo.SoilAssessment ON;
+INSERT INTO dbo.SoilAssessment (
+    SoilAssessmentID, PlotID, ConductedByMemberID, AssessmentDate, SoilType, PH, OrganicMatterPercent, ResultStatus, ResultJson, EvidenceUrl, Notes
+) VALUES 
+(1, 3, 2, '2026-01-18', N'Giá thể xơ dừa lên men xử lý nhiệt', 6.20, 12.50, 'PASS', '{"EC":0.4,"NPK":{"N":1.2,"P":0.8,"K":1.5}}', N'https://storage.cropdiary.com/reports/soil-test-2026.pdf', N'Độ mặn EC thấp, thông thoáng rễ tốt cho dưa lưới phát triển.');
+SET IDENTITY_INSERT dbo.SoilAssessment OFF;
+GO
+
+SET IDENTITY_INSERT dbo.PlotConditionObservation ON;
+INSERT INTO dbo.PlotConditionObservation (
+    ObservationID, PlotID, RecordedByMemberID, ObservedAt, ConditionType, Severity, Description, ImageUrl, RecommendedAction
+) VALUES 
+(1, 1, 2, '2026-02-05 07:30:00', 'PEST_SURVEILLANCE', 'LOW', N'Phát hiện bọ trĩ mật độ thấp dưới mặt lá xà lách ở hàng số 3 và 4.', N'https://storage.cropdiary.com/images/pest-obs-01.jpg', N'Treo bẫy dính màu vàng và phun bổ sung chế phẩm sinh học tinh dầu tỏi ớt.');
+SET IDENTITY_INSERT dbo.PlotConditionObservation OFF;
+GO
+
+-- 10.13 Danh mục cây trồng, Mùa vụ (CropSeason), Công việc (FarmTask) và Hoạt động (FarmingActivity)
+SET IDENTITY_INSERT dbo.CropCategory ON;
+INSERT INTO dbo.CropCategory (
+    CropCategoryID, CategoryCode, CategoryName, ScientificName, TypicalDurationDays, IsActive
+) VALUES 
+(1, 'CROP-SALAD', N'Rau Xà Lách', N'Lactuca sativa', 45, 1),
+(2, 'CROP-MELON', N'Dưa Lưới Ichiba', N'Cucumis melo', 75, 1),
+(3, 'CROP-TOMATO', N'Cà Chua Cherry', N'Solanum lycopersicum', 90, 1),
+(4, 'CROP-DURIAN', N'Sầu Riêng Ri6', N'Durio zibethinus', 120, 1);
+SET IDENTITY_INSERT dbo.CropCategory OFF;
+GO
+
+SET IDENTITY_INSERT dbo.CropSeason ON;
+INSERT INTO dbo.CropSeason (
+    CropSeasonID, FarmID, PlotID, CropCategoryID, CreatedByMemberID, SeasonCode, SeasonName, VarietyName, StartDate, ExpectedHarvestDate, ActualEndDate, CultivatedAreaM2, Status, Notes
+) VALUES 
+(1, 1, 1, 1, 2, 'VU-XL-2026-Q1', N'Vụ Xà Lách Thủy Canh Mùa Xuân 2026', N'Lô Lô Xanh Rijk Zwaan', '2026-01-10', '2026-02-25', NULL, 3000.00, 'ACTIVE', N'Canh tác thủy canh hồi lưu tự động trong nhà kính công nghệ cao'),
+(2, 1, 3, 2, 2, 'VU-DL-2026-Q1', N'Vụ Dưa Lưới Ichiba Nhật Bản Xuân Hè', N'Dưa lưới Taka Ichiba', '2026-01-05', '2026-03-20', NULL, 4000.00, 'HARVESTING', N'Trồng trên giá thể túi xơ dừa, thụ phấn bằng ong mật tự nhiên'),
+(3, 2, 5, 4, 5, 'VU-SR-2026', N'Vụ Sầu Riêng Xuất Khẩu 2026', N'Ri6 Đầu Dòng Miền Tây', '2025-11-01', '2026-05-15', NULL, 25000.00, 'ACTIVE', N'Chăm sóc chuẩn VietGAP hướng tới xuất khẩu chính ngạch');
+SET IDENTITY_INSERT dbo.CropSeason OFF;
+GO
+
+SET IDENTITY_INSERT dbo.FarmTask ON;
+INSERT INTO dbo.FarmTask (
+    FarmTaskID, FarmID, ProductionAreaID, PlotID, CropSeasonID, CreatedByMemberID, HandledByMemberID, Title, Description, Priority, Status, StartAt, DueAt, CompletedAt, CreatedAt
+) VALUES 
+(1, 1, 1, 1, 1, 2, 2, N'Kiểm tra pH và EC bồn dinh dưỡng hồi lưu', N'Đo đạc nồng độ ppm, EC và pH bể chứa dinh dưỡng bồn A và B', 'HIGH', 'DONE', '2026-01-12 08:00:00', '2026-01-12 11:00:00', '2026-01-12 10:30:00', '2026-01-12 07:45:00'),
+(2, 1, 2, 3, 2, 2, 3, N'Tỉa nhánh phụ và cố định dây leo dưa lưới', N'Tỉa các nhánh phụ từ nách lá 1 đến 8, cố định ngọn dây bằng kẹp chuyên dụng', 'MEDIUM', 'IN_PROGRESS', '2026-02-10 07:00:00', '2026-02-12 17:00:00', NULL, '2026-02-09 16:30:00');
+SET IDENTITY_INSERT dbo.FarmTask OFF;
+GO
+
+INSERT INTO dbo.FarmTaskWorker (FarmTaskID, FarmWorkerID, AssignedAt, AssignmentStatus) VALUES 
+(2, 1, '2026-02-10 07:15:00', 'ACCEPTED'),
+(2, 2, '2026-02-10 07:15:00', 'ACCEPTED');
+GO
+
+SET IDENTITY_INSERT dbo.FarmingActivity ON;
+INSERT INTO dbo.FarmingActivity (
+    FarmingActivityID, CropSeasonID, FarmTaskID, SupervisedByMemberID, ActivityType, ActivityName, StartedAt, EndedAt, Description, ResultNotes, WeatherNotes, CreatedAt
+) VALUES 
+(1, 1, 1, 2, 'FERTILIZING', N'Châm dinh dưỡng bổ sung cho bể thủy canh xà lách', '2026-01-12 08:30:00', '2026-01-12 10:00:00', N'Pha thêm dung dịch Hydro Umat V theo tỷ lệ 1:200 để ổn định EC', N'Đã cân bằng đạt EC = 1.6 mS/cm, pH = 6.0', N'Trời nắng nhẹ, nhiệt độ 22 độ C', '2026-01-12 10:15:00'),
+(2, 2, NULL, 3, 'HARVEST', N'Thu hoạch đợt 1 dưa lưới Lô G1', '2026-03-15 06:00:00', '2026-03-15 11:30:00', N'Thu hoạch trái dưa lưới đạt độ chín và cuống nứt tròn đều', N'Tổng sản lượng thu hoạch đạt 3,200 kg, chất lượng xuất sắc, độ ngọt brix trung bình 14.2', N'Trời mát mẻ, 18 độ C', '2026-03-15 12:00:00');
+SET IDENTITY_INSERT dbo.FarmingActivity OFF;
+GO
+
+INSERT INTO dbo.ActivityWorker (FarmingActivityID, FarmWorkerID, WorkHours, Notes) VALUES 
+(2, 1, 5.50, N'Cắt trái và phân loại sơ bộ tại luống'),
+(2, 2, 5.50, N'Vận chuyển trái về khu sơ chế và lau sạch cuống');
+GO
+
+-- 10.14 Nhà cung cấp, Vật tư, Nhập kho và Nhật ký sử dụng vật tư
+SET IDENTITY_INSERT dbo.Supplier ON;
+INSERT INTO dbo.Supplier (
+    SupplierID, FarmID, SupplierCode, SupplierName, ContactPerson, PhoneNumber, Email, AddressLine, TaxCode, IsActive
+) VALUES 
+(1, 1, 'SUP-VT-01', N'Công Ty Cổ Phần Giống Cây Trồng Đà Lạt', N'Lê Văn Thắng', '02633888999', 'sales@dalatseeds.vn', N'78 Đường Phan Chu Trinh, Phường 9, TP. Đà Lạt', '5801234567', 1),
+(2, 1, 'SUP-VT-02', N'Công Ty Phân Bón Sinh Học Bio-Green', N'Trần Thị Mai', '02838999888', 'contact@biogreen.vn', N'102 Đường Võ Văn Ngân, TP. Thủ Đức, TP.HCM', '0309876543', 1);
+SET IDENTITY_INSERT dbo.Supplier OFF;
+GO
+
+SET IDENTITY_INSERT dbo.Material ON;
+INSERT INTO dbo.Material (
+    MaterialID, FarmID, MaterialCode, MaterialName, MaterialType, Unit, ActiveIngredient, Manufacturer, IsActive
+) VALUES 
+(1, 1, 'MAT-SEED-01', N'Hạt Giống Xà Lách Lô Lô Xanh Rijk Zwaan', 'SEED', N'Gói', N'Hạt F1 tinh khiết 99%', N'Rijk Zwaan Hà Lan', 1),
+(2, 1, 'MAT-FERT-01', N'Dinh Dưỡng Thủy Canh Chuyên Dụng Hydro Umat V', 'FERTILIZER', N'Bộ', N'Đa trung vi lượng chelate (N, P2O5, K2O, Ca, Mg, Fe)', N'Bio-Green Việt Nam', 1),
+(3, 1, 'MAT-BIO-01', N'Chế Phẩm Sinh Học Phòng Trừ Sâu Neem Oil 80EC', 'BIOLOGICAL', N'Chai', N'Azadirachtin chiết xuất hạt Neem hữu cơ', N'Công Ty Thảo Mộc Xanh', 1);
+SET IDENTITY_INSERT dbo.Material OFF;
+GO
+
+SET IDENTITY_INSERT dbo.InputPurchase ON;
+INSERT INTO dbo.InputPurchase (
+    InputPurchaseID, FarmID, SupplierID, RecordedByMemberID, InvoiceNumber, PurchaseDate, TotalAmount, DocumentUrl, Notes
+) VALUES 
+(1, 1, 2, 2, 'HD-BIO-2026-001', '2026-01-08', 15000000.00, N'https://storage.cropdiary.com/invoices/inv-2026-001.pdf', N'Nhập vật tư dinh dưỡng thủy canh và chế phẩm phòng trừ sinh học cho vụ đầu năm 2026');
+SET IDENTITY_INSERT dbo.InputPurchase OFF;
+GO
+
+SET IDENTITY_INSERT dbo.InputPurchaseDetail ON;
+INSERT INTO dbo.InputPurchaseDetail (
+    InputPurchaseDetailID, InputPurchaseID, MaterialID, BatchNumber, ManufactureDate, ExpiryDate, Quantity, UnitPrice
+) VALUES 
+(1, 1, 2, 'LOT-202601-DDT', '2025-12-15', '2027-12-15', 50.000, 200000.00),
+(2, 1, 3, 'LOT-202601-NEEM', '2025-12-20', '2027-12-20', 20.000, 250000.00);
+SET IDENTITY_INSERT dbo.InputPurchaseDetail OFF;
+GO
+
+SET IDENTITY_INSERT dbo.MaterialUsage ON;
+INSERT INTO dbo.MaterialUsage (
+    MaterialUsageID, FarmingActivityID, InputPurchaseDetailID, MaterialID, RecordedByMemberID, UsedAt, Quantity, Unit, Dosage, Method, SafetyIntervalDays, Notes
+) VALUES 
+(1, 1, 1, 2, 2, '2026-01-12 09:00:00', 5.000, N'Bộ', N'1 bộ / 1000 lít nước', N'Châm trực tiếp vào bồn pha dinh dưỡng tuần hoàn', 0, N'Dinh dưỡng gốc khoáng thủy canh an toàn');
+SET IDENTITY_INSERT dbo.MaterialUsage OFF;
+GO
+
+-- 10.15 Chi phí (Expense), Thu hoạch (HarvestRecord) và Bán hàng (ProductSale)
+SET IDENTITY_INSERT dbo.Expense ON;
+INSERT INTO dbo.Expense (
+    ExpenseID, FarmID, CropSeasonID, FarmingActivityID, InputPurchaseID, RecordedByMemberID, ExpenseType, ExpenseDate, Amount, Description, EvidenceUrl
+) VALUES 
+(1, 1, 1, 1, 1, 2, 'INPUT', '2026-01-08', 15000000.00, N'Chi phí mua vật tư dinh dưỡng thủy canh và chế phẩm sinh học', N'https://storage.cropdiary.com/receipts/exp-001.pdf'),
+(2, 1, 2, 2, NULL, 3, 'LABOR', '2026-03-15', 1100000.00, N'Tiền công nhật nhân công phụ trách thu hoạch dưa lưới lô G1', N'https://storage.cropdiary.com/receipts/exp-002.pdf');
+SET IDENTITY_INSERT dbo.Expense OFF;
+GO
+
+SET IDENTITY_INSERT dbo.HarvestRecord ON;
+INSERT INTO dbo.HarvestRecord (
+    HarvestRecordID, CropSeasonID, RecordedByMemberID, HarvestLotCode, HarvestedAt, Quantity, Unit, QualityGrade, StorageLocation, TraceabilityCode, Notes
+) VALUES 
+(1, 2, 3, 'LOT-DL-20260315-01', '2026-03-15 11:00:00', 3200.000, N'kg', N'Loại 1 - Xuất khẩu', N'Kho Lạnh K1 Bảo Quản Nông Sản Đà Lạt', 'TRC-DL26-0001', N'Trái đều đẹp, lưới nổi rõ, trọng lượng 1.5 - 1.8 kg/trái, độ ngọt 14.2 độ brix');
+SET IDENTITY_INSERT dbo.HarvestRecord OFF;
+GO
+
+INSERT INTO dbo.HarvestActivitySource (HarvestRecordID, FarmingActivityID) VALUES 
+(1, 2);
+GO
+
+SET IDENTITY_INSERT dbo.ProductSale ON;
+INSERT INTO dbo.ProductSale (
+    ProductSaleID, HarvestRecordID, RecordedByMemberID, SaleDate, BuyerName, Quantity, UnitPrice, InvoiceNumber, Notes
+) VALUES 
+(1, 1, 1, '2026-03-16', N'Hệ Thống Chuỗi Siêu Thị WinCommerce / WinMart', 3000.000, 45000.00, 'INV-WIN-2026-001', N'Giao hàng tại Tổng kho WinMart Miền Đông, Dĩ An, Bình Dương');
+SET IDENTITY_INSERT dbo.ProductSale OFF;
+GO
+
+-- 10.16 Tiêu chuẩn Checklist VietGAP, Đánh giá nội bộ & Tập huấn
+SET IDENTITY_INSERT dbo.ChecklistRule ON;
+INSERT INTO dbo.ChecklistRule (
+    ChecklistRuleID, CreatedByUserID, RuleCode, RuleName, RuleCategory, Description, EvaluationType, RuleExpression, ReferenceDocument, EffectiveFrom, EffectiveTo, IsActive
+) VALUES 
+(1, 1, 'VIETGAP-WATER-01', N'Kiểm tra định kỳ chất lượng nguồn nước tưới', 'VIETGAP', N'Nguồn nước tưới phải được kiểm nghiệm chỉ tiêu vi sinh và kim loại nặng đạt chuẩn theo QCVN 39:2011/BTNMT', 'BOOLEAN', 'WaterTest.Pass == true', N'TCVN 11892-1:2017 Quy trình thực hành sản xuất nông nghiệp tốt (VietGAP)', '2025-01-01', NULL, 1),
+(2, 1, 'VIETGAP-PEST-02', N'Tuân thủ thời gian cách ly thuốc BVTV (PHI)', 'VIETGAP', N'Phải ghi chép nhật ký sử dụng thuốc và đảm bảo tuyệt đối đủ số ngày cách ly trước khi thu hoạch', 'BOOLEAN', 'PestControl.DaysSinceLastSpray >= PHI', N'Quy định an toàn thực phẩm Bộ Nông nghiệp & PTNT', '2025-01-01', NULL, 1);
+SET IDENTITY_INSERT dbo.ChecklistRule OFF;
+GO
+
+SET IDENTITY_INSERT dbo.ChecklistRun ON;
+INSERT INTO dbo.ChecklistRun (
+    ChecklistRunID, FarmID, CropSeasonID, CreatedByMemberID, RunName, StartedAt, CompletedAt, OverallStatus, ScorePercent, Notes
+) VALUES 
+(1, 1, 2, 2, N'Đánh giá tuân thủ VietGAP tiền thu hoạch Vụ Dưa Lưới Q1', '2026-03-10 08:00:00', '2026-03-10 11:30:00', 'PASS', 95.00, N'Tất cả chỉ tiêu an toàn thực phẩm và vệ sinh thu hoạch đều đáp ứng yêu cầu.');
+SET IDENTITY_INSERT dbo.ChecklistRun OFF;
+GO
+
+SET IDENTITY_INSERT dbo.ChecklistResult ON;
+INSERT INTO dbo.ChecklistResult (
+    ChecklistResultID, ChecklistRunID, ChecklistRuleID, ResultStatus, ActualValue, EvidenceUrl, Explanation, EvaluatedAt
+) VALUES 
+(1, 1, 1, 'PASS', N'Đạt chuẩn QCVN 39:2011', N'https://storage.cropdiary.com/reports/water-test-2026.pdf', N'Có phiếu kiểm nghiệm nước định kỳ còn hiệu lực', '2026-03-10 09:00:00'),
+(2, 1, 2, 'PASS', N'Đã cách ly 16 ngày', N'https://storage.cropdiary.com/logs/pest-log-2026.pdf', N'Ngưng phun chế phẩm Neem Oil từ ngày 28/02, đảm bảo cách ly an toàn', '2026-03-10 09:30:00');
+SET IDENTITY_INSERT dbo.ChecklistResult OFF;
+GO
+
+SET IDENTITY_INSERT dbo.AssessmentCriterion ON;
+INSERT INTO dbo.AssessmentCriterion (
+    AssessmentCriterionID, CriterionCode, CriterionName, Category, Description, MaxScore, IsCritical, IsActive
+) VALUES 
+(1, 'CRIT-HYGIENE-01', N'Vệ sinh thùng chứa và dụng cụ thu hoạch', 'HYGIENE', N'Thùng chứa nông sản, kéo cắt và xe đẩy phải được khử trùng sạch sẽ trước khi đưa vào lô thu hoạch', 10.00, 1, 1);
+SET IDENTITY_INSERT dbo.AssessmentCriterion OFF;
+GO
+
+SET IDENTITY_INSERT dbo.InternalAssessment ON;
+INSERT INTO dbo.InternalAssessment (
+    InternalAssessmentID, FarmID, ProductionAreaID, ConductedByMemberID, AssessmentDate, AssessmentName, Status, TotalScore, Conclusion, CorrectiveAction
+) VALUES 
+(1, 1, 2, 2, '2026-03-12', N'Đánh giá nội bộ tiền thu hoạch Lô G1', 'COMPLETED', 9.50, N'Đủ điều kiện xuất bán vào hệ thống siêu thị cao cấp', NULL);
+SET IDENTITY_INSERT dbo.InternalAssessment OFF;
+GO
+
+SET IDENTITY_INSERT dbo.InternalAssessmentItem ON;
+INSERT INTO dbo.InternalAssessmentItem (
+    InternalAssessmentItemID, InternalAssessmentID, AssessmentCriterionID, ResultStatus, Score, Finding, EvidenceUrl
+) VALUES 
+(1, 1, 1, 'COMPLIANT', 9.50, N'Dụng cụ và giỏ thu hoạch đã được rửa sạch bằng dung dịch khử trùng hữu cơ và phơi khô ráo.', N'https://storage.cropdiary.com/images/assess-hygiene.jpg');
+SET IDENTITY_INSERT dbo.InternalAssessmentItem OFF;
+GO
+
+SET IDENTITY_INSERT dbo.TrainingRecord ON;
+INSERT INTO dbo.TrainingRecord (
+    TrainingRecordID, FarmID, OrganizedByMemberID, TrainingTitle, TrainingTopic, TrainerName, StartedAt, EndedAt, Location, DocumentUrl, Notes
+) VALUES 
+(1, 1, 2, N'Tập huấn an toàn lao động và kỹ thuật thu hoạch VietGAP', N'Quy trình vệ sinh, mang bảo hộ và bảo quản nông sản sau thu hoạch', N'Kỹ sư Nguyễn Kỹ Thuật Viên', '2026-03-01 08:00:00', '2026-03-01 11:30:00', N'Hội trường nhà điều hành Trang Trại Đà Lạt', N'https://storage.cropdiary.com/training/vietgap-slides.pdf', N'Toàn bộ công nhân tham gia đầy đủ và đạt bài sát hạch');
+SET IDENTITY_INSERT dbo.TrainingRecord OFF;
+GO
+
+INSERT INTO dbo.TrainingAttendance (TrainingRecordID, FarmWorkerID, AttendanceStatus, Result) VALUES 
+(1, 1, 'COMPLETED', N'Đạt 95/100 bài kiểm tra thực hành'),
+(1, 2, 'COMPLETED', N'Đạt 100/100 bài kiểm tra thực hành');
+GO
+
+SET IDENTITY_INSERT dbo.ProductionReport ON;
+INSERT INTO dbo.ProductionReport (
+    ProductionReportID, FarmID, CropSeasonID, GeneratedByMemberID, ReportType, PeriodFrom, PeriodTo, GeneratedAt, ReportDataJson, FileUrl
+) VALUES 
+(1, 1, 2, 2, 'PRODUCTION', '2026-01-05', '2026-03-20', '2026-03-20 17:00:00', '{"totalHarvestKg":3200,"yieldPerM2":0.8,"qualityGradeA_Percent":93.75,"revenueVND":135000000}', N'https://storage.cropdiary.com/reports/production-rep-dl-q1.pdf');
+SET IDENTITY_INSERT dbo.ProductionReport OFF;
+GO
+
+-- 10.17 Bài viết kiến thức nông nghiệp (KnowledgeArticle)
+SET IDENTITY_INSERT dbo.KnowledgeArticle ON;
+INSERT INTO dbo.KnowledgeArticle (
+    KnowledgeArticleID, CreatedByUserID, Title, Slug, Summary, Content, Category, SourceUrl, Status, PublishedAt, CreatedAt, UpdatedAt
+) VALUES 
+(1, 1, N'Hướng Dẫn Kỹ Thuật Trồng Rau Xà Lách Thủy Canh Tiêu Chuẩn VietGAP', 'huong-dan-ky-thuat-trong-rau-xa-lach-thuy-canh-vietgap', N'Tài liệu chi tiết hướng dẫn quản lý nồng độ dinh dưỡng EC, pH và biện pháp kiểm soát dịch hại sinh học trên xà lách thủy canh.', N'# 1. Chuẩn bị dung dịch thủy canh\nCần kiểm tra độ dẫn điện EC ở mức 1.4 - 1.8 mS/cm và pH từ 5.8 đến 6.5 để rễ cây hấp thu dinh dưỡng tối ưu.\n\n# 2. Quản lý sâu bệnh bằng biện pháp sinh học\nSử dụng bẫy dính màu vàng để bẫy bọ trĩ và rầy mềm. Định kỳ phun chế phẩm Neem Oil nồng độ 0.3% khi phát hiện sâu non.\n\n# 3. Quy trình thu hoạch\nThu hoạch vào sáng sớm trước 9 giờ để tránh cây bị mất nước và giòn lá.', N'Rau ăn lá', N'https://khuyennongdalat.gov.vn/ky-thuat-thuy-canh', 'PUBLISHED', '2026-01-15 09:00:00', '2026-01-15 08:30:00', '2026-01-15 09:00:00'),
+(2, 1, N'Biện Pháp Phòng Trừ Bệnh Nứt Thân Chảy Mủ Trên Cây Dưa Lưới Nhà Màng', 'bien-phap-phong-tru-benh-nut-than-chay-mu-dua-luoi', N'Nhận diện triệu chứng bệnh do nấm Didymella bryoniae gây ra và các bước xử lý hữu cơ kịp thời.', N'# 1. Triệu chứng nhận biết\nThân cây xuất hiện các đốm nâu ủng nước, sau đó tiết ra giọt gôm màu nâu đỏ. Vết bệnh khô lại làm nứt thân và héo rũ cây.\n\n# 2. Biện pháp xử lý\nGiảm độ ẩm không khí trong nhà màng bằng quạt thông gió đối lưu. Cắt tỉa cành thông thoáng và quét dung dịch vôi pha đồng sunfat quanh gốc.', N'Cây ăn quả', N'https://nongnghiepthongminh.vn/dua-luoi-nut-than', 'PUBLISHED', '2026-01-20 14:00:00', '2026-01-20 13:30:00', '2026-01-20 14:00:00'),
+(3, 1, N'Dự Thảo: Tiêu Chuẩn GlobalGAP Cho Sầu Riêng Xuất Khẩu Sang Thị Trường Châu Âu', 'du-thao-tieu-chuan-globalgap-sau-rieng-xuat-khau', N'Bản thảo quy chuẩn quản lý mã số vùng trồng, kiểm soát dư lượng kim loại nặng và nhật ký điện tử.', N'Nội dung dự thảo đang được thẩm định và tổng hợp ý kiến từ các chuyên gia Viện Cây ăn quả Miền Nam...', N'Tiêu chuẩn xuất khẩu', NULL, 'DRAFT', NULL, '2026-02-10 10:00:00', '2026-02-10 10:00:00');
+SET IDENTITY_INSERT dbo.KnowledgeArticle OFF;
+GO
+
+-- 10.18 Trợ lý nông nghiệp AI (AIConversation, AIMessage, AIFeedback, AIFeedbackReply)
+SET IDENTITY_INSERT dbo.AIConversation ON;
+INSERT INTO dbo.AIConversation (
+    AIConversationID, UserID, FarmID, PlotID, CropSeasonID, Title, Purpose, Status, CreatedAt, UpdatedAt
+) VALUES 
+(1, 2, 1, 1, 1, N'Tư vấn khắc phục bọ trĩ trên xà lách thủy canh', 'KNOWLEDGE_QA', 'ACTIVE', '2026-02-05 08:00:00', '2026-02-05 08:05:00');
+SET IDENTITY_INSERT dbo.AIConversation OFF;
+GO
+
+SET IDENTITY_INSERT dbo.AIMessage ON;
+INSERT INTO dbo.AIMessage (
+    AIMessageID, AIConversationID, SenderRole, MessageContent, ModelName, PromptTokens, CompletionTokens, IsConfirmedByUser, CreatedAt
+) VALUES 
+(1, 1, 'USER', N'Vườn xà lách thủy canh Lô H1 của tôi xuất hiện bọ trĩ nhỏ li ti ở mặt dưới lá. Có cách nào xử lý sinh học không dùng hóa chất không?', NULL, NULL, NULL, 0, '2026-02-05 08:00:00'),
+(2, 1, 'ASSISTANT', N'Chào bạn, đối với rau xà lách thủy canh sắp thu hoạch, bạn tuyệt đối không nên dùng thuốc hóa học có thời gian cách ly dài. Bạn có thể áp dụng ngay các biện pháp sinh học sau:\n1. Treo bẫy dính màu vàng mật độ 10m²/tấm ở độ cao ngang ngọn rau.\n2. Phun tinh dầu Neem (Neem Oil 80EC) nồng độ 0.3% kết hợp chất bám dính hữu cơ vào lúc chiều mát.\n3. Rửa trôi bọ trĩ bằng vòi phun sương áp lực nhẹ vào sáng sớm.', 'gemini-1.5-pro', 85, 120, 1, '2026-02-05 08:01:00');
+SET IDENTITY_INSERT dbo.AIMessage OFF;
+GO
+
+SET IDENTITY_INSERT dbo.AIFeedback ON;
+INSERT INTO dbo.AIFeedback (
+    AIFeedbackID, AIMessageID, SubmittedByUserID, Rating, FeedbackType, Comment, Status, SubmittedAt
+) VALUES 
+(1, 2, 2, 5, 'HELPFUL', N'Câu trả lời rất chính xác và áp dụng hiệu quả, sau 3 ngày bọ trĩ giảm rõ rệt mà không ảnh hưởng chất lượng xà lách.', 'RESOLVED', '2026-02-08 09:30:00');
+SET IDENTITY_INSERT dbo.AIFeedback OFF;
+GO
+
+SET IDENTITY_INSERT dbo.AIFeedbackReply ON;
+INSERT INTO dbo.AIFeedbackReply (
+    AIFeedbackReplyID, AIFeedbackID, WrittenByUserID, ReplyContent, CreatedAt
+) VALUES 
+(1, 1, 1, N'Cảm ơn anh Trần Văn Chủ đã phản hồi tích cực! Hệ thống AI MyCropDiary luôn cập nhật phác đồ canh tác hữu cơ mới nhất.', '2026-02-08 11:00:00');
+SET IDENTITY_INSERT dbo.AIFeedbackReply OFF;
+GO
+
+PRINT N'Sample data inserted successfully for all existing modules and APIs.';
+GO
+
