@@ -157,6 +157,42 @@ public class FarmServiceImpl implements FarmService {
         });
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<FarmSummaryResponse> searchFarms(
+            Long currentUserId,
+            String keyword,
+            String province,
+            String status,
+            BigDecimal minArea,
+            BigDecimal maxArea,
+            Pageable pageable) {
+
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        String trimmedProvince = (province != null && !province.isBlank()) ? province.trim() : null;
+        String trimmedStatus = (status != null && !status.isBlank()) ? status.trim().toUpperCase() : null;
+
+        if (farmAccessGuard.isSystemAdmin(currentUserId)) {
+            Page<Farm> allFarms = farmRepository.findAll(pageable);
+            return PageResponse.map(allFarms, farm -> farmMapper.toSummary(farm, "ADMIN"));
+        }
+
+        Page<Farm> page = farmRepository.searchAccessibleFarms(
+                currentUserId,
+                trimmedKeyword,
+                trimmedProvince,
+                trimmedStatus,
+                minArea,
+                maxArea,
+                pageable
+        );
+
+        return PageResponse.map(page, farm -> {
+            String role = farmAccessGuard.getUserRoleInFarm(currentUserId, farm.getId());
+            return farmMapper.toSummary(farm, role);
+        });
+    }
+
     /**
      * Lấy toàn bộ danh sách trang trại mà người dùng có quyền truy cập.
      */

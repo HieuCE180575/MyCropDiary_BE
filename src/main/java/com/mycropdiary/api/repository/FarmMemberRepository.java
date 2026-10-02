@@ -39,4 +39,18 @@ public interface FarmMemberRepository extends JpaRepository<FarmMember, Long> {
     /** Lấy vai trò active của người dùng trong trang trại */
     @Query("SELECT fm.farmRole FROM FarmMember fm WHERE fm.farm.id = :farmId AND fm.user.id = :userId AND fm.status = 'ACTIVE'")
     Optional<String> findActiveRoleInFarm(@Param("farmId") Long farmId, @Param("userId") Long userId);
+
+    boolean existsByFarmIdAndUserId(Long farmId, Long userId);
+
+    @Query("SELECT fm FROM FarmMember fm " +
+           "JOIN FETCH fm.user u " +
+           "WHERE fm.farm.id = :farmId " +
+           "AND (:status IS NULL OR fm.status = :status) " +
+           "AND (:keyword IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "     OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "     OR LOWER(fm.jobTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "ORDER BY fm.joinedAt DESC")
+    List<FarmMember> searchMembers(@Param("farmId") Long farmId, 
+                                  @Param("status") String status, 
+                                  @Param("keyword") String keyword);
 }

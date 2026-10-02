@@ -49,6 +49,16 @@ public class Farm extends BaseEntity {
 
     public Farm() { }
 
+    public Farm(String farmCode, String farmName) {
+        this.farmCode = farmCode;
+        this.farmName = farmName;
+        this.status = "ACTIVE";
+    }
+
+    public Farm(String farmCode, String farmName, String addressLine, String province, String district, String ward, BigDecimal totalAreaM2) {
+        this(farmCode, farmName, addressLine, province, district, ward, null, null, totalAreaM2, "ACTIVE");
+    }
+
     public Farm(String farmCode, String farmName, String addressLine, String province,
                 String district, String ward, BigDecimal latitude, BigDecimal longitude,
                 BigDecimal totalAreaM2, String status) {

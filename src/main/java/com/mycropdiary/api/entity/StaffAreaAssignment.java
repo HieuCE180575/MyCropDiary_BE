@@ -67,6 +67,12 @@ public class StaffAreaAssignment extends BaseEntity {
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
+    public StaffAreaAssignment(FarmMember farmMember, ProductionArea productionArea, FarmMember assignedByMember, LocalDate startDate) {
+        this(farmMember, productionArea, assignedByMember, startDate, null, true);
+    }
+
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+    public Boolean getIsActive() { return active; }
+    public void setIsActive(Boolean active) { this.active = active != null && active; }
 }

@@ -71,14 +71,16 @@ public class FarmController {
      * @return Danh sách trang trại phân trang
      */
     @Operation(summary = "Tìm kiếm trang trại", description = "Tìm kiếm và lọc danh sách trang trại mà người dùng có quyền truy cập (Có phân trang).")
-    @GetMapping
+    @GetMapping({"", "/search"})
     public ApiResponse<PageResponse<FarmSummaryResponse>> searchFarms(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String province,
+            @RequestParam(required = false) java.math.BigDecimal minArea,
+            @RequestParam(required = false) java.math.BigDecimal maxArea,
             @PageableDefault(size = 20) Pageable pageable) {
         Long currentUserId = securityUtils.getCurrentUserId();
-        PageResponse<FarmSummaryResponse> page = farmService.searchFarms(currentUserId, keyword, status, province, pageable);
+        PageResponse<FarmSummaryResponse> page = farmService.searchFarms(currentUserId, keyword, province, status, minArea, maxArea, pageable);
         return ApiResponse.ok("Accessible farms list", page);
     }
 
@@ -114,74 +116,7 @@ public class FarmController {
         return ApiResponse.ok("Farm deactivated successfully", null);
     }
 
-    /**
-     * Lấy danh sách thành viên đang hoạt động trong trang trại.
-     *
-     * @param farmId Mã ID trang trại
-     * @return Danh sách thành viên trang trại
-     */
-    @Operation(summary = "Danh sách thành viên trang trại", description = "Lấy danh sách thành viên đang hoạt động trong trang trại.")
-    @GetMapping("/{farmId}/members")
-    public ApiResponse<List<FarmMemberResponse>> getFarmMembers(@PathVariable Long farmId) {
-        Long currentUserId = securityUtils.getCurrentUserId();
-        List<FarmMemberResponse> members = farmService.getFarmMembers(currentUserId, farmId);
-        return ApiResponse.ok("Farm members list", members);
-    }
 
-    /**
-     * Thêm thành viên mới vào trang trại. Kiểm tra quy tắc 1 Active Owner. Yêu cầu quyền OWNER hoặc ADMIN.
-     *
-     * @param farmId Mã ID trang trại
-     * @param request Thông tin thành viên mới (Email, Vai trò, Chức danh)
-     * @return Thông tin thành viên vừa thêm
-     */
-    @Operation(summary = "Thêm thành viên vào trang trại", description = "Thêm thành viên mới vào trang trại. Yêu cầu quyền OWNER hoặc ADMIN.")
-    @PostMapping("/{farmId}/members")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<FarmMemberResponse> addMember(
-            @PathVariable Long farmId,
-            @Valid @RequestBody AddFarmMemberRequest request) {
-        Long currentUserId = securityUtils.getCurrentUserId();
-        FarmMemberResponse member = farmService.addMember(currentUserId, farmId, request);
-        return ApiResponse.ok("Farm member added successfully", member);
-    }
-
-    /**
-     * Xóa/Vô hiệu hóa thành viên khỏi trang trại. Kiểm tra quy tắc bảo vệ Owner duy nhất.
-     *
-     * @param farmId Mã ID trang trại
-     * @param memberId Mã ID thành viên cần xóa
-     * @return Thông báo thành công
-     */
-    @Operation(summary = "Xóa thành viên khỏi trang trại", description = "Xóa/Vô hiệu hóa thành viên khỏi trang trại.")
-    @DeleteMapping("/{farmId}/members/{memberId}")
-    public ApiResponse<Void> removeMember(
-            @PathVariable Long farmId,
-            @PathVariable Long memberId) {
-        Long currentUserId = securityUtils.getCurrentUserId();
-        farmService.removeMember(currentUserId, farmId, memberId);
-        return ApiResponse.ok("Farm member removed successfully", null);
-    }
-
-    /**
-     * Phân công nhân viên (STAFF) quản lý một Vùng sản xuất. Yêu cầu quyền OWNER hoặc ADMIN.
-     *
-     * @param farmId Mã ID trang trại
-     * @param memberId Mã ID thành viên (Staff)
-     * @param request Thông tin phân công (Vùng sản xuất, Ngày bắt đầu, Ngày kết thúc)
-     * @return Thông tin phân công sau khi lưu
-     */
-    @Operation(summary = "Phân công nhân viên vào vùng sản xuất", description = "Phân công nhân viên quản lý vùng sản xuất. Yêu cầu quyền OWNER hoặc ADMIN.")
-    @PostMapping("/{farmId}/members/{memberId}/assignments")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<StaffAreaAssignmentResponse> assignStaffToArea(
-            @PathVariable Long farmId,
-            @PathVariable Long memberId,
-            @Valid @RequestBody AssignStaffAreaRequest request) {
-        Long currentUserId = securityUtils.getCurrentUserId();
-        StaffAreaAssignmentResponse assignment = farmService.assignStaffToArea(currentUserId, farmId, memberId, request);
-        return ApiResponse.ok("Staff assigned to production area successfully", assignment);
-    }
 
     /**
      * Tạo Vùng sản xuất mới trong trang trại. Kiểm tra tổng diện tích không vượt quá diện tích trang trại.

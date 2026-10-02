@@ -77,4 +77,16 @@ public class FarmMember extends BaseEntity {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public FarmMember(Farm farm, AppUser user, String farmRole, String jobTitle, String status) {
+        this(farm, user, farmRole, jobTitle, LocalDate.now(), status);
+    }
+
+    public boolean isOwner() {
+        return "OWNER".equalsIgnoreCase(farmRole);
+    }
+
+    public boolean isActive() {
+        return "ACTIVE".equalsIgnoreCase(status);
+    }
 }

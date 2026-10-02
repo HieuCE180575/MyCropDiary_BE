@@ -40,6 +40,16 @@ public interface FarmService {
      */
     PageResponse<FarmSummaryResponse> searchFarms(Long currentUserId, String keyword, String status, String province, Pageable pageable);
 
+    PageResponse<FarmSummaryResponse> searchFarms(
+            Long currentUserId,
+            String keyword,
+            String province,
+            String status,
+            java.math.BigDecimal minArea,
+            java.math.BigDecimal maxArea,
+            Pageable pageable
+    );
+
     /**
      * Lấy toàn bộ danh sách trang trại người dùng có quyền truy cập (không phân trang).
      *

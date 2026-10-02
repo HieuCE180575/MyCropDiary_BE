@@ -40,4 +40,28 @@ public interface FarmRepository extends JpaRepository<Farm, Long> {
     @Query("SELECT DISTINCT f FROM Farm f JOIN FarmMember fm ON f.id = fm.farm.id " +
            "WHERE fm.user.id = :userId AND fm.status = 'ACTIVE'")
     List<Farm> findAllAccessibleFarmsByUser(@Param("userId") Long userId);
+
+    @Query("SELECT f FROM Farm f " +
+           "JOIN FarmMember fm ON fm.farm.id = f.id " +
+           "WHERE fm.user.id = :userId AND fm.status = 'ACTIVE' " +
+           "AND (:status IS NULL OR f.status = :status) " +
+           "AND (:province IS NULL OR LOWER(f.province) LIKE LOWER(CONCAT('%', :province, '%'))) " +
+           "AND (:minArea IS NULL OR f.totalAreaM2 >= :minArea) " +
+           "AND (:maxArea IS NULL OR f.totalAreaM2 <= :maxArea) " +
+           "AND (:keyword IS NULL OR LOWER(f.farmName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "     OR LOWER(f.farmCode) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "     OR LOWER(f.addressLine) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Farm> searchAccessibleFarms(
+            @Param("userId") Long userId,
+            @Param("keyword") String keyword,
+            @Param("province") String province,
+            @Param("status") String status,
+            @Param("minArea") java.math.BigDecimal minArea,
+            @Param("maxArea") java.math.BigDecimal maxArea,
+            Pageable pageable
+    );
+
+    default List<Farm> findAllAccessibleByUserId(Long userId) {
+        return findAllAccessibleFarmsByUser(userId);
+    }
 }

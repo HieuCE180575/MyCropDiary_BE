@@ -28,6 +28,21 @@ public class FarmMapper {
         );
     }
 
+    public FarmSummaryResponse toSummary(Farm farm) {
+        return new FarmSummaryResponse(
+                farm.getId(),
+                farm.getFarmCode(),
+                farm.getFarmName(),
+                farm.getAddressLine(),
+                farm.getProvince(),
+                farm.getDistrict(),
+                farm.getWard(),
+                farm.getTotalAreaM2(),
+                farm.getStatus(),
+                farm.getCreatedAt()
+        );
+    }
+
     /**
      * Chuyển đổi Entity Farm sang FarmResponse DTO (Chi tiết trang trại).
      */

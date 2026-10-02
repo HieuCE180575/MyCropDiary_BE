@@ -23,6 +23,18 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(exception.getMessage());
     }
 
+    @ExceptionHandler(ResourceConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    ApiResponse<Void> handleConflict(ResourceConflictException exception) {
+        return ApiResponse.error(exception.getMessage());
+    }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ApiResponse<Void> handleBusinessRule(BusinessRuleException exception) {
+        return ApiResponse.error(exception.getMessage());
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     ApiResponse<Void> handleAccessDenied(AccessDeniedException exception) {
