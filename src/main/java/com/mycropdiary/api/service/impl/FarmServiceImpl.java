@@ -17,7 +17,9 @@ import com.mycropdiary.api.repository.StaffAreaAssignmentRepository;
 import com.mycropdiary.api.service.FarmService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -157,6 +159,35 @@ public class FarmServiceImpl implements FarmService {
         });
     }
 
+    /** Các property của entity Farm được phép sort. */
+    private static final java.util.Set<String> FARM_SORTABLE_FIELDS = java.util.Set.of(
+            "id", "farmCode", "farmName", "province", "district",
+            "totalAreaM2", "status", "createdAt"
+    );
+
+    /**
+     * Sanitize Pageable: loại bỏ sort field không hợp lệ để tránh
+     * {@code InvalidDataAccessApiUsageException} khi client (Swagger) gửi
+     * sort=\"string\" hoặc các giá trị placeholder không hợp lệ.
+     * Nếu không còn sort field nào hợp lệ, fallback về createdAt DESC.
+     *
+     * // [AI_CHANGE] thêm để fix lỗi sort expression từ Swagger placeholder
+     */
+    private Pageable sanitizePageable(Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            return pageable;
+        }
+        List<Sort.Order> validOrders = pageable.getSort().stream()
+                .filter(order -> FARM_SORTABLE_FIELDS.contains(order.getProperty()))
+                .toList();
+
+        Sort safeSort = validOrders.isEmpty()
+                ? Sort.by(Sort.Direction.DESC, "createdAt")
+                : Sort.by(validOrders);
+
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), safeSort);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<FarmSummaryResponse> searchFarms(
@@ -168,12 +199,15 @@ public class FarmServiceImpl implements FarmService {
             BigDecimal maxArea,
             Pageable pageable) {
 
+        // [AI_CHANGE] sanitize trước khi dùng để tránh sort field không hợp lệ
+        Pageable safePageable = sanitizePageable(pageable);
+
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         String trimmedProvince = (province != null && !province.isBlank()) ? province.trim() : null;
         String trimmedStatus = (status != null && !status.isBlank()) ? status.trim().toUpperCase() : null;
 
         if (farmAccessGuard.isSystemAdmin(currentUserId)) {
-            Page<Farm> allFarms = farmRepository.findAll(pageable);
+            Page<Farm> allFarms = farmRepository.findAll(safePageable);
             return PageResponse.map(allFarms, farm -> farmMapper.toSummary(farm, "ADMIN"));
         }
 
@@ -184,7 +218,7 @@ public class FarmServiceImpl implements FarmService {
                 trimmedStatus,
                 minArea,
                 maxArea,
-                pageable
+                safePageable
         );
 
         return PageResponse.map(page, farm -> {
