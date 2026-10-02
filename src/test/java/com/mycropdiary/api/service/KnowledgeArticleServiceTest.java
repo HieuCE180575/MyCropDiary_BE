@@ -18,6 +18,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -68,7 +69,7 @@ class KnowledgeArticleServiceTest {
     @Test
     @DisplayName("UC-01: Guest can view public knowledge articles with pagination")
     void getPublicArticles_Success() {
-        Page<KnowledgeArticle> page = new PageImpl<>(List.of(publicArticle));
+        Page<KnowledgeArticle> page = new PageImpl<>(List.of(publicArticle), PageRequest.of(0, 10), 1);
         when(knowledgeArticleRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
         PageResponse<KnowledgeArticleResponseDTO> response = knowledgeArticleService.getPublicArticles(0, 10, null, null);
