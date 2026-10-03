@@ -6,6 +6,7 @@ import com.mycropdiary.api.dto.cultivation.MaterialUsageResponse;
 import com.mycropdiary.api.entity.AppUser;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
+import com.mycropdiary.api.entity.Plot;
 import com.mycropdiary.api.entity.ProductionArea;
 import com.mycropdiary.api.entity.cultivation.*;
 
