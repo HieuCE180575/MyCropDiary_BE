@@ -6,9 +6,9 @@ import com.mycropdiary.api.dto.cultivation.HarvestRecordResponse;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.ProductionArea;
+import com.mycropdiary.api.entity.Plot;
 import com.mycropdiary.api.entity.cultivation.CropSeason;
 import com.mycropdiary.api.entity.cultivation.HarvestRecord;
-import com.mycropdiary.api.entity.cultivation.Plot;
 
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;

@@ -2,6 +2,7 @@ package com.mycropdiary.api.entity.cultivation;
 
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
+import com.mycropdiary.api.entity.Plot;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;

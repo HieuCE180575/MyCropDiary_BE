@@ -4,6 +4,7 @@ import com.mycropdiary.api.dto.common.PageResponse;
 import com.mycropdiary.api.dto.cultivation.*;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
+import com.mycropdiary.api.entity.Plot;
 import com.mycropdiary.api.entity.cultivation.*;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;

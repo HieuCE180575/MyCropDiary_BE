@@ -4,7 +4,7 @@ import com.mycropdiary.api.dto.common.ApiResponse;
 import com.mycropdiary.api.dto.common.PageResponse;
 import com.mycropdiary.api.dto.farm.FarmRegistrationResponse;
 import com.mycropdiary.api.dto.farm.HandleRegistrationRequest;
-import com.mycropdiary.api.service.FarmRegistrationService;
+import com.mycropdiary.api.service.farmregistration.FarmRegistrationService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

@@ -36,14 +36,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.mycropdiary.api.service.farmregistration.FarmRegistrationService;
+
 /**
  * Service implementation cho cả nghiệp vụ Admin duyệt đơn (UC-39) và User đăng ký trang trại (UC-09).
  */
 @Service
 @Transactional(readOnly = true)
-public class FarmRegistrationServiceImpl implements 
-        com.mycropdiary.api.service.FarmRegistrationService,
-        com.mycropdiary.api.service.farmregistration.FarmRegistrationService {
+public class FarmRegistrationServiceImpl implements FarmRegistrationService {
 
     private static final Logger log = LoggerFactory.getLogger(FarmRegistrationServiceImpl.class);
 
