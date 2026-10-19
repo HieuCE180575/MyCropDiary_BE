@@ -4,6 +4,7 @@ public enum KnowledgeStatus {
     DRAFT,
     PUBLISHED,
     ACTIVE,
-    INACTIVE
+    INACTIVE,
+    ARCHIVED
 }
 

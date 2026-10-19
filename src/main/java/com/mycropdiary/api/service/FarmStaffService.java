@@ -5,10 +5,11 @@ import com.mycropdiary.api.dto.staff.FarmMemberResponse;
 import com.mycropdiary.api.dto.staff.UpdateStaffRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface FarmStaffService {
-    List<FarmMemberResponse> getStaffList(Long currentUserId, Long farmId, String status, String keyword);
-    FarmMemberResponse addStaff(Long currentUserId, Long farmId, AddStaffRequest request);
-    FarmMemberResponse updateStaff(Long currentUserId, Long farmId, Long memberId, UpdateStaffRequest request);
-    void deactivateStaff(Long currentUserId, Long farmId, Long memberId);
+    List<FarmMemberResponse> getStaffList(UUID currentUserId, UUID farmId, String status, String keyword);
+    FarmMemberResponse addStaff(UUID currentUserId, UUID farmId, AddStaffRequest request);
+    FarmMemberResponse updateStaff(UUID currentUserId, UUID farmId, UUID memberId, UpdateStaffRequest request);
+    void deactivateStaff(UUID currentUserId, UUID farmId, UUID memberId);
 }

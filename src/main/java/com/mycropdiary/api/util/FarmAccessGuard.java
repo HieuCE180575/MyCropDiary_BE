@@ -1,186 +1,161 @@
 package com.mycropdiary.api.util;
 
+import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.FarmMember;
-import com.mycropdiary.api.entity.Plot;
-import com.mycropdiary.api.entity.ProductionArea;
+import com.mycropdiary.api.entity.Zone;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
-import com.mycropdiary.api.repository.AppUserRepository;
+import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
-import com.mycropdiary.api.repository.PlotRepository;
-import com.mycropdiary.api.repository.ProductionAreaRepository;
-import com.mycropdiary.api.repository.StaffAreaAssignmentRepository;
+import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
+import com.mycropdiary.api.repository.UserRepository;
+import com.mycropdiary.api.repository.ZoneRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
- * Lớp hỗ trợ bảo mật và phân quyền truy cập theo phạm vi trang trại (Farm Scope & Staff Area Scope).
+ * Lớp hỗ trợ bảo mật và phân quyền truy cập theo phạm vi trang trại (Farm Scope & Staff Zone Scope).
  */
 @Component
 public class FarmAccessGuard {
     private final FarmMemberRepository farmMemberRepository;
-    private final AppUserRepository appUserRepository;
-    private final StaffAreaAssignmentRepository staffAreaAssignmentRepository;
-    private final ProductionAreaRepository productionAreaRepository;
-    private final PlotRepository plotRepository;
+    private final UserRepository userRepository;
+    private final StaffZoneAssignmentRepository staffZoneAssignmentRepository;
+    private final ZoneRepository zoneRepository;
+    private final BlockRepository blockRepository;
 
     public FarmAccessGuard(FarmMemberRepository farmMemberRepository,
-                           AppUserRepository appUserRepository,
-                           StaffAreaAssignmentRepository staffAreaAssignmentRepository,
-                           ProductionAreaRepository productionAreaRepository,
-                           PlotRepository plotRepository) {
+                           UserRepository userRepository,
+                           StaffZoneAssignmentRepository staffZoneAssignmentRepository,
+                           ZoneRepository zoneRepository,
+                           BlockRepository blockRepository) {
         this.farmMemberRepository = farmMemberRepository;
-        this.appUserRepository = appUserRepository;
-        this.staffAreaAssignmentRepository = staffAreaAssignmentRepository;
-        this.productionAreaRepository = productionAreaRepository;
-        this.plotRepository = plotRepository;
+        this.userRepository = userRepository;
+        this.staffZoneAssignmentRepository = staffZoneAssignmentRepository;
+        this.zoneRepository = zoneRepository;
+        this.blockRepository = blockRepository;
     }
 
     /**
      * Kiểm tra người dùng có phải là Quản trị viên hệ thống (System ADMIN) hay không.
-     *
-     * @param userId ID người dùng
-     * @return true nếu là ADMIN hệ thống, ngược lại false
      */
-    public boolean isSystemAdmin(Long userId) {
+    public boolean isSystemAdmin(UUID userId) {
         if (userId == null) {
             return false;
         }
-        return appUserRepository.findById(userId)
-                .map(user -> "ADMIN".equalsIgnoreCase(user.getSystemRole()))
+        return userRepository.findById(userId)
+                .map(user -> "admin".equalsIgnoreCase(user.getSystemRole()))
                 .orElse(false);
     }
 
     /**
-     * Lấy vai trò hoạt động của người dùng trong một trang trại cụ thể (ADMIN, OWNER, STAFF hoặc null).
-     *
-     * @param userId ID người dùng
-     * @param farmId ID trang trại
-     * @return Tên vai trò (ADMIN, OWNER, STAFF) hoặc null nếu không thuộc trang trại
+     * Lấy vai trò hoạt động của người dùng trong một trang trại cụ thể.
      */
-    public String getUserRoleInFarm(Long userId, Long farmId) {
+    public String getUserRoleInFarm(UUID userId, UUID farmId) {
         if (isSystemAdmin(userId)) {
-            return "ADMIN";
+            return "admin";
         }
         return farmMemberRepository.findActiveRoleInFarm(farmId, userId)
                 .orElse(null);
     }
 
     /**
-     * Yêu cầu người dùng phải là thành viên đang hoạt động (Active Farm Member) của trang trại.
-     *
-     * @param userId ID người dùng
-     * @param farmId ID trang trại
-     * @return Đối tượng FarmMember nếu hợp lệ (null nếu là System ADMIN)
-     * @throws AccessDeniedException nếu không có quyền truy cập
+     * Yêu cầu người dùng phải là thành viên đang hoạt động (active) của trang trại.
      */
-    public FarmMember requireFarmMember(Long userId, Long farmId) {
+    public FarmMember requireFarmMember(UUID userId, UUID farmId) {
         if (isSystemAdmin(userId)) {
-            return null; // System admin được miễn trừ yêu cầu thành viên
+            return null;
         }
-        return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "ACTIVE")
+        return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active")
                 .orElseThrow(() -> new AccessDeniedException("Access denied: You are not an active member of this farm (Farm ID: " + farmId + ")"));
     }
 
-    public FarmMember requireFarmAccess(Long userId, Long farmId) {
+    public FarmMember requireFarmAccess(UUID userId, UUID farmId) {
         if (isSystemAdmin(userId)) {
-            return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "ACTIVE").orElse(null);
+            return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active").orElse(null);
         }
-        return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "ACTIVE")
-                .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền truy cập vào trang trại này (yêu cầu là thành viên ACTIVE)"));
+        return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active")
+                .orElseThrow(() -> new AccessDeniedException("Bạn không có quyền truy cập vào trang trại này (yêu cầu là thành viên active)"));
     }
 
     /**
      * Yêu cầu người dùng phải là Chủ trang trại (Farm OWNER) hoặc Quản trị hệ thống (System ADMIN).
-     *
-     * @param userId ID người dùng
-     * @param farmId ID trang trại
-     * @return Đối tượng FarmMember nếu hợp lệ
-     * @throws AccessDeniedException nếu không phải OWNER hoặc ADMIN
      */
-    public FarmMember requireOwnerOrAdmin(Long userId, Long farmId) {
+    public FarmMember requireOwnerOrAdmin(UUID userId, UUID farmId) {
         if (isSystemAdmin(userId)) {
             return null;
         }
         FarmMember member = requireFarmMember(userId, farmId);
-        if (!"OWNER".equalsIgnoreCase(member.getFarmRole())) {
-            throw new AccessDeniedException("Access denied: Only Farm OWNER or System ADMIN can perform this action");
+        if (!member.isOwner()) {
+            throw new AccessDeniedException("Access denied: Only Farm owner or System admin can perform this action");
         }
         return member;
     }
 
-    public FarmMember requireFarmOwner(Long userId, Long farmId) {
+    public FarmMember requireFarmOwner(UUID userId, UUID farmId) {
         if (isSystemAdmin(userId)) {
-            return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "ACTIVE").orElse(null);
+            return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active").orElse(null);
         }
         FarmMember member = requireFarmAccess(userId, farmId);
         if (member == null || !member.isOwner()) {
-            throw new AccessDeniedException("Thao tác yêu cầu quyền OWNER của trang trại");
+            throw new AccessDeniedException("Thao tác yêu cầu quyền owner của trang trại");
         }
         return member;
     }
 
-    /**
-     * BR-07: Yêu cầu người dùng có quyền truy cập vào Vùng sản xuất cụ thể.
-     * OWNER/ADMIN có quyền truy cập toàn bộ; STAFF phải được phân công trong StaffAreaAssignment.
-     *
-     * @param userId ID người dùng
-     * @param farmId ID trang trại
-     * @param productionAreaId ID vùng sản xuất
-     * @throws AccessDeniedException nếu không được phân công
-     */
-    public void requireProductionAreaAccess(Long userId, Long farmId, Long productionAreaId) {
+    public void requireZoneAccess(UUID userId, UUID farmId, UUID zoneId) {
         if (isSystemAdmin(userId)) {
             return;
         }
         FarmMember member = requireFarmMember(userId, farmId);
-        if ("OWNER".equalsIgnoreCase(member.getFarmRole())) {
-            return; // OWNER có quyền xem tất cả vùng sản xuất
+        if (member.isOwner()) {
+            return;
         }
-        boolean isAssigned = staffAreaAssignmentRepository.existsByFarmMemberIdAndProductionAreaIdAndActiveTrue(member.getId(), productionAreaId);
+        boolean isAssigned = staffZoneAssignmentRepository.existsByFarmMemberIdAndZoneIdAndEndedAtIsNull(member.getId(), zoneId);
         if (!isAssigned) {
-            throw new AccessDeniedException("Access denied: Staff is not assigned to Production Area ID: " + productionAreaId);
+            throw new AccessDeniedException("Access denied: Staff is not assigned to Zone ID: " + zoneId);
         }
     }
 
-    public ProductionArea requireProductionAreaAccess(Long userId, Long productionAreaId) {
-        ProductionArea area = productionAreaRepository.findById(productionAreaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khu vực sản xuất ID: " + productionAreaId));
+    public Zone requireZoneAccess(UUID userId, UUID zoneId) {
+        Zone zone = zoneRepository.findById(zoneId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khu vực sản xuất ID: " + zoneId));
 
         if (isSystemAdmin(userId)) {
-            return area;
+            return zone;
         }
 
-        FarmMember member = requireFarmAccess(userId, area.getFarm().getId());
+        FarmMember member = requireFarmAccess(userId, zone.getFarm().getId());
         if (member != null && member.isOwner()) {
-            return area;
+            return zone;
         }
 
         if (member == null) {
             throw new AccessDeniedException("Bạn không phải thành viên của trang trại này");
         }
 
-        // Nếu là STAFF, kiểm tra xem có phân công khu vực active không
-        boolean isAssigned = staffAreaAssignmentRepository.existsByFarmMemberIdAndProductionAreaIdAndIsActiveTrue(member.getId(), productionAreaId);
+        boolean isAssigned = staffZoneAssignmentRepository.existsByFarmMemberIdAndZoneIdAndEndedAtIsNull(member.getId(), zoneId);
         if (!isAssigned) {
             throw new AccessDeniedException("Nhân viên không được phân công phụ trách khu vực sản xuất này");
         }
 
-        return area;
+        return zone;
     }
 
-    public Plot requirePlotAccess(Long userId, Long plotId) {
-        Plot plot = plotRepository.findById(plotId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thửa đất ID: " + plotId));
+    public Block requireBlockAccess(UUID userId, UUID blockId) {
+        Block block = blockRepository.findById(blockId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thửa đất ID: " + blockId));
 
-        requireProductionAreaAccess(userId, plot.getProductionArea().getId());
-        return plot;
+        requireZoneAccess(userId, block.getZone().getId());
+        return block;
     }
 
-    public boolean isOwner(Long userId, Long farmId) {
+    public boolean isOwner(UUID userId, UUID farmId) {
         if (isSystemAdmin(userId)) {
             return true;
         }
-        return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "ACTIVE")
+        return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active")
                 .map(FarmMember::isOwner)
                 .orElse(false);
     }

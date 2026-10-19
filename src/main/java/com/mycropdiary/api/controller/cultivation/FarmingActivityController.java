@@ -16,6 +16,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 /**
  * Controller quản lý REST API cho Nhật ký canh tác (UC-24).
  */
@@ -35,7 +37,7 @@ public class FarmingActivityController {
 
     /**
      * Tạo mới nhật ký canh tác.
-     * Người ghi nhật ký tự động được xác định từ tài khoản người dùng đăng nhập (SupervisedByMemberID).
+     * Người ghi nhật ký tự động được xác định từ tài khoản người dùng đăng nhập.
      *
      * @param request Thông tin nhật ký canh tác
      * @return Thông tin nhật ký vừa tạo
@@ -44,7 +46,7 @@ public class FarmingActivityController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<FarmingActivityResponse> createActivity(@Valid @RequestBody CreateFarmingActivityRequest request) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+        UUID currentUserId = securityUtils.getCurrentUserId();
         FarmingActivityResponse response = farmingActivityService.createActivity(currentUserId, request);
         return ApiResponse.ok("Tạo nhật ký canh tác thành công.", response);
     }
@@ -59,9 +61,9 @@ public class FarmingActivityController {
     @Operation(summary = "Xem lịch sử nhật ký canh tác theo mùa vụ", description = "Lấy danh sách nhật ký canh tác của mùa vụ (Có phân trang).")
     @GetMapping
     public ApiResponse<PageResponse<FarmingActivitySummaryResponse>> getActivitiesByCropSeason(
-            @RequestParam Long cropSeasonId,
+            @RequestParam UUID cropSeasonId,
             @PageableDefault(size = 20) Pageable pageable) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+        UUID currentUserId = securityUtils.getCurrentUserId();
         PageResponse<FarmingActivitySummaryResponse> response = farmingActivityService.getActivitiesByCropSeason(currentUserId, cropSeasonId, pageable);
         return ApiResponse.ok("Danh sách lịch sử nhật ký canh tác.", response);
     }
@@ -74,8 +76,8 @@ public class FarmingActivityController {
      */
     @Operation(summary = "Xem chi tiết nhật ký canh tác", description = "Lấy chi tiết một nhật ký canh tác theo ID bao gồm danh sách công nhân trực tiếp thực hiện.")
     @GetMapping("/{activityId}")
-    public ApiResponse<FarmingActivityResponse> getActivityDetail(@PathVariable Long activityId) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+    public ApiResponse<FarmingActivityResponse> getActivityDetail(@PathVariable UUID activityId) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
         FarmingActivityResponse response = farmingActivityService.getActivityDetail(currentUserId, activityId);
         return ApiResponse.ok("Chi tiết nhật ký canh tác.", response);
     }

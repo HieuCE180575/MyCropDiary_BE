@@ -6,16 +6,16 @@ import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageRequest;
 import com.mycropdiary.api.dto.cultivation.MaterialUsageResponse;
 import com.mycropdiary.api.service.cultivation.MaterialUsageService;
 import com.mycropdiary.api.util.SecurityUtils;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 /**
  * Controller quản lý REST API cho Nhật ký sử dụng vật tư (UC-25).
@@ -41,7 +41,7 @@ public class MaterialUsageController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<MaterialUsageResponse> createMaterialUsage(@Valid @RequestBody CreateMaterialUsageRequest request) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+        UUID currentUserId = securityUtils.getCurrentUserId();
         MaterialUsageResponse response = materialUsageService.createMaterialUsage(currentUserId, request);
         return ApiResponse.ok("Ghi nhận sử dụng vật tư thành công.", response);
     }
@@ -52,9 +52,9 @@ public class MaterialUsageController {
     @Operation(summary = "Xem lịch sử sử dụng vật tư theo hoạt động canh tác", description = "Lấy danh sách vật tư đã sử dụng trong một hoạt động canh tác (có phân trang).")
     @GetMapping
     public ApiResponse<PageResponse<MaterialUsageResponse>> getMaterialUsagesByActivity(
-            @RequestParam("farmingActivityId") Long farmingActivityId,
+            @RequestParam("farmingActivityId") UUID farmingActivityId,
             @PageableDefault(size = 20) Pageable pageable) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+        UUID currentUserId = securityUtils.getCurrentUserId();
         PageResponse<MaterialUsageResponse> response = materialUsageService.getMaterialUsagesByActivity(currentUserId, farmingActivityId, pageable);
         return ApiResponse.ok("Lấy danh sách sử dụng vật tư thành công.", response);
     }
@@ -64,8 +64,8 @@ public class MaterialUsageController {
      */
     @Operation(summary = "Xem chi tiết bản ghi sử dụng vật tư", description = "Lấy thông tin chi tiết của bản ghi sử dụng vật tư theo ID.")
     @GetMapping("/{materialUsageId}")
-    public ApiResponse<MaterialUsageResponse> getMaterialUsageById(@PathVariable("materialUsageId") Long materialUsageId) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+    public ApiResponse<MaterialUsageResponse> getMaterialUsageById(@PathVariable("materialUsageId") UUID materialUsageId) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
         MaterialUsageResponse response = materialUsageService.getMaterialUsageById(currentUserId, materialUsageId);
         return ApiResponse.ok("Lấy chi tiết sử dụng vật tư thành công.", response);
     }

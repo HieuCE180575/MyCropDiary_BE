@@ -4,6 +4,10 @@ import com.mycropdiary.api.dto.knowledge.KnowledgeArticleResponseDTO;
 import com.mycropdiary.api.entity.knowledge.KnowledgeArticle;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
 @Component
 public class KnowledgeArticleMapper {
 
@@ -21,9 +25,13 @@ public class KnowledgeArticleMapper {
                 entity.getSourceUrl(),
                 entity.getStatus(),
                 entity.getIsPublic(),
-                entity.getPublishedAt(),
-                entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                toLocalDateTime(entity.getPublishedAt()),
+                toLocalDateTime(entity.getCreatedAt()),
+                toLocalDateTime(entity.getUpdatedAt())
         );
+    }
+
+    private LocalDateTime toLocalDateTime(Instant instant) {
+        return instant != null ? LocalDateTime.ofInstant(instant, ZoneId.systemDefault()) : null;
     }
 }

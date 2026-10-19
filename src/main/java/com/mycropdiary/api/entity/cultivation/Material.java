@@ -2,128 +2,98 @@ package com.mycropdiary.api.entity.cultivation;
 
 import com.mycropdiary.api.entity.Farm;
 import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.UUID;
 
 /**
- * Entity biểu diễn bảng dbo.Material (Vật tư nông nghiệp).
+ * Entity biểu diễn bảng [Material] (Vật tư nông nghiệp).
+ * Khớp 100% với ERD mới.
  */
 @Entity
-@Table(name = "Material", schema = "dbo", uniqueConstraints = {
-        @UniqueConstraint(name = "UQ_Material_Code", columnNames = {"FarmID", "MaterialCode"})
+@Table(name = "Material", uniqueConstraints = {
+        @UniqueConstraint(name = "UQ_Material_Name", columnNames = {"farm_id", "material_name"})
 })
 public class Material {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MaterialID")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "material_id", updatable = false, nullable = false)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "FarmID", nullable = false)
+    @JoinColumn(name = "farm_id", nullable = false)
     private Farm farm;
 
-    @Column(name = "MaterialCode", nullable = false, length = 30)
-    private String materialCode;
-
-    @Column(name = "MaterialName", nullable = false, length = 200)
+    @Column(name = "material_name", nullable = false, length = 160)
     private String materialName;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "MaterialType", nullable = false, length = 30)
-    private MaterialType materialType;
+    @Column(name = "material_type", length = 80)
+    private String materialType;
 
-    @Column(name = "Unit", nullable = false, length = 30)
+    @Column(name = "unit", nullable = false, length = 30)
     private String unit;
 
-    @Column(name = "ActiveIngredient", length = 300)
-    private String activeIngredient;
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    private String description;
 
-    @Column(name = "Manufacturer", length = 200)
-    private String manufacturer;
+    @Column(name = "image_url", columnDefinition = "NVARCHAR(MAX)")
+    private String imageUrl;
 
-    @Column(name = "IsActive", nullable = false)
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @PrePersist
+    void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
 
     public Material() {}
 
-    public Material(Long id, Farm farm, String materialCode, String materialName, MaterialType materialType, String unit, Boolean isActive) {
-        this.id = id;
+    public Material(Farm farm, String materialName, String materialType, String unit) {
         this.farm = farm;
-        this.materialCode = materialCode;
         this.materialName = materialName;
         this.materialType = materialType;
         this.unit = unit;
-        this.isActive = isActive;
+        this.isActive = true;
     }
 
-    public Long getId() {
-        return id;
-    }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Farm getFarm() { return farm; }
+    public void setFarm(Farm farm) { this.farm = farm; }
 
-    public Farm getFarm() {
-        return farm;
-    }
+    public String getMaterialName() { return materialName; }
+    public void setMaterialName(String materialName) { this.materialName = materialName; }
 
-    public void setFarm(Farm farm) {
-        this.farm = farm;
-    }
+    public String getMaterialType() { return materialType; }
+    public void setMaterialType(String materialType) { this.materialType = materialType; }
 
-    public String getMaterialCode() {
-        return materialCode;
-    }
+    public String getUnit() { return unit; }
+    public void setUnit(String unit) { this.unit = unit; }
 
-    public void setMaterialCode(String materialCode) {
-        this.materialCode = materialCode;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public String getMaterialName() {
-        return materialName;
-    }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    public void setMaterialName(String materialName) {
-        this.materialName = materialName;
-    }
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
 
-    public MaterialType getMaterialType() {
-        return materialType;
-    }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
-    public void setMaterialType(MaterialType materialType) {
-        this.materialType = materialType;
-    }
-
-    public String getUnit() {
-        return unit;
-    }
-
-    public void setUnit(String unit) {
-        this.unit = unit;
-    }
-
-    public String getActiveIngredient() {
-        return activeIngredient;
-    }
-
-    public void setActiveIngredient(String activeIngredient) {
-        this.activeIngredient = activeIngredient;
-    }
-
-    public String getManufacturer() {
-        return manufacturer;
-    }
-
-    public void setManufacturer(String manufacturer) {
-        this.manufacturer = manufacturer;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
+    // --- Backward compatibility helpers ---
+    public String getMaterialCode() { return materialName; }
+    public void setMaterialCode(String materialCode) { this.materialName = materialCode; }
+    public String getActiveIngredient() { return description; }
+    public void setActiveIngredient(String activeIngredient) { this.description = activeIngredient; }
+    public String getManufacturer() { return null; }
+    public void setManufacturer(String manufacturer) { }
 }

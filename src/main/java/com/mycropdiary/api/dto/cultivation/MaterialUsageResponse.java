@@ -2,21 +2,22 @@ package com.mycropdiary.api.dto.cultivation;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * DTO phản hồi thông tin chi tiết nhật ký sử dụng vật tư (UC-25).
  */
 public record MaterialUsageResponse(
-        Long materialUsageId,
-        Long farmingActivityId,
+        UUID materialUsageId,
+        UUID farmingActivityId,
         String activityName,
-        Long cropSeasonId,
-        Long materialId,
+        UUID cropSeasonId,
+        UUID materialId,
         String materialCode,
         String materialName,
         String materialType,
-        Long inputPurchaseDetailId,
-        Long recordedByMemberId,
+        UUID inputPurchaseDetailId,
+        UUID recordedByMemberId,
         String recorderFullName,
         LocalDateTime usedAt,
         BigDecimal quantity,

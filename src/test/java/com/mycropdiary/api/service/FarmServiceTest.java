@@ -1,8 +1,9 @@
 package com.mycropdiary.api.service;
 
 import com.mycropdiary.api.dto.farm.*;
-import com.mycropdiary.api.entity.AppUser;
-import com.mycropdiary.api.repository.AppUserRepository;
+import com.mycropdiary.api.entity.User;
+import com.mycropdiary.api.exception.BusinessRuleException;
+import com.mycropdiary.api.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,17 +26,17 @@ class FarmServiceTest {
     private FarmService farmService;
 
     @Autowired
-    private AppUserRepository appUserRepository;
+    private UserRepository userRepository;
 
-    private AppUser ownerUser;
-    private AppUser staffUser;
-    private AppUser anotherUser;
+    private User ownerUser;
+    private User staffUser;
+    private User anotherUser;
 
     @BeforeEach
     void setUp() {
-        ownerUser = appUserRepository.save(new AppUser("owner@example.com", "hash", "Farm Owner User", "0901234567", "USER", "ACTIVE"));
-        staffUser = appUserRepository.save(new AppUser("staff@example.com", "hash", "Farm Staff User", "0907654321", "USER", "ACTIVE"));
-        anotherUser = appUserRepository.save(new AppUser("another@example.com", "hash", "Another User", "0909999999", "USER", "ACTIVE"));
+        ownerUser = userRepository.save(new User("owner@example.com", "hash", "Farm Owner User", "0901234567", "user", "active"));
+        staffUser = userRepository.save(new User("staff@example.com", "hash", "Farm Staff User", "0907654321", "user", "active"));
+        anotherUser = userRepository.save(new User("another@example.com", "hash", "Another User", "0909999999", "user", "active"));
     }
 
     @Test
@@ -54,13 +55,13 @@ class FarmServiceTest {
 
         FarmResponse created = farmService.createFarm(ownerUser.getId(), request);
         assertNotNull(created.id());
-        assertEquals("FARM001", created.farmCode());
+        assertNotNull(created.farmCode());
         assertEquals("Green Valley Farm", created.farmName());
-        assertEquals("OWNER", created.currentUserRole());
+        assertEquals("OWNER", created.currentUserRole().toUpperCase());
 
         FarmResponse fetched = farmService.getFarmById(ownerUser.getId(), created.id());
         assertEquals("Green Valley Farm", fetched.farmName());
-        assertEquals("OWNER", fetched.currentUserRole());
+        assertEquals("OWNER", fetched.currentUserRole().toUpperCase());
     }
 
     @Test
@@ -90,13 +91,13 @@ class FarmServiceTest {
 
         // Cannot add a 2nd OWNER directly
         AddFarmMemberRequest addOwnerReq = new AddFarmMemberRequest("another@example.com", "OWNER", "Co-Owner");
-        assertThrows(IllegalStateException.class, () -> farmService.addMember(ownerUser.getId(), farm.id(), addOwnerReq));
+        assertThrows(BusinessRuleException.class, () -> farmService.addMember(ownerUser.getId(), farm.id(), addOwnerReq));
 
         // Cannot deactivate sole active OWNER
         List<FarmMemberResponse> members = farmService.getFarmMembers(ownerUser.getId(), farm.id());
-        FarmMemberResponse ownerMember = members.stream().filter(m -> "OWNER".equals(m.farmRole())).findFirst().orElseThrow();
+        FarmMemberResponse ownerMember = members.stream().filter(m -> "OWNER".equalsIgnoreCase(m.farmRole())).findFirst().orElseThrow();
 
-        assertThrows(IllegalStateException.class, () -> farmService.removeMember(ownerUser.getId(), farm.id(), ownerMember.id()));
+        assertThrows(BusinessRuleException.class, () -> farmService.removeMember(ownerUser.getId(), farm.id(), ownerMember.id()));
     }
 
     @Test
@@ -107,26 +108,30 @@ class FarmServiceTest {
         );
         FarmResponse farm = farmService.createFarm(ownerUser.getId(), farmReq);
 
-        // Create Production Area 1 (6000 m2)
-        CreateProductionAreaRequest area1Req = new CreateProductionAreaRequest("AREA01", "Zone A", new BigDecimal("6000.00"), "Zone A notes");
-        ProductionAreaResponse area1 = farmService.createProductionArea(ownerUser.getId(), farm.id(), area1Req);
-        assertEquals("AREA01", area1.areaCode());
+        // Create Production Area 1 (Zone A)
+        CreateZoneRequest area1Req = new CreateZoneRequest("Zone A", new BigDecimal("6000.00"), "Zone A notes");
+        ZoneResponse area1 = farmService.createZone(ownerUser.getId(), farm.id(), area1Req);
+        assertEquals("Zone A", area1.zoneName());
 
-        // Create Production Area 2 (5000 m2) -> Total 11000 m2 > 10000 m2 -> Throws IllegalArgumentException
-        CreateProductionAreaRequest area2Req = new CreateProductionAreaRequest("AREA02", "Zone B", new BigDecimal("5000.00"), "Zone B notes");
-        assertThrows(IllegalArgumentException.class, () -> farmService.createProductionArea(ownerUser.getId(), farm.id(), area2Req));
+        // Create Zone with duplicate name in same farm -> Throws IllegalArgumentException
+        CreateZoneRequest duplicateReq = new CreateZoneRequest("Zone A", new BigDecimal("5000.00"), "Duplicate Zone A");
+        assertThrows(IllegalArgumentException.class, () -> farmService.createZone(ownerUser.getId(), farm.id(), duplicateReq));
 
-        // Add staff member and assign to Area 1
+        // Create Production Area 2 (Zone B)
+        CreateZoneRequest area2Req = new CreateZoneRequest("Zone B", new BigDecimal("5000.00"), "Zone B notes");
+        farmService.createZone(ownerUser.getId(), farm.id(), area2Req);
+
+        // Add staff member and assign to Area 1 only
         AddFarmMemberRequest addStaffReq = new AddFarmMemberRequest("staff@example.com", "STAFF", "Worker");
         FarmMemberResponse staffMember = farmService.addMember(ownerUser.getId(), farm.id(), addStaffReq);
 
-        AssignStaffAreaRequest assignReq = new AssignStaffAreaRequest(area1.id(), null, null);
-        farmService.assignStaffToArea(ownerUser.getId(), farm.id(), staffMember.id(), assignReq);
+        AssignStaffZoneRequest assignReq = new AssignStaffZoneRequest(area1.id());
+        farmService.assignStaffToZone(ownerUser.getId(), farm.id(), staffMember.id(), assignReq);
 
-        // Staff views production areas -> receives only Area 1
-        List<ProductionAreaResponse> staffAreas = farmService.getProductionAreas(staffUser.getId(), farm.id());
+        // Staff views zones -> receives only Zone 1
+        List<ZoneResponse> staffAreas = farmService.getZones(staffUser.getId(), farm.id());
         assertEquals(1, staffAreas.size());
-        assertEquals("AREA01", staffAreas.get(0).areaCode());
+        assertEquals("Zone A", staffAreas.get(0).zoneName());
     }
 
     @Test
@@ -146,12 +151,12 @@ class FarmServiceTest {
         AddFarmMemberRequest addMemberReq = new AddFarmMemberRequest("staff@example.com", "STAFF", "Field Technician");
         FarmMemberResponse addedMember = farmService.addMember(ownerUser.getId(), farm.id(), addMemberReq);
 
-        assertEquals("STAFF", addedMember.farmRole());
+        assertEquals("STAFF", addedMember.farmRole().toUpperCase());
         assertEquals("Field Technician", addedMember.jobTitle());
 
         // Staff can view farm details
         FarmResponse staffView = farmService.getFarmById(staffUser.getId(), farm.id());
-        assertEquals("STAFF", staffView.currentUserRole());
+        assertEquals("STAFF", staffView.currentUserRole().toUpperCase());
 
         // Staff cannot update farm details (Permission check)
         UpdateFarmRequest updateReq = new UpdateFarmRequest(

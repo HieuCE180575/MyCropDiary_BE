@@ -3,18 +3,17 @@ package com.mycropdiary.api.service;
 import com.mycropdiary.api.dto.common.PageResponse;
 import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageRequest;
 import com.mycropdiary.api.dto.cultivation.MaterialUsageResponse;
-import com.mycropdiary.api.entity.AppUser;
+import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
-import com.mycropdiary.api.entity.Plot;
-import com.mycropdiary.api.entity.ProductionArea;
+import com.mycropdiary.api.entity.User;
+import com.mycropdiary.api.entity.Zone;
 import com.mycropdiary.api.entity.cultivation.*;
 
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
 
 import com.mycropdiary.api.repository.FarmMemberRepository;
-import com.mycropdiary.api.repository.StaffAreaAssignmentRepository;
 import com.mycropdiary.api.repository.cultivation.*;
 
 import com.mycropdiary.api.service.impl.MaterialUsageServiceImpl;
@@ -34,6 +33,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -47,189 +47,168 @@ class MaterialUsageServiceTest {
     @Mock
     private MaterialRepository materialRepository;
     @Mock
-    private InputPurchaseDetailRepository inputPurchaseDetailRepository;
-    @Mock
     private FarmingActivityRepository farmingActivityRepository;
     @Mock
     private FarmMemberRepository farmMemberRepository;
-    @Mock
-    private StaffAreaAssignmentRepository staffAreaAssignmentRepository;
 
     @InjectMocks
     private MaterialUsageServiceImpl materialUsageService;
 
     private Farm farm;
-    private ProductionArea areaA;
-    private ProductionArea areaB;
-    private Plot plotA;
-    private Plot plotB;
+    private Zone zoneA;
+    private Block blockA;
     private CropSeason activeSeason;
     private CropSeason completedSeason;
     private FarmingActivity activity;
-    private AppUser ownerUser;
-    private AppUser staffUser;
+    private User ownerUser;
+    private User staffUser;
     private FarmMember ownerMember;
     private FarmMember staffMember;
     private Material fertilizerMaterial;
     private Material pesticideMaterial;
     private Material inactiveMaterial;
 
+    private final UUID farmId = UUID.randomUUID();
+    private final UUID zoneId = UUID.randomUUID();
+    private final UUID blockId = UUID.randomUUID();
+    private final UUID ownerUserId = UUID.randomUUID();
+    private final UUID staffUserId = UUID.randomUUID();
+    private final UUID ownerMemberId = UUID.randomUUID();
+    private final UUID staffMemberId = UUID.randomUUID();
+    private final UUID activeSeasonId = UUID.randomUUID();
+    private final UUID completedSeasonId = UUID.randomUUID();
+    private final UUID activityId = UUID.randomUUID();
+    private final UUID fertilizerId = UUID.randomUUID();
+    private final UUID pesticideId = UUID.randomUUID();
+    private final UUID inactiveMaterialId = UUID.randomUUID();
+    private final UUID usageId = UUID.randomUUID();
+
     @BeforeEach
     void setUp() {
         farm = new Farm();
-        farm.setId(1L);
+        farm.setId(farmId);
         farm.setFarmName("Nông trại Việt");
 
-        areaA = new ProductionArea();
-        areaA.setId(10L);
-        areaA.setFarm(farm);
+        zoneA = new Zone();
+        zoneA.setId(zoneId);
+        zoneA.setFarm(farm);
 
-        areaB = new ProductionArea();
-        areaB.setId(20L);
-        areaB.setFarm(farm);
+        blockA = new Block();
+        blockA.setId(blockId);
+        blockA.setZone(zoneA);
 
-        plotA = new Plot();
-        plotA.setId(100L);
-        plotA.setProductionArea(areaA);
-
-        plotB = new Plot();
-        plotB.setId(200L);
-        plotB.setProductionArea(areaB);
-
-        ownerUser = new AppUser();
-        ownerUser.setId(1L);
+        ownerUser = new User();
+        ownerUser.setId(ownerUserId);
         ownerUser.setFullName("Chủ Nông Trại");
 
-        staffUser = new AppUser();
-        staffUser.setId(2L);
+        staffUser = new User();
+        staffUser.setId(staffUserId);
         staffUser.setFullName("Nhân Viên Trại");
 
         ownerMember = new FarmMember();
-        ownerMember.setId(101L);
+        ownerMember.setId(ownerMemberId);
         ownerMember.setFarm(farm);
         ownerMember.setUser(ownerUser);
-        ownerMember.setFarmRole("OWNER");
-        ownerMember.setStatus("ACTIVE");
+        ownerMember.setMemberRole("owner");
+        ownerMember.setMembershipStatus("active");
 
         staffMember = new FarmMember();
-        staffMember.setId(102L);
+        staffMember.setId(staffMemberId);
         staffMember.setFarm(farm);
         staffMember.setUser(staffUser);
-        staffMember.setFarmRole("STAFF");
-        staffMember.setStatus("ACTIVE");
+        staffMember.setMemberRole("member");
+        staffMember.setMembershipStatus("active");
 
         activeSeason = new CropSeason();
-        activeSeason.setId(50L);
+        activeSeason.setId(activeSeasonId);
         activeSeason.setFarm(farm);
-        activeSeason.setPlot(plotA);
-        activeSeason.setStatus("ACTIVE");
+        activeSeason.setPlot(blockA);
+        activeSeason.setSeasonStatus("active");
 
         completedSeason = new CropSeason();
-        completedSeason.setId(51L);
+        completedSeason.setId(completedSeasonId);
         completedSeason.setFarm(farm);
-        completedSeason.setPlot(plotA);
-        completedSeason.setStatus("COMPLETED");
+        completedSeason.setPlot(blockA);
+        completedSeason.setSeasonStatus("completed");
 
         activity = new FarmingActivity();
-        activity.setId(500L);
+        activity.setId(activityId);
+        activity.setFarm(farm);
         activity.setCropSeason(activeSeason);
-        activity.setSupervisedByMember(ownerMember);
+        activity.setBlock(blockA);
         activity.setActivityName("Bón phân đợt 1");
 
-        fertilizerMaterial = new Material(1L, farm, "FERT01", "Phân NPK 16-16-8", MaterialType.FERTILIZER, "kg", true);
-        pesticideMaterial = new Material(2L, farm, "PEST01", "Thuốc Trừ Sâu An Toàn", MaterialType.PESTICIDE, "chai", true);
-        inactiveMaterial = new Material(3L, farm, "OLD01", "Vật tư cũ", MaterialType.OTHER, "cái", false);
+        fertilizerMaterial = new Material(farm, "Phân NPK 16-16-8", "fertilizer", "kg");
+        fertilizerMaterial.setId(fertilizerId);
+        fertilizerMaterial.setIsActive(true);
+
+        pesticideMaterial = new Material(farm, "Thuốc Trừ Sâu An Toàn", "pesticide", "chai");
+        pesticideMaterial.setId(pesticideId);
+        pesticideMaterial.setIsActive(true);
+
+        inactiveMaterial = new Material(farm, "Vật tư cũ", "other", "cái");
+        inactiveMaterial.setId(inactiveMaterialId);
+        inactiveMaterial.setIsActive(false);
     }
 
     @Test
     @DisplayName("Tạo MaterialUsage thành công với vai trò OWNER")
     void createMaterialUsage_AsOwner_Success() {
         CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                500L, 1L, null, LocalDateTime.now(), new BigDecimal("2.500"), "kg", "50g/gốc", "Rải gốc", null, "Thời tiết nắng"
+                activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("2.500"), "kg", "50g/gốc", "Rải gốc", null, "Thời tiết nắng"
         );
 
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 1L, "ACTIVE")).thenReturn(Optional.of(ownerMember));
-        when(materialRepository.findById(1L)).thenReturn(Optional.of(fertilizerMaterial));
+        when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+        when(materialRepository.findById(fertilizerId)).thenReturn(Optional.of(fertilizerMaterial));
 
         MaterialUsage savedUsage = new MaterialUsage();
-        savedUsage.setId(99L);
+        savedUsage.setId(usageId);
+        savedUsage.setFarm(farm);
         savedUsage.setFarmingActivity(activity);
         savedUsage.setMaterial(fertilizerMaterial);
-        savedUsage.setRecordedByMember(ownerMember);
+        savedUsage.setUsedBy(ownerMember);
         savedUsage.setUsedAt(request.usedAt());
         savedUsage.setQuantity(request.quantity());
-        savedUsage.setUnit("kg");
 
         when(materialUsageRepository.save(any(MaterialUsage.class))).thenReturn(savedUsage);
 
-        MaterialUsageResponse response = materialUsageService.createMaterialUsage(1L, request);
+        MaterialUsageResponse response = materialUsageService.createMaterialUsage(ownerUserId, request);
 
         assertNotNull(response);
-        assertEquals(99L, response.materialUsageId());
+        assertEquals(usageId, response.materialUsageId());
         assertEquals("Phân NPK 16-16-8", response.materialName());
-        assertEquals("FERTILIZER", response.materialType());
         verify(materialUsageRepository).save(any(MaterialUsage.class));
     }
 
     @Test
-    @DisplayName("Tạo MaterialUsage thành công với STAFF được assign đúng ProductionArea")
-    void createMaterialUsage_AsStaff_AssignedToArea_Success() {
+    @DisplayName("Tạo MaterialUsage thất bại nếu không phải active member của farm")
+    void createMaterialUsage_NotMember_ThrowsForbidden() {
         CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                500L, 1L, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
+                activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
         );
 
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 2L, "ACTIVE")).thenReturn(Optional.of(staffMember));
-        when(staffAreaAssignmentRepository.existsByFarmMemberIdAndProductionAreaIdAndActiveTrue(102L, 10L)).thenReturn(true);
-        when(materialRepository.findById(1L)).thenReturn(Optional.of(fertilizerMaterial));
+        when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, staffUserId, "active")).thenReturn(Optional.empty());
 
-        MaterialUsage savedUsage = new MaterialUsage();
-        savedUsage.setId(100L);
-        savedUsage.setFarmingActivity(activity);
-        savedUsage.setMaterial(fertilizerMaterial);
-        savedUsage.setRecordedByMember(staffMember);
-
-        when(materialUsageRepository.save(any(MaterialUsage.class))).thenReturn(savedUsage);
-
-        MaterialUsageResponse response = materialUsageService.createMaterialUsage(2L, request);
-
-        assertNotNull(response);
-        assertEquals(100L, response.materialUsageId());
-    }
-
-    @Test
-    @DisplayName("Tạo MaterialUsage thất bại nếu STAFF không được assign ProductionArea")
-    void createMaterialUsage_AsStaff_NotAssigned_ThrowsForbidden() {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                500L, 1L, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
-        );
-
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 2L, "ACTIVE")).thenReturn(Optional.of(staffMember));
-        when(staffAreaAssignmentRepository.existsByFarmMemberIdAndProductionAreaIdAndActiveTrue(102L, 10L)).thenReturn(false);
-
-        ForbiddenException exception = assertThrows(ForbiddenException.class,
-                () -> materialUsageService.createMaterialUsage(2L, request));
-
-        assertTrue(exception.getMessage().contains("Nhân viên chưa được phân công"));
+        assertThrows(ForbiddenException.class,
+                () -> materialUsageService.createMaterialUsage(staffUserId, request));
         verify(materialUsageRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Tạo MaterialUsage thất bại khi Unit trong request không khớp với Material.unit (kg vs L)")
     void createMaterialUsage_UnitMismatch_ThrowsBadRequest() {
-        // Material.unit = "kg", Request.unit = "L"
         CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                500L, 1L, null, LocalDateTime.now(), new BigDecimal("1.000"), "L", null, null, null, null
+                activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("1.000"), "L", null, null, null, null
         );
 
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 1L, "ACTIVE")).thenReturn(Optional.of(ownerMember));
-        when(materialRepository.findById(1L)).thenReturn(Optional.of(fertilizerMaterial)); // Unit là "kg"
+        when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+        when(materialRepository.findById(fertilizerId)).thenReturn(Optional.of(fertilizerMaterial));
 
         BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> materialUsageService.createMaterialUsage(1L, request));
+                () -> materialUsageService.createMaterialUsage(ownerUserId, request));
 
         assertTrue(exception.getMessage().contains("không khớp với đơn vị tính của vật tư"));
     }
@@ -238,19 +217,21 @@ class MaterialUsageServiceTest {
     @DisplayName("Tạo MaterialUsage thất bại nếu Material thuộc Farm khác")
     void createMaterialUsage_MaterialBelongsToDifferentFarm_ThrowsBadRequest() {
         Farm farmB = new Farm();
-        farmB.setId(2L);
-        Material otherFarmMaterial = new Material(5L, farmB, "OTHER", "Phân Farm B", MaterialType.FERTILIZER, "kg", true);
+        farmB.setId(UUID.randomUUID());
+        UUID otherMatId = UUID.randomUUID();
+        Material otherFarmMaterial = new Material(farmB, "Phân Farm B", "fertilizer", "kg");
+        otherFarmMaterial.setId(otherMatId);
 
         CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                500L, 5L, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
+                activityId, otherMatId, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
         );
 
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 1L, "ACTIVE")).thenReturn(Optional.of(ownerMember));
-        when(materialRepository.findById(5L)).thenReturn(Optional.of(otherFarmMaterial));
+        when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+        when(materialRepository.findById(otherMatId)).thenReturn(Optional.of(otherFarmMaterial));
 
         BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> materialUsageService.createMaterialUsage(1L, request));
+                () -> materialUsageService.createMaterialUsage(ownerUserId, request));
 
         assertTrue(exception.getMessage().contains("không thuộc trang trại"));
     }
@@ -259,15 +240,15 @@ class MaterialUsageServiceTest {
     @DisplayName("Tạo MaterialUsage thất bại nếu Material inactive")
     void createMaterialUsage_MaterialInactive_ThrowsBadRequest() {
         CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                500L, 3L, null, LocalDateTime.now(), new BigDecimal("1.000"), "cái", null, null, null, null
+                activityId, inactiveMaterialId, null, LocalDateTime.now(), new BigDecimal("1.000"), "cái", null, null, null, null
         );
 
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 1L, "ACTIVE")).thenReturn(Optional.of(ownerMember));
-        when(materialRepository.findById(3L)).thenReturn(Optional.of(inactiveMaterial));
+        when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+        when(materialRepository.findById(inactiveMaterialId)).thenReturn(Optional.of(inactiveMaterial));
 
         BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> materialUsageService.createMaterialUsage(1L, request));
+                () -> materialUsageService.createMaterialUsage(ownerUserId, request));
 
         assertTrue(exception.getMessage().contains("vô hiệu hóa"));
     }
@@ -276,78 +257,36 @@ class MaterialUsageServiceTest {
     @DisplayName("Tạo MaterialUsage thất bại nếu Quantity <= 0")
     void createMaterialUsage_QuantityInvalid_ThrowsBadRequest() {
         CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                500L, 1L, null, LocalDateTime.now(), new BigDecimal("0.000"), "kg", null, null, null, null
+                activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("0.000"), "kg", null, null, null, null
         );
 
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 1L, "ACTIVE")).thenReturn(Optional.of(ownerMember));
-        when(materialRepository.findById(1L)).thenReturn(Optional.of(fertilizerMaterial));
+        when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+        when(materialRepository.findById(fertilizerId)).thenReturn(Optional.of(fertilizerMaterial));
 
         BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> materialUsageService.createMaterialUsage(1L, request));
+                () -> materialUsageService.createMaterialUsage(ownerUserId, request));
 
         assertTrue(exception.getMessage().contains("phải lớn hơn 0"));
-    }
-
-    @Test
-    @DisplayName("Tạo MaterialUsage thất bại nếu PESTICIDE thiếu SafetyIntervalDays")
-    void createMaterialUsage_PesticideMissingSafetyInterval_ThrowsBadRequest() {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                500L, 2L, null, LocalDateTime.now(), new BigDecimal("1.000"), "chai", null, null, null, null
-        );
-
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 1L, "ACTIVE")).thenReturn(Optional.of(ownerMember));
-        when(materialRepository.findById(2L)).thenReturn(Optional.of(pesticideMaterial));
-
-        BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> materialUsageService.createMaterialUsage(1L, request));
-
-        assertTrue(exception.getMessage().contains("SafetyIntervalDays"));
-    }
-
-    @Test
-    @DisplayName("Tạo MaterialUsage thành công với PESTICIDE khi truyền SafetyIntervalDays hợp lệ")
-    void createMaterialUsage_PesticideWithSafetyInterval_Success() {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                500L, 2L, null, LocalDateTime.now(), new BigDecimal("1.000"), "chai", "10ml/bình", "Phun lá", 14, "Cách ly 14 ngày"
-        );
-
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 1L, "ACTIVE")).thenReturn(Optional.of(ownerMember));
-        when(materialRepository.findById(2L)).thenReturn(Optional.of(pesticideMaterial));
-
-        MaterialUsage savedUsage = new MaterialUsage();
-        savedUsage.setId(101L);
-        savedUsage.setFarmingActivity(activity);
-        savedUsage.setMaterial(pesticideMaterial);
-        savedUsage.setRecordedByMember(ownerMember);
-        savedUsage.setSafetyIntervalDays(14);
-
-        when(materialUsageRepository.save(any(MaterialUsage.class))).thenReturn(savedUsage);
-
-        MaterialUsageResponse response = materialUsageService.createMaterialUsage(1L, request);
-
-        assertNotNull(response);
-        assertEquals(14, response.safetyIntervalDays());
     }
 
     @Test
     @DisplayName("Tạo MaterialUsage thất bại khi CropSeason đã COMPLETED")
     void createMaterialUsage_ClosedSeason_ThrowsBadRequest() {
         FarmingActivity closedActivity = new FarmingActivity();
-        closedActivity.setId(600L);
+        closedActivity.setId(UUID.randomUUID());
+        closedActivity.setFarm(farm);
         closedActivity.setCropSeason(completedSeason);
 
         CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
-                600L, 1L, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
+                closedActivity.getId(), fertilizerId, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
         );
 
-        when(farmingActivityRepository.findById(600L)).thenReturn(Optional.of(closedActivity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 1L, "ACTIVE")).thenReturn(Optional.of(ownerMember));
+        when(farmingActivityRepository.findById(closedActivity.getId())).thenReturn(Optional.of(closedActivity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
 
         BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> materialUsageService.createMaterialUsage(1L, request));
+                () -> materialUsageService.createMaterialUsage(ownerUserId, request));
 
         assertTrue(exception.getMessage().contains("mùa vụ đã đóng"));
     }
@@ -356,21 +295,22 @@ class MaterialUsageServiceTest {
     @DisplayName("Xem danh sách MaterialUsage theo Activity có phân trang thành công")
     void getMaterialUsagesByActivity_Success() {
         MaterialUsage usage = new MaterialUsage();
-        usage.setId(1L);
+        usage.setId(usageId);
+        usage.setFarm(farm);
         usage.setFarmingActivity(activity);
         usage.setMaterial(fertilizerMaterial);
-        usage.setRecordedByMember(ownerMember);
+        usage.setUsedBy(ownerMember);
 
         Pageable pageable = PageRequest.of(0, 20);
 
-        when(farmingActivityRepository.findById(500L)).thenReturn(Optional.of(activity));
-        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1L, 1L, "ACTIVE")).thenReturn(Optional.of(ownerMember));
-        when(materialUsageRepository.findByFarmingActivityId(500L, pageable)).thenReturn(new PageImpl<>(List.of(usage)));
+        when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+        when(materialUsageRepository.findByFarmingActivityId(activityId, pageable)).thenReturn(new PageImpl<>(List.of(usage)));
 
-        PageResponse<MaterialUsageResponse> result = materialUsageService.getMaterialUsagesByActivity(1L, 500L, pageable);
+        PageResponse<MaterialUsageResponse> result = materialUsageService.getMaterialUsagesByActivity(ownerUserId, activityId, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.content().size());
-        assertEquals(1L, result.content().get(0).materialUsageId());
+        assertEquals(usageId, result.content().get(0).materialUsageId());
     }
 }

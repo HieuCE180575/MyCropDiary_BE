@@ -8,18 +8,21 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * DTO yêu cầu tạo mới nhật ký sử dụng vật tư (UC-25).
  */
 public record CreateMaterialUsageRequest(
         @NotNull(message = "Farming activity ID is required")
-        Long farmingActivityId,
+        UUID farmingActivityId,
 
         @NotNull(message = "Material ID is required")
-        Long materialId,
+        UUID materialId,
 
-        Long inputPurchaseDetailId,
+        UUID inputPurchaseDetailId,
+
+        UUID blockId,
 
         @NotNull(message = "Used at timestamp is required")
         LocalDateTime usedAt,
@@ -43,4 +46,19 @@ public record CreateMaterialUsageRequest(
 
         @Size(max = 1000, message = "Notes must not exceed 1000 characters")
         String notes
-) {}
+) {
+    public CreateMaterialUsageRequest(
+            UUID farmingActivityId,
+            UUID materialId,
+            UUID inputPurchaseDetailId,
+            LocalDateTime usedAt,
+            BigDecimal quantity,
+            String unit,
+            String dosage,
+            String method,
+            Integer safetyIntervalDays,
+            String notes
+    ) {
+        this(farmingActivityId, materialId, inputPurchaseDetailId, null, usedAt, quantity, unit, dosage, method, safetyIntervalDays, notes);
+    }
+}

@@ -1,84 +1,92 @@
 package com.mycropdiary.api.entity.cultivation;
 
 import com.mycropdiary.api.entity.Farm;
+import com.mycropdiary.api.entity.FarmMember;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
- * Entity biểu diễn bảng dbo.FarmWorker (Hồ sơ công nhân trang trại).
+ * Entity biểu diễn bảng [FarmWorker] (Hồ sơ công nhân lao động trang trại).
+ * Liên kết 1-1 với FarmMember.
  */
 @Entity
-@Table(name = "FarmWorker", schema = "dbo", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"FarmID", "WorkerCode"})
-})
+@Table(name = "FarmWorker")
 public class FarmWorker {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "FarmWorkerID")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "farm_worker_id", updatable = false, nullable = false)
+    private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "FarmID", nullable = false)
-    private Farm farm;
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "farm_member_id", nullable = false, unique = true)
+    private FarmMember farmMember;
 
-    @Column(name = "WorkerCode", nullable = false, length = 30)
+    @Column(name = "worker_code", length = 40)
     private String workerCode;
 
-    @Column(name = "FullName", nullable = false, length = 150)
-    private String fullName;
+    @Column(name = "job_title", length = 100)
+    private String jobTitle;
 
-    @Column(name = "PhoneNumber", length = 20)
-    private String phoneNumber;
+    @Column(name = "employment_status", nullable = false, length = 20)
+    private String employmentStatus = "active"; // active, inactive, seasonal
 
-    @Column(name = "DateOfBirth")
-    private LocalDate dateOfBirth;
+    @Column(name = "hired_at")
+    private LocalDate hiredAt;
 
-    @Column(name = "HireDate")
-    private LocalDate hireDate;
-
-    @Column(name = "Status", nullable = false, length = 20)
-    private String status = "ACTIVE"; // ACTIVE, INACTIVE
-
-    @Column(name = "Notes", length = 1000)
+    @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
 
     public FarmWorker() { }
 
-    public FarmWorker(Farm farm, String workerCode, String fullName, String phoneNumber, String status) {
-        this.farm = farm;
+    public FarmWorker(FarmMember farmMember, String workerCode, String jobTitle, String employmentStatus, LocalDate hiredAt, String notes) {
+        this.farmMember = farmMember;
         this.workerCode = workerCode;
-        this.fullName = fullName;
-        this.phoneNumber = phoneNumber;
-        if (status != null) {
-            this.status = status;
+        this.jobTitle = jobTitle;
+        if (employmentStatus != null) {
+            this.employmentStatus = employmentStatus.toLowerCase();
         }
+        this.hiredAt = hiredAt;
+        this.notes = notes;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public Farm getFarm() { return farm; }
-    public void setFarm(Farm farm) { this.farm = farm; }
+    public FarmMember getFarmMember() { return farmMember; }
+    public void setFarmMember(FarmMember farmMember) { this.farmMember = farmMember; }
 
     public String getWorkerCode() { return workerCode; }
     public void setWorkerCode(String workerCode) { this.workerCode = workerCode; }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getJobTitle() { return jobTitle; }
+    public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
 
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public String getEmploymentStatus() { return employmentStatus; }
+    public void setEmploymentStatus(String employmentStatus) {
+        this.employmentStatus = employmentStatus != null ? employmentStatus.toLowerCase() : "active";
+    }
 
-    public LocalDate getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
-
-    public LocalDate getHireDate() { return hireDate; }
-    public void setHireDate(LocalDate hireDate) { this.hireDate = hireDate; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public LocalDate getHiredAt() { return hiredAt; }
+    public void setHiredAt(LocalDate hiredAt) { this.hiredAt = hiredAt; }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    // --- Compatibility helper methods ---
+    public Farm getFarm() {
+        return farmMember != null ? farmMember.getFarm() : null;
+    }
+
+    public String getFullName() {
+        return farmMember != null && farmMember.getUser() != null ? farmMember.getUser().getFullName() : null;
+    }
+
+    public String getPhoneNumber() {
+        return farmMember != null && farmMember.getUser() != null ? farmMember.getUser().getPhone() : null;
+    }
+
+    public String getStatus() { return employmentStatus; }
+    public void setStatus(String status) { setEmploymentStatus(status); }
 }

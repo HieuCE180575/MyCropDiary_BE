@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -26,7 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Unit Test cho tầng Controller của KnowledgeArticle (API Endpoint Testing).
- * Sử dụng MockMvc standalone setup để kiểm tra đường dẫn HTTP, tham số và dữ liệu JSON trả về độc lập và nhanh chóng.
  */
 @ExtendWith(MockitoExtension.class)
 class KnowledgeArticleControllerTest {
@@ -38,6 +38,8 @@ class KnowledgeArticleControllerTest {
 
     @InjectMocks
     private KnowledgeArticleController knowledgeArticleController;
+
+    private final UUID articleId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
@@ -53,7 +55,7 @@ class KnowledgeArticleControllerTest {
     @DisplayName("GET /api/v1/knowledge/articles - Trả về danh sách bài viết công khai thành công")
     void getPublicArticles_Success() throws Exception {
         KnowledgeArticleResponseDTO dto = new KnowledgeArticleResponseDTO(
-                1L,
+                articleId,
                 "Tomato Cultivation Guide",
                 "tomato-cultivation-guide",
                 "Guide summary",
@@ -77,7 +79,7 @@ class KnowledgeArticleControllerTest {
                         .param("keyword", "tomato"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.items[0].id").value(1))
+                .andExpect(jsonPath("$.data.items[0].id").value(articleId.toString()))
                 .andExpect(jsonPath("$.data.items[0].title").value("Tomato Cultivation Guide"))
                 .andExpect(jsonPath("$.data.totalElements").value(1));
     }
@@ -89,7 +91,7 @@ class KnowledgeArticleControllerTest {
     @DisplayName("GET /api/v1/knowledge/articles/{id} - Trả về chi tiết bài viết thành công")
     void getPublicArticleById_Success() throws Exception {
         KnowledgeArticleResponseDTO dto = new KnowledgeArticleResponseDTO(
-                1L,
+                articleId,
                 "Tomato Cultivation Guide",
                 "tomato-cultivation-guide",
                 "Guide summary",
@@ -103,12 +105,12 @@ class KnowledgeArticleControllerTest {
                 LocalDateTime.now()
         );
 
-        when(knowledgeArticleService.getPublicArticleById(1L)).thenReturn(dto);
+        when(knowledgeArticleService.getPublicArticleById(articleId)).thenReturn(dto);
 
-        mockMvc.perform(get("/api/v1/knowledge/articles/1"))
+        mockMvc.perform(get("/api/v1/knowledge/articles/" + articleId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.id").value(articleId.toString()))
                 .andExpect(jsonPath("$.data.title").value("Tomato Cultivation Guide"));
     }
 
@@ -118,12 +120,13 @@ class KnowledgeArticleControllerTest {
     @Test
     @DisplayName("GET /api/v1/knowledge/articles/{id} - Trả về lỗi 404 khi không tìm thấy hoặc bài viết bị ẩn")
     void getPublicArticleById_NotFound() throws Exception {
-        when(knowledgeArticleService.getPublicArticleById(99L))
-                .thenThrow(new ResourceNotFoundException("Knowledge article not found with id: 99"));
+        UUID unknownId = UUID.randomUUID();
+        when(knowledgeArticleService.getPublicArticleById(unknownId))
+                .thenThrow(new ResourceNotFoundException("Knowledge article not found with id: " + unknownId));
 
-        mockMvc.perform(get("/api/v1/knowledge/articles/99"))
+        mockMvc.perform(get("/api/v1/knowledge/articles/" + unknownId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Knowledge article not found with id: 99"));
+                .andExpect(jsonPath("$.message").value("Knowledge article not found with id: " + unknownId));
     }
 }

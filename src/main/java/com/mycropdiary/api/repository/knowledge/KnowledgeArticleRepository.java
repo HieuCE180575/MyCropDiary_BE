@@ -4,35 +4,28 @@ import com.mycropdiary.api.entity.knowledge.KnowledgeArticle;
 import com.mycropdiary.api.entity.knowledge.KnowledgeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repository thao tác dữ liệu cơ sở dữ liệu cho bảng KnowledgeArticle.
- * Hỗ trợ các phương thức CRUD chuẩn của JPA và truy vấn động Specification.
  */
 @Repository
-public interface KnowledgeArticleRepository extends JpaRepository<KnowledgeArticle, Long>, JpaSpecificationExecutor<KnowledgeArticle> {
+public interface KnowledgeArticleRepository extends JpaRepository<KnowledgeArticle, UUID>, JpaSpecificationExecutor<KnowledgeArticle> {
 
-    /**
-     * Tìm danh sách bài viết theo trạng thái.
-     */
-    List<KnowledgeArticle> findByStatus(KnowledgeStatus status);
+    @Query("SELECT k FROM KnowledgeArticle k WHERE LOWER(k.articleStatus) = LOWER(:status)")
+    List<KnowledgeArticle> findByStatusString(@Param("status") String status);
 
-    /**
-     * Tìm danh sách bài viết theo danh mục.
-     */
-    List<KnowledgeArticle> findByCategory(String category);
+    default List<KnowledgeArticle> findByStatus(KnowledgeStatus status) {
+        return findByStatusString(status.name());
+    }
 
-    /**
-     * Tìm danh sách bài viết theo trạng thái và danh mục.
-     */
-    List<KnowledgeArticle> findByStatusAndCategory(KnowledgeStatus status, String category);
-
-    /**
-     * Tìm bài viết theo đường dẫn duy nhất (Slug).
-     */
     Optional<KnowledgeArticle> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
 }

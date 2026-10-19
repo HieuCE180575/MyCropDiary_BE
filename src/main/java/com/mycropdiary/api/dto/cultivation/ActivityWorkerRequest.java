@@ -5,13 +5,14 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * DTO chứa thông tin nhân công trực tiếp thực hiện một nhật ký canh tác.
  */
 public record ActivityWorkerRequest(
         @NotNull(message = "Farm worker ID is required")
-        Long workerId,
+        UUID workerId,
 
         @PositiveOrZero(message = "Work hours must be positive or zero")
         BigDecimal workHours,

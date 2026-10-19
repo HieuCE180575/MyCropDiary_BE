@@ -15,6 +15,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 // [AI_CHANGE] Root cause: UC-39 Admin cần REST API để xem danh sách, chi tiết và duyệt/từ chối đơn đăng ký farm
 // [AI_CHANGE] Mechanism: Controller riêng cho Admin với prefix /api/v1/admin/farm-registrations,
 //             sử dụng @PreAuthorize("hasRole('ADMIN')") để đảm bảo chỉ Admin mới truy cập được
@@ -45,7 +47,7 @@ public class AdminFarmRegistrationController {
     @GetMapping
     public ApiResponse<PageResponse<FarmRegistrationResponse>> getRegistrations(
             @RequestParam(required = false) String status,
-            @PageableDefault(size = 20, sort = "submittedAt") Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
         PageResponse<FarmRegistrationResponse> page = farmRegistrationService.getRegistrations(status, pageable);
         return ApiResponse.ok("Danh sách đơn đăng ký trang trại", page);
     }
@@ -59,7 +61,7 @@ public class AdminFarmRegistrationController {
     @Operation(summary = "Chi tiết đơn đăng ký trang trại (UC-39)",
             description = "Admin xem chi tiết thông tin đơn đăng ký trang trại bao gồm thông tin người nộp, địa chỉ, trạng thái xử lý.")
     @GetMapping("/{registrationId}")
-    public ApiResponse<FarmRegistrationResponse> getRegistrationById(@PathVariable Long registrationId) {
+    public ApiResponse<FarmRegistrationResponse> getRegistrationById(@PathVariable UUID registrationId) {
         FarmRegistrationResponse response = farmRegistrationService.getRegistrationById(registrationId);
         return ApiResponse.ok("Chi tiết đơn đăng ký trang trại", response);
     }
@@ -81,11 +83,11 @@ public class AdminFarmRegistrationController {
                           "Chỉ xử lý đơn ở trạng thái PENDING (chặn xử lý trùng).")
     @PutMapping("/{registrationId}/handle")
     public ApiResponse<FarmRegistrationResponse> handleRegistration(
-            @PathVariable Long registrationId,
+            @PathVariable UUID registrationId,
             @Valid @RequestBody HandleRegistrationRequest request) {
-        Long adminUserId = securityUtils.getCurrentUserId();
+        UUID adminUserId = securityUtils.getCurrentUserId();
         FarmRegistrationResponse response = farmRegistrationService.handleRegistration(adminUserId, registrationId, request);
-        String actionMessage = "APPROVED".equals(request.action())
+        String actionMessage = "APPROVED".equalsIgnoreCase(request.action())
                 ? "Đã duyệt đơn đăng ký và tạo trang trại thành công."
                 : "Đã từ chối đơn đăng ký trang trại.";
         return ApiResponse.ok(actionMessage, response);

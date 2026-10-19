@@ -10,9 +10,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
-// [AI_CHANGE] Root cause: Hệ thống cần cơ chế sinh và xác thực JWT thay thế HTTP Basic
-// [AI_CHANGE] Mechanism: Dùng HMAC-SHA512 từ secret cấu hình, gắn userId + email + role vào claims
 @Component
 public class JwtTokenProvider {
     private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
@@ -30,8 +29,7 @@ public class JwtTokenProvider {
         this.refreshTokenExpirationMs = refreshTokenExpirationMs;
     }
 
-    // [AI_CHANGE] Sinh access token chứa userId, email, systemRole
-    public String generateAccessToken(Long userId, String email, String systemRole) {
+    public String generateAccessToken(UUID userId, String email, String systemRole) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(userId.toString())
@@ -43,8 +41,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // [AI_CHANGE] Sinh refresh token (chỉ chứa userId, không chứa claims nhạy cảm)
-    public String generateRefreshToken(Long userId) {
+    public String generateRefreshToken(UUID userId) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(userId.toString())
@@ -55,8 +52,8 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public Long getUserIdFromToken(String token) {
-        return Long.parseLong(parseClaims(token).getSubject());
+    public UUID getUserIdFromToken(String token) {
+        return UUID.fromString(parseClaims(token).getSubject());
     }
 
     public String getRoleFromToken(String token) {
@@ -67,7 +64,6 @@ public class JwtTokenProvider {
         return parseClaims(token).get("email", String.class);
     }
 
-    // [AI_CHANGE] Xác thực tính hợp lệ của token (chữ ký, hạn sử dụng, định dạng)
     public boolean validateToken(String token) {
         try {
             parseClaims(token);

@@ -7,13 +7,18 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * DTO yêu cầu tạo mới bản ghi thu hoạch (UC-26).
  */
 public record CreateHarvestRecordRequest(
         @NotNull(message = "Crop season ID is required")
-        Long cropSeasonId,
+        UUID cropSeasonId,
+
+        UUID blockId,
+
+        UUID farmingActivityId,
 
         @Size(max = 60, message = "Harvest lot code must not exceed 60 characters")
         String harvestLotCode,
@@ -40,4 +45,18 @@ public record CreateHarvestRecordRequest(
 
         @Size(max = 1000, message = "Notes must not exceed 1000 characters")
         String notes
-) {}
+) {
+    public CreateHarvestRecordRequest(
+            UUID cropSeasonId,
+            String harvestLotCode,
+            LocalDateTime harvestedAt,
+            BigDecimal quantity,
+            String unit,
+            String qualityGrade,
+            String storageLocation,
+            String traceabilityCode,
+            String notes
+    ) {
+        this(cropSeasonId, null, null, harvestLotCode, harvestedAt, quantity, unit, qualityGrade, storageLocation, traceabilityCode, notes);
+    }
+}

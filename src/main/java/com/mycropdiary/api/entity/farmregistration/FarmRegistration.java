@@ -1,186 +1,148 @@
 package com.mycropdiary.api.entity.farmregistration;
 
-import com.mycropdiary.api.entity.AppUser;
+import com.mycropdiary.api.entity.User;
 import jakarta.persistence.*;
-
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.UUID;
 
 @Entity
-@Table(name = "FarmRegistration", schema = "dbo")
+@Table(name = "FarmRegistration")
 public class FarmRegistration {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "RegistrationID")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "registration_id", updatable = false, nullable = false)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ApplicantUserID", nullable = false)
-    private AppUser applicantUser;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "FarmName", nullable = false, length = 200)
+    @Column(name = "farm_name", nullable = false, length = 160)
     private String farmName;
 
-    @Column(name = "AddressLine", nullable = false, length = 300)
-    private String addressLine;
+    @Column(name = "address", columnDefinition = "NVARCHAR(MAX)")
+    private String address;
 
-    @Column(name = "Province", length = 100)
-    private String province;
+    @Column(name = "registration_note", columnDefinition = "NVARCHAR(MAX)")
+    private String registrationNote;
 
-    @Column(name = "District", length = 100)
-    private String district;
-
-    @Column(name = "Ward", length = 100)
-    private String ward;
-
-    @Column(name = "Description", length = 1000)
-    private String description;
-
-    @Column(name = "DocumentUrl", length = 1000)
-    private String documentUrl;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "Status", nullable = false, length = 20)
-    private FarmRegistrationStatus status = FarmRegistrationStatus.PENDING;
+    @Column(name = "registration_status", nullable = false, length = 20)
+    private String registrationStatus = "pending"; // pending, approved, rejected, cancelled
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "HandlerUserID")
-    private AppUser handlerUser;
+    @JoinColumn(name = "reviewed_by")
+    private User reviewedBy;
 
-    @Column(name = "SubmittedAt", nullable = false)
-    private LocalDateTime submittedAt;
+    @Column(name = "reviewed_at")
+    private Instant reviewedAt;
 
-    @Column(name = "HandledAt")
-    private LocalDateTime handledAt;
+    @Column(name = "resulting_farm_id")
+    private UUID resultingFarmId;
 
-    @Column(name = "RejectionReason", length = 1000)
-    private String rejectionReason;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
-    public FarmRegistration() {
-    }
+    public FarmRegistration() { }
 
-    public FarmRegistration(AppUser applicantUser, String farmName, String addressLine) {
-        this.applicantUser = applicantUser;
+    public FarmRegistration(User user, String farmName, String address) {
+        this.user = user;
         this.farmName = farmName;
-        this.addressLine = addressLine;
+        this.address = address;
+        this.registrationStatus = "pending";
     }
 
     @PrePersist
     void onCreate() {
-        if (this.submittedAt == null) {
-            this.submittedAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = Instant.now();
         }
     }
 
-    public Long getId() {
-        return id;
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public String getFarmName() { return farmName; }
+    public void setFarmName(String farmName) { this.farmName = farmName; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getRegistrationNote() { return registrationNote; }
+    public void setRegistrationNote(String registrationNote) { this.registrationNote = registrationNote; }
+
+    public String getRegistrationStatus() { return registrationStatus; }
+    public void setRegistrationStatus(String registrationStatus) {
+        this.registrationStatus = registrationStatus != null ? registrationStatus.toLowerCase() : "pending";
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public User getReviewedBy() { return reviewedBy; }
+    public void setReviewedBy(User reviewedBy) { this.reviewedBy = reviewedBy; }
 
-    public AppUser getApplicantUser() {
-        return applicantUser;
-    }
+    public Instant getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(Instant reviewedAt) { this.reviewedAt = reviewedAt; }
 
-    public void setApplicantUser(AppUser applicantUser) {
-        this.applicantUser = applicantUser;
-    }
+    public UUID getResultingFarmId() { return resultingFarmId; }
+    public void setResultingFarmId(UUID resultingFarmId) { this.resultingFarmId = resultingFarmId; }
 
-    public String getFarmName() {
-        return farmName;
-    }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
-    public void setFarmName(String farmName) {
-        this.farmName = farmName;
-    }
+    // --- Compatibility Helpers ---
+    public User getApplicantUser() { return user; }
+    public void setApplicantUser(User user) { this.user = user; }
 
-    public String getAddressLine() {
-        return addressLine;
-    }
+    public User getHandlerUser() { return reviewedBy; }
+    public void setHandlerUser(User handlerUser) { this.reviewedBy = handlerUser; }
 
-    public void setAddressLine(String addressLine) {
-        this.addressLine = addressLine;
+    public java.time.LocalDateTime getHandledAt() {
+        return reviewedAt != null ? java.time.LocalDateTime.ofInstant(reviewedAt, java.time.ZoneId.systemDefault()) : null;
     }
+    public void setHandledAt(java.time.LocalDateTime handledAt) {
+        this.reviewedAt = handledAt != null ? handledAt.atZone(java.time.ZoneId.systemDefault()).toInstant() : null;
+    }
+    public void setHandledAt(Instant handledAt) { this.reviewedAt = handledAt; }
 
-    public String getProvince() {
-        return province;
+    public java.time.LocalDateTime getSubmittedAt() {
+        return createdAt != null ? java.time.LocalDateTime.ofInstant(createdAt, java.time.ZoneId.systemDefault()) : null;
     }
+    public void setSubmittedAt(java.time.LocalDateTime submittedAt) {
+        this.createdAt = submittedAt != null ? submittedAt.atZone(java.time.ZoneId.systemDefault()).toInstant() : null;
+    }
+    public void setSubmittedAt(Instant submittedAt) { this.createdAt = submittedAt; }
 
-    public void setProvince(String province) {
-        this.province = province;
-    }
+    public String getAddressLine() { return address; }
+    public void setAddressLine(String addressLine) { this.address = addressLine; }
 
-    public String getDistrict() {
-        return district;
-    }
+    public String getProvince() { return null; }
+    public void setProvince(String province) { }
 
-    public void setDistrict(String district) {
-        this.district = district;
-    }
+    public String getDistrict() { return null; }
+    public void setDistrict(String district) { }
 
-    public String getWard() {
-        return ward;
-    }
+    public String getWard() { return null; }
+    public void setWard(String ward) { }
 
-    public void setWard(String ward) {
-        this.ward = ward;
-    }
+    public String getDocumentUrl() { return null; }
+    public void setDocumentUrl(String documentUrl) { }
 
-    public String getDescription() {
-        return description;
-    }
+    public String getDescription() { return registrationNote; }
+    public void setDescription(String description) { this.registrationNote = description; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getDocumentUrl() {
-        return documentUrl;
-    }
-
-    public void setDocumentUrl(String documentUrl) {
-        this.documentUrl = documentUrl;
-    }
+    public String getRejectionReason() { return registrationNote; }
+    public void setRejectionReason(String rejectionReason) { this.registrationNote = rejectionReason; }
 
     public FarmRegistrationStatus getStatus() {
-        return status;
+        if ("approved".equalsIgnoreCase(registrationStatus)) return FarmRegistrationStatus.APPROVED;
+        if ("rejected".equalsIgnoreCase(registrationStatus)) return FarmRegistrationStatus.REJECTED;
+        if ("cancelled".equalsIgnoreCase(registrationStatus)) return FarmRegistrationStatus.CANCELLED;
+        return FarmRegistrationStatus.PENDING;
     }
 
     public void setStatus(FarmRegistrationStatus status) {
-        this.status = status;
-    }
-
-    public AppUser getHandlerUser() {
-        return handlerUser;
-    }
-
-    public void setHandlerUser(AppUser handlerUser) {
-        this.handlerUser = handlerUser;
-    }
-
-    public LocalDateTime getSubmittedAt() {
-        return submittedAt;
-    }
-
-    public void setSubmittedAt(LocalDateTime submittedAt) {
-        this.submittedAt = submittedAt;
-    }
-
-    public LocalDateTime getHandledAt() {
-        return handledAt;
-    }
-
-    public void setHandledAt(LocalDateTime handledAt) {
-        this.handledAt = handledAt;
-    }
-
-    public String getRejectionReason() {
-        return rejectionReason;
-    }
-
-    public void setRejectionReason(String rejectionReason) {
-        this.rejectionReason = rejectionReason;
+        this.registrationStatus = status != null ? status.name().toLowerCase() : "pending";
     }
 }

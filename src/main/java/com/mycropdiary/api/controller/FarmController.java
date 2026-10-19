@@ -14,7 +14,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Controller quản lý REST API cho module Farm Core (Trang trại, Thành viên, Vùng sản xuất).
@@ -32,122 +34,102 @@ public class FarmController {
         this.securityUtils = securityUtils;
     }
 
-    /**
-     * Tạo mới trang trại. Người tạo sẽ tự động được cấp quyền OWNER.
-     *
-     * @param request Thông tin trang trại mới
-     * @return Kết quả tạo trang trại kèm vai trò OWNER
-     */
     @Operation(summary = "Tạo mới trang trại", description = "Tạo mới trang trại. Người tạo sẽ tự động được cấp quyền OWNER.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<FarmResponse> createFarm(@Valid @RequestBody CreateFarmRequest request) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+        UUID currentUserId = securityUtils.getCurrentUserId();
         FarmResponse response = farmService.createFarm(currentUserId, request);
         return ApiResponse.ok("Farm created successfully", response);
     }
 
-    /**
-     * Lấy chi tiết thông tin trang trại theo ID. Yêu cầu quyền truy cập (Thành viên trang trại hoặc Admin).
-     *
-     * @param farmId Mã ID trang trại
-     * @return Chi tiết trang trại kèm vai trò của người dùng hiện tại
-     */
     @Operation(summary = "Lấy chi tiết trang trại", description = "Lấy chi tiết thông tin trang trại theo ID.")
     @GetMapping("/{farmId}")
-    public ApiResponse<FarmResponse> getFarmById(@PathVariable Long farmId) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+    public ApiResponse<FarmResponse> getFarmById(@PathVariable UUID farmId) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
         FarmResponse response = farmService.getFarmById(currentUserId, farmId);
-        return ApiResponse.ok("Farm details", response);
+        return ApiResponse.ok("Farm details retrieved successfully", response);
     }
 
-    /**
-     * Tìm kiếm và lọc danh sách trang trại mà người dùng có quyền truy cập (Có phân trang).
-     *
-     * @param keyword Từ khóa tìm kiếm theo tên hoặc mã trang trại
-     * @param status Lọc theo trạng thái (ACTIVE, INACTIVE)
-     * @param province Lọc theo tỉnh/thành phố
-     * @param pageable Cấu hình phân trang
-     * @return Danh sách trang trại phân trang
-     */
-    @Operation(summary = "Tìm kiếm trang trại", description = "Tìm kiếm và lọc danh sách trang trại mà người dùng có quyền truy cập (Có phân trang).")
-    @GetMapping({"", "/search"})
+    @Operation(summary = "Tìm kiếm trang trại", description = "Tìm kiếm trang trại có phân trang theo từ khóa, tỉnh thành, trạng thái.")
+    @GetMapping
     public ApiResponse<PageResponse<FarmSummaryResponse>> searchFarms(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String status,
             @RequestParam(required = false) String province,
-            @RequestParam(required = false) java.math.BigDecimal minArea,
-            @RequestParam(required = false) java.math.BigDecimal maxArea,
-            @PageableDefault(size = 20) Pageable pageable) {
-        Long currentUserId = securityUtils.getCurrentUserId();
-        PageResponse<FarmSummaryResponse> page = farmService.searchFarms(currentUserId, keyword, province, status, minArea, maxArea, pageable);
-        return ApiResponse.ok("Accessible farms list", page);
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) BigDecimal minArea,
+            @RequestParam(required = false) BigDecimal maxArea,
+            @PageableDefault(size = 10) Pageable pageable) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
+        PageResponse<FarmSummaryResponse> response = farmService.searchFarms(
+                currentUserId, keyword, province, status, minArea, maxArea, pageable
+        );
+        return ApiResponse.ok("Farms retrieved successfully", response);
     }
 
-    /**
-     * Cập nhật thông tin trang trại. Yêu cầu quyền Farm OWNER hoặc System ADMIN.
-     *
-     * @param farmId Mã ID trang trại
-     * @param request Thông tin cập nhật
-     * @return Chi tiết trang trại sau khi cập nhật
-     */
     @Operation(summary = "Cập nhật trang trại", description = "Cập nhật thông tin trang trại. Yêu cầu quyền OWNER hoặc ADMIN.")
     @PutMapping("/{farmId}")
     public ApiResponse<FarmResponse> updateFarm(
-            @PathVariable Long farmId,
+            @PathVariable UUID farmId,
             @Valid @RequestBody UpdateFarmRequest request) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+        UUID currentUserId = securityUtils.getCurrentUserId();
         FarmResponse response = farmService.updateFarm(currentUserId, farmId, request);
         return ApiResponse.ok("Farm updated successfully", response);
     }
 
-    /**
-     * Vô hiệu hóa (Soft Delete) trang trại. Yêu cầu quyền Farm OWNER hoặc System ADMIN.
-     *
-     * @param farmId Mã ID trang trại
-     * @return Thông báo thành công
-     */
-    @Operation(summary = "Xóa trang trại (Soft delete)", description = "Vô hiệu hóa trang trại. Yêu cầu quyền OWNER hoặc ADMIN.")
+    @Operation(summary = "Vô hiệu hóa trang trại", description = "Ngừng hoạt động trang trại. Yêu cầu quyền OWNER hoặc ADMIN.")
     @DeleteMapping("/{farmId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ApiResponse<Void> deleteFarm(@PathVariable Long farmId) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+    public ApiResponse<Void> deleteFarm(@PathVariable UUID farmId) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
         farmService.deleteFarm(currentUserId, farmId);
-        return ApiResponse.ok("Farm deactivated successfully", null);
+        return ApiResponse.ok("Farm deleted successfully", null);
     }
 
-
-
-    /**
-     * Tạo Vùng sản xuất mới trong trang trại. Kiểm tra tổng diện tích không vượt quá diện tích trang trại.
-     *
-     * @param farmId Mã ID trang trại
-     * @param request Thông tin vùng sản xuất (Mã, Tên, Diện tích)
-     * @return Thông tin vùng sản xuất vừa tạo
-     */
-    @Operation(summary = "Tạo vùng sản xuất mới", description = "Tạo Vùng sản xuất mới trong trang trại. Kiểm tra tổng diện tích không vượt quá diện tích trang trại.")
-    @PostMapping("/{farmId}/production-areas")
+    @Operation(summary = "Thêm thành viên vào trang trại", description = "Thêm thành viên mới. Yêu cầu quyền OWNER hoặc ADMIN.")
+    @PostMapping("/{farmId}/members")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<ProductionAreaResponse> createProductionArea(
-            @PathVariable Long farmId,
-            @Valid @RequestBody CreateProductionAreaRequest request) {
-        Long currentUserId = securityUtils.getCurrentUserId();
-        ProductionAreaResponse response = farmService.createProductionArea(currentUserId, farmId, request);
-        return ApiResponse.ok("Production area created successfully", response);
+    public ApiResponse<FarmMemberResponse> addMember(
+            @PathVariable UUID farmId,
+            @Valid @RequestBody AddFarmMemberRequest request) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
+        FarmMemberResponse response = farmService.addMember(currentUserId, farmId, request);
+        return ApiResponse.ok("Member added successfully", response);
     }
 
-    /**
-     * Lấy danh sách vùng sản xuất của trang trại.
-     * STAFF chỉ nhìn thấy các vùng được phân công; OWNER/ADMIN nhìn thấy tất cả.
-     *
-     * @param farmId Mã ID trang trại
-     * @return Danh sách vùng sản xuất theo phạm vi quyền
-     */
-    @Operation(summary = "Lấy danh sách vùng sản xuất", description = "Lấy danh sách vùng sản xuất của trang trại theo quyền truy cập.")
-    @GetMapping("/{farmId}/production-areas")
-    public ApiResponse<List<ProductionAreaResponse>> getProductionAreas(@PathVariable Long farmId) {
-        Long currentUserId = securityUtils.getCurrentUserId();
-        List<ProductionAreaResponse> areas = farmService.getProductionAreas(currentUserId, farmId);
-        return ApiResponse.ok("Production areas list", areas);
+    @Operation(summary = "Lấy danh sách thành viên trang trại", description = "Lấy toàn bộ thành viên đang hoạt động trong trang trại.")
+    @GetMapping("/{farmId}/members")
+    public ApiResponse<List<FarmMemberResponse>> getFarmMembers(@PathVariable UUID farmId) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
+        List<FarmMemberResponse> response = farmService.getFarmMembers(currentUserId, farmId);
+        return ApiResponse.ok("Farm members retrieved successfully", response);
+    }
+
+    @Operation(summary = "Xóa thành viên khỏi trang trại", description = "Vô hiệu hóa thành viên. Yêu cầu quyền OWNER hoặc ADMIN.")
+    @DeleteMapping("/{farmId}/members/{memberId}")
+    public ApiResponse<Void> removeMember(
+            @PathVariable UUID farmId,
+            @PathVariable UUID memberId) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
+        farmService.removeMember(currentUserId, farmId, memberId);
+        return ApiResponse.ok("Member removed successfully", null);
+    }
+
+    @Operation(summary = "Tạo vùng sản xuất / Zone mới", description = "Tạo phân khu sản xuất mới trong trang trại.")
+    @PostMapping({"/{farmId}/zones", "/{farmId}/production-areas"})
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<ZoneResponse> createZone(
+            @PathVariable UUID farmId,
+            @Valid @RequestBody CreateZoneRequest request) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
+        ZoneResponse response = farmService.createZone(currentUserId, farmId, request);
+        return ApiResponse.ok("Zone created successfully", response);
+    }
+
+    @Operation(summary = "Lấy danh sách vùng sản xuất / Zones", description = "Lấy danh sách các vùng sản xuất thuộc trang trại.")
+    @GetMapping({"/{farmId}/zones", "/{farmId}/production-areas"})
+    public ApiResponse<List<ZoneResponse>> getZones(@PathVariable UUID farmId) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
+        List<ZoneResponse> response = farmService.getZones(currentUserId, farmId);
+        return ApiResponse.ok("Zones retrieved successfully", response);
     }
 }

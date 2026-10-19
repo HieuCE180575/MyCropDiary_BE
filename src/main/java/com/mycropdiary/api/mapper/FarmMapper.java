@@ -3,8 +3,8 @@ package com.mycropdiary.api.mapper;
 import com.mycropdiary.api.dto.farm.*;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
-import com.mycropdiary.api.entity.ProductionArea;
-import com.mycropdiary.api.entity.StaffAreaAssignment;
+import com.mycropdiary.api.entity.StaffZoneAssignment;
+import com.mycropdiary.api.entity.Zone;
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,29 +18,17 @@ public class FarmMapper {
     public FarmSummaryResponse toSummary(Farm farm, String userRole) {
         return new FarmSummaryResponse(
                 farm.getId(),
-                farm.getFarmCode(),
                 farm.getFarmName(),
-                farm.getProvince(),
-                farm.getDistrict(),
-                farm.getTotalAreaM2(),
-                farm.getStatus(),
+                farm.getDescription(),
+                farm.getAddress(),
+                farm.getFarmStatus(),
+                farm.getCreatedAt(),
                 userRole
         );
     }
 
     public FarmSummaryResponse toSummary(Farm farm) {
-        return new FarmSummaryResponse(
-                farm.getId(),
-                farm.getFarmCode(),
-                farm.getFarmName(),
-                farm.getAddressLine(),
-                farm.getProvince(),
-                farm.getDistrict(),
-                farm.getWard(),
-                farm.getTotalAreaM2(),
-                farm.getStatus(),
-                farm.getCreatedAt()
-        );
+        return toSummary(farm, null);
     }
 
     /**
@@ -49,19 +37,15 @@ public class FarmMapper {
     public FarmResponse toResponse(Farm farm, String userRole) {
         return new FarmResponse(
                 farm.getId(),
-                farm.getRegistrationId(),
-                farm.getFarmCode(),
                 farm.getFarmName(),
-                farm.getAddressLine(),
-                farm.getProvince(),
-                farm.getDistrict(),
-                farm.getWard(),
+                farm.getDescription(),
+                farm.getAddress(),
                 farm.getLatitude(),
                 farm.getLongitude(),
-                farm.getTotalAreaM2(),
-                farm.getStatus(),
+                farm.getCoverImageUrl(),
+                farm.getFarmStatus(),
                 farm.getCreatedAt(),
-                null,
+                farm.getUpdatedAt(),
                 userRole
         );
     }
@@ -76,44 +60,42 @@ public class FarmMapper {
                 member.getUser().getId(),
                 member.getUser().getFullName(),
                 member.getUser().getEmail(),
-                member.getFarmRole(),
+                member.getMemberRole(),
                 member.getJobTitle(),
                 member.getJoinedAt(),
-                member.getStatus()
+                member.getMembershipStatus()
         );
     }
 
     /**
-     * Chuyển đổi Entity StaffAreaAssignment sang StaffAreaAssignmentResponse DTO (Phân công nhân viên).
+     * Chuyển đổi Entity StaffZoneAssignment sang StaffZoneAssignmentResponse DTO.
      */
-    public StaffAreaAssignmentResponse toAssignmentResponse(StaffAreaAssignment assignment) {
-        return new StaffAreaAssignmentResponse(
+    public StaffZoneAssignmentResponse toStaffZoneAssignmentResponse(StaffZoneAssignment assignment) {
+        return new StaffZoneAssignmentResponse(
                 assignment.getId(),
                 assignment.getFarmMember().getId(),
-                assignment.getProductionArea().getId(),
-                assignment.getProductionArea().getAreaCode(),
-                assignment.getProductionArea().getAreaName(),
-                assignment.getAssignedByMember() != null ? assignment.getAssignedByMember().getId() : null,
-                assignment.getStartDate(),
-                assignment.getEndDate(),
+                assignment.getZone().getId(),
+                assignment.getZone().getZoneName(),
+                null,
+                assignment.getAssignedAt(),
+                assignment.getEndedAt(),
                 assignment.isActive()
         );
     }
 
     /**
-     * Chuyển đổi Entity ProductionArea sang ProductionAreaResponse DTO (Vùng sản xuất).
+     * Chuyển đổi Entity Zone sang ZoneResponse DTO.
      */
-    public ProductionAreaResponse toProductionAreaResponse(ProductionArea area) {
-        return new ProductionAreaResponse(
-                area.getId(),
-                area.getFarm().getId(),
-                area.getAreaCode(),
-                area.getAreaName(),
-                area.getAreaM2(),
-                area.getDescription(),
-                area.getStatus(),
-                area.getCreatedAt(),
-                null
+    public ZoneResponse toZoneResponse(Zone zone) {
+        return new ZoneResponse(
+                zone.getId(),
+                zone.getFarm().getId(),
+                zone.getZoneName(),
+                zone.getAreaValue(),
+                zone.getAreaUnit(),
+                zone.getDescription(),
+                zone.getImageUrl(),
+                zone.getCreatedAt()
         );
     }
 }

@@ -22,9 +22,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,25 +46,25 @@ class KnowledgeArticleServiceTest {
     private KnowledgeArticle publicArticle;
     private KnowledgeArticle draftArticle;
 
+    private final UUID publicArticleId = UUID.randomUUID();
+    private final UUID draftArticleId = UUID.randomUUID();
+
     @BeforeEach
     void setUp() {
         publicArticle = new KnowledgeArticle();
-        publicArticle.setId(1L);
+        publicArticle.setId(publicArticleId);
         publicArticle.setTitle("Tomato Cultivation Guide");
         publicArticle.setSlug("tomato-cultivation-guide");
         publicArticle.setSummary("Complete guide to growing tomatoes");
-        publicArticle.setContent("Detailed content...");
-        publicArticle.setCategory("tomato");
-        publicArticle.setStatus(KnowledgeStatus.PUBLISHED);
-        publicArticle.setIsPublic(true);
-        publicArticle.setPublishedAt(LocalDateTime.now());
+        publicArticle.setBody("Detailed content...");
+        publicArticle.setArticleStatus("published");
+        publicArticle.setPublishedAt(Instant.now());
 
         draftArticle = new KnowledgeArticle();
-        draftArticle.setId(2L);
+        draftArticle.setId(draftArticleId);
         draftArticle.setTitle("Draft Article");
         draftArticle.setSlug("draft-article");
-        draftArticle.setStatus(KnowledgeStatus.DRAFT);
-        draftArticle.setIsPublic(true);
+        draftArticle.setArticleStatus("draft");
     }
 
     @Test
@@ -85,12 +86,12 @@ class KnowledgeArticleServiceTest {
     @Test
     @DisplayName("UC-02: Guest can get public article detail by ID")
     void getPublicArticleById_Success() {
-        when(knowledgeArticleRepository.findById(1L)).thenReturn(Optional.of(publicArticle));
+        when(knowledgeArticleRepository.findById(publicArticleId)).thenReturn(Optional.of(publicArticle));
 
-        KnowledgeArticleResponseDTO response = knowledgeArticleService.getPublicArticleById(1L);
+        KnowledgeArticleResponseDTO response = knowledgeArticleService.getPublicArticleById(publicArticleId);
 
         assertNotNull(response);
-        assertEquals(1L, response.id());
+        assertEquals(publicArticleId, response.id());
         assertEquals("Tomato Cultivation Guide", response.title());
         assertEquals(KnowledgeStatus.PUBLISHED, response.status());
     }
@@ -98,16 +99,17 @@ class KnowledgeArticleServiceTest {
     @Test
     @DisplayName("UC-02: Throw ResourceNotFoundException when article is DRAFT")
     void getPublicArticleById_DraftArticle_ThrowsException() {
-        when(knowledgeArticleRepository.findById(2L)).thenReturn(Optional.of(draftArticle));
+        when(knowledgeArticleRepository.findById(draftArticleId)).thenReturn(Optional.of(draftArticle));
 
-        assertThrows(ResourceNotFoundException.class, () -> knowledgeArticleService.getPublicArticleById(2L));
+        assertThrows(ResourceNotFoundException.class, () -> knowledgeArticleService.getPublicArticleById(draftArticleId));
     }
 
     @Test
     @DisplayName("UC-02: Throw ResourceNotFoundException when article ID does not exist")
     void getPublicArticleById_NotFound_ThrowsException() {
-        when(knowledgeArticleRepository.findById(99L)).thenReturn(Optional.empty());
+        UUID nonExistentId = UUID.randomUUID();
+        when(knowledgeArticleRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> knowledgeArticleService.getPublicArticleById(99L));
+        assertThrows(ResourceNotFoundException.class, () -> knowledgeArticleService.getPublicArticleById(nonExistentId));
     }
 }

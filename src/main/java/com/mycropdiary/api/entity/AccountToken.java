@@ -2,91 +2,94 @@ package com.mycropdiary.api.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.UUID;
 
-// [AI_CHANGE] Root cause: Cần bảng AccountToken quản lý OTP xác thực email và Refresh Token
-// [AI_CHANGE] Mechanism: Ánh xạ chính xác bảng dbo.AccountToken trong MyCropDiary_SQLServer.sql
 @Entity
-@Table(name = "AccountToken", schema = "dbo")
+@Table(name = "AccountToken")
 public class AccountToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "TokenID")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "token_id", updatable = false, nullable = false)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "UserID", nullable = false)
-    private AppUser user;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "TokenHash", nullable = false, unique = true)
+    @Column(name = "token_hash", nullable = false, unique = true, length = 255)
     private String tokenHash;
 
-    @Column(name = "TokenType", nullable = false, length = 30)
+    @Column(name = "token_type", nullable = false, length = 30)
     private String tokenType;
 
-    @Column(name = "ExpiresAt", nullable = false)
+    @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
-    @Column(name = "UsedAt")
+    @Column(name = "used_at")
     private Instant usedAt;
 
-    @Column(name = "RevokedAt")
-    private Instant revokedAt;
-
-    @Column(name = "CreatedAt", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    protected AccountToken() { }
+    @PrePersist
+    void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
 
-    // [AI_CHANGE] Factory method cho tạo OTP token mới
-    public static AccountToken createOtp(AppUser user, String otpHash, Instant expiresAt) {
+    public AccountToken() { }
+
+    public static AccountToken createOtp(User user, String otpHash, Instant expiresAt) {
         AccountToken token = new AccountToken();
         token.user = user;
         token.tokenHash = otpHash;
-        token.tokenType = "EMAIL_OTP";
+        token.tokenType = "email_verification";
         token.expiresAt = expiresAt;
         token.createdAt = Instant.now();
         return token;
     }
 
-    // [AI_CHANGE] Factory method cho tạo Refresh Token mới
-    public static AccountToken createRefreshToken(AppUser user, String tokenHash, Instant expiresAt) {
+    public static AccountToken createRefreshToken(User user, String tokenHash, Instant expiresAt) {
         AccountToken token = new AccountToken();
         token.user = user;
         token.tokenHash = tokenHash;
-        token.tokenType = "REFRESH_TOKEN";
+        token.tokenType = "refresh";
         token.expiresAt = expiresAt;
         token.createdAt = Instant.now();
         return token;
     }
 
-    // [AI_CHANGE] Root cause: UC-06 cần OTP riêng cho luồng quên mật khẩu (PASSWORD_RESET)
-    // [AI_CHANGE] Mechanism: Factory method tạo token type PASSWORD_RESET, tách biệt với EMAIL_OTP đăng ký
-    public static AccountToken createPasswordResetOtp(AppUser user, String otpHash, Instant expiresAt) {
+    public static AccountToken createPasswordResetOtp(User user, String otpHash, Instant expiresAt) {
         AccountToken token = new AccountToken();
         token.user = user;
         token.tokenHash = otpHash;
-        token.tokenType = "PASSWORD_RESET";
+        token.tokenType = "password_reset";
         token.expiresAt = expiresAt;
         token.createdAt = Instant.now();
         return token;
     }
 
-    // --- Getters ---
-    public Long getId() { return id; }
-    public AppUser getUser() { return user; }
+    // --- Getters & Setters ---
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
     public String getTokenHash() { return tokenHash; }
+    public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
     public String getTokenType() { return tokenType; }
+    public void setTokenType(String tokenType) { this.tokenType = tokenType; }
     public Instant getExpiresAt() { return expiresAt; }
+    public void setExpiresAt(Instant expiresAt) { this.expiresAt = expiresAt; }
     public Instant getUsedAt() { return usedAt; }
-    public Instant getRevokedAt() { return revokedAt; }
+    public void setUsedAt(Instant usedAt) { this.usedAt = usedAt; }
     public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     // --- Business methods ---
     public boolean isExpired() { return Instant.now().isAfter(expiresAt); }
     public boolean isUsed() { return usedAt != null; }
-    public boolean isRevoked() { return revokedAt != null; }
-    public boolean isValid() { return !isExpired() && !isUsed() && !isRevoked(); }
-
+    public boolean isValid() { return !isExpired() && !isUsed(); }
     public void markUsed() { this.usedAt = Instant.now(); }
-    public void revoke() { this.revokedAt = Instant.now(); }
+    public void revoke() { this.usedAt = Instant.now(); } // marks used since revoked_at is omitted
 }

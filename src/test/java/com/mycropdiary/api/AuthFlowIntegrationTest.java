@@ -4,9 +4,9 @@ import com.mycropdiary.api.dto.auth.AuthResponse;
 import com.mycropdiary.api.dto.auth.RegisterRequest;
 import com.mycropdiary.api.dto.auth.VerifyOtpRequest;
 import com.mycropdiary.api.entity.AccountToken;
-import com.mycropdiary.api.entity.AppUser;
+import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.repository.AccountTokenRepository;
-import com.mycropdiary.api.repository.AppUserRepository;
+import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.mail.javamail.JavaMailSender;
+
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,7 +32,7 @@ class AuthFlowIntegrationTest {
     private AuthService authService;
 
     @Autowired
-    private AppUserRepository appUserRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private AccountTokenRepository accountTokenRepository;
@@ -56,19 +58,16 @@ class AuthFlowIntegrationTest {
         authService.register(registerReq);
 
         // 2. Tìm user và OTP trong CSDL
-        AppUser user = appUserRepository.findByEmailIgnoreCase(testEmail).orElseThrow();
-        assertThat(user.getAccountStatus()).isEqualTo("PENDING");
+        User user = userRepository.findByEmailIgnoreCase(testEmail).orElseThrow();
+        assertThat(user.getAccountStatus()).isEqualToIgnoringCase("pending");
 
         AccountToken otpEntity = accountTokenRepository
-                .findFirstByUser_IdAndTokenTypeAndUsedAtIsNullAndRevokedAtIsNullOrderByCreatedAtDesc(user.getId(), "EMAIL_OTP")
+                .findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(user.getId(), "email_verification")
                 .orElseThrow();
 
         // 3. Giả lập người dùng nhập mã OTP đúng
-        // Vì OTP entity lưu BCrypt hash, ta tìm mã 6 số khớp hoặc test trực tiếp với OTP
-        // Ở đây để test issueTokens không bị lỗi 72 bytes:
-        // Đổi OTP token thành hash của "123456"
         AccountToken newOtp = AccountToken.createOtp(user, passwordEncoder.encode("123456"), otpEntity.getExpiresAt());
-        otpEntity.revoke();
+        otpEntity.setUsedAt(Instant.now());
         accountTokenRepository.save(otpEntity);
         accountTokenRepository.save(newOtp);
 
@@ -82,7 +81,7 @@ class AuthFlowIntegrationTest {
         assertThat(authResponse.refreshToken()).isNotBlank();
         assertThat(authResponse.email()).isEqualTo(testEmail);
 
-        AppUser activatedUser = appUserRepository.findByEmailIgnoreCase(testEmail).orElseThrow();
-        assertThat(activatedUser.getAccountStatus()).isEqualTo("ACTIVE");
+        User activatedUser = userRepository.findByEmailIgnoreCase(testEmail).orElseThrow();
+        assertThat(activatedUser.getAccountStatus()).isEqualToIgnoringCase("active");
     }
 }

@@ -6,16 +6,16 @@ import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordRequest;
 import com.mycropdiary.api.dto.cultivation.HarvestRecordResponse;
 import com.mycropdiary.api.service.cultivation.HarvestRecordService;
 import com.mycropdiary.api.util.SecurityUtils;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 /**
  * Controller quản lý REST API cho Bản ghi thu hoạch (UC-26).
@@ -41,7 +41,7 @@ public class HarvestRecordController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<HarvestRecordResponse> createHarvestRecord(@Valid @RequestBody CreateHarvestRecordRequest request) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+        UUID currentUserId = securityUtils.getCurrentUserId();
         HarvestRecordResponse response = harvestRecordService.createHarvestRecord(currentUserId, request);
         return ApiResponse.ok("Ghi nhận thu hoạch thành công.", response);
     }
@@ -52,9 +52,9 @@ public class HarvestRecordController {
     @Operation(summary = "Xem lịch sử thu hoạch theo mùa vụ", description = "Lấy danh sách các bản ghi thu hoạch của mùa vụ canh tác (có phân trang).")
     @GetMapping
     public ApiResponse<PageResponse<HarvestRecordResponse>> getHarvestRecordsBySeason(
-            @RequestParam("cropSeasonId") Long cropSeasonId,
+            @RequestParam("cropSeasonId") UUID cropSeasonId,
             @PageableDefault(size = 20) Pageable pageable) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+        UUID currentUserId = securityUtils.getCurrentUserId();
         PageResponse<HarvestRecordResponse> response = harvestRecordService.getHarvestRecordsBySeason(currentUserId, cropSeasonId, pageable);
         return ApiResponse.ok("Lấy danh sách thu hoạch thành công.", response);
     }
@@ -64,8 +64,8 @@ public class HarvestRecordController {
      */
     @Operation(summary = "Xem chi tiết bản ghi thu hoạch", description = "Lấy thông tin chi tiết bản ghi thu hoạch theo ID.")
     @GetMapping("/{harvestRecordId}")
-    public ApiResponse<HarvestRecordResponse> getHarvestRecordById(@PathVariable("harvestRecordId") Long harvestRecordId) {
-        Long currentUserId = securityUtils.getCurrentUserId();
+    public ApiResponse<HarvestRecordResponse> getHarvestRecordById(@PathVariable("harvestRecordId") UUID harvestRecordId) {
+        UUID currentUserId = securityUtils.getCurrentUserId();
         HarvestRecordResponse response = harvestRecordService.getHarvestRecordById(currentUserId, harvestRecordId);
         return ApiResponse.ok("Lấy chi tiết bản ghi thu hoạch thành công.", response);
     }

@@ -1,12 +1,11 @@
 package com.mycropdiary.api.dto.farm;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-// [AI_CHANGE] Root cause: UC-39 cần DTO trả về thông tin đơn đăng ký farm cho Admin xem và xử lý
-// [AI_CHANGE] Mechanism: Java Record chứa đầy đủ thông tin FarmRegistration + applicant info
 public record FarmRegistrationResponse(
-        Long registrationId,
-        Long applicantUserId,
+        UUID registrationId,
+        UUID applicantUserId,
         String applicantEmail,
         String applicantFullName,
         String farmName,
@@ -17,7 +16,7 @@ public record FarmRegistrationResponse(
         String description,
         String documentUrl,
         String status,
-        Long handlerUserId,
+        UUID handlerUserId,
         String handlerFullName,
         LocalDateTime submittedAt,
         LocalDateTime handledAt,

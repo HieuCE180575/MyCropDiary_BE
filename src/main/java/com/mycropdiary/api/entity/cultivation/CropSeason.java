@@ -1,121 +1,115 @@
 package com.mycropdiary.api.entity.cultivation;
 
 import com.mycropdiary.api.entity.Farm;
-import com.mycropdiary.api.entity.FarmMember;
-import com.mycropdiary.api.entity.Plot;
+import com.mycropdiary.api.entity.User;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
- * Entity biểu diễn bảng dbo.CropSeason (Mùa vụ canh tác nông nghiệp).
+ * Entity biểu diễn bảng [CropSeason] (Mùa vụ canh tác).
+ * Khớp 100% với ERD mới.
  */
 @Entity
-@Table(name = "CropSeason", schema = "dbo", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"FarmID", "SeasonCode"})
-})
+@Table(name = "CropSeason")
 public class CropSeason {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "CropSeasonID")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "crop_season_id", updatable = false, nullable = false)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "FarmID", nullable = false)
+    @JoinColumn(name = "farm_id", nullable = false)
     private Farm farm;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "PlotID", nullable = false)
-    private Plot plot;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "crop_category_id", nullable = false)
+    private CropCategory cropCategory;
 
-    @Column(name = "CropCategoryID", nullable = false)
-    private Long cropCategoryId;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "CreatedByMemberID", nullable = false)
-    private FarmMember createdByMember;
-
-    @Column(name = "SeasonCode", nullable = false, length = 40)
-    private String seasonCode;
-
-    @Column(name = "SeasonName", nullable = false, length = 200)
+    @Column(name = "season_name", nullable = false, length = 120)
     private String seasonName;
 
-    @Column(name = "VarietyName", length = 150)
-    private String varietyName;
-
-    @Column(name = "StartDate", nullable = false)
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
-    @Column(name = "ExpectedHarvestDate")
-    private LocalDate expectedHarvestDate;
+    @Column(name = "end_date")
+    private LocalDate endDate;
 
-    @Column(name = "ActualEndDate")
-    private LocalDate actualEndDate;
+    @Column(name = "season_status", nullable = false, length = 20)
+    private String seasonStatus = "planned"; // planned, active, completed, cancelled
 
-    @Column(name = "CultivatedAreaM2", precision = 18, scale = 2)
-    private BigDecimal cultivatedAreaM2;
-
-    @Column(name = "Status", nullable = false, length = 20)
-    private String status = "PLANNED"; // PLANNED, ACTIVE, HARVESTING, COMPLETED, CANCELLED
-
-    @Column(name = "Notes", length = 2000)
+    @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @PrePersist
+    void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
 
     public CropSeason() { }
 
-    public CropSeason(Farm farm, Plot plot, Long cropCategoryId, FarmMember createdByMember,
-                      String seasonCode, String seasonName, LocalDate startDate) {
+    public CropSeason(Farm farm, CropCategory cropCategory, String seasonName, LocalDate startDate) {
         this.farm = farm;
-        this.plot = plot;
-        this.cropCategoryId = cropCategoryId;
-        this.createdByMember = createdByMember;
-        this.seasonCode = seasonCode;
+        this.cropCategory = cropCategory;
         this.seasonName = seasonName;
         this.startDate = startDate;
-        this.status = "ACTIVE";
+        this.seasonStatus = "active";
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public Farm getFarm() { return farm; }
     public void setFarm(Farm farm) { this.farm = farm; }
 
-    public Plot getPlot() { return plot; }
-    public void setPlot(Plot plot) { this.plot = plot; }
+    public CropCategory getCropCategory() { return cropCategory; }
+    public void setCropCategory(CropCategory cropCategory) { this.cropCategory = cropCategory; }
 
-    public Long getCropCategoryId() { return cropCategoryId; }
-    public void setCropCategoryId(Long cropCategoryId) { this.cropCategoryId = cropCategoryId; }
-
-    public FarmMember getCreatedByMember() { return createdByMember; }
-    public void setCreatedByMember(FarmMember createdByMember) { this.createdByMember = createdByMember; }
-
-    public String getSeasonCode() { return seasonCode; }
-    public void setSeasonCode(String seasonCode) { this.seasonCode = seasonCode; }
+    public UUID getCropCategoryId() {
+        return cropCategory != null ? cropCategory.getId() : null;
+    }
 
     public String getSeasonName() { return seasonName; }
     public void setSeasonName(String seasonName) { this.seasonName = seasonName; }
 
-    public String getVarietyName() { return varietyName; }
-    public void setVarietyName(String varietyName) { this.varietyName = varietyName; }
-
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    public LocalDate getExpectedHarvestDate() { return expectedHarvestDate; }
-    public void setExpectedHarvestDate(LocalDate expectedHarvestDate) { this.expectedHarvestDate = expectedHarvestDate; }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
-    public LocalDate getActualEndDate() { return actualEndDate; }
-    public void setActualEndDate(LocalDate actualEndDate) { this.actualEndDate = actualEndDate; }
-
-    public BigDecimal getCultivatedAreaM2() { return cultivatedAreaM2; }
-    public void setCultivatedAreaM2(BigDecimal cultivatedAreaM2) { this.cultivatedAreaM2 = cultivatedAreaM2; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getSeasonStatus() { return seasonStatus; }
+    public void setSeasonStatus(String seasonStatus) {
+        this.seasonStatus = seasonStatus != null ? seasonStatus.toLowerCase() : "planned";
+    }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public User getCreatedBy() { return createdBy; }
+    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    // --- Backward compatibility helpers ---
+    public String getStatus() { return seasonStatus; }
+    public void setStatus(String status) { setSeasonStatus(status); }
+
+    public String getSeasonCode() { return seasonName; }
+    public void setSeasonCode(String seasonCode) { this.seasonName = seasonCode; }
+
+    public com.mycropdiary.api.entity.Block getPlot() { return null; }
+    public void setPlot(com.mycropdiary.api.entity.Block block) { }
 }

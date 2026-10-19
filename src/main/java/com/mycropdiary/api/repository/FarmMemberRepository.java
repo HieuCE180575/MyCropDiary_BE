@@ -7,50 +7,47 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repository thao tác cơ sở dữ liệu cho Entity FarmMember (Thành viên trang trại).
  */
-public interface FarmMemberRepository extends JpaRepository<FarmMember, Long> {
-    /** Tìm thành viên theo Farm ID và User ID */
-    Optional<FarmMember> findByFarmIdAndUserId(Long farmId, Long userId);
+public interface FarmMemberRepository extends JpaRepository<FarmMember, UUID> {
+    Optional<FarmMember> findByFarmIdAndUserId(UUID farmId, UUID userId);
 
-    /** Tìm thành viên theo Farm ID, User ID và trạng thái */
-    Optional<FarmMember> findByFarmIdAndUserIdAndStatus(Long farmId, Long userId, String status);
+    @Query("SELECT fm FROM FarmMember fm WHERE fm.farm.id = :farmId AND fm.user.id = :userId AND LOWER(fm.membershipStatus) = LOWER(:status)")
+    Optional<FarmMember> findByFarmIdAndUserIdAndStatus(@Param("farmId") UUID farmId, @Param("userId") UUID userId, @Param("status") String status);
 
-    /** Lấy danh sách thành viên trang trại theo trạng thái */
-    List<FarmMember> findByFarmIdAndStatus(Long farmId, String status);
+    @Query("SELECT fm FROM FarmMember fm WHERE fm.farm.id = :farmId AND LOWER(fm.membershipStatus) = LOWER(:status)")
+    List<FarmMember> findByFarmIdAndStatus(@Param("farmId") UUID farmId, @Param("status") String status);
 
-    /** Lấy toàn bộ danh sách thành viên của một trang trại */
-    List<FarmMember> findByFarmId(Long farmId);
+    List<FarmMember> findByFarmId(UUID farmId);
 
-    /** Lấy danh sách thành viên theo User ID và trạng thái */
-    List<FarmMember> findByUserIdAndStatus(Long userId, String status);
+    @Query("SELECT fm FROM FarmMember fm WHERE fm.user.id = :userId AND LOWER(fm.membershipStatus) = LOWER(:status)")
+    List<FarmMember> findByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") String status);
 
-    /** Kiểm tra xem thành viên có tồn tại trong trang trại với trạng thái nhất định hay không */
-    boolean existsByFarmIdAndUserIdAndStatus(Long farmId, Long userId, String status);
+    @Query("SELECT COUNT(fm) > 0 FROM FarmMember fm WHERE fm.farm.id = :farmId AND fm.user.id = :userId AND LOWER(fm.membershipStatus) = LOWER(:status)")
+    boolean existsByFarmIdAndUserIdAndStatus(@Param("farmId") UUID farmId, @Param("userId") UUID userId, @Param("status") String status);
 
-    /** BR-01: Kiểm tra trang trại đã có thành viên với vai trò và trạng thái nhất định (dùng kiểm tra Active OWNER) */
-    boolean existsByFarmIdAndFarmRoleAndStatus(Long farmId, String farmRole, String status);
+    @Query("SELECT COUNT(fm) > 0 FROM FarmMember fm WHERE fm.farm.id = :farmId AND LOWER(fm.memberRole) = LOWER(:farmRole) AND LOWER(fm.membershipStatus) = LOWER(:status)")
+    boolean existsByFarmIdAndFarmRoleAndStatus(@Param("farmId") UUID farmId, @Param("farmRole") String farmRole, @Param("status") String status);
 
-    /** BR-02: Đếm số lượng thành viên active theo vai trò (dùng bảo vệ Active OWNER duy nhất) */
-    long countByFarmIdAndFarmRoleAndStatus(Long farmId, String farmRole, String status);
+    @Query("SELECT COUNT(fm) FROM FarmMember fm WHERE fm.farm.id = :farmId AND LOWER(fm.memberRole) = LOWER(:farmRole) AND LOWER(fm.membershipStatus) = LOWER(:status)")
+    long countByFarmIdAndFarmRoleAndStatus(@Param("farmId") UUID farmId, @Param("farmRole") String farmRole, @Param("status") String status);
 
-    /** Lấy vai trò active của người dùng trong trang trại */
-    @Query("SELECT fm.farmRole FROM FarmMember fm WHERE fm.farm.id = :farmId AND fm.user.id = :userId AND fm.status = 'ACTIVE'")
-    Optional<String> findActiveRoleInFarm(@Param("farmId") Long farmId, @Param("userId") Long userId);
+    @Query("SELECT fm.memberRole FROM FarmMember fm WHERE fm.farm.id = :farmId AND fm.user.id = :userId AND LOWER(fm.membershipStatus) = 'active'")
+    Optional<String> findActiveRoleInFarm(@Param("farmId") UUID farmId, @Param("userId") UUID userId);
 
-    boolean existsByFarmIdAndUserId(Long farmId, Long userId);
+    boolean existsByFarmIdAndUserId(UUID farmId, UUID userId);
 
     @Query("SELECT fm FROM FarmMember fm " +
            "JOIN FETCH fm.user u " +
            "WHERE fm.farm.id = :farmId " +
-           "AND (:status IS NULL OR fm.status = :status) " +
+           "AND (:status IS NULL OR LOWER(fm.membershipStatus) = LOWER(:status)) " +
            "AND (:keyword IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "     OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "     OR LOWER(fm.jobTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "     OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "ORDER BY fm.joinedAt DESC")
-    List<FarmMember> searchMembers(@Param("farmId") Long farmId, 
-                                  @Param("status") String status, 
-                                  @Param("keyword") String keyword);
+    List<FarmMember> searchMembers(@Param("farmId") UUID farmId, 
+                                   @Param("status") String status, 
+                                   @Param("keyword") String keyword);
 }

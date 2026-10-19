@@ -1,19 +1,20 @@
 package com.mycropdiary.api.dto.staff;
 
-import java.time.LocalDate;
+import java.time.Instant;
+import java.util.UUID;
 
 public record FarmMemberResponse(
-        Long id,
-        Long farmId,
+        UUID id,
+        UUID farmId,
         String farmName,
-        Long userId,
+        UUID userId,
         String fullName,
         String email,
         String phoneNumber,
         String farmRole,
         String jobTitle,
-        LocalDate joinedAt,
-        LocalDate leftAt,
+        Instant joinedAt,
+        Instant leftAt,
         String status,
         int activeAssignmentCount
 ) {

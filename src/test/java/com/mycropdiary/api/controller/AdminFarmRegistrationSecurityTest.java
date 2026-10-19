@@ -13,6 +13,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.UUID;
+
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -58,7 +60,7 @@ class AdminFarmRegistrationSecurityTest {
     @Test
     @DisplayName("GET /api/v1/admin/farm-registrations với token USER -> Trả về 403 Forbidden")
     void getRegistrations_UserRole_Returns403() throws Exception {
-        String userToken = jwtTokenProvider.generateAccessToken(99L, "farmer@test.com", "USER");
+        String userToken = jwtTokenProvider.generateAccessToken(UUID.randomUUID(), "farmer@test.com", "USER");
 
         mockMvc.perform(get("/api/v1/admin/farm-registrations")
                         .header("Authorization", "Bearer " + userToken)
@@ -71,7 +73,7 @@ class AdminFarmRegistrationSecurityTest {
     @Test
     @DisplayName("GET /api/v1/admin/farm-registrations với token ADMIN -> Trả về 200 OK")
     void getRegistrations_AdminRole_Returns200() throws Exception {
-        String adminToken = jwtTokenProvider.generateAccessToken(1L, "admin@mycropdiary.com", "ADMIN");
+        String adminToken = jwtTokenProvider.generateAccessToken(UUID.randomUUID(), "admin@mycropdiary.com", "ADMIN");
 
         mockMvc.perform(get("/api/v1/admin/farm-registrations")
                         .header("Authorization", "Bearer " + adminToken)
@@ -82,12 +84,12 @@ class AdminFarmRegistrationSecurityTest {
     }
 
     @Test
-    @DisplayName("PUT /api/v1/admin/farm-registrations/1/handle với token USER -> Trả về 403 Forbidden")
+    @DisplayName("PUT /api/v1/admin/farm-registrations/{id}/handle với token USER -> Trả về 403 Forbidden")
     void handleRegistration_UserRole_Returns403() throws Exception {
-        String userToken = jwtTokenProvider.generateAccessToken(99L, "farmer@test.com", "USER");
+        String userToken = jwtTokenProvider.generateAccessToken(UUID.randomUUID(), "farmer@test.com", "USER");
         HandleRegistrationRequest request = new HandleRegistrationRequest("APPROVED", null);
 
-        mockMvc.perform(put("/api/v1/admin/farm-registrations/1/handle")
+        mockMvc.perform(put("/api/v1/admin/farm-registrations/" + UUID.randomUUID() + "/handle")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

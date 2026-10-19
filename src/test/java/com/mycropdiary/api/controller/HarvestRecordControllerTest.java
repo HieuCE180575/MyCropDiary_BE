@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -51,34 +52,41 @@ class HarvestRecordControllerTest {
     @InjectMocks
     private HarvestRecordController harvestRecordController;
 
+    private final UUID userId = UUID.randomUUID();
+    private final UUID harvestRecordId = UUID.randomUUID();
+    private final UUID cropSeasonId = UUID.randomUUID();
+    private final UUID farmId = UUID.randomUUID();
+    private final UUID plotId = UUID.randomUUID();
+    private final UUID recordedByMemberId = UUID.randomUUID();
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(harvestRecordController)
                 .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
-        lenient().when(securityUtils.getCurrentUserId()).thenReturn(1L);
+        lenient().when(securityUtils.getCurrentUserId()).thenReturn(userId);
     }
 
     @Test
     @DisplayName("POST /api/v1/harvest-records -> 201 Created khi tạo thành công")
     void createHarvestRecord_Success() throws Exception {
         CreateHarvestRecordRequest request = new CreateHarvestRecordRequest(
-                50L, "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
+                cropSeasonId, "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
         HarvestRecordResponse response = new HarvestRecordResponse(
-                10L, 50L, "S2026", "Mùa Vụ Đông Xuân", 1L, "Nông trại Việt", 100L, "P01", "Thửa 1",
-                20L, "Chủ Nông Trại", "LOT-001", request.harvestedAt(), request.quantity(), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
+                harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
+                recordedByMemberId, "Chủ Nông Trại", "LOT-001", request.harvestedAt(), request.quantity(), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
-        when(harvestRecordService.createHarvestRecord(eq(1L), any(CreateHarvestRecordRequest.class))).thenReturn(response);
+        when(harvestRecordService.createHarvestRecord(eq(userId), any(CreateHarvestRecordRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/harvest-records")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.harvestRecordId").value(10))
+                .andExpect(jsonPath("$.data.harvestRecordId").value(harvestRecordId.toString()))
                 .andExpect(jsonPath("$.data.harvestLotCode").value("LOT-001"));
     }
 
@@ -96,38 +104,38 @@ class HarvestRecordControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/harvest-records?cropSeasonId=50 -> 200 OK với PageResponse")
+    @DisplayName("GET /api/v1/harvest-records?cropSeasonId=... -> 200 OK với PageResponse")
     void getHarvestRecordsBySeason_Success() throws Exception {
         HarvestRecordResponse response = new HarvestRecordResponse(
-                10L, 50L, "S2026", "Mùa Vụ Đông Xuân", 1L, "Nông trại Việt", 100L, "P01", "Thửa 1",
-                20L, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
+                harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
+                recordedByMemberId, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
         PageResponse<HarvestRecordResponse> pageResponse = PageResponse.from(new PageImpl<>(List.of(response)));
 
-        when(harvestRecordService.getHarvestRecordsBySeason(eq(1L), eq(50L), any(Pageable.class)))
+        when(harvestRecordService.getHarvestRecordsBySeason(eq(userId), eq(cropSeasonId), any(Pageable.class)))
                 .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/v1/harvest-records")
-                        .param("cropSeasonId", "50"))
+                        .param("cropSeasonId", cropSeasonId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.content[0].harvestRecordId").value(10));
+                .andExpect(jsonPath("$.data.items[0].harvestRecordId").value(harvestRecordId.toString()));
     }
 
     @Test
-    @DisplayName("GET /api/v1/harvest-records/10 -> 200 OK với chi tiết bản ghi")
+    @DisplayName("GET /api/v1/harvest-records/{id} -> 200 OK với chi tiết bản ghi")
     void getHarvestRecordById_Success() throws Exception {
         HarvestRecordResponse response = new HarvestRecordResponse(
-                10L, 50L, "S2026", "Mùa Vụ Đông Xuân", 1L, "Nông trại Việt", 100L, "P01", "Thửa 1",
-                20L, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
+                harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
+                recordedByMemberId, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
-        when(harvestRecordService.getHarvestRecordById(1L, 10L)).thenReturn(response);
+        when(harvestRecordService.getHarvestRecordById(userId, harvestRecordId)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/harvest-records/10"))
+        mockMvc.perform(get("/api/v1/harvest-records/" + harvestRecordId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.harvestRecordId").value(10));
+                .andExpect(jsonPath("$.data.harvestRecordId").value(harvestRecordId.toString()));
     }
 }

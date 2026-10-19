@@ -14,9 +14,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
-// [AI_CHANGE] Root cause: Cần filter chặn mọi request, trích xuất JWT từ header Authorization
-// [AI_CHANGE] Mechanism: Parse Bearer token -> validate -> đặt Authentication vào SecurityContext
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
@@ -32,15 +31,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwt = extractJwtFromRequest(request);
 
         if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-            Long userId = jwtTokenProvider.getUserIdFromToken(jwt);
+            UUID userId = jwtTokenProvider.getUserIdFromToken(jwt);
             String role = jwtTokenProvider.getRoleFromToken(jwt);
 
-            // [AI_CHANGE] Tạo Authentication từ claims trong JWT, không cần truy vấn DB mỗi request
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             userId,
                             null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                            List.of(new SimpleGrantedAuthority("ROLE_" + (role != null ? role.toUpperCase() : "USER")))
                     );
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);

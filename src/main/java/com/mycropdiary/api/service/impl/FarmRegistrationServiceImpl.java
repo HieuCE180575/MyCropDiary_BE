@@ -5,18 +5,19 @@ import com.mycropdiary.api.dto.farm.FarmRegistrationResponse;
 import com.mycropdiary.api.dto.farm.HandleRegistrationRequest;
 import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateRequest;
 import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResponse;
-import com.mycropdiary.api.entity.AppUser;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
+import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.farmregistration.FarmRegistration;
 import com.mycropdiary.api.entity.farmregistration.FarmRegistrationStatus;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
-import com.mycropdiary.api.repository.AppUserRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
+import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.farmregistration.FarmRegistrationRepository;
+import com.mycropdiary.api.service.farmregistration.FarmRegistrationService;
 import com.mycropdiary.api.util.EmailTemplateBuilder;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
@@ -32,11 +33,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
-import com.mycropdiary.api.service.farmregistration.FarmRegistrationService;
 
 /**
  * Service implementation cho cả nghiệp vụ Admin duyệt đơn (UC-39) và User đăng ký trang trại (UC-09).
@@ -50,7 +49,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     private final FarmRegistrationRepository farmRegistrationRepository;
     private final FarmRepository farmRepository;
     private final FarmMemberRepository farmMemberRepository;
-    private final AppUserRepository appUserRepository;
+    private final UserRepository userRepository;
 
     @Autowired(required = false)
     private JavaMailSender mailSender;
@@ -61,15 +60,15 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     public FarmRegistrationServiceImpl(FarmRegistrationRepository farmRegistrationRepository,
                                        FarmRepository farmRepository,
                                        FarmMemberRepository farmMemberRepository,
-                                       AppUserRepository appUserRepository) {
+                                       UserRepository userRepository) {
         this.farmRegistrationRepository = farmRegistrationRepository;
         this.farmRepository = farmRepository;
         this.farmMemberRepository = farmMemberRepository;
-        this.appUserRepository = appUserRepository;
+        this.userRepository = userRepository;
     }
 
-    private AppUser validateAndGetActiveUser(Long userId) {
-        AppUser user = appUserRepository.findById(userId)
+    private User validateAndGetActiveUser(UUID userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài khoản người dùng không tồn tại."));
         if (!user.isActive() || user.isLocked()) {
             throw new ForbiddenException("Tài khoản chưa được kích hoạt hoặc đã bị khóa.");
@@ -82,29 +81,24 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     @Override
     @Transactional
     public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse createRegistration(
-            Long currentUserId, FarmRegistrationCreateRequest request) {
-        AppUser applicantUser = validateAndGetActiveUser(currentUserId);
+            UUID currentUserId, FarmRegistrationCreateRequest request) {
+        User applicantUser = validateAndGetActiveUser(currentUserId);
 
         FarmRegistration registration = new FarmRegistration();
-        registration.setApplicantUser(applicantUser);
+        registration.setUser(applicantUser);
         registration.setFarmName(request.farmName().trim());
-        registration.setAddressLine(request.addressLine().trim());
-        registration.setProvince(request.province() != null ? request.province().trim() : null);
-        registration.setDistrict(request.district() != null ? request.district().trim() : null);
-        registration.setWard(request.ward() != null ? request.ward().trim() : null);
-        registration.setDescription(request.description() != null ? request.description().trim() : null);
-        registration.setDocumentUrl(request.documentUrl() != null ? request.documentUrl().trim() : null);
-        registration.setStatus(FarmRegistrationStatus.PENDING);
-        registration.setHandlerUser(null);
-        registration.setHandledAt(null);
-        registration.setRejectionReason(null);
+        registration.setAddress(request.addressLine().trim());
+        registration.setRegistrationNote(request.description() != null ? request.description().trim() : null);
+        registration.setRegistrationStatus("pending");
+        registration.setReviewedBy(null);
+        registration.setReviewedAt(null);
 
         FarmRegistration saved = farmRegistrationRepository.save(registration);
         return mapToUserResponse(saved);
     }
 
     @Override
-    public PageResponse<FarmRegistrationSummaryResponse> getMyRegistrations(Long currentUserId, Pageable pageable) {
+    public PageResponse<FarmRegistrationSummaryResponse> getMyRegistrations(UUID currentUserId, Pageable pageable) {
         validateAndGetActiveUser(currentUserId);
         Page<FarmRegistration> page = farmRegistrationRepository.findByApplicantUserId(currentUserId, pageable);
         return PageResponse.map(page, this::mapToSummaryResponse);
@@ -112,7 +106,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
 
     @Override
     public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse getMyRegistrationDetail(
-            Long currentUserId, Long registrationId) {
+            UUID currentUserId, UUID registrationId) {
         validateAndGetActiveUser(currentUserId);
         FarmRegistration registration = farmRegistrationRepository
                 .findByIdAndApplicantUserId(registrationId, currentUserId)
@@ -123,26 +117,26 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     @Override
     @Transactional
     public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse cancelRegistration(
-            Long currentUserId, Long registrationId) {
+            UUID currentUserId, UUID registrationId) {
         validateAndGetActiveUser(currentUserId);
         FarmRegistration registration = farmRegistrationRepository
                 .findByIdAndApplicantUserId(registrationId, currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Yêu cầu đăng ký trang trại không tồn tại."));
 
-        if (registration.getStatus() == FarmRegistrationStatus.CANCELLED) {
+        if ("cancelled".equalsIgnoreCase(registration.getRegistrationStatus())) {
             throw new BadRequestException("Yêu cầu đăng ký trang trại đã bị hủy trước đó.");
         }
-        if (registration.getStatus() == FarmRegistrationStatus.APPROVED) {
+        if ("approved".equalsIgnoreCase(registration.getRegistrationStatus())) {
             throw new BadRequestException("Không thể hủy yêu cầu đăng ký trang trại đã được duyệt.");
         }
-        if (registration.getStatus() == FarmRegistrationStatus.REJECTED) {
+        if ("rejected".equalsIgnoreCase(registration.getRegistrationStatus())) {
             throw new BadRequestException("Không thể hủy yêu cầu đăng ký trang trại đã bị từ chối.");
         }
-        if (registration.getStatus() != FarmRegistrationStatus.PENDING) {
+        if (!"pending".equalsIgnoreCase(registration.getRegistrationStatus())) {
             throw new BadRequestException("Chỉ có thể hủy yêu cầu đăng ký trang trại đang ở trạng thái PENDING.");
         }
 
-        registration.setStatus(FarmRegistrationStatus.CANCELLED);
+        registration.setRegistrationStatus("cancelled");
         FarmRegistration updated = farmRegistrationRepository.save(registration);
         return mapToUserResponse(updated);
     }
@@ -153,13 +147,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     public PageResponse<FarmRegistrationResponse> getRegistrations(String status, Pageable pageable) {
         Page<FarmRegistration> page;
         if (status != null && !status.isBlank()) {
-            FarmRegistrationStatus registrationStatus;
-            try {
-                registrationStatus = FarmRegistrationStatus.valueOf(status.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new BadRequestException("Trạng thái không hợp lệ: " + status + ". Các giá trị hợp lệ: PENDING, APPROVED, REJECTED, CANCELLED");
-            }
-            page = farmRegistrationRepository.findByStatus(registrationStatus, pageable);
+            page = farmRegistrationRepository.findByStatusString(status.trim().toLowerCase(), pageable);
         } else {
             page = farmRegistrationRepository.findAll(pageable);
         }
@@ -168,7 +156,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     }
 
     @Override
-    public FarmRegistrationResponse getRegistrationById(Long registrationId) {
+    public FarmRegistrationResponse getRegistrationById(UUID registrationId) {
         FarmRegistration registration = farmRegistrationRepository.findById(registrationId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy đơn đăng ký trang trại với ID: " + registrationId));
@@ -177,77 +165,71 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
 
     @Override
     @Transactional
-    public FarmRegistrationResponse handleRegistration(Long adminUserId, Long registrationId,
+    public FarmRegistrationResponse handleRegistration(UUID adminUserId, UUID registrationId,
                                                         HandleRegistrationRequest request) {
-        AppUser adminUser = appUserRepository.findById(adminUserId)
+        User adminUser = userRepository.findById(adminUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản admin với ID: " + adminUserId));
 
         FarmRegistration registration = farmRegistrationRepository.findById(registrationId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy đơn đăng ký trang trại với ID: " + registrationId));
 
-        if (registration.getStatus() != FarmRegistrationStatus.PENDING) {
+        if (!"pending".equalsIgnoreCase(registration.getRegistrationStatus())) {
             throw new BadRequestException(
-                    "Đơn đăng ký này đã được xử lý trước đó (trạng thái hiện tại: " + registration.getStatus() + "). Không thể xử lý lại.");
+                    "Đơn đăng ký này đã được xử lý trước đó (trạng thái hiện tại: " + registration.getRegistrationStatus() + "). Không thể xử lý lại.");
         }
 
-        FarmRegistrationStatus action = FarmRegistrationStatus.valueOf(request.action());
+        String action = request.action().toUpperCase();
 
-        if (action == FarmRegistrationStatus.APPROVED) {
+        if ("APPROVED".equals(action)) {
             return handleApproval(registration, adminUser);
         } else {
             return handleRejection(registration, adminUser, request.rejectionReason());
         }
     }
 
-    private FarmRegistrationResponse handleApproval(FarmRegistration registration, AppUser adminUser) {
-        String farmCode = generateUniqueFarmCode();
-
+    private FarmRegistrationResponse handleApproval(FarmRegistration registration, User adminUser) {
         Farm farm = new Farm();
-        farm.setFarmCode(farmCode);
         farm.setFarmName(registration.getFarmName());
-        farm.setAddressLine(registration.getAddressLine());
-        farm.setProvince(registration.getProvince());
-        farm.setDistrict(registration.getDistrict());
-        farm.setWard(registration.getWard());
-        farm.setRegistrationId(registration.getId());
-        farm.setStatus("ACTIVE");
+        farm.setAddress(registration.getAddress());
+        farm.setDescription(registration.getRegistrationNote());
+        farm.setCreatedBy(registration.getUser());
+        farm.setFarmStatus("active");
         farm = farmRepository.save(farm);
 
         FarmMember ownerMember = new FarmMember(
                 farm,
-                registration.getApplicantUser(),
-                "OWNER",
-                "Chủ trang trại",
-                LocalDate.now(),
-                "ACTIVE"
+                registration.getUser(),
+                "owner",
+                "active"
         );
         farmMemberRepository.save(ownerMember);
 
-        registration.setStatus(FarmRegistrationStatus.APPROVED);
-        registration.setHandlerUser(adminUser);
-        registration.setHandledAt(LocalDateTime.now());
+        registration.setRegistrationStatus("approved");
+        registration.setReviewedBy(adminUser);
+        registration.setReviewedAt(Instant.now());
+        registration.setResultingFarmId(farm.getId());
         farmRegistrationRepository.save(registration);
 
-        log.info("UC-39: Admin {} đã DUYỆT đơn đăng ký #{} -> Farm '{}' (Code: {}) đã được tạo, OWNER: {}",
-                adminUser.getEmail(), registration.getId(), farm.getFarmName(), farmCode,
-                registration.getApplicantUser().getEmail());
+        log.info("UC-39: Admin {} đã DUYỆT đơn đăng ký #{} -> Farm '{}' đã được tạo, OWNER: {}",
+                adminUser.getEmail(), registration.getId(), farm.getFarmName(),
+                registration.getUser().getEmail());
 
         sendApprovalEmail(registration, farm);
 
         return toAdminResponse(registration);
     }
 
-    private FarmRegistrationResponse handleRejection(FarmRegistration registration, AppUser adminUser,
+    private FarmRegistrationResponse handleRejection(FarmRegistration registration, User adminUser,
                                                       String rejectionReason) {
         if (rejectionReason == null || rejectionReason.isBlank()) {
             throw new BadRequestException("Vui lòng cung cấp lý do từ chối đơn đăng ký.");
         }
 
-        registration.setStatus(FarmRegistrationStatus.REJECTED);
-        registration.setHandlerUser(adminUser);
-        registration.setHandledAt(LocalDateTime.now());
-        registration.setRejectionReason(rejectionReason.trim());
+        registration.setRegistrationStatus("rejected");
+        registration.setReviewedBy(adminUser);
+        registration.setReviewedAt(Instant.now());
+        registration.setRegistrationNote(rejectionReason.trim());
         farmRegistrationRepository.save(registration);
 
         log.info("UC-39: Admin {} đã TỪ CHỐI đơn đăng ký #{} với lý do: {}",
@@ -261,7 +243,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     private void sendApprovalEmail(FarmRegistration registration, Farm farm) {
         if (mailSender == null) return;
         try {
-            AppUser applicant = registration.getApplicantUser();
+            User applicant = registration.getUser();
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             if (mimeMessage == null) {
                 mimeMessage = new JavaMailSenderImpl().createMimeMessage();
@@ -280,14 +262,14 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
             log.info("Approval notification email sent to: {}", applicant.getEmail());
         } catch (Exception e) {
             log.warn("Không thể gửi email thông báo duyệt trang trại tới {}: {}",
-                    registration.getApplicantUser().getEmail(), e.getMessage());
+                    registration.getUser().getEmail(), e.getMessage());
         }
     }
 
     private void sendRejectionEmail(FarmRegistration registration, String rejectionReason) {
         if (mailSender == null) return;
         try {
-            AppUser applicant = registration.getApplicantUser();
+            User applicant = registration.getUser();
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             if (mimeMessage == null) {
                 mimeMessage = new JavaMailSenderImpl().createMimeMessage();
@@ -306,27 +288,13 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
             log.info("Rejection notification email sent to: {}", applicant.getEmail());
         } catch (Exception e) {
             log.warn("Không thể gửi email thông báo từ chối trang trại tới {}: {}",
-                    registration.getApplicantUser().getEmail(), e.getMessage());
+                    registration.getUser().getEmail(), e.getMessage());
         }
     }
 
-    private String generateUniqueFarmCode() {
-        String code;
-        int maxAttempts = 10;
-        int attempt = 0;
-        do {
-            code = "FARM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-            attempt++;
-            if (attempt > maxAttempts) {
-                throw new IllegalStateException("Không thể sinh mã trang trại duy nhất sau " + maxAttempts + " lần thử.");
-            }
-        } while (farmRepository.existsByFarmCode(code));
-        return code;
-    }
-
     private FarmRegistrationResponse toAdminResponse(FarmRegistration reg) {
-        AppUser applicant = reg.getApplicantUser();
-        AppUser handler = reg.getHandlerUser();
+        User applicant = reg.getUser();
+        User handler = reg.getReviewedBy();
 
         return new FarmRegistrationResponse(
                 reg.getId(),
@@ -334,13 +302,13 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
                 applicant != null ? applicant.getEmail() : null,
                 applicant != null ? applicant.getFullName() : null,
                 reg.getFarmName(),
-                reg.getAddressLine(),
+                reg.getAddress(),
                 reg.getProvince(),
                 reg.getDistrict(),
                 reg.getWard(),
                 reg.getDescription(),
                 reg.getDocumentUrl(),
-                reg.getStatus() != null ? reg.getStatus().name() : null,
+                reg.getRegistrationStatus() != null ? reg.getRegistrationStatus().toUpperCase() : null,
                 handler != null ? handler.getId() : null,
                 handler != null ? handler.getFullName() : null,
                 reg.getSubmittedAt(),
@@ -353,7 +321,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         return new com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse(
                 reg.getId(),
                 reg.getFarmName(),
-                reg.getAddressLine(),
+                reg.getAddress(),
                 reg.getProvince(),
                 reg.getDistrict(),
                 reg.getWard(),
@@ -370,7 +338,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         return new FarmRegistrationSummaryResponse(
                 reg.getId(),
                 reg.getFarmName(),
-                reg.getAddressLine(),
+                reg.getAddress(),
                 reg.getStatus(),
                 reg.getSubmittedAt(),
                 reg.getHandledAt(),

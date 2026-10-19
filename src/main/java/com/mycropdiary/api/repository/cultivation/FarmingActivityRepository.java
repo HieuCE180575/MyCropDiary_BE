@@ -7,9 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface FarmingActivityRepository extends JpaRepository<FarmingActivity, Long> {
-    Page<FarmingActivity> findByCropSeasonId(Long cropSeasonId, Pageable pageable);
-    Optional<FarmingActivity> findByIdAndCropSeasonId(Long id, Long cropSeasonId);
+public interface FarmingActivityRepository extends JpaRepository<FarmingActivity, UUID> {
+    Page<FarmingActivity> findByCropSeasonId(UUID cropSeasonId, Pageable pageable);
+    Optional<FarmingActivity> findByIdAndCropSeasonId(UUID id, UUID cropSeasonId);
 }

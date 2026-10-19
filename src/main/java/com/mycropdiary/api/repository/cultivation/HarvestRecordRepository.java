@@ -7,14 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repository truy vấn dữ liệu bản ghi thu hoạch (HarvestRecord).
  */
 @Repository
-public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Long> {
-    Page<HarvestRecord> findByCropSeasonId(Long cropSeasonId, Pageable pageable);
-    boolean existsByHarvestLotCode(String harvestLotCode);
-    boolean existsByTraceabilityCode(String traceabilityCode);
-    Optional<HarvestRecord> findByIdAndCropSeasonId(Long id, Long cropSeasonId);
+public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, UUID> {
+    Page<HarvestRecord> findByCropSeasonId(UUID cropSeasonId, Pageable pageable);
+    Optional<HarvestRecord> findByIdAndCropSeasonId(UUID id, UUID cropSeasonId);
 }

@@ -5,22 +5,37 @@ import com.mycropdiary.api.entity.farmregistration.FarmRegistrationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface FarmRegistrationRepository extends JpaRepository<FarmRegistration, Long> {
+public interface FarmRegistrationRepository extends JpaRepository<FarmRegistration, UUID> {
 
-    List<FarmRegistration> findByApplicantUserId(Long applicantUserId);
+    @Query("SELECT r FROM FarmRegistration r WHERE r.user.id = :userId")
+    List<FarmRegistration> findByApplicantUserId(@Param("userId") UUID userId);
 
-    Page<FarmRegistration> findByApplicantUserId(Long applicantUserId, Pageable pageable);
+    @Query("SELECT r FROM FarmRegistration r WHERE r.user.id = :userId")
+    Page<FarmRegistration> findByApplicantUserId(@Param("userId") UUID userId, Pageable pageable);
 
-    List<FarmRegistration> findByApplicantUserIdAndStatus(Long applicantUserId, FarmRegistrationStatus status);
+    @Query("SELECT r FROM FarmRegistration r WHERE r.user.id = :userId AND LOWER(r.registrationStatus) = LOWER(:status)")
+    List<FarmRegistration> findByApplicantUserIdAndStatusString(@Param("userId") UUID userId, @Param("status") String status);
 
-    // [AI_CHANGE] UC-39: Admin lọc đơn đăng ký theo trạng thái với phân trang
-    Page<FarmRegistration> findByStatus(FarmRegistrationStatus status, Pageable pageable);
+    default List<FarmRegistration> findByApplicantUserIdAndStatus(UUID userId, FarmRegistrationStatus status) {
+        return findByApplicantUserIdAndStatusString(userId, status.name());
+    }
 
-    Optional<FarmRegistration> findByIdAndApplicantUserId(Long id, Long applicantUserId);
+    @Query("SELECT r FROM FarmRegistration r WHERE LOWER(r.registrationStatus) = LOWER(:status)")
+    Page<FarmRegistration> findByStatusString(@Param("status") String status, Pageable pageable);
+
+    default Page<FarmRegistration> findByStatus(FarmRegistrationStatus status, Pageable pageable) {
+        return findByStatusString(status.name(), pageable);
+    }
+
+    @Query("SELECT r FROM FarmRegistration r WHERE r.id = :id AND r.user.id = :userId")
+    Optional<FarmRegistration> findByIdAndApplicantUserId(@Param("id") UUID id, @Param("userId") UUID userId);
 }

@@ -3,6 +3,8 @@ package com.mycropdiary.api.service;
 import com.mycropdiary.api.dto.common.PageResponse;
 import com.mycropdiary.api.dto.knowledge.KnowledgeArticleResponseDTO;
 
+import java.util.UUID;
+
 /**
  * Interface định nghĩa các dịch vụ nghiệp vụ xử lý Bài viết Kiến thức Nông nghiệp.
  */
@@ -25,5 +27,5 @@ public interface KnowledgeArticleService {
      * @param id ID của bài viết
      * @return DTO bài viết tìm thấy
      */
-    KnowledgeArticleResponseDTO getPublicArticleById(Long id);
+    KnowledgeArticleResponseDTO getPublicArticleById(UUID id);
 }
