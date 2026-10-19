@@ -2,15 +2,14 @@ package com.mycropdiary.api.entity.cultivation;
 
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "CropCategory")
 public class CropCategory {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "crop_category_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @Column(name = "category_name", nullable = false, unique = true, length = 100)
     private String categoryName;
@@ -38,8 +37,8 @@ public class CropCategory {
         this.description = description;
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public String getCategoryName() { return categoryName; }
     public void setCategoryName(String categoryName) { this.categoryName = categoryName; }

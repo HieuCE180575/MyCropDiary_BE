@@ -1,6 +1,6 @@
 package com.mycropdiary.api.controller;
 
-import com.mycropdiary.api.dto.common.ApiResponse;
+import com.mycropdiary.api.dto.common.ApiResp;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,8 +16,8 @@ import java.util.List;
 public class ModuleCatalogController {
     @Operation(summary = "Danh sách modules UC hệ thống", description = "Trả về danh sách 17 modules Use Case theo thiết kế kiến trúc MyCropDiary")
     @GetMapping
-    public ApiResponse<List<String>> listModules() {
-        return ApiResponse.ok("MyCropDiary UC modules", List.of(
+    public ApiResp<List<String>> listModules() {
+        return ApiResp.ok("MyCropDiary UC modules", List.of(
                 "auth-profile", "farm-registration", "farm-members", "production-areas", "plots",
                 "environmental-assessments", "crop-seasons", "tasks", "farming-activities",
                 "materials-purchases-expenses", "harvest-traceability", "training",

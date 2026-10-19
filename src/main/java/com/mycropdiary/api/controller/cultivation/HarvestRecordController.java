@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller.cultivation;
 
-import com.mycropdiary.api.dto.common.ApiResponse;
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordRequest;
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResponse;
+import com.mycropdiary.api.dto.common.ApiResp;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
 import com.mycropdiary.api.service.cultivation.HarvestRecordService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +15,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 
 /**
  * Controller quản lý REST API cho Bản ghi thu hoạch (UC-26).
@@ -40,10 +39,10 @@ public class HarvestRecordController {
     @Operation(summary = "Tạo mới bản ghi thu hoạch", description = "Ghi nhận sản lượng thu hoạch cho một mùa vụ canh tác.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<HarvestRecordResponse> createHarvestRecord(@Valid @RequestBody CreateHarvestRecordRequest request) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        HarvestRecordResponse response = harvestRecordService.createHarvestRecord(currentUserId, request);
-        return ApiResponse.ok("Ghi nhận thu hoạch thành công.", response);
+    public ApiResp<HarvestRecordResp> createHarvestRecord(@Valid @RequestBody CreateHarvestRecordReq request) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        HarvestRecordResp response = harvestRecordService.createHarvestRecord(currentUserId, request);
+        return ApiResp.ok("Ghi nhận thu hoạch thành công.", response);
     }
 
     /**
@@ -51,12 +50,12 @@ public class HarvestRecordController {
      */
     @Operation(summary = "Xem lịch sử thu hoạch theo mùa vụ", description = "Lấy danh sách các bản ghi thu hoạch của mùa vụ canh tác (có phân trang).")
     @GetMapping
-    public ApiResponse<PageResponse<HarvestRecordResponse>> getHarvestRecordsBySeason(
-            @RequestParam("cropSeasonId") UUID cropSeasonId,
+    public ApiResp<PageResp<HarvestRecordResp>> getHarvestRecordsBySeason(
+            @RequestParam("cropSeasonId") Integer cropSeasonId,
             @PageableDefault(size = 20) Pageable pageable) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        PageResponse<HarvestRecordResponse> response = harvestRecordService.getHarvestRecordsBySeason(currentUserId, cropSeasonId, pageable);
-        return ApiResponse.ok("Lấy danh sách thu hoạch thành công.", response);
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        PageResp<HarvestRecordResp> response = harvestRecordService.getHarvestRecordsBySeason(currentUserId, cropSeasonId, pageable);
+        return ApiResp.ok("Lấy danh sách thu hoạch thành công.", response);
     }
 
     /**
@@ -64,9 +63,9 @@ public class HarvestRecordController {
      */
     @Operation(summary = "Xem chi tiết bản ghi thu hoạch", description = "Lấy thông tin chi tiết bản ghi thu hoạch theo ID.")
     @GetMapping("/{harvestRecordId}")
-    public ApiResponse<HarvestRecordResponse> getHarvestRecordById(@PathVariable("harvestRecordId") UUID harvestRecordId) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        HarvestRecordResponse response = harvestRecordService.getHarvestRecordById(currentUserId, harvestRecordId);
-        return ApiResponse.ok("Lấy chi tiết bản ghi thu hoạch thành công.", response);
+    public ApiResp<HarvestRecordResp> getHarvestRecordById(@PathVariable("harvestRecordId") Integer harvestRecordId) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        HarvestRecordResp response = harvestRecordService.getHarvestRecordById(currentUserId, harvestRecordId);
+        return ApiResp.ok("Lấy chi tiết bản ghi thu hoạch thành công.", response);
     }
 }

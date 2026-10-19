@@ -4,7 +4,6 @@ import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.util.UUID;
 
 /**
  * Entity biểu diễn bảng [FarmWorker] (Hồ sơ công nhân lao động trang trại).
@@ -15,9 +14,9 @@ import java.util.UUID;
 public class FarmWorker {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "farm_worker_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "farm_member_id", nullable = false, unique = true)
@@ -51,8 +50,8 @@ public class FarmWorker {
         this.notes = notes;
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public FarmMember getFarmMember() { return farmMember; }
     public void setFarmMember(FarmMember farmMember) { this.farmMember = farmMember; }

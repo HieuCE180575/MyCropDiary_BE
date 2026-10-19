@@ -2,7 +2,6 @@ package com.mycropdiary.api.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Entity biểu diễn bảng [FarmMember] (Thành viên trang trại).
@@ -15,9 +14,9 @@ import java.util.UUID;
 })
 public class FarmMember {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "farm_member_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "farm_id", nullable = false)
@@ -57,8 +56,8 @@ public class FarmMember {
         this.joinedAt = Instant.now();
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public Farm getFarm() { return farm; }
     public void setFarm(Farm farm) { this.farm = farm; }

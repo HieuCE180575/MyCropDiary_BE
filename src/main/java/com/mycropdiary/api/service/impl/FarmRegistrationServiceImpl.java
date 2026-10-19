@@ -1,10 +1,10 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.farm.FarmRegistrationResponse;
-import com.mycropdiary.api.dto.farm.HandleRegistrationRequest;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateRequest;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResponse;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.farm.FarmRegistrationResp;
+import com.mycropdiary.api.dto.farm.HandleRegistrationReq;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateReq;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResp;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.User;
@@ -35,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * Service implementation cho cả nghiệp vụ Admin duyệt đơn (UC-39) và User đăng ký trang trại (UC-09).
@@ -67,7 +66,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         this.userRepository = userRepository;
     }
 
-    private User validateAndGetActiveUser(UUID userId) {
+    private User validateAndGetActiveUser(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài khoản người dùng không tồn tại."));
         if (!user.isActive() || user.isLocked()) {
@@ -80,8 +79,8 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
 
     @Override
     @Transactional
-    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse createRegistration(
-            UUID currentUserId, FarmRegistrationCreateRequest request) {
+    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp createRegistration(
+            Integer currentUserId, FarmRegistrationCreateReq request) {
         User applicantUser = validateAndGetActiveUser(currentUserId);
 
         FarmRegistration registration = new FarmRegistration();
@@ -98,15 +97,15 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     }
 
     @Override
-    public PageResponse<FarmRegistrationSummaryResponse> getMyRegistrations(UUID currentUserId, Pageable pageable) {
+    public PageResp<FarmRegistrationSummaryResp> getMyRegistrations(Integer currentUserId, Pageable pageable) {
         validateAndGetActiveUser(currentUserId);
         Page<FarmRegistration> page = farmRegistrationRepository.findByApplicantUserId(currentUserId, pageable);
-        return PageResponse.map(page, this::mapToSummaryResponse);
+        return PageResp.map(page, this::mapToSummaryResponse);
     }
 
     @Override
-    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse getMyRegistrationDetail(
-            UUID currentUserId, UUID registrationId) {
+    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp getMyRegistrationDetail(
+            Integer currentUserId, Integer registrationId) {
         validateAndGetActiveUser(currentUserId);
         FarmRegistration registration = farmRegistrationRepository
                 .findByIdAndApplicantUserId(registrationId, currentUserId)
@@ -116,8 +115,8 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
 
     @Override
     @Transactional
-    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse cancelRegistration(
-            UUID currentUserId, UUID registrationId) {
+    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp cancelRegistration(
+            Integer currentUserId, Integer registrationId) {
         validateAndGetActiveUser(currentUserId);
         FarmRegistration registration = farmRegistrationRepository
                 .findByIdAndApplicantUserId(registrationId, currentUserId)
@@ -144,7 +143,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     // ==================== UC-39: Admin side APIs ====================
 
     @Override
-    public PageResponse<FarmRegistrationResponse> getRegistrations(String status, Pageable pageable) {
+    public PageResp<FarmRegistrationResp> getRegistrations(String status, Pageable pageable) {
         Page<FarmRegistration> page;
         if (status != null && !status.isBlank()) {
             page = farmRegistrationRepository.findByStatusString(status.trim().toLowerCase(), pageable);
@@ -152,11 +151,11 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
             page = farmRegistrationRepository.findAll(pageable);
         }
 
-        return PageResponse.map(page, this::toAdminResponse);
+        return PageResp.map(page, this::toAdminResponse);
     }
 
     @Override
-    public FarmRegistrationResponse getRegistrationById(UUID registrationId) {
+    public FarmRegistrationResp getRegistrationById(Integer registrationId) {
         FarmRegistration registration = farmRegistrationRepository.findById(registrationId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy đơn đăng ký trang trại với ID: " + registrationId));
@@ -165,8 +164,8 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
 
     @Override
     @Transactional
-    public FarmRegistrationResponse handleRegistration(UUID adminUserId, UUID registrationId,
-                                                        HandleRegistrationRequest request) {
+    public FarmRegistrationResp handleRegistration(Integer adminUserId, Integer registrationId,
+                                                        HandleRegistrationReq request) {
         User adminUser = userRepository.findById(adminUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản admin với ID: " + adminUserId));
 
@@ -188,7 +187,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         }
     }
 
-    private FarmRegistrationResponse handleApproval(FarmRegistration registration, User adminUser) {
+    private FarmRegistrationResp handleApproval(FarmRegistration registration, User adminUser) {
         Farm farm = new Farm();
         farm.setFarmName(registration.getFarmName());
         farm.setAddress(registration.getAddress());
@@ -220,7 +219,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         return toAdminResponse(registration);
     }
 
-    private FarmRegistrationResponse handleRejection(FarmRegistration registration, User adminUser,
+    private FarmRegistrationResp handleRejection(FarmRegistration registration, User adminUser,
                                                       String rejectionReason) {
         if (rejectionReason == null || rejectionReason.isBlank()) {
             throw new BadRequestException("Vui lòng cung cấp lý do từ chối đơn đăng ký.");
@@ -292,11 +291,11 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         }
     }
 
-    private FarmRegistrationResponse toAdminResponse(FarmRegistration reg) {
+    private FarmRegistrationResp toAdminResponse(FarmRegistration reg) {
         User applicant = reg.getUser();
         User handler = reg.getReviewedBy();
 
-        return new FarmRegistrationResponse(
+        return new FarmRegistrationResp(
                 reg.getId(),
                 applicant != null ? applicant.getId() : null,
                 applicant != null ? applicant.getEmail() : null,
@@ -317,8 +316,8 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         );
     }
 
-    private com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse mapToUserResponse(FarmRegistration reg) {
-        return new com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse(
+    private com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp mapToUserResponse(FarmRegistration reg) {
+        return new com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp(
                 reg.getId(),
                 reg.getFarmName(),
                 reg.getAddress(),
@@ -334,8 +333,8 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         );
     }
 
-    private FarmRegistrationSummaryResponse mapToSummaryResponse(FarmRegistration reg) {
-        return new FarmRegistrationSummaryResponse(
+    private FarmRegistrationSummaryResp mapToSummaryResponse(FarmRegistration reg) {
+        return new FarmRegistrationSummaryResp(
                 reg.getId(),
                 reg.getFarmName(),
                 reg.getAddress(),

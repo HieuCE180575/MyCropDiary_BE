@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.staff.AddStaffRequest;
-import com.mycropdiary.api.dto.staff.FarmMemberResponse;
-import com.mycropdiary.api.dto.staff.UpdateStaffRequest;
+import com.mycropdiary.api.dto.staff.AddStaffReq;
+import com.mycropdiary.api.dto.staff.FarmMemberResp;
+import com.mycropdiary.api.dto.staff.UpdateStaffReq;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.StaffZoneAssignment;
@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -47,7 +46,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FarmMemberResponse> getStaffList(UUID currentUserId, UUID farmId, String status, String keyword) {
+    public List<FarmMemberResp> getStaffList(Integer currentUserId, Integer farmId, String status, String keyword) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
 
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
@@ -58,7 +57,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
     }
 
     @Override
-    public FarmMemberResponse addStaff(UUID currentUserId, UUID farmId, AddStaffRequest request) {
+    public FarmMemberResp addStaff(Integer currentUserId, Integer farmId, AddStaffReq request) {
         accessGuard.requireFarmOwner(currentUserId, farmId);
 
         Farm farm = farmRepository.findById(farmId)
@@ -100,7 +99,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
     }
 
     @Override
-    public FarmMemberResponse updateStaff(UUID currentUserId, UUID farmId, UUID memberId, UpdateStaffRequest request) {
+    public FarmMemberResp updateStaff(Integer currentUserId, Integer farmId, Integer memberId, UpdateStaffReq request) {
         accessGuard.requireFarmOwner(currentUserId, farmId);
 
         FarmMember member = farmMemberRepository.findById(memberId)
@@ -133,7 +132,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
     }
 
     @Override
-    public void deactivateStaff(UUID currentUserId, UUID farmId, UUID memberId) {
+    public void deactivateStaff(Integer currentUserId, Integer farmId, Integer memberId) {
         accessGuard.requireFarmOwner(currentUserId, farmId);
 
         FarmMember member = farmMemberRepository.findById(memberId)
@@ -160,9 +159,9 @@ public class FarmStaffServiceImpl implements FarmStaffService {
         }
     }
 
-    private FarmMemberResponse toResponse(FarmMember member) {
+    private FarmMemberResp toResponse(FarmMember member) {
         List<StaffZoneAssignment> activeAssignments = assignmentRepository.findByFarmMemberIdAndEndedAtIsNull(member.getId());
-        return new FarmMemberResponse(
+        return new FarmMemberResp(
                 member.getId(),
                 member.getFarm().getId(),
                 member.getFarm().getFarmName(),

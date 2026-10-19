@@ -8,14 +8,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Repository truy vấn nhật ký sử dụng vật tư (MaterialUsage).
  */
 @Repository
-public interface MaterialUsageRepository extends JpaRepository<MaterialUsage, UUID> {
-    List<MaterialUsage> findByFarmingActivityId(UUID farmingActivityId);
-    Page<MaterialUsage> findByFarmingActivityId(UUID farmingActivityId, Pageable pageable);
-    Optional<MaterialUsage> findByIdAndFarmingActivityId(UUID id, UUID farmingActivityId);
+public interface MaterialUsageRepository extends JpaRepository<MaterialUsage, Integer> {
+    List<MaterialUsage> findByFarmingActivityId(Integer farmingActivityId);
+    Page<MaterialUsage> findByFarmingActivityId(Integer farmingActivityId, Pageable pageable);
+    Optional<MaterialUsage> findByIdAndFarmingActivityId(Integer id, Integer farmingActivityId);
 }

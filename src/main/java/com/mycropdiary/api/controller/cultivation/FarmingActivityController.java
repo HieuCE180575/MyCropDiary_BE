@@ -1,10 +1,10 @@
 package com.mycropdiary.api.controller.cultivation;
 
-import com.mycropdiary.api.dto.common.ApiResponse;
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateFarmingActivityRequest;
-import com.mycropdiary.api.dto.cultivation.FarmingActivityResponse;
-import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryResponse;
+import com.mycropdiary.api.dto.common.ApiResp;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateFarmingActivityReq;
+import com.mycropdiary.api.dto.cultivation.FarmingActivityResp;
+import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryResp;
 import com.mycropdiary.api.service.cultivation.FarmingActivityService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +16,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 
 /**
  * Controller quản lý REST API cho Nhật ký canh tác (UC-24).
@@ -45,10 +44,10 @@ public class FarmingActivityController {
     @Operation(summary = "Tạo mới nhật ký canh tác", description = "Tạo mới nhật ký canh tác cho một mùa vụ. Người ghi nhật ký tự động được xác định từ tài khoản đã đăng nhập.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<FarmingActivityResponse> createActivity(@Valid @RequestBody CreateFarmingActivityRequest request) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        FarmingActivityResponse response = farmingActivityService.createActivity(currentUserId, request);
-        return ApiResponse.ok("Tạo nhật ký canh tác thành công.", response);
+    public ApiResp<FarmingActivityResp> createActivity(@Valid @RequestBody CreateFarmingActivityReq request) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        FarmingActivityResp response = farmingActivityService.createActivity(currentUserId, request);
+        return ApiResp.ok("Tạo nhật ký canh tác thành công.", response);
     }
 
     /**
@@ -60,12 +59,12 @@ public class FarmingActivityController {
      */
     @Operation(summary = "Xem lịch sử nhật ký canh tác theo mùa vụ", description = "Lấy danh sách nhật ký canh tác của mùa vụ (Có phân trang).")
     @GetMapping
-    public ApiResponse<PageResponse<FarmingActivitySummaryResponse>> getActivitiesByCropSeason(
-            @RequestParam UUID cropSeasonId,
+    public ApiResp<PageResp<FarmingActivitySummaryResp>> getActivitiesByCropSeason(
+            @RequestParam Integer cropSeasonId,
             @PageableDefault(size = 20) Pageable pageable) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        PageResponse<FarmingActivitySummaryResponse> response = farmingActivityService.getActivitiesByCropSeason(currentUserId, cropSeasonId, pageable);
-        return ApiResponse.ok("Danh sách lịch sử nhật ký canh tác.", response);
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        PageResp<FarmingActivitySummaryResp> response = farmingActivityService.getActivitiesByCropSeason(currentUserId, cropSeasonId, pageable);
+        return ApiResp.ok("Danh sách lịch sử nhật ký canh tác.", response);
     }
 
     /**
@@ -76,9 +75,9 @@ public class FarmingActivityController {
      */
     @Operation(summary = "Xem chi tiết nhật ký canh tác", description = "Lấy chi tiết một nhật ký canh tác theo ID bao gồm danh sách công nhân trực tiếp thực hiện.")
     @GetMapping("/{activityId}")
-    public ApiResponse<FarmingActivityResponse> getActivityDetail(@PathVariable UUID activityId) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        FarmingActivityResponse response = farmingActivityService.getActivityDetail(currentUserId, activityId);
-        return ApiResponse.ok("Chi tiết nhật ký canh tác.", response);
+    public ApiResp<FarmingActivityResp> getActivityDetail(@PathVariable Integer activityId) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        FarmingActivityResp response = farmingActivityService.getActivityDetail(currentUserId, activityId);
+        return ApiResp.ok("Chi tiết nhật ký canh tác.", response);
     }
 }

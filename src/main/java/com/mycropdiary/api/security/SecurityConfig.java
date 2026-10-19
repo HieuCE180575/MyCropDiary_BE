@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 // [AI_CHANGE] Root cause: Tránh trả về 403 mặc định rỗng hoặc HTML khi không có token / sai quyền
-                // [AI_CHANGE] Mechanism: Custom EntryPoint trả 401 Unauthorized và AccessDeniedHandler trả 403 Forbidden với ApiResponse JSON chuẩn
+                // [AI_CHANGE] Mechanism: Custom EntryPoint trả 401 Unauthorized và AccessDeniedHandler trả 403 Forbidden với ApiResp JSON chuẩn
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

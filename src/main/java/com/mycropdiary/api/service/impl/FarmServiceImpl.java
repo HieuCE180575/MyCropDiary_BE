@@ -1,6 +1,6 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.common.PageResponse;
+import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.farm.*;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Lớp triển khai các dịch vụ nghiệp vụ cốt lõi cho module Farm Core.
@@ -74,7 +73,7 @@ public class FarmServiceImpl implements FarmService {
     }
 
     @Override
-    public FarmResponse createFarm(UUID currentUserId, CreateFarmRequest request) {
+    public FarmResp createFarm(Integer currentUserId, CreateFarmReq request) {
         validateCoordinates(request.latitude(), request.longitude());
 
         User currentUser = userRepository.findById(currentUserId)
@@ -100,7 +99,7 @@ public class FarmServiceImpl implements FarmService {
 
     @Override
     @Transactional(readOnly = true)
-    public FarmResponse getFarmById(UUID currentUserId, UUID farmId) {
+    public FarmResp getFarmById(Integer currentUserId, Integer farmId) {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farm not found: " + farmId));
 
@@ -112,14 +111,14 @@ public class FarmServiceImpl implements FarmService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<FarmSummaryResponse> searchFarms(UUID currentUserId, String keyword, String status, String province, Pageable pageable) {
+    public PageResp<FarmSummaryResp> searchFarms(Integer currentUserId, String keyword, String status, String province, Pageable pageable) {
         return searchFarms(currentUserId, keyword, province, status, null, null, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<FarmSummaryResponse> searchFarms(
-            UUID currentUserId,
+    public PageResp<FarmSummaryResp> searchFarms(
+            Integer currentUserId,
             String keyword,
             String province,
             String status,
@@ -136,14 +135,14 @@ public class FarmServiceImpl implements FarmService {
                 currentUserId, keyword, province, status, minArea, maxArea, sortedPageable
         );
 
-        List<FarmSummaryResponse> content = farmPage.getContent().stream()
+        List<FarmSummaryResp> content = farmPage.getContent().stream()
                 .map(farm -> {
                     String role = farmAccessGuard.getUserRoleInFarm(currentUserId, farm.getId());
                     return farmMapper.toSummary(farm, role);
                 })
                 .toList();
 
-        return new PageResponse<>(
+        return new PageResp<>(
                 content,
                 farmPage.getNumber(),
                 farmPage.getSize(),
@@ -155,7 +154,7 @@ public class FarmServiceImpl implements FarmService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FarmSummaryResponse> findAllAccessibleFarms(UUID currentUserId) {
+    public List<FarmSummaryResp> findAllAccessibleFarms(Integer currentUserId) {
         List<Farm> farms = farmRepository.findAllAccessibleFarmsByUser(currentUserId);
         return farms.stream()
                 .map(farm -> {
@@ -166,7 +165,7 @@ public class FarmServiceImpl implements FarmService {
     }
 
     @Override
-    public FarmResponse updateFarm(UUID currentUserId, UUID farmId, UpdateFarmRequest request) {
+    public FarmResp updateFarm(Integer currentUserId, Integer farmId, UpdateFarmReq request) {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farm not found: " + farmId));
 
@@ -201,7 +200,7 @@ public class FarmServiceImpl implements FarmService {
     }
 
     @Override
-    public void deleteFarm(UUID currentUserId, UUID farmId) {
+    public void deleteFarm(Integer currentUserId, Integer farmId) {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farm not found: " + farmId));
 
@@ -211,7 +210,7 @@ public class FarmServiceImpl implements FarmService {
     }
 
     @Override
-    public FarmMemberResponse addMember(UUID currentUserId, UUID farmId, AddFarmMemberRequest request) {
+    public FarmMemberResp addMember(Integer currentUserId, Integer farmId, AddFarmMemberReq request) {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farm not found: " + farmId));
 
@@ -244,7 +243,7 @@ public class FarmServiceImpl implements FarmService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FarmMemberResponse> getFarmMembers(UUID currentUserId, UUID farmId) {
+    public List<FarmMemberResp> getFarmMembers(Integer currentUserId, Integer farmId) {
         farmAccessGuard.requireFarmMember(currentUserId, farmId);
         List<FarmMember> members = farmMemberRepository.findByFarmId(farmId);
         return members.stream()
@@ -253,7 +252,7 @@ public class FarmServiceImpl implements FarmService {
     }
 
     @Override
-    public void removeMember(UUID currentUserId, UUID farmId, UUID memberId) {
+    public void removeMember(Integer currentUserId, Integer farmId, Integer memberId) {
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
 
         FarmMember member = farmMemberRepository.findById(memberId)
@@ -275,7 +274,7 @@ public class FarmServiceImpl implements FarmService {
     }
 
     @Override
-    public StaffZoneAssignmentResponse assignStaffToZone(UUID currentUserId, UUID farmId, UUID memberId, AssignStaffZoneRequest request) {
+    public StaffZoneAssignmentResp assignStaffToZone(Integer currentUserId, Integer farmId, Integer memberId, AssignStaffZoneReq request) {
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
 
         FarmMember staffMember = farmMemberRepository.findById(memberId)
@@ -310,7 +309,7 @@ public class FarmServiceImpl implements FarmService {
     }
 
     @Override
-    public ZoneResponse createZone(UUID currentUserId, UUID farmId, CreateZoneRequest request) {
+    public ZoneResp createZone(Integer currentUserId, Integer farmId, CreateZoneReq request) {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farm not found: " + farmId));
 
@@ -335,7 +334,7 @@ public class FarmServiceImpl implements FarmService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ZoneResponse> getZones(UUID currentUserId, UUID farmId) {
+    public List<ZoneResp> getZones(Integer currentUserId, Integer farmId) {
         FarmMember member = farmAccessGuard.requireFarmMember(currentUserId, farmId);
         String role = farmAccessGuard.getUserRoleInFarm(currentUserId, farmId);
 

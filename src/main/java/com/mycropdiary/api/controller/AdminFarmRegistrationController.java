@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller;
 
-import com.mycropdiary.api.dto.common.ApiResponse;
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.farm.FarmRegistrationResponse;
-import com.mycropdiary.api.dto.farm.HandleRegistrationRequest;
+import com.mycropdiary.api.dto.common.ApiResp;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.farm.FarmRegistrationResp;
+import com.mycropdiary.api.dto.farm.HandleRegistrationReq;
 import com.mycropdiary.api.service.farmregistration.FarmRegistrationService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +15,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 
 // [AI_CHANGE] Root cause: UC-39 Admin cần REST API để xem danh sách, chi tiết và duyệt/từ chối đơn đăng ký farm
 // [AI_CHANGE] Mechanism: Controller riêng cho Admin với prefix /api/v1/admin/farm-registrations,
@@ -45,11 +44,11 @@ public class AdminFarmRegistrationController {
     @Operation(summary = "Danh sách đơn đăng ký trang trại (UC-39)",
             description = "Admin xem danh sách đơn đăng ký trang trại. Có thể lọc theo trạng thái PENDING, APPROVED, REJECTED, CANCELLED.")
     @GetMapping
-    public ApiResponse<PageResponse<FarmRegistrationResponse>> getRegistrations(
+    public ApiResp<PageResp<FarmRegistrationResp>> getRegistrations(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable) {
-        PageResponse<FarmRegistrationResponse> page = farmRegistrationService.getRegistrations(status, pageable);
-        return ApiResponse.ok("Danh sách đơn đăng ký trang trại", page);
+        PageResp<FarmRegistrationResp> page = farmRegistrationService.getRegistrations(status, pageable);
+        return ApiResp.ok("Danh sách đơn đăng ký trang trại", page);
     }
 
     /**
@@ -61,9 +60,9 @@ public class AdminFarmRegistrationController {
     @Operation(summary = "Chi tiết đơn đăng ký trang trại (UC-39)",
             description = "Admin xem chi tiết thông tin đơn đăng ký trang trại bao gồm thông tin người nộp, địa chỉ, trạng thái xử lý.")
     @GetMapping("/{registrationId}")
-    public ApiResponse<FarmRegistrationResponse> getRegistrationById(@PathVariable UUID registrationId) {
-        FarmRegistrationResponse response = farmRegistrationService.getRegistrationById(registrationId);
-        return ApiResponse.ok("Chi tiết đơn đăng ký trang trại", response);
+    public ApiResp<FarmRegistrationResp> getRegistrationById(@PathVariable Integer registrationId) {
+        FarmRegistrationResp response = farmRegistrationService.getRegistrationById(registrationId);
+        return ApiResp.ok("Chi tiết đơn đăng ký trang trại", response);
     }
 
     /**
@@ -82,14 +81,14 @@ public class AdminFarmRegistrationController {
                           "Khi từ chối: bắt buộc kèm lý do từ chối. " +
                           "Chỉ xử lý đơn ở trạng thái PENDING (chặn xử lý trùng).")
     @PutMapping("/{registrationId}/handle")
-    public ApiResponse<FarmRegistrationResponse> handleRegistration(
-            @PathVariable UUID registrationId,
-            @Valid @RequestBody HandleRegistrationRequest request) {
-        UUID adminUserId = securityUtils.getCurrentUserId();
-        FarmRegistrationResponse response = farmRegistrationService.handleRegistration(adminUserId, registrationId, request);
+    public ApiResp<FarmRegistrationResp> handleRegistration(
+            @PathVariable Integer registrationId,
+            @Valid @RequestBody HandleRegistrationReq request) {
+        Integer adminUserId = securityUtils.getCurrentUserId();
+        FarmRegistrationResp response = farmRegistrationService.handleRegistration(adminUserId, registrationId, request);
         String actionMessage = "APPROVED".equalsIgnoreCase(request.action())
                 ? "Đã duyệt đơn đăng ký và tạo trang trại thành công."
                 : "Đã từ chối đơn đăng ký trang trại.";
-        return ApiResponse.ok(actionMessage, response);
+        return ApiResp.ok(actionMessage, response);
     }
 }

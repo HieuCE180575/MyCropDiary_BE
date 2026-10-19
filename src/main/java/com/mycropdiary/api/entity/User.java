@@ -2,15 +2,14 @@ package com.mycropdiary.api.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "\"User\"")
 public class User extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
@@ -64,8 +63,8 @@ public class User extends BaseEntity {
     }
 
     // --- Getters & Setters ---
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }

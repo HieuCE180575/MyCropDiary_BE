@@ -10,13 +10,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Repository thao tác dữ liệu cơ sở dữ liệu cho bảng KnowledgeArticle.
  */
 @Repository
-public interface KnowledgeArticleRepository extends JpaRepository<KnowledgeArticle, UUID>, JpaSpecificationExecutor<KnowledgeArticle> {
+public interface KnowledgeArticleRepository extends JpaRepository<KnowledgeArticle, Integer>, JpaSpecificationExecutor<KnowledgeArticle> {
 
     @Query("SELECT k FROM KnowledgeArticle k WHERE LOWER(k.articleStatus) = LOWER(:status)")
     List<KnowledgeArticle> findByStatusString(@Param("status") String status);

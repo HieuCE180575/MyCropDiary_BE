@@ -2,7 +2,6 @@ package com.mycropdiary.api.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.util.UUID;
 
 /**
  * Entity biểu diễn bảng [Farm] (Thông tin Trang trại).
@@ -12,9 +11,9 @@ import java.util.UUID;
 @Table(name = "Farm")
 public class Farm extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "farm_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @Column(name = "farm_name", nullable = false, length = 160)
     private String farmName;
@@ -50,8 +49,8 @@ public class Farm extends BaseEntity {
         this.farmStatus = "active";
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public String getFarmName() { return farmName; }
     public void setFarmName(String farmName) { this.farmName = farmName; }
@@ -89,8 +88,7 @@ public class Farm extends BaseEntity {
 
     public boolean isActive() { return "active".equalsIgnoreCase(farmStatus); }
 
-    // Transient helpers for backward compatibility
-    public String getFarmCode() { return id != null ? id.toString().substring(0, 8).toUpperCase() : ""; }
+    public String getFarmCode() { return id != null ? String.format("FARM-%04d", id) : ""; }
     public void setFarmCode(String farmCode) { }
     public String getProvince() { return null; }
     public void setProvince(String province) { }
@@ -98,6 +96,6 @@ public class Farm extends BaseEntity {
     public void setDistrict(String district) { }
     public String getWard() { return null; }
     public void setWard(String ward) { }
-    public UUID getRegistrationId() { return null; }
-    public void setRegistrationId(UUID regId) { }
+    public Integer getRegistrationId() { return null; }
+    public void setRegistrationId(Integer regId) { }
 }

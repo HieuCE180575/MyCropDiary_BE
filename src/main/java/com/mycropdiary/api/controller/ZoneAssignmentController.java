@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller;
 
-import com.mycropdiary.api.dto.assignment.AssignedZoneResponse;
-import com.mycropdiary.api.dto.assignment.AssignmentResponse;
-import com.mycropdiary.api.dto.assignment.CreateAssignmentRequest;
-import com.mycropdiary.api.dto.common.ApiResponse;
+import com.mycropdiary.api.dto.assignment.AssignedZoneResp;
+import com.mycropdiary.api.dto.assignment.AssignmentResp;
+import com.mycropdiary.api.dto.assignment.CreateAssignmentReq;
+import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.service.ZoneAssignmentService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @Tag(name = "Zone Assignment Management", description = "Quản lý phân công nhân viên vào Vùng canh tác (Zone)")
 @RestController
@@ -30,42 +29,42 @@ public class ZoneAssignmentController {
     @Operation(summary = "Phân công nhân viên vào Vùng (Zone)")
     @PostMapping({"/zone-assignments", "/area-assignments"})
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<AssignmentResponse> assignStaffToZone(
-            @PathVariable UUID farmId,
-            @Valid @RequestBody CreateAssignmentRequest request) {
-        UUID currentUserId = securityUtils.getRequiredCurrentUserId();
-        AssignmentResponse response = zoneAssignmentService.assignStaffToZone(currentUserId, farmId, request);
-        return ApiResponse.ok("Phân công nhân viên vào vùng canh tác thành công", response);
+    public ApiResp<AssignmentResp> assignStaffToZone(
+            @PathVariable Integer farmId,
+            @Valid @RequestBody CreateAssignmentReq request) {
+        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
+        AssignmentResp response = zoneAssignmentService.assignStaffToZone(currentUserId, farmId, request);
+        return ApiResp.ok("Phân công nhân viên vào vùng canh tác thành công", response);
     }
 
     @Operation(summary = "Hủy phân công nhân viên khỏi Vùng (Zone)")
     @DeleteMapping({"/zone-assignments/{assignmentId}", "/area-assignments/{assignmentId}"})
-    public ApiResponse<Void> unassignStaffFromZone(
-            @PathVariable UUID farmId,
-            @PathVariable UUID assignmentId) {
-        UUID currentUserId = securityUtils.getRequiredCurrentUserId();
+    public ApiResp<Void> unassignStaffFromZone(
+            @PathVariable Integer farmId,
+            @PathVariable Integer assignmentId) {
+        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
         zoneAssignmentService.unassignStaffFromZone(currentUserId, farmId, assignmentId);
-        return ApiResponse.ok("Hủy phân công nhân viên khỏi vùng canh tác thành công", null);
+        return ApiResp.ok("Hủy phân công nhân viên khỏi vùng canh tác thành công", null);
     }
 
     @Operation(summary = "Lấy danh sách các Vùng được phân công của nhân viên hiện tại")
     @GetMapping({"/my-assigned-zones", "/my-assigned-areas"})
-    public ApiResponse<List<AssignedZoneResponse>> getAssignedZonesForCurrentStaff(
-            @PathVariable UUID farmId) {
-        UUID currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<AssignedZoneResponse> list = zoneAssignmentService.getAssignedZonesForCurrentStaff(currentUserId, farmId);
-        return ApiResponse.ok("Danh sách vùng được phân công phụ trách", list);
+    public ApiResp<List<AssignedZoneResp>> getAssignedZonesForCurrentStaff(
+            @PathVariable Integer farmId) {
+        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
+        List<AssignedZoneResp> list = zoneAssignmentService.getAssignedZonesForCurrentStaff(currentUserId, farmId);
+        return ApiResp.ok("Danh sách vùng được phân công phụ trách", list);
     }
 
     @Operation(summary = "Lấy danh sách phân công nhân viên theo Vùng")
     @GetMapping({"/zone-assignments", "/area-assignments"})
-    public ApiResponse<List<AssignmentResponse>> getZoneAssignments(
-            @PathVariable UUID farmId,
-            @RequestParam(required = false) UUID zoneId,
-            @RequestParam(required = false) UUID productionAreaId) {
-        UUID currentUserId = securityUtils.getRequiredCurrentUserId();
-        UUID targetZoneId = zoneId != null ? zoneId : productionAreaId;
-        List<AssignmentResponse> list = zoneAssignmentService.getZoneAssignments(currentUserId, farmId, targetZoneId);
-        return ApiResponse.ok("Danh sách phân công vùng sản xuất", list);
+    public ApiResp<List<AssignmentResp>> getZoneAssignments(
+            @PathVariable Integer farmId,
+            @RequestParam(required = false) Integer zoneId,
+            @RequestParam(required = false) Integer productionAreaId) {
+        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
+        Integer targetZoneId = zoneId != null ? zoneId : productionAreaId;
+        List<AssignmentResp> list = zoneAssignmentService.getZoneAssignments(currentUserId, farmId, targetZoneId);
+        return ApiResp.ok("Danh sách phân công vùng sản xuất", list);
     }
 }

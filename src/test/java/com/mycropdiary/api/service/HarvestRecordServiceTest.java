@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordRequest;
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResponse;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -37,7 +37,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -66,16 +65,16 @@ class HarvestRecordServiceTest {
     private FarmMember ownerMember;
     private FarmMember staffMember;
 
-    private final UUID farmId = UUID.randomUUID();
-    private final UUID zoneId = UUID.randomUUID();
-    private final UUID blockId = UUID.randomUUID();
-    private final UUID ownerUserId = UUID.randomUUID();
-    private final UUID staffUserId = UUID.randomUUID();
-    private final UUID ownerMemberId = UUID.randomUUID();
-    private final UUID staffMemberId = UUID.randomUUID();
-    private final UUID activeSeasonId = UUID.randomUUID();
-    private final UUID completedSeasonId = UUID.randomUUID();
-    private final UUID harvestRecordId = UUID.randomUUID();
+    private final Integer farmId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer zoneId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer blockId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer ownerUserId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer staffUserId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer ownerMemberId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer staffMemberId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer activeSeasonId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer completedSeasonId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer harvestRecordId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
 
     @BeforeEach
     void setUp() {
@@ -129,7 +128,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Tạo HarvestRecord thành công với vai trò OWNER")
     void createHarvestRecord_AsOwner_Success() {
-        CreateHarvestRecordRequest request = new CreateHarvestRecordRequest(
+        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
                 activeSeasonId, "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú thu hoạch"
         );
 
@@ -147,7 +146,7 @@ class HarvestRecordServiceTest {
 
         when(harvestRecordRepository.save(any(HarvestRecord.class))).thenReturn(savedRecord);
 
-        HarvestRecordResponse response = harvestRecordService.createHarvestRecord(ownerUserId, request);
+        HarvestRecordResp response = harvestRecordService.createHarvestRecord(ownerUserId, request);
 
         assertNotNull(response);
         assertEquals(harvestRecordId, response.harvestRecordId());
@@ -158,7 +157,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Tạo HarvestRecord thất bại nếu không phải active member của farm")
     void createHarvestRecord_NotMember_ThrowsForbidden() {
-        CreateHarvestRecordRequest request = new CreateHarvestRecordRequest(
+        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
                 activeSeasonId, null, LocalDateTime.now(), new BigDecimal("100.000"), "kg", null, null, null, null
         );
 
@@ -173,7 +172,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Tạo HarvestRecord thất bại nếu Quantity <= 0")
     void createHarvestRecord_QuantityInvalid_ThrowsBadRequest() {
-        CreateHarvestRecordRequest request = new CreateHarvestRecordRequest(
+        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
                 activeSeasonId, null, LocalDateTime.now(), new BigDecimal("0.000"), "kg", null, null, null, null
         );
 
@@ -189,7 +188,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Tạo HarvestRecord thất bại khi CropSeason đã COMPLETED")
     void createHarvestRecord_ClosedSeason_ThrowsBadRequest() {
-        CreateHarvestRecordRequest request = new CreateHarvestRecordRequest(
+        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
                 completedSeasonId, null, LocalDateTime.now(), new BigDecimal("10.000"), "kg", null, null, null, null
         );
 
@@ -217,7 +216,7 @@ class HarvestRecordServiceTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
         when(harvestRecordRepository.findByCropSeasonId(activeSeasonId, pageable)).thenReturn(new PageImpl<>(List.of(record)));
 
-        PageResponse<HarvestRecordResponse> result = harvestRecordService.getHarvestRecordsBySeason(ownerUserId, activeSeasonId, pageable);
+        PageResp<HarvestRecordResp> result = harvestRecordService.getHarvestRecordsBySeason(ownerUserId, activeSeasonId, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.content().size());
@@ -236,7 +235,7 @@ class HarvestRecordServiceTest {
         when(harvestRecordRepository.findById(harvestRecordId)).thenReturn(Optional.of(record));
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
 
-        HarvestRecordResponse response = harvestRecordService.getHarvestRecordById(ownerUserId, harvestRecordId);
+        HarvestRecordResp response = harvestRecordService.getHarvestRecordById(ownerUserId, harvestRecordId);
 
         assertNotNull(response);
         assertEquals(harvestRecordId, response.harvestRecordId());
@@ -245,7 +244,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Xem chi tiết HarvestRecord thất bại khi không tồn tại")
     void getHarvestRecordById_NotFound_ThrowsNotFound() {
-        UUID unknownId = UUID.randomUUID();
+        Integer unknownId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
         when(harvestRecordRepository.findById(unknownId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,

@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.UUID;
 
 /**
  * Entity biểu diễn bảng [MaterialUsage] (Nhật ký sử dụng vật tư).
@@ -19,9 +18,9 @@ import java.util.UUID;
 public class MaterialUsage {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "material_usage_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "farm_id", nullable = false)
@@ -64,8 +63,8 @@ public class MaterialUsage {
 
     public MaterialUsage() {}
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public Farm getFarm() { return farm; }
     public void setFarm(Farm farm) { this.farm = farm; }

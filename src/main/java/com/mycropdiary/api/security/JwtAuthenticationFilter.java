@@ -14,7 +14,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -31,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwt = extractJwtFromRequest(request);
 
         if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-            UUID userId = jwtTokenProvider.getUserIdFromToken(jwt);
+            Integer userId = jwtTokenProvider.getUserIdFromToken(jwt);
             String role = jwtTokenProvider.getRoleFromToken(jwt);
 
             UsernamePasswordAuthenticationToken authentication =

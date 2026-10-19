@@ -1,10 +1,10 @@
 package com.mycropdiary.api.controller.farmregistration;
 
-import com.mycropdiary.api.dto.common.ApiResponse;
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateRequest;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationResponse;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResponse;
+import com.mycropdiary.api.dto.common.ApiResp;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateReq;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResp;
 import com.mycropdiary.api.service.farmregistration.FarmRegistrationService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +16,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 
 /**
  * Controller quản lý REST API cho đăng ký trang trại từ phía người dùng (UC-09).
@@ -44,10 +43,10 @@ public class FarmRegistrationController {
     @Operation(summary = "Gửi yêu cầu đăng ký trang trại", description = "Người dùng đã xác thực gửi yêu cầu đăng ký trang trại mới (Trạng thái mặc định: PENDING).")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<FarmRegistrationResponse> createRegistration(@Valid @RequestBody FarmRegistrationCreateRequest request) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        FarmRegistrationResponse response = farmRegistrationService.createRegistration(currentUserId, request);
-        return ApiResponse.ok("Gửi yêu cầu đăng ký trang trại thành công.", response);
+    public ApiResp<FarmRegistrationResp> createRegistration(@Valid @RequestBody FarmRegistrationCreateReq request) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        FarmRegistrationResp response = farmRegistrationService.createRegistration(currentUserId, request);
+        return ApiResp.ok("Gửi yêu cầu đăng ký trang trại thành công.", response);
     }
 
     /**
@@ -58,11 +57,11 @@ public class FarmRegistrationController {
      */
     @Operation(summary = "Xem danh sách yêu cầu đăng ký của tôi", description = "Lấy danh sách các yêu cầu đăng ký trang trại của người dùng đang đăng nhập (Có phân trang).")
     @GetMapping
-    public ApiResponse<PageResponse<FarmRegistrationSummaryResponse>> getMyRegistrations(
+    public ApiResp<PageResp<FarmRegistrationSummaryResp>> getMyRegistrations(
             @PageableDefault(size = 20) Pageable pageable) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        PageResponse<FarmRegistrationSummaryResponse> response = farmRegistrationService.getMyRegistrations(currentUserId, pageable);
-        return ApiResponse.ok("Danh sách yêu cầu đăng ký trang trại của tôi.", response);
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        PageResp<FarmRegistrationSummaryResp> response = farmRegistrationService.getMyRegistrations(currentUserId, pageable);
+        return ApiResp.ok("Danh sách yêu cầu đăng ký trang trại của tôi.", response);
     }
 
     /**
@@ -73,10 +72,10 @@ public class FarmRegistrationController {
      */
     @Operation(summary = "Xem chi tiết yêu cầu đăng ký của tôi", description = "Lấy thông tin chi tiết một yêu cầu đăng ký trang trại của người dùng đang đăng nhập theo ID.")
     @GetMapping("/{registrationId}")
-    public ApiResponse<FarmRegistrationResponse> getMyRegistrationDetail(@PathVariable UUID registrationId) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        FarmRegistrationResponse response = farmRegistrationService.getMyRegistrationDetail(currentUserId, registrationId);
-        return ApiResponse.ok("Chi tiết yêu cầu đăng ký trang trại.", response);
+    public ApiResp<FarmRegistrationResp> getMyRegistrationDetail(@PathVariable Integer registrationId) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        FarmRegistrationResp response = farmRegistrationService.getMyRegistrationDetail(currentUserId, registrationId);
+        return ApiResp.ok("Chi tiết yêu cầu đăng ký trang trại.", response);
     }
 
     /**
@@ -87,9 +86,9 @@ public class FarmRegistrationController {
      */
     @Operation(summary = "Hủy yêu cầu đăng ký trang trại", description = "Người dùng hủy yêu cầu đăng ký trang trại của chính mình khi trạng thái là PENDING.")
     @PatchMapping("/{registrationId}/cancel")
-    public ApiResponse<FarmRegistrationResponse> cancelRegistration(@PathVariable UUID registrationId) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        FarmRegistrationResponse response = farmRegistrationService.cancelRegistration(currentUserId, registrationId);
-        return ApiResponse.ok("Hủy yêu cầu đăng ký trang trại thành công.", response);
+    public ApiResp<FarmRegistrationResp> cancelRegistration(@PathVariable Integer registrationId) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        FarmRegistrationResp response = farmRegistrationService.cancelRegistration(currentUserId, registrationId);
+        return ApiResp.ok("Hủy yêu cầu đăng ký trang trại thành công.", response);
     }
 }

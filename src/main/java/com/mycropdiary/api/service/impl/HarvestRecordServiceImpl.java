@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordRequest;
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResponse;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.UUID;
 
 /**
  * Service implementation cho nghiệp vụ quản lý bản ghi thu hoạch (UC-26).
@@ -46,7 +45,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
 
     @Override
     @Transactional
-    public HarvestRecordResponse createHarvestRecord(UUID userId, CreateHarvestRecordRequest request) {
+    public HarvestRecordResp createHarvestRecord(Integer userId, CreateHarvestRecordReq request) {
         CropSeason season = cropSeasonRepository.findById(request.cropSeasonId())
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại."));
 
@@ -81,18 +80,18 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
     }
 
     @Override
-    public PageResponse<HarvestRecordResponse> getHarvestRecordsBySeason(UUID userId, UUID cropSeasonId, Pageable pageable) {
+    public PageResp<HarvestRecordResp> getHarvestRecordsBySeason(Integer userId, Integer cropSeasonId, Pageable pageable) {
         CropSeason season = cropSeasonRepository.findById(cropSeasonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại."));
 
         validateAndGetActiveMember(userId, season);
 
         Page<HarvestRecord> page = harvestRecordRepository.findByCropSeasonId(cropSeasonId, pageable);
-        return PageResponse.map(page, this::mapToResponse);
+        return PageResp.map(page, this::mapToResponse);
     }
 
     @Override
-    public HarvestRecordResponse getHarvestRecordById(UUID userId, UUID harvestRecordId) {
+    public HarvestRecordResp getHarvestRecordById(Integer userId, Integer harvestRecordId) {
         HarvestRecord record = harvestRecordRepository.findById(harvestRecordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bản ghi thu hoạch không tồn tại."));
 
@@ -101,13 +100,13 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
         return mapToResponse(record);
     }
 
-    private FarmMember validateAndGetActiveMember(UUID userId, CropSeason season) {
+    private FarmMember validateAndGetActiveMember(Integer userId, CropSeason season) {
         Farm farm = season.getFarm();
         return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farm.getId(), userId, "active")
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập hoặc ghi nhận thu hoạch cho mùa vụ của trang trại này."));
     }
 
-    private HarvestRecordResponse mapToResponse(HarvestRecord record) {
+    private HarvestRecordResp mapToResponse(HarvestRecord record) {
         CropSeason season = record.getCropSeason();
         Farm farm = season != null ? season.getFarm() : record.getFarm();
         Block block = record.getBlock();
@@ -116,7 +115,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
                 ? record.getRecordedBy().getUser().getFullName()
                 : null;
 
-        return new HarvestRecordResponse(
+        return new HarvestRecordResp(
                 record.getId(),
                 season != null ? season.getId() : null,
                 season != null ? season.getSeasonName() : null,

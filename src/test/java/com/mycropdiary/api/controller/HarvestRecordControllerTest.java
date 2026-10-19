@@ -3,9 +3,9 @@ package com.mycropdiary.api.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mycropdiary.api.controller.cultivation.HarvestRecordController;
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordRequest;
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResponse;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
 import com.mycropdiary.api.service.cultivation.HarvestRecordService;
 import com.mycropdiary.api.util.SecurityUtils;
 
@@ -27,7 +27,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -52,12 +51,12 @@ class HarvestRecordControllerTest {
     @InjectMocks
     private HarvestRecordController harvestRecordController;
 
-    private final UUID userId = UUID.randomUUID();
-    private final UUID harvestRecordId = UUID.randomUUID();
-    private final UUID cropSeasonId = UUID.randomUUID();
-    private final UUID farmId = UUID.randomUUID();
-    private final UUID plotId = UUID.randomUUID();
-    private final UUID recordedByMemberId = UUID.randomUUID();
+    private final Integer userId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer harvestRecordId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer cropSeasonId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer farmId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer plotId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer recordedByMemberId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
 
     @BeforeEach
     void setUp() {
@@ -70,16 +69,16 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("POST /api/v1/harvest-records -> 201 Created khi tạo thành công")
     void createHarvestRecord_Success() throws Exception {
-        CreateHarvestRecordRequest request = new CreateHarvestRecordRequest(
+        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
                 cropSeasonId, "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
-        HarvestRecordResponse response = new HarvestRecordResponse(
+        HarvestRecordResp response = new HarvestRecordResp(
                 harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
                 recordedByMemberId, "Chủ Nông Trại", "LOT-001", request.harvestedAt(), request.quantity(), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
-        when(harvestRecordService.createHarvestRecord(eq(userId), any(CreateHarvestRecordRequest.class))).thenReturn(response);
+        when(harvestRecordService.createHarvestRecord(eq(userId), any(CreateHarvestRecordReq.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/harvest-records")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -93,7 +92,7 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("POST /api/v1/harvest-records -> 400 Bad Request khi validation thất bại (Quantity <= 0)")
     void createHarvestRecord_ValidationFailed() throws Exception {
-        CreateHarvestRecordRequest request = new CreateHarvestRecordRequest(
+        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
                 null, "LOT-001", null, new BigDecimal("-10.000"), "", null, null, null, null
         );
 
@@ -104,14 +103,14 @@ class HarvestRecordControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/harvest-records?cropSeasonId=... -> 200 OK với PageResponse")
+    @DisplayName("GET /api/v1/harvest-records?cropSeasonId=... -> 200 OK với PageResp")
     void getHarvestRecordsBySeason_Success() throws Exception {
-        HarvestRecordResponse response = new HarvestRecordResponse(
+        HarvestRecordResp response = new HarvestRecordResp(
                 harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
                 recordedByMemberId, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
-        PageResponse<HarvestRecordResponse> pageResponse = PageResponse.from(new PageImpl<>(List.of(response)));
+        PageResp<HarvestRecordResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
 
         when(harvestRecordService.getHarvestRecordsBySeason(eq(userId), eq(cropSeasonId), any(Pageable.class)))
                 .thenReturn(pageResponse);
@@ -126,7 +125,7 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("GET /api/v1/harvest-records/{id} -> 200 OK với chi tiết bản ghi")
     void getHarvestRecordById_Success() throws Exception {
-        HarvestRecordResponse response = new HarvestRecordResponse(
+        HarvestRecordResp response = new HarvestRecordResp(
                 harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
                 recordedByMemberId, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );

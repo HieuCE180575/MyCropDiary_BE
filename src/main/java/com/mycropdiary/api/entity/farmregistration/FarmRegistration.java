@@ -3,16 +3,15 @@ package com.mycropdiary.api.entity.farmregistration;
 import com.mycropdiary.api.entity.User;
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "FarmRegistration")
 public class FarmRegistration {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "registration_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -38,7 +37,7 @@ public class FarmRegistration {
     private Instant reviewedAt;
 
     @Column(name = "resulting_farm_id")
-    private UUID resultingFarmId;
+    private Integer resultingFarmId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -59,8 +58,8 @@ public class FarmRegistration {
         }
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
@@ -85,8 +84,8 @@ public class FarmRegistration {
     public Instant getReviewedAt() { return reviewedAt; }
     public void setReviewedAt(Instant reviewedAt) { this.reviewedAt = reviewedAt; }
 
-    public UUID getResultingFarmId() { return resultingFarmId; }
-    public void setResultingFarmId(UUID resultingFarmId) { this.resultingFarmId = resultingFarmId; }
+    public Integer getResultingFarmId() { return resultingFarmId; }
+    public void setResultingFarmId(Integer resultingFarmId) { this.resultingFarmId = resultingFarmId; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

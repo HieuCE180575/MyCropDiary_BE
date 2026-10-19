@@ -7,38 +7,37 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Repository thao tác cơ sở dữ liệu cho Entity FarmMember (Thành viên trang trại).
  */
-public interface FarmMemberRepository extends JpaRepository<FarmMember, UUID> {
-    Optional<FarmMember> findByFarmIdAndUserId(UUID farmId, UUID userId);
+public interface FarmMemberRepository extends JpaRepository<FarmMember, Integer> {
+    Optional<FarmMember> findByFarmIdAndUserId(Integer farmId, Integer userId);
 
     @Query("SELECT fm FROM FarmMember fm WHERE fm.farm.id = :farmId AND fm.user.id = :userId AND LOWER(fm.membershipStatus) = LOWER(:status)")
-    Optional<FarmMember> findByFarmIdAndUserIdAndStatus(@Param("farmId") UUID farmId, @Param("userId") UUID userId, @Param("status") String status);
+    Optional<FarmMember> findByFarmIdAndUserIdAndStatus(@Param("farmId") Integer farmId, @Param("userId") Integer userId, @Param("status") String status);
 
     @Query("SELECT fm FROM FarmMember fm WHERE fm.farm.id = :farmId AND LOWER(fm.membershipStatus) = LOWER(:status)")
-    List<FarmMember> findByFarmIdAndStatus(@Param("farmId") UUID farmId, @Param("status") String status);
+    List<FarmMember> findByFarmIdAndStatus(@Param("farmId") Integer farmId, @Param("status") String status);
 
-    List<FarmMember> findByFarmId(UUID farmId);
+    List<FarmMember> findByFarmId(Integer farmId);
 
     @Query("SELECT fm FROM FarmMember fm WHERE fm.user.id = :userId AND LOWER(fm.membershipStatus) = LOWER(:status)")
-    List<FarmMember> findByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") String status);
+    List<FarmMember> findByUserIdAndStatus(@Param("userId") Integer userId, @Param("status") String status);
 
     @Query("SELECT COUNT(fm) > 0 FROM FarmMember fm WHERE fm.farm.id = :farmId AND fm.user.id = :userId AND LOWER(fm.membershipStatus) = LOWER(:status)")
-    boolean existsByFarmIdAndUserIdAndStatus(@Param("farmId") UUID farmId, @Param("userId") UUID userId, @Param("status") String status);
+    boolean existsByFarmIdAndUserIdAndStatus(@Param("farmId") Integer farmId, @Param("userId") Integer userId, @Param("status") String status);
 
     @Query("SELECT COUNT(fm) > 0 FROM FarmMember fm WHERE fm.farm.id = :farmId AND LOWER(fm.memberRole) = LOWER(:farmRole) AND LOWER(fm.membershipStatus) = LOWER(:status)")
-    boolean existsByFarmIdAndFarmRoleAndStatus(@Param("farmId") UUID farmId, @Param("farmRole") String farmRole, @Param("status") String status);
+    boolean existsByFarmIdAndFarmRoleAndStatus(@Param("farmId") Integer farmId, @Param("farmRole") String farmRole, @Param("status") String status);
 
     @Query("SELECT COUNT(fm) FROM FarmMember fm WHERE fm.farm.id = :farmId AND LOWER(fm.memberRole) = LOWER(:farmRole) AND LOWER(fm.membershipStatus) = LOWER(:status)")
-    long countByFarmIdAndFarmRoleAndStatus(@Param("farmId") UUID farmId, @Param("farmRole") String farmRole, @Param("status") String status);
+    long countByFarmIdAndFarmRoleAndStatus(@Param("farmId") Integer farmId, @Param("farmRole") String farmRole, @Param("status") String status);
 
     @Query("SELECT fm.memberRole FROM FarmMember fm WHERE fm.farm.id = :farmId AND fm.user.id = :userId AND LOWER(fm.membershipStatus) = 'active'")
-    Optional<String> findActiveRoleInFarm(@Param("farmId") UUID farmId, @Param("userId") UUID userId);
+    Optional<String> findActiveRoleInFarm(@Param("farmId") Integer farmId, @Param("userId") Integer userId);
 
-    boolean existsByFarmIdAndUserId(UUID farmId, UUID userId);
+    boolean existsByFarmIdAndUserId(Integer farmId, Integer userId);
 
     @Query("SELECT fm FROM FarmMember fm " +
            "JOIN FETCH fm.user u " +
@@ -47,7 +46,7 @@ public interface FarmMemberRepository extends JpaRepository<FarmMember, UUID> {
            "AND (:keyword IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "     OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "ORDER BY fm.joinedAt DESC")
-    List<FarmMember> searchMembers(@Param("farmId") UUID farmId, 
+    List<FarmMember> searchMembers(@Param("farmId") Integer farmId, 
                                    @Param("status") String status, 
                                    @Param("keyword") String keyword);
 }

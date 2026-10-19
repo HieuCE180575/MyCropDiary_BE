@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.block.CreateBlockRequest;
-import com.mycropdiary.api.dto.block.BlockResponse;
-import com.mycropdiary.api.dto.block.UpdateBlockRequest;
+import com.mycropdiary.api.dto.block.CreateBlockReq;
+import com.mycropdiary.api.dto.block.BlockResp;
+import com.mycropdiary.api.dto.block.UpdateBlockReq;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.StaffZoneAssignment;
@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -45,7 +44,7 @@ public class BlockServiceImpl implements BlockService {
     }
 
     @Override
-    public BlockResponse createBlock(UUID currentUserId, UUID zoneId, CreateBlockRequest request) {
+    public BlockResp createBlock(Integer currentUserId, Integer zoneId, CreateBlockReq request) {
         // Business Rule: Kiểm tra quyền truy cập khu vực (chỉ Owner hoặc Staff được phân công khu vực này)
         Zone zone = accessGuard.requireZoneAccess(currentUserId, zoneId);
 
@@ -75,7 +74,7 @@ public class BlockServiceImpl implements BlockService {
     }
 
     @Override
-    public BlockResponse updateBlock(UUID currentUserId, UUID blockId, UpdateBlockRequest request) {
+    public BlockResp updateBlock(Integer currentUserId, Integer blockId, UpdateBlockReq request) {
         // Business Rule: Kiểm tra quyền truy cập thửa đất
         Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
         Zone zone = block.getZone();
@@ -109,7 +108,7 @@ public class BlockServiceImpl implements BlockService {
 
     @Override
     @Transactional(readOnly = true)
-    public BlockResponse getBlockById(UUID currentUserId, UUID blockId) {
+    public BlockResp getBlockById(Integer currentUserId, Integer blockId) {
         // Business Rule: Kiểm tra quyền truy cập thửa đất
         Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
         return toBlockResponse(block);
@@ -117,11 +116,11 @@ public class BlockServiceImpl implements BlockService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BlockResponse> searchBlocks(UUID currentUserId, UUID farmId, UUID zoneId, String status, String keyword) {
+    public List<BlockResp> searchBlocks(Integer currentUserId, Integer farmId, Integer zoneId, String status, String keyword) {
         // Business Rule: Kiểm tra quyền truy cập vào trang trại
         FarmMember currentMember = accessGuard.requireFarmAccess(currentUserId, farmId);
 
-        Set<UUID> allowedZoneIds = null;
+        Set<Integer> allowedZoneIds = null;
         // Chặn truy cập trái quyền đối với Staff:
         if (currentMember != null && !currentMember.isOwner()) {
             List<StaffZoneAssignment> staffAssignments = assignmentRepository.findActiveAssignmentsByMemberId(currentMember.getId());
@@ -148,7 +147,7 @@ public class BlockServiceImpl implements BlockService {
     }
 
     @Override
-    public void deleteBlock(UUID currentUserId, UUID blockId) {
+    public void deleteBlock(Integer currentUserId, Integer blockId) {
         // Business Rule: Kiểm tra quyền truy cập thửa đất
         Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
         blockRepository.delete(block);
@@ -160,7 +159,7 @@ public class BlockServiceImpl implements BlockService {
         }
     }
 
-    private void validateZoneCapacity(Zone zone, BigDecimal newBlockArea, UUID excludeBlockId) {
+    private void validateZoneCapacity(Zone zone, BigDecimal newBlockArea, Integer excludeBlockId) {
         if (zone.getAreaValue() != null && zone.getAreaValue().compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal currentTotal = blockRepository.sumAreaValueByZoneId(zone.getId(), excludeBlockId);
             BigDecimal totalWithNew = currentTotal.add(newBlockArea);
@@ -170,8 +169,8 @@ public class BlockServiceImpl implements BlockService {
         }
     }
 
-    private BlockResponse toBlockResponse(Block b) {
-        return new BlockResponse(
+    private BlockResp toBlockResponse(Block b) {
+        return new BlockResp(
                 b.getId(),
                 b.getZone().getId(),
                 b.getZone().getZoneName(),

@@ -1,7 +1,7 @@
 package com.mycropdiary.api.controller;
 
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.knowledge.KnowledgeArticleResponseDTO;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.knowledge.KnowledgeArticleRespDTO;
 import com.mycropdiary.api.entity.knowledge.KnowledgeStatus;
 import com.mycropdiary.api.exception.GlobalExceptionHandler;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
@@ -18,7 +18,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -39,7 +38,7 @@ class KnowledgeArticleControllerTest {
     @InjectMocks
     private KnowledgeArticleController knowledgeArticleController;
 
-    private final UUID articleId = UUID.randomUUID();
+    private final Integer articleId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
 
     @BeforeEach
     void setUp() {
@@ -54,7 +53,7 @@ class KnowledgeArticleControllerTest {
     @Test
     @DisplayName("GET /api/v1/knowledge/articles - Trả về danh sách bài viết công khai thành công")
     void getPublicArticles_Success() throws Exception {
-        KnowledgeArticleResponseDTO dto = new KnowledgeArticleResponseDTO(
+        KnowledgeArticleRespDTO dto = new KnowledgeArticleRespDTO(
                 articleId,
                 "Tomato Cultivation Guide",
                 "tomato-cultivation-guide",
@@ -69,7 +68,7 @@ class KnowledgeArticleControllerTest {
                 LocalDateTime.now()
         );
 
-        PageResponse<KnowledgeArticleResponseDTO> pageResponse = new PageResponse<>(List.of(dto), 0, 10, 1L, 1, true);
+        PageResp<KnowledgeArticleRespDTO> pageResponse = new PageResp<>(List.of(dto), 0, 10, 1L, 1, true);
 
         when(knowledgeArticleService.getPublicArticles(0, 10, "tomato", null)).thenReturn(pageResponse);
 
@@ -90,7 +89,7 @@ class KnowledgeArticleControllerTest {
     @Test
     @DisplayName("GET /api/v1/knowledge/articles/{id} - Trả về chi tiết bài viết thành công")
     void getPublicArticleById_Success() throws Exception {
-        KnowledgeArticleResponseDTO dto = new KnowledgeArticleResponseDTO(
+        KnowledgeArticleRespDTO dto = new KnowledgeArticleRespDTO(
                 articleId,
                 "Tomato Cultivation Guide",
                 "tomato-cultivation-guide",
@@ -120,7 +119,7 @@ class KnowledgeArticleControllerTest {
     @Test
     @DisplayName("GET /api/v1/knowledge/articles/{id} - Trả về lỗi 404 khi không tìm thấy hoặc bài viết bị ẩn")
     void getPublicArticleById_NotFound() throws Exception {
-        UUID unknownId = UUID.randomUUID();
+        Integer unknownId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
         when(knowledgeArticleService.getPublicArticleById(unknownId))
                 .thenThrow(new ResourceNotFoundException("Knowledge article not found with id: " + unknownId));
 

@@ -10,18 +10,17 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Repository thao tác cơ sở dữ liệu cho Entity Farm (Trang trại).
  */
-public interface FarmRepository extends JpaRepository<Farm, UUID> {
+public interface FarmRepository extends JpaRepository<Farm, Integer> {
 
     @Query("SELECT DISTINCT f FROM Farm f JOIN FarmMember fm ON f.id = fm.farm.id " +
            "WHERE fm.user.id = :userId AND LOWER(fm.membershipStatus) = 'active' " +
            "AND (:keyword IS NULL OR LOWER(f.farmName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(f.address) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:status IS NULL OR LOWER(f.farmStatus) = LOWER(:status))")
-    Page<Farm> findAccessibleFarmsByUser(@Param("userId") UUID userId,
+    Page<Farm> findAccessibleFarmsByUser(@Param("userId") Integer userId,
                                          @Param("keyword") String keyword,
                                          @Param("status") String status,
                                          @Param("province") String province,
@@ -29,7 +28,7 @@ public interface FarmRepository extends JpaRepository<Farm, UUID> {
 
     @Query("SELECT DISTINCT f FROM Farm f JOIN FarmMember fm ON f.id = fm.farm.id " +
            "WHERE fm.user.id = :userId AND LOWER(fm.membershipStatus) = 'active'")
-    List<Farm> findAllAccessibleFarmsByUser(@Param("userId") UUID userId);
+    List<Farm> findAllAccessibleFarmsByUser(@Param("userId") Integer userId);
 
     @Query("SELECT f FROM Farm f " +
            "JOIN FarmMember fm ON fm.farm.id = f.id " +
@@ -38,7 +37,7 @@ public interface FarmRepository extends JpaRepository<Farm, UUID> {
            "AND (:keyword IS NULL OR LOWER(f.farmName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "     OR LOWER(f.address) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Farm> searchAccessibleFarms(
-            @Param("userId") UUID userId,
+            @Param("userId") Integer userId,
             @Param("keyword") String keyword,
             @Param("province") String province,
             @Param("status") String status,

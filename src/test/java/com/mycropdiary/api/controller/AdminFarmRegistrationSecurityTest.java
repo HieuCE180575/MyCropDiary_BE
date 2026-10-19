@@ -1,7 +1,7 @@
 package com.mycropdiary.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycropdiary.api.dto.farm.HandleRegistrationRequest;
+import com.mycropdiary.api.dto.farm.HandleRegistrationReq;
 import com.mycropdiary.api.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +13,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -60,7 +59,7 @@ class AdminFarmRegistrationSecurityTest {
     @Test
     @DisplayName("GET /api/v1/admin/farm-registrations với token USER -> Trả về 403 Forbidden")
     void getRegistrations_UserRole_Returns403() throws Exception {
-        String userToken = jwtTokenProvider.generateAccessToken(UUID.randomUUID(), "farmer@test.com", "USER");
+        String userToken = jwtTokenProvider.generateAccessToken(java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000), "farmer@test.com", "USER");
 
         mockMvc.perform(get("/api/v1/admin/farm-registrations")
                         .header("Authorization", "Bearer " + userToken)
@@ -73,7 +72,7 @@ class AdminFarmRegistrationSecurityTest {
     @Test
     @DisplayName("GET /api/v1/admin/farm-registrations với token ADMIN -> Trả về 200 OK")
     void getRegistrations_AdminRole_Returns200() throws Exception {
-        String adminToken = jwtTokenProvider.generateAccessToken(UUID.randomUUID(), "admin@mycropdiary.com", "ADMIN");
+        String adminToken = jwtTokenProvider.generateAccessToken(java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000), "admin@mycropdiary.com", "ADMIN");
 
         mockMvc.perform(get("/api/v1/admin/farm-registrations")
                         .header("Authorization", "Bearer " + adminToken)
@@ -86,10 +85,10 @@ class AdminFarmRegistrationSecurityTest {
     @Test
     @DisplayName("PUT /api/v1/admin/farm-registrations/{id}/handle với token USER -> Trả về 403 Forbidden")
     void handleRegistration_UserRole_Returns403() throws Exception {
-        String userToken = jwtTokenProvider.generateAccessToken(UUID.randomUUID(), "farmer@test.com", "USER");
-        HandleRegistrationRequest request = new HandleRegistrationRequest("APPROVED", null);
+        String userToken = jwtTokenProvider.generateAccessToken(java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000), "farmer@test.com", "USER");
+        HandleRegistrationReq request = new HandleRegistrationReq("APPROVED", null);
 
-        mockMvc.perform(put("/api/v1/admin/farm-registrations/" + UUID.randomUUID() + "/handle")
+        mockMvc.perform(put("/api/v1/admin/farm-registrations/" + java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000) + "/handle")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

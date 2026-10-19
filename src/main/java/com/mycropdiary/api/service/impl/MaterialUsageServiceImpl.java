@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageRequest;
-import com.mycropdiary.api.dto.cultivation.MaterialUsageResponse;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
+import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.cultivation.*;
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 /**
  * Service implementation cho nghiệp vụ nhật ký sử dụng vật tư (UC-25).
@@ -45,7 +44,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
     @Override
     @Transactional
-    public MaterialUsageResponse createMaterialUsage(UUID userId, CreateMaterialUsageRequest request) {
+    public MaterialUsageResp createMaterialUsage(Integer userId, CreateMaterialUsageReq request) {
         // 1. Tìm FarmingActivity
         FarmingActivity activity = farmingActivityRepository.findById(request.farmingActivityId())
                 .orElseThrow(() -> new ResourceNotFoundException("Hoạt động canh tác không tồn tại."));
@@ -113,18 +112,18 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
     }
 
     @Override
-    public PageResponse<MaterialUsageResponse> getMaterialUsagesByActivity(UUID userId, UUID farmingActivityId, Pageable pageable) {
+    public PageResp<MaterialUsageResp> getMaterialUsagesByActivity(Integer userId, Integer farmingActivityId, Pageable pageable) {
         FarmingActivity activity = farmingActivityRepository.findById(farmingActivityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hoạt động canh tác không tồn tại."));
 
         validateAndGetActiveMember(userId, activity);
 
         Page<MaterialUsage> usagesPage = materialUsageRepository.findByFarmingActivityId(farmingActivityId, pageable);
-        return PageResponse.map(usagesPage, this::mapToResponse);
+        return PageResp.map(usagesPage, this::mapToResponse);
     }
 
     @Override
-    public MaterialUsageResponse getMaterialUsageById(UUID userId, UUID materialUsageId) {
+    public MaterialUsageResp getMaterialUsageById(Integer userId, Integer materialUsageId) {
         MaterialUsage usage = materialUsageRepository.findById(materialUsageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bản ghi sử dụng vật tư không tồn tại."));
 
@@ -133,7 +132,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         return mapToResponse(usage);
     }
 
-    private FarmMember validateAndGetActiveMember(UUID userId, FarmingActivity activity) {
+    private FarmMember validateAndGetActiveMember(Integer userId, FarmingActivity activity) {
         CropSeason season = activity.getCropSeason();
         Farm farm = season != null ? season.getFarm() : activity.getFarm();
 
@@ -141,14 +140,14 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập hoặc ghi nhật ký cho mùa vụ của trang trại này."));
     }
 
-    private MaterialUsageResponse mapToResponse(MaterialUsage usage) {
+    private MaterialUsageResp mapToResponse(MaterialUsage usage) {
         String recorderName = usage.getUsedBy() != null && usage.getUsedBy().getUser() != null
                 ? usage.getUsedBy().getUser().getFullName()
                 : null;
         FarmingActivity act = usage.getFarmingActivity();
         CropSeason cs = act != null ? act.getCropSeason() : null;
 
-        return new MaterialUsageResponse(
+        return new MaterialUsageResp(
                 usage.getId(),
                 act != null ? act.getId() : null,
                 act != null ? act.getActivityName() : null,

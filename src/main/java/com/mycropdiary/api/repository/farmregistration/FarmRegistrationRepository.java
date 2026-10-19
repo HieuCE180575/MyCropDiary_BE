@@ -11,21 +11,20 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface FarmRegistrationRepository extends JpaRepository<FarmRegistration, UUID> {
+public interface FarmRegistrationRepository extends JpaRepository<FarmRegistration, Integer> {
 
     @Query("SELECT r FROM FarmRegistration r WHERE r.user.id = :userId")
-    List<FarmRegistration> findByApplicantUserId(@Param("userId") UUID userId);
+    List<FarmRegistration> findByApplicantUserId(@Param("userId") Integer userId);
 
     @Query("SELECT r FROM FarmRegistration r WHERE r.user.id = :userId")
-    Page<FarmRegistration> findByApplicantUserId(@Param("userId") UUID userId, Pageable pageable);
+    Page<FarmRegistration> findByApplicantUserId(@Param("userId") Integer userId, Pageable pageable);
 
     @Query("SELECT r FROM FarmRegistration r WHERE r.user.id = :userId AND LOWER(r.registrationStatus) = LOWER(:status)")
-    List<FarmRegistration> findByApplicantUserIdAndStatusString(@Param("userId") UUID userId, @Param("status") String status);
+    List<FarmRegistration> findByApplicantUserIdAndStatusString(@Param("userId") Integer userId, @Param("status") String status);
 
-    default List<FarmRegistration> findByApplicantUserIdAndStatus(UUID userId, FarmRegistrationStatus status) {
+    default List<FarmRegistration> findByApplicantUserIdAndStatus(Integer userId, FarmRegistrationStatus status) {
         return findByApplicantUserIdAndStatusString(userId, status.name());
     }
 
@@ -37,5 +36,5 @@ public interface FarmRegistrationRepository extends JpaRepository<FarmRegistrati
     }
 
     @Query("SELECT r FROM FarmRegistration r WHERE r.id = :id AND r.user.id = :userId")
-    Optional<FarmRegistration> findByIdAndApplicantUserId(@Param("id") UUID id, @Param("userId") UUID userId);
+    Optional<FarmRegistration> findByIdAndApplicantUserId(@Param("id") Integer id, @Param("userId") Integer userId);
 }

@@ -8,27 +8,26 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Repository thao tác cơ sở dữ liệu cho Entity Zone (Khu vực / Phân khu sản xuất).
  */
-public interface ZoneRepository extends JpaRepository<Zone, UUID> {
-    List<Zone> findByFarmId(UUID farmId);
+public interface ZoneRepository extends JpaRepository<Zone, Integer> {
+    List<Zone> findByFarmId(Integer farmId);
 
-    Optional<Zone> findByFarmIdAndZoneName(UUID farmId, String zoneName);
+    Optional<Zone> findByFarmIdAndZoneName(Integer farmId, String zoneName);
 
-    boolean existsByFarmIdAndZoneNameIgnoreCase(UUID farmId, String zoneName);
+    boolean existsByFarmIdAndZoneNameIgnoreCase(Integer farmId, String zoneName);
 
-    boolean existsByFarmIdAndZoneNameIgnoreCaseAndIdNot(UUID farmId, String zoneName, UUID id);
+    boolean existsByFarmIdAndZoneNameIgnoreCaseAndIdNot(Integer farmId, String zoneName, Integer id);
 
-    Optional<Zone> findByIdAndFarmId(UUID id, UUID farmId);
+    Optional<Zone> findByIdAndFarmId(Integer id, Integer farmId);
 
     @Query("SELECT COALESCE(SUM(z.areaValue), 0) FROM Zone z WHERE z.farm.id = :farmId AND (:excludeZoneId IS NULL OR z.id <> :excludeZoneId)")
-    BigDecimal sumAreaValueByFarmId(@Param("farmId") UUID farmId, @Param("excludeZoneId") UUID excludeZoneId);
+    BigDecimal sumAreaValueByFarmId(@Param("farmId") Integer farmId, @Param("excludeZoneId") Integer excludeZoneId);
 
     @Query("SELECT z FROM Zone z WHERE z.farm.id = :farmId " +
            "AND (:keyword IS NULL OR LOWER(z.zoneName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "ORDER BY z.zoneName ASC")
-    List<Zone> searchZones(@Param("farmId") UUID farmId, @Param("keyword") String keyword);
+    List<Zone> searchZones(@Param("farmId") Integer farmId, @Param("keyword") String keyword);
 }

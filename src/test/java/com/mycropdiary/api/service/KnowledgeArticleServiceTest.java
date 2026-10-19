@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.knowledge.KnowledgeArticleResponseDTO;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.knowledge.KnowledgeArticleRespDTO;
 import com.mycropdiary.api.entity.knowledge.KnowledgeArticle;
 import com.mycropdiary.api.entity.knowledge.KnowledgeStatus;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
@@ -25,7 +25,6 @@ import org.springframework.data.jpa.domain.Specification;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,8 +45,8 @@ class KnowledgeArticleServiceTest {
     private KnowledgeArticle publicArticle;
     private KnowledgeArticle draftArticle;
 
-    private final UUID publicArticleId = UUID.randomUUID();
-    private final UUID draftArticleId = UUID.randomUUID();
+    private final Integer publicArticleId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer draftArticleId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
 
     @BeforeEach
     void setUp() {
@@ -73,7 +72,7 @@ class KnowledgeArticleServiceTest {
         Page<KnowledgeArticle> page = new PageImpl<>(List.of(publicArticle), PageRequest.of(0, 10), 1);
         when(knowledgeArticleRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
-        PageResponse<KnowledgeArticleResponseDTO> response = knowledgeArticleService.getPublicArticles(0, 10, null, null);
+        PageResp<KnowledgeArticleRespDTO> response = knowledgeArticleService.getPublicArticles(0, 10, null, null);
 
         assertNotNull(response);
         assertEquals(1, response.content().size());
@@ -88,7 +87,7 @@ class KnowledgeArticleServiceTest {
     void getPublicArticleById_Success() {
         when(knowledgeArticleRepository.findById(publicArticleId)).thenReturn(Optional.of(publicArticle));
 
-        KnowledgeArticleResponseDTO response = knowledgeArticleService.getPublicArticleById(publicArticleId);
+        KnowledgeArticleRespDTO response = knowledgeArticleService.getPublicArticleById(publicArticleId);
 
         assertNotNull(response);
         assertEquals(publicArticleId, response.id());
@@ -107,7 +106,7 @@ class KnowledgeArticleServiceTest {
     @Test
     @DisplayName("UC-02: Throw ResourceNotFoundException when article ID does not exist")
     void getPublicArticleById_NotFound_ThrowsException() {
-        UUID nonExistentId = UUID.randomUUID();
+        Integer nonExistentId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
         when(knowledgeArticleRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> knowledgeArticleService.getPublicArticleById(nonExistentId));

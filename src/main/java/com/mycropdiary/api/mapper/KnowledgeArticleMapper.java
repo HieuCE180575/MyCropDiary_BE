@@ -1,6 +1,6 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.knowledge.KnowledgeArticleResponseDTO;
+import com.mycropdiary.api.dto.knowledge.KnowledgeArticleRespDTO;
 import com.mycropdiary.api.entity.knowledge.KnowledgeArticle;
 import org.springframework.stereotype.Component;
 
@@ -11,11 +11,11 @@ import java.time.ZoneId;
 @Component
 public class KnowledgeArticleMapper {
 
-    public KnowledgeArticleResponseDTO toDTO(KnowledgeArticle entity) {
+    public KnowledgeArticleRespDTO toDTO(KnowledgeArticle entity) {
         if (entity == null) {
             return null;
         }
-        return new KnowledgeArticleResponseDTO(
+        return new KnowledgeArticleRespDTO(
                 entity.getId(),
                 entity.getTitle(),
                 entity.getSlug(),

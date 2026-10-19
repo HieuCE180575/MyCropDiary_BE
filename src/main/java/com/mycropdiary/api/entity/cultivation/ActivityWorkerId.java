@@ -2,24 +2,23 @@ package com.mycropdiary.api.entity.cultivation;
 
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.UUID;
 
 public class ActivityWorkerId implements Serializable {
-    private UUID farmingActivity;
-    private UUID farmWorker;
+    private Integer farmingActivity;
+    private Integer farmWorker;
 
     public ActivityWorkerId() { }
 
-    public ActivityWorkerId(UUID farmingActivity, UUID farmWorker) {
+    public ActivityWorkerId(Integer farmingActivity, Integer farmWorker) {
         this.farmingActivity = farmingActivity;
         this.farmWorker = farmWorker;
     }
 
-    public UUID getFarmingActivity() { return farmingActivity; }
-    public void setFarmingActivity(UUID farmingActivity) { this.farmingActivity = farmingActivity; }
+    public Integer getFarmingActivity() { return farmingActivity; }
+    public void setFarmingActivity(Integer farmingActivity) { this.farmingActivity = farmingActivity; }
 
-    public UUID getFarmWorker() { return farmWorker; }
-    public void setFarmWorker(UUID farmWorker) { this.farmWorker = farmWorker; }
+    public Integer getFarmWorker() { return farmWorker; }
+    public void setFarmWorker(Integer farmWorker) { this.farmWorker = farmWorker; }
 
     @Override
     public boolean equals(Object o) {

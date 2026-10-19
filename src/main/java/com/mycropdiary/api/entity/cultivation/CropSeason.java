@@ -5,7 +5,6 @@ import com.mycropdiary.api.entity.User;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.UUID;
 
 /**
  * Entity biểu diễn bảng [CropSeason] (Mùa vụ canh tác).
@@ -16,9 +15,9 @@ import java.util.UUID;
 public class CropSeason {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "crop_season_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "farm_id", nullable = false)
@@ -67,8 +66,8 @@ public class CropSeason {
         this.seasonStatus = "active";
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public Farm getFarm() { return farm; }
     public void setFarm(Farm farm) { this.farm = farm; }
@@ -76,7 +75,7 @@ public class CropSeason {
     public CropCategory getCropCategory() { return cropCategory; }
     public void setCropCategory(CropCategory cropCategory) { this.cropCategory = cropCategory; }
 
-    public UUID getCropCategoryId() {
+    public Integer getCropCategoryId() {
         return cropCategory != null ? cropCategory.getId() : null;
     }
 

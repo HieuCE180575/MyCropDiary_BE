@@ -9,7 +9,6 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.UUID;
 
 /**
  * Entity biểu diễn bảng [FarmingActivity] (Hoạt động canh tác / Nhật ký canh tác).
@@ -20,9 +19,9 @@ import java.util.UUID;
 public class FarmingActivity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "farming_activity_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "farm_id", nullable = false)
@@ -41,7 +40,7 @@ public class FarmingActivity {
     private Block block;
 
     @Column(name = "farm_task_id")
-    private UUID farmTaskId;
+    private Integer farmTaskId;
 
     @Column(name = "activity_name", nullable = false, length = 160)
     private String activityName;
@@ -77,8 +76,8 @@ public class FarmingActivity {
 
     public FarmingActivity() { }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public Farm getFarm() { return farm; }
     public void setFarm(Farm farm) { this.farm = farm; }
@@ -135,8 +134,8 @@ public class FarmingActivity {
     public String getWeatherNotes() { return null; }
     public void setWeatherNotes(String weatherNotes) { }
 
-    public UUID getFarmTaskId() { return farmTaskId; }
-    public void setFarmTaskId(UUID farmTaskId) { this.farmTaskId = farmTaskId; }
+    public Integer getFarmTaskId() { return farmTaskId; }
+    public void setFarmTaskId(Integer farmTaskId) { this.farmTaskId = farmTaskId; }
 
     public FarmMember getSupervisedByMember() { return null; }
     public void setSupervisedByMember(FarmMember supervisedByMember) { }

@@ -1,19 +1,18 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.block.CreateBlockRequest;
-import com.mycropdiary.api.dto.block.BlockResponse;
-import com.mycropdiary.api.dto.block.UpdateBlockRequest;
+import com.mycropdiary.api.dto.block.CreateBlockReq;
+import com.mycropdiary.api.dto.block.BlockResp;
+import com.mycropdiary.api.dto.block.UpdateBlockReq;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Service quản lý Lô / Thửa đất (Block).
  */
 public interface BlockService {
-    BlockResponse createBlock(UUID currentUserId, UUID zoneId, CreateBlockRequest request);
-    BlockResponse updateBlock(UUID currentUserId, UUID blockId, UpdateBlockRequest request);
-    BlockResponse getBlockById(UUID currentUserId, UUID blockId);
-    List<BlockResponse> searchBlocks(UUID currentUserId, UUID farmId, UUID zoneId, String status, String keyword);
-    void deleteBlock(UUID currentUserId, UUID blockId);
+    BlockResp createBlock(Integer currentUserId, Integer zoneId, CreateBlockReq request);
+    BlockResp updateBlock(Integer currentUserId, Integer blockId, UpdateBlockReq request);
+    BlockResp getBlockById(Integer currentUserId, Integer blockId);
+    List<BlockResp> searchBlocks(Integer currentUserId, Integer farmId, Integer zoneId, String status, String keyword);
+    void deleteBlock(Integer currentUserId, Integer blockId);
 }

@@ -1,9 +1,8 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.knowledge.KnowledgeArticleResponseDTO;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.knowledge.KnowledgeArticleRespDTO;
 
-import java.util.UUID;
 
 /**
  * Interface định nghĩa các dịch vụ nghiệp vụ xử lý Bài viết Kiến thức Nông nghiệp.
@@ -19,7 +18,7 @@ public interface KnowledgeArticleService {
      * @param categoryId mã/tên danh mục lọc
      * @return danh sách kết quả đã phân trang dạng DTO
      */
-    PageResponse<KnowledgeArticleResponseDTO> getPublicArticles(int page, int size, String keyword, String categoryId);
+    PageResp<KnowledgeArticleRespDTO> getPublicArticles(int page, int size, String keyword, String categoryId);
 
     /**
      * Lấy thông tin chi tiết một bài viết công khai theo ID.
@@ -27,5 +26,5 @@ public interface KnowledgeArticleService {
      * @param id ID của bài viết
      * @return DTO bài viết tìm thấy
      */
-    KnowledgeArticleResponseDTO getPublicArticleById(UUID id);
+    KnowledgeArticleRespDTO getPublicArticleById(Integer id);
 }

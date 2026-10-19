@@ -1,6 +1,6 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.common.PageResponse;
+import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.cultivation.*;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
@@ -46,7 +46,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         this.staffZoneAssignmentRepository = staffZoneAssignmentRepository;
     }
 
-    private FarmMember validateAndGetActiveMember(UUID userId, CropSeason cropSeason) {
+    private FarmMember validateAndGetActiveMember(Integer userId, CropSeason cropSeason) {
         Farm farm = cropSeason.getFarm();
         return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farm.getId(), userId, "active")
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập hoặc ghi nhật ký cho mùa vụ của trang trại này."));
@@ -54,7 +54,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
     @Override
     @Transactional
-    public FarmingActivityResponse createActivity(UUID currentUserId, CreateFarmingActivityRequest request) {
+    public FarmingActivityResp createActivity(Integer currentUserId, CreateFarmingActivityReq request) {
         CropSeason cropSeason = cropSeasonRepository.findById(request.cropSeasonId())
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại."));
 
@@ -83,11 +83,11 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
         FarmingActivity savedActivity = farmingActivityRepository.save(activity);
 
-        List<ActivityWorkerResponse> workerResponses = new ArrayList<>();
+        List<ActivityWorkerResp> workerResponses = new ArrayList<>();
 
         if (request.workers() != null && !request.workers().isEmpty()) {
-            List<UUID> workerIds = request.workers().stream()
-                    .map(ActivityWorkerRequest::workerId)
+            List<Integer> workerIds = request.workers().stream()
+                    .map(ActivityWorkerReq::workerId)
                     .distinct()
                     .toList();
 
@@ -96,15 +96,15 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
                 throw new BadRequestException("Một hoặc nhiều công nhân không tồn tại hoặc không thuộc trang trại của mùa vụ này.");
             }
 
-            Map<UUID, FarmWorker> workerMap = farmWorkers.stream()
+            Map<Integer, FarmWorker> workerMap = farmWorkers.stream()
                     .collect(Collectors.toMap(FarmWorker::getId, w -> w));
 
             List<ActivityWorker> activityWorkers = new ArrayList<>();
-            for (ActivityWorkerRequest workerReq : request.workers()) {
+            for (ActivityWorkerReq workerReq : request.workers()) {
                 FarmWorker fw = workerMap.get(workerReq.workerId());
                 ActivityWorker aw = new ActivityWorker(savedActivity, fw, workerReq.workHours(), workerReq.notes());
                 activityWorkers.add(aw);
-                workerResponses.add(new ActivityWorkerResponse(
+                workerResponses.add(new ActivityWorkerResp(
                         fw.getId(),
                         fw.getWorkerCode(),
                         fw.getFullName(),
@@ -120,27 +120,27 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<FarmingActivitySummaryResponse> getActivitiesByCropSeason(UUID currentUserId, UUID cropSeasonId, Pageable pageable) {
+    public PageResp<FarmingActivitySummaryResp> getActivitiesByCropSeason(Integer currentUserId, Integer cropSeasonId, Pageable pageable) {
         CropSeason cropSeason = cropSeasonRepository.findById(cropSeasonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại."));
 
         FarmMember member = validateAndGetActiveMember(currentUserId, cropSeason);
 
         Page<FarmingActivity> page = farmingActivityRepository.findByCropSeasonId(cropSeasonId, pageable);
-        return PageResponse.map(page, act -> mapToSummaryResponse(act, member));
+        return PageResp.map(page, act -> mapToSummaryResponse(act, member));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public FarmingActivityResponse getActivityDetail(UUID currentUserId, UUID activityId) {
+    public FarmingActivityResp getActivityDetail(Integer currentUserId, Integer activityId) {
         FarmingActivity activity = farmingActivityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Nhật ký canh tác không tồn tại."));
 
         FarmMember member = validateAndGetActiveMember(currentUserId, activity.getCropSeason());
 
         List<ActivityWorker> workers = activityWorkerRepository.findByFarmingActivityId(activityId);
-        List<ActivityWorkerResponse> workerResponses = workers.stream()
-                .map(aw -> new ActivityWorkerResponse(
+        List<ActivityWorkerResp> workerResponses = workers.stream()
+                .map(aw -> new ActivityWorkerResp(
                         aw.getFarmWorker().getId(),
                         aw.getFarmWorker().getWorkerCode(),
                         aw.getFarmWorker().getFullName(),
@@ -152,12 +152,12 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         return mapToResponse(activity, workerResponses, member);
     }
 
-    private FarmingActivityResponse mapToResponse(FarmingActivity act, List<ActivityWorkerResponse> workers, FarmMember supervisor) {
+    private FarmingActivityResp mapToResponse(FarmingActivity act, List<ActivityWorkerResp> workers, FarmMember supervisor) {
         CropSeason cs = act.getCropSeason();
         Farm farm = cs != null ? cs.getFarm() : act.getFarm();
         Block block = act.getBlock();
 
-        return new FarmingActivityResponse(
+        return new FarmingActivityResp(
                 act.getId(),
                 cs != null ? cs.getId() : null,
                 cs != null ? cs.getSeasonName() : null,
@@ -182,10 +182,10 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         );
     }
 
-    private FarmingActivitySummaryResponse mapToSummaryResponse(FarmingActivity act, FarmMember supervisor) {
+    private FarmingActivitySummaryResp mapToSummaryResponse(FarmingActivity act, FarmMember supervisor) {
         List<ActivityWorker> workers = activityWorkerRepository.findByFarmingActivityId(act.getId());
 
-        return new FarmingActivitySummaryResponse(
+        return new FarmingActivitySummaryResp(
                 act.getId(),
                 act.getCropSeason() != null ? act.getCropSeason().getId() : null,
                 act.getActivityType(),

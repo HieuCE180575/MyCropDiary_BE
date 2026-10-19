@@ -13,14 +13,13 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Tiện ích hỗ trợ trích xuất thông tin người dùng đang đăng nhập từ Spring Security Context.
  */
 @Component
 public class SecurityUtils {
-    public static final UUID DEFAULT_FALLBACK_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    public static final Integer DEFAULT_FALLBACK_USER_ID = 1;
 
     private final UserRepository userRepository;
 
@@ -28,7 +27,7 @@ public class SecurityUtils {
         this.userRepository = userRepository;
     }
 
-    public Optional<UUID> getCurrentUserIdOptional() {
+    public Optional<Integer> getCurrentUserIdOptional() {
         // 1. Check HTTP header X-User-Id for testing/development flexibility
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
@@ -36,7 +35,7 @@ public class SecurityUtils {
             String headerUserId = request.getHeader("X-User-Id");
             if (headerUserId != null && !headerUserId.isBlank()) {
                 try {
-                    return Optional.of(UUID.fromString(headerUserId.trim()));
+                    return Optional.of(Integer.valueOf(headerUserId.trim()));
                 } catch (IllegalArgumentException ignored) {}
             }
         }
@@ -45,7 +44,7 @@ public class SecurityUtils {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
             Object principal = authentication.getPrincipal();
-            if (principal instanceof UUID userId) {
+            if (principal instanceof Integer userId) {
                 return Optional.of(userId);
             }
             String username = null;
@@ -57,7 +56,7 @@ public class SecurityUtils {
 
             if (username != null) {
                 try {
-                    return Optional.of(UUID.fromString(username));
+                    return Optional.of(Integer.valueOf(username));
                 } catch (IllegalArgumentException ignored) {
                     return userRepository.findByEmailIgnoreCase(username).map(User::getId);
                 }
@@ -66,17 +65,17 @@ public class SecurityUtils {
         return Optional.empty();
     }
 
-    public UUID getCurrentUserId() {
+    public Integer getCurrentUserId() {
         return getCurrentUserIdOptional().orElse(DEFAULT_FALLBACK_USER_ID);
     }
 
-    public UUID getRequiredCurrentUserId() {
+    public Integer getRequiredCurrentUserId() {
         return getCurrentUserIdOptional().orElseThrow(() ->
                 new AccessDeniedException("Yêu cầu xác thực tài khoản người dùng"));
     }
 
     public User getRequiredCurrentUser() {
-        UUID userId = getRequiredCurrentUserId();
+        Integer userId = getRequiredCurrentUserId();
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin tài khoản người dùng ID: " + userId));
     }

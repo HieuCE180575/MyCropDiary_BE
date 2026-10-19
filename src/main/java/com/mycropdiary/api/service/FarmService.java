@@ -1,25 +1,24 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.common.PageResponse;
+import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.farm.*;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Interface định nghĩa các dịch vụ nghiệp vụ cốt lõi cho trang trại (Farm Core).
  */
 public interface FarmService {
-    FarmResponse createFarm(UUID currentUserId, CreateFarmRequest request);
+    FarmResp createFarm(Integer currentUserId, CreateFarmReq request);
 
-    FarmResponse getFarmById(UUID currentUserId, UUID farmId);
+    FarmResp getFarmById(Integer currentUserId, Integer farmId);
 
-    PageResponse<FarmSummaryResponse> searchFarms(UUID currentUserId, String keyword, String status, String province, Pageable pageable);
+    PageResp<FarmSummaryResp> searchFarms(Integer currentUserId, String keyword, String status, String province, Pageable pageable);
 
-    PageResponse<FarmSummaryResponse> searchFarms(
-            UUID currentUserId,
+    PageResp<FarmSummaryResp> searchFarms(
+            Integer currentUserId,
             String keyword,
             String province,
             String status,
@@ -28,21 +27,21 @@ public interface FarmService {
             Pageable pageable
     );
 
-    List<FarmSummaryResponse> findAllAccessibleFarms(UUID currentUserId);
+    List<FarmSummaryResp> findAllAccessibleFarms(Integer currentUserId);
 
-    FarmResponse updateFarm(UUID currentUserId, UUID farmId, UpdateFarmRequest request);
+    FarmResp updateFarm(Integer currentUserId, Integer farmId, UpdateFarmReq request);
 
-    void deleteFarm(UUID currentUserId, UUID farmId);
+    void deleteFarm(Integer currentUserId, Integer farmId);
 
-    FarmMemberResponse addMember(UUID currentUserId, UUID farmId, AddFarmMemberRequest request);
+    FarmMemberResp addMember(Integer currentUserId, Integer farmId, AddFarmMemberReq request);
 
-    List<FarmMemberResponse> getFarmMembers(UUID currentUserId, UUID farmId);
+    List<FarmMemberResp> getFarmMembers(Integer currentUserId, Integer farmId);
 
-    void removeMember(UUID currentUserId, UUID farmId, UUID memberId);
+    void removeMember(Integer currentUserId, Integer farmId, Integer memberId);
 
-    StaffZoneAssignmentResponse assignStaffToZone(UUID currentUserId, UUID farmId, UUID memberId, AssignStaffZoneRequest request);
+    StaffZoneAssignmentResp assignStaffToZone(Integer currentUserId, Integer farmId, Integer memberId, AssignStaffZoneReq request);
 
-    ZoneResponse createZone(UUID currentUserId, UUID farmId, CreateZoneRequest request);
+    ZoneResp createZone(Integer currentUserId, Integer farmId, CreateZoneReq request);
 
-    List<ZoneResponse> getZones(UUID currentUserId, UUID farmId);
+    List<ZoneResp> getZones(Integer currentUserId, Integer farmId);
 }

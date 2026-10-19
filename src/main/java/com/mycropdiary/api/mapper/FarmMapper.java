@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class FarmMapper {
     /**
-     * Chuyển đổi Entity Farm sang FarmSummaryResponse DTO (Danh sách tóm tắt).
+     * Chuyển đổi Entity Farm sang FarmSummaryResp DTO (Danh sách tóm tắt).
      */
-    public FarmSummaryResponse toSummary(Farm farm, String userRole) {
-        return new FarmSummaryResponse(
+    public FarmSummaryResp toSummary(Farm farm, String userRole) {
+        return new FarmSummaryResp(
                 farm.getId(),
                 farm.getFarmName(),
                 farm.getDescription(),
@@ -27,15 +27,15 @@ public class FarmMapper {
         );
     }
 
-    public FarmSummaryResponse toSummary(Farm farm) {
+    public FarmSummaryResp toSummary(Farm farm) {
         return toSummary(farm, null);
     }
 
     /**
-     * Chuyển đổi Entity Farm sang FarmResponse DTO (Chi tiết trang trại).
+     * Chuyển đổi Entity Farm sang FarmResp DTO (Chi tiết trang trại).
      */
-    public FarmResponse toResponse(Farm farm, String userRole) {
-        return new FarmResponse(
+    public FarmResp toResponse(Farm farm, String userRole) {
+        return new FarmResp(
                 farm.getId(),
                 farm.getFarmName(),
                 farm.getDescription(),
@@ -51,10 +51,10 @@ public class FarmMapper {
     }
 
     /**
-     * Chuyển đổi Entity FarmMember sang FarmMemberResponse DTO (Thông tin thành viên).
+     * Chuyển đổi Entity FarmMember sang FarmMemberResp DTO (Thông tin thành viên).
      */
-    public FarmMemberResponse toMemberResponse(FarmMember member) {
-        return new FarmMemberResponse(
+    public FarmMemberResp toMemberResponse(FarmMember member) {
+        return new FarmMemberResp(
                 member.getId(),
                 member.getFarm().getId(),
                 member.getUser().getId(),
@@ -68,10 +68,10 @@ public class FarmMapper {
     }
 
     /**
-     * Chuyển đổi Entity StaffZoneAssignment sang StaffZoneAssignmentResponse DTO.
+     * Chuyển đổi Entity StaffZoneAssignment sang StaffZoneAssignmentResp DTO.
      */
-    public StaffZoneAssignmentResponse toStaffZoneAssignmentResponse(StaffZoneAssignment assignment) {
-        return new StaffZoneAssignmentResponse(
+    public StaffZoneAssignmentResp toStaffZoneAssignmentResponse(StaffZoneAssignment assignment) {
+        return new StaffZoneAssignmentResp(
                 assignment.getId(),
                 assignment.getFarmMember().getId(),
                 assignment.getZone().getId(),
@@ -84,10 +84,10 @@ public class FarmMapper {
     }
 
     /**
-     * Chuyển đổi Entity Zone sang ZoneResponse DTO.
+     * Chuyển đổi Entity Zone sang ZoneResp DTO.
      */
-    public ZoneResponse toZoneResponse(Zone zone) {
-        return new ZoneResponse(
+    public ZoneResp toZoneResponse(Zone zone) {
+        return new ZoneResp(
                 zone.getId(),
                 zone.getFarm().getId(),
                 zone.getZoneName(),

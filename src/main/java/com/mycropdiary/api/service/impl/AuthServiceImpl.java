@@ -30,7 +30,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -71,7 +70,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-04: Đăng ký tài khoản ====================
     @Override
     @Transactional
-    public void register(RegisterRequest request) {
+    public void register(RegisterReq request) {
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
             throw new BadRequestException("Email đã được sử dụng. Vui lòng dùng email khác.");
         }
@@ -94,7 +93,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-04: Xác thực OTP ====================
     @Override
     @Transactional
-    public AuthResponse verifyOtp(VerifyOtpRequest request) {
+    public AuthResp verifyOtp(VerifyOtpReq request) {
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản với email này."));
 
@@ -129,7 +128,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-03: Đăng nhập ====================
     @Override
     @Transactional
-    public AuthResponse login(LoginRequest request) {
+    public AuthResp login(LoginReq request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
@@ -186,7 +185,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-05: Cấp mới Access Token từ Refresh Token ====================
     @Override
     @Transactional
-    public AuthResponse refreshToken(String refreshToken) {
+    public AuthResp refreshToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new BadRequestException("Refresh token không hợp lệ hoặc đã hết hạn.");
         }
@@ -200,7 +199,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Phiên đăng nhập đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.");
         }
 
-        UUID userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        Integer userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản."));
 
@@ -213,7 +212,7 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("UC-05: Đã cấp access token mới cho user: {}", user.getEmail());
 
-        return AuthResponse.of(newAccessToken, refreshToken,
+        return AuthResp.of(newAccessToken, refreshToken,
                 user.getId(), user.getEmail(), user.getFullName(), user.getSystemRole());
     }
 
@@ -245,7 +244,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-06: Đặt lại mật khẩu ====================
     @Override
     @Transactional
-    public void resetPassword(ResetPasswordRequest request) {
+    public void resetPassword(ResetPasswordReq request) {
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản với email này."));
 
@@ -280,7 +279,7 @@ public class AuthServiceImpl implements AuthService {
 
     // ==================== Private helpers ====================
 
-    private AuthResponse issueTokens(User user) {
+    private AuthResp issueTokens(User user) {
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId(), user.getEmail(), user.getSystemRole());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
@@ -292,7 +291,7 @@ public class AuthServiceImpl implements AuthService {
         );
         accountTokenRepository.save(refreshTokenEntity);
 
-        return AuthResponse.of(accessToken, refreshToken,
+        return AuthResp.of(accessToken, refreshToken,
                 user.getId(), user.getEmail(), user.getFullName(), user.getSystemRole());
     }
 
@@ -332,14 +331,14 @@ public class AuthServiceImpl implements AuthService {
         accountTokenRepository.save(otpToken);
     }
 
-    private void revokeAllOldOtps(UUID userId) {
+    private void revokeAllOldOtps(Integer userId) {
         List<AccountToken> oldTokens = accountTokenRepository
                 .findAllByUser_IdAndTokenTypeAndUsedAtIsNull(userId, "email_verification");
         oldTokens.forEach(AccountToken::revoke);
         accountTokenRepository.saveAll(oldTokens);
     }
 
-    private void revokeAllOldTokens(UUID userId, String tokenType) {
+    private void revokeAllOldTokens(Integer userId, String tokenType) {
         List<AccountToken> oldTokens = accountTokenRepository
                 .findAllByUser_IdAndTokenTypeAndUsedAtIsNull(userId, tokenType);
         oldTokens.forEach(AccountToken::revoke);

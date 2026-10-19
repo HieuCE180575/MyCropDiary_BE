@@ -1,12 +1,12 @@
 package com.mycropdiary.api;
 
-import com.mycropdiary.api.dto.assignment.AssignedZoneResponse;
-import com.mycropdiary.api.dto.assignment.AssignmentResponse;
-import com.mycropdiary.api.dto.assignment.CreateAssignmentRequest;
-import com.mycropdiary.api.dto.block.BlockResponse;
-import com.mycropdiary.api.dto.block.CreateBlockRequest;
-import com.mycropdiary.api.dto.staff.AddStaffRequest;
-import com.mycropdiary.api.dto.staff.FarmMemberResponse;
+import com.mycropdiary.api.dto.assignment.AssignedZoneResp;
+import com.mycropdiary.api.dto.assignment.AssignmentResp;
+import com.mycropdiary.api.dto.assignment.CreateAssignmentReq;
+import com.mycropdiary.api.dto.block.BlockResp;
+import com.mycropdiary.api.dto.block.CreateBlockReq;
+import com.mycropdiary.api.dto.staff.AddStaffReq;
+import com.mycropdiary.api.dto.staff.FarmMemberResp;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -118,15 +118,15 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-33: Owner xem danh sách nhân viên thành công")
     void testGetStaffList_Success() {
-        List<FarmMemberResponse> members = farmStaffService.getStaffList(ownerUser.getId(), farm.getId(), null, null);
+        List<FarmMemberResp> members = farmStaffService.getStaffList(ownerUser.getId(), farm.getId(), null, null);
         assertEquals(2, members.size());
     }
 
     @Test
     @DisplayName("UC-33: Owner thêm nhân viên mới thành công")
     void testAddStaff_Success() {
-        AddStaffRequest request = new AddStaffRequest("outsider@farm.com", null, "MEMBER", "Nhan vien thu hoach");
-        FarmMemberResponse response = farmStaffService.addStaff(ownerUser.getId(), farm.getId(), request);
+        AddStaffReq request = new AddStaffReq("outsider@farm.com", null, "MEMBER", "Nhan vien thu hoach");
+        FarmMemberResp response = farmStaffService.addStaff(ownerUser.getId(), farm.getId(), request);
 
         assertNotNull(response.id());
         assertEquals("outsider@farm.com", response.email());
@@ -136,7 +136,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-33: Thêm nhân viên đã active -> Ném lỗi ResourceConflictException")
     void testAddStaff_AlreadyActive_ThrowsConflict() {
-        AddStaffRequest request = new AddStaffRequest("staff@farm.com", null, "MEMBER", "Ky thuat");
+        AddStaffReq request = new AddStaffReq("staff@farm.com", null, "MEMBER", "Ky thuat");
         assertThrows(ResourceConflictException.class, () -> 
                 farmStaffService.addStaff(ownerUser.getId(), farm.getId(), request));
     }
@@ -144,7 +144,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-33: Nhân viên cố tình thêm nhân viên -> Chặn AccessDeniedException")
     void testAddStaff_ByStaff_ThrowsAccessDenied() {
-        AddStaffRequest request = new AddStaffRequest("outsider@farm.com", null, "MEMBER", "Nhan vien");
+        AddStaffReq request = new AddStaffReq("outsider@farm.com", null, "MEMBER", "Nhan vien");
         assertThrows(AccessDeniedException.class, () -> 
                 farmStaffService.addStaff(staffUser.getId(), farm.getId(), request));
     }
@@ -153,7 +153,7 @@ class FarmCoreAndStaffServiceTest {
     @DisplayName("UC-33: Owner ngừng hoạt động nhân viên -> Tự động đóng tất cả phân công khu vực")
     void testDeactivateStaff_ClosesAssignments() {
         // Phân công staff vào area1
-        CreateAssignmentRequest assignReq = new CreateAssignmentRequest(staffMember.getId(), area1.getId(), Instant.now(), null);
+        CreateAssignmentReq assignReq = new CreateAssignmentReq(staffMember.getId(), area1.getId(), Instant.now(), null);
         zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), assignReq);
 
         // Ngừng hoạt động staff
@@ -171,8 +171,8 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-34: Owner phân công nhân viên vào khu vực thành công")
     void testAssignStaffToArea_Success() {
-        CreateAssignmentRequest request = new CreateAssignmentRequest(staffMember.getId(), area1.getId(), Instant.now(), null);
-        AssignmentResponse response = zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), request);
+        CreateAssignmentReq request = new CreateAssignmentReq(staffMember.getId(), area1.getId(), Instant.now(), null);
+        AssignmentResp response = zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), request);
 
         assertNotNull(response.id());
         assertEquals("KV-01", response.zoneName());
@@ -183,7 +183,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-34: Phân công trùng lặp nhân viên vào khu vực đang active -> Ném lỗi ResourceConflictException")
     void testAssignStaffToArea_Duplicate_ThrowsConflict() {
-        CreateAssignmentRequest request = new CreateAssignmentRequest(staffMember.getId(), area1.getId(), Instant.now(), null);
+        CreateAssignmentReq request = new CreateAssignmentReq(staffMember.getId(), area1.getId(), Instant.now(), null);
         zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), request);
 
         assertThrows(ResourceConflictException.class, () -> 
@@ -194,11 +194,11 @@ class FarmCoreAndStaffServiceTest {
     @DisplayName("UC-14: Nhân viên xem khu vực được giao -> Chỉ trả đúng khu vực được phân công")
     void testGetAssignedAreasForCurrentStaff() {
         // Gán staff vào duy nhất area1
-        CreateAssignmentRequest request = new CreateAssignmentRequest(staffMember.getId(), area1.getId(), Instant.now(), null);
+        CreateAssignmentReq request = new CreateAssignmentReq(staffMember.getId(), area1.getId(), Instant.now(), null);
         zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), request);
 
         // Staff gọi API xem khu vực được giao
-        List<AssignedZoneResponse> assignedZones = zoneAssignmentService.getAssignedZonesForCurrentStaff(staffUser.getId(), farm.getId());
+        List<AssignedZoneResp> assignedZones = zoneAssignmentService.getAssignedZonesForCurrentStaff(staffUser.getId(), farm.getId());
         assertEquals(1, assignedZones.size());
         assertEquals("KV-01", assignedZones.get(0).zoneName());
     }
@@ -210,7 +210,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-17: Tạo thửa đất thành công khi có quyền phụ trách khu vực")
     void testCreatePlot_Success() {
-        CreateBlockRequest request = new CreateBlockRequest(
+        CreateBlockReq request = new CreateBlockReq(
                 "THUA-01",
                 "Thua Dat 1",
                 new BigDecimal("1500.00"),
@@ -221,7 +221,7 @@ class FarmCoreAndStaffServiceTest {
                 "AVAILABLE"
         );
 
-        BlockResponse response = blockService.createBlock(ownerUser.getId(), area1.getId(), request);
+        BlockResp response = blockService.createBlock(ownerUser.getId(), area1.getId(), request);
         assertNotNull(response.id());
         assertEquals("THUA-01", response.blockCode());
         assertEquals(new BigDecimal("1500.00"), response.areaValue());
@@ -231,8 +231,8 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-17: Tạo thửa đất trùng mã trong cùng khu vực -> Ném lỗi ResourceConflictException")
     void testCreatePlot_DuplicateCode_ThrowsConflict() {
-        CreateBlockRequest request1 = new CreateBlockRequest("THUA-01", "Thua 1", new BigDecimal("1000.00"), null, null, null, null, null, null, null, "AVAILABLE");
-        CreateBlockRequest request2 = new CreateBlockRequest("THUA-01", "Thua 1 trung", new BigDecimal("500.00"), null, null, null, null, null, null, null, "AVAILABLE");
+        CreateBlockReq request1 = new CreateBlockReq("THUA-01", "Thua 1", new BigDecimal("1000.00"), null, null, null, null, null, null, null, "AVAILABLE");
+        CreateBlockReq request2 = new CreateBlockReq("THUA-01", "Thua 1 trung", new BigDecimal("500.00"), null, null, null, null, null, null, null, "AVAILABLE");
 
         blockService.createBlock(ownerUser.getId(), area1.getId(), request1);
 
@@ -243,7 +243,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-17: Nhân viên chưa được phân công khu vực tạo thửa đất -> Chặn AccessDeniedException")
     void testCreatePlot_UnassignedStaff_ThrowsAccessDenied() {
-        CreateBlockRequest request = new CreateBlockRequest("THUA-X", "Thua X", new BigDecimal("500.00"), null, null, null, null, null, null, null, "AVAILABLE");
+        CreateBlockReq request = new CreateBlockReq("THUA-X", "Thua X", new BigDecimal("500.00"), null, null, null, null, null, null, null, "AVAILABLE");
 
         // staffUser chưa được gán area2 -> phải bị chặn
         assertThrows(AccessDeniedException.class, () -> 
@@ -254,7 +254,7 @@ class FarmCoreAndStaffServiceTest {
     @DisplayName("UC-17: Tạo thửa đất vượt quá diện tích tối đa của khu vực -> Ném lỗi BusinessRuleException")
     void testCreatePlot_ExceedsAreaCapacity_ThrowsBusinessRule() {
         // area1 diện tích 10,000 m2 -> tạo thửa 15,000 m2 phải bị chặn
-        CreateBlockRequest request = new CreateBlockRequest("THUA-BIG", "Thua Sieu To", new BigDecimal("15000.00"), null, null, null, null, null, null, null, "AVAILABLE");
+        CreateBlockReq request = new CreateBlockReq("THUA-BIG", "Thua Sieu To", new BigDecimal("15000.00"), null, null, null, null, null, null, null, "AVAILABLE");
 
         assertThrows(BusinessRuleException.class, () -> 
                 blockService.createBlock(ownerUser.getId(), area1.getId(), request));

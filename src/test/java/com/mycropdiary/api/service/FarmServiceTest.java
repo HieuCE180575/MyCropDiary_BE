@@ -41,7 +41,7 @@ class FarmServiceTest {
 
     @Test
     void testCreateFarm_OwnerRoleAssignedAndGetById() {
-        CreateFarmRequest request = new CreateFarmRequest(
+        CreateFarmReq request = new CreateFarmReq(
                 "FARM001",
                 "Green Valley Farm",
                 "123 Agriculture Way",
@@ -53,13 +53,13 @@ class FarmServiceTest {
                 new BigDecimal("5000.00")
         );
 
-        FarmResponse created = farmService.createFarm(ownerUser.getId(), request);
+        FarmResp created = farmService.createFarm(ownerUser.getId(), request);
         assertNotNull(created.id());
         assertNotNull(created.farmCode());
         assertEquals("Green Valley Farm", created.farmName());
         assertEquals("OWNER", created.currentUserRole().toUpperCase());
 
-        FarmResponse fetched = farmService.getFarmById(ownerUser.getId(), created.id());
+        FarmResp fetched = farmService.getFarmById(ownerUser.getId(), created.id());
         assertEquals("Green Valley Farm", fetched.farmName());
         assertEquals("OWNER", fetched.currentUserRole().toUpperCase());
     }
@@ -67,14 +67,14 @@ class FarmServiceTest {
     @Test
     void testBR_CoordinatesValidation() {
         // Invalid: only latitude provided
-        CreateFarmRequest invalidReq1 = new CreateFarmRequest(
+        CreateFarmReq invalidReq1 = new CreateFarmReq(
                 "FARM_INVALID1", "Test Farm", "Address", "Province", "District", "Ward",
                 new BigDecimal("10.5"), null, new BigDecimal("1000.00")
         );
         assertThrows(IllegalArgumentException.class, () -> farmService.createFarm(ownerUser.getId(), invalidReq1));
 
         // Invalid: latitude out of range
-        CreateFarmRequest invalidReq2 = new CreateFarmRequest(
+        CreateFarmReq invalidReq2 = new CreateFarmReq(
                 "FARM_INVALID2", "Test Farm", "Address", "Province", "District", "Ward",
                 new BigDecimal("95.0"), new BigDecimal("105.0"), new BigDecimal("1000.00")
         );
@@ -83,60 +83,60 @@ class FarmServiceTest {
 
     @Test
     void testBR_SingleActiveOwnerAndSoleOwnerProtection() {
-        CreateFarmRequest farmReq = new CreateFarmRequest(
+        CreateFarmReq farmReq = new CreateFarmReq(
                 "FARM_OWNER_BR", "Single Owner Farm", "Address", "Province", "District", "Ward",
                 null, null, new BigDecimal("5000.00")
         );
-        FarmResponse farm = farmService.createFarm(ownerUser.getId(), farmReq);
+        FarmResp farm = farmService.createFarm(ownerUser.getId(), farmReq);
 
         // Cannot add a 2nd OWNER directly
-        AddFarmMemberRequest addOwnerReq = new AddFarmMemberRequest("another@example.com", "OWNER", "Co-Owner");
+        AddFarmMemberReq addOwnerReq = new AddFarmMemberReq("another@example.com", "OWNER", "Co-Owner");
         assertThrows(BusinessRuleException.class, () -> farmService.addMember(ownerUser.getId(), farm.id(), addOwnerReq));
 
         // Cannot deactivate sole active OWNER
-        List<FarmMemberResponse> members = farmService.getFarmMembers(ownerUser.getId(), farm.id());
-        FarmMemberResponse ownerMember = members.stream().filter(m -> "OWNER".equalsIgnoreCase(m.farmRole())).findFirst().orElseThrow();
+        List<FarmMemberResp> members = farmService.getFarmMembers(ownerUser.getId(), farm.id());
+        FarmMemberResp ownerMember = members.stream().filter(m -> "OWNER".equalsIgnoreCase(m.farmRole())).findFirst().orElseThrow();
 
         assertThrows(BusinessRuleException.class, () -> farmService.removeMember(ownerUser.getId(), farm.id(), ownerMember.id()));
     }
 
     @Test
     void testBR_ProductionAreaSizeAndStaffAccessScope() {
-        CreateFarmRequest farmReq = new CreateFarmRequest(
+        CreateFarmReq farmReq = new CreateFarmReq(
                 "FARM_AREA_BR", "Area Delta Farm", "Address", "Province", "District", "Ward",
                 null, null, new BigDecimal("10000.00")
         );
-        FarmResponse farm = farmService.createFarm(ownerUser.getId(), farmReq);
+        FarmResp farm = farmService.createFarm(ownerUser.getId(), farmReq);
 
         // Create Production Area 1 (Zone A)
-        CreateZoneRequest area1Req = new CreateZoneRequest("Zone A", new BigDecimal("6000.00"), "Zone A notes");
-        ZoneResponse area1 = farmService.createZone(ownerUser.getId(), farm.id(), area1Req);
+        CreateZoneReq area1Req = new CreateZoneReq("Zone A", new BigDecimal("6000.00"), "Zone A notes");
+        ZoneResp area1 = farmService.createZone(ownerUser.getId(), farm.id(), area1Req);
         assertEquals("Zone A", area1.zoneName());
 
         // Create Zone with duplicate name in same farm -> Throws IllegalArgumentException
-        CreateZoneRequest duplicateReq = new CreateZoneRequest("Zone A", new BigDecimal("5000.00"), "Duplicate Zone A");
+        CreateZoneReq duplicateReq = new CreateZoneReq("Zone A", new BigDecimal("5000.00"), "Duplicate Zone A");
         assertThrows(IllegalArgumentException.class, () -> farmService.createZone(ownerUser.getId(), farm.id(), duplicateReq));
 
         // Create Production Area 2 (Zone B)
-        CreateZoneRequest area2Req = new CreateZoneRequest("Zone B", new BigDecimal("5000.00"), "Zone B notes");
+        CreateZoneReq area2Req = new CreateZoneReq("Zone B", new BigDecimal("5000.00"), "Zone B notes");
         farmService.createZone(ownerUser.getId(), farm.id(), area2Req);
 
         // Add staff member and assign to Area 1 only
-        AddFarmMemberRequest addStaffReq = new AddFarmMemberRequest("staff@example.com", "STAFF", "Worker");
-        FarmMemberResponse staffMember = farmService.addMember(ownerUser.getId(), farm.id(), addStaffReq);
+        AddFarmMemberReq addStaffReq = new AddFarmMemberReq("staff@example.com", "STAFF", "Worker");
+        FarmMemberResp staffMember = farmService.addMember(ownerUser.getId(), farm.id(), addStaffReq);
 
-        AssignStaffZoneRequest assignReq = new AssignStaffZoneRequest(area1.id());
+        AssignStaffZoneReq assignReq = new AssignStaffZoneReq(area1.id());
         farmService.assignStaffToZone(ownerUser.getId(), farm.id(), staffMember.id(), assignReq);
 
         // Staff views zones -> receives only Zone 1
-        List<ZoneResponse> staffAreas = farmService.getZones(staffUser.getId(), farm.id());
+        List<ZoneResp> staffAreas = farmService.getZones(staffUser.getId(), farm.id());
         assertEquals(1, staffAreas.size());
         assertEquals("Zone A", staffAreas.get(0).zoneName());
     }
 
     @Test
     void testAddMember_AndStaffAccessControl() {
-        CreateFarmRequest farmReq = new CreateFarmRequest(
+        CreateFarmReq farmReq = new CreateFarmReq(
                 "FARM002",
                 "Organic Farm",
                 "456 Eco St",
@@ -145,21 +145,21 @@ class FarmServiceTest {
                 "An Hoa",
                 null, null, new BigDecimal("10000.00")
         );
-        FarmResponse farm = farmService.createFarm(ownerUser.getId(), farmReq);
+        FarmResp farm = farmService.createFarm(ownerUser.getId(), farmReq);
 
         // Add staff member
-        AddFarmMemberRequest addMemberReq = new AddFarmMemberRequest("staff@example.com", "STAFF", "Field Technician");
-        FarmMemberResponse addedMember = farmService.addMember(ownerUser.getId(), farm.id(), addMemberReq);
+        AddFarmMemberReq addMemberReq = new AddFarmMemberReq("staff@example.com", "STAFF", "Field Technician");
+        FarmMemberResp addedMember = farmService.addMember(ownerUser.getId(), farm.id(), addMemberReq);
 
         assertEquals("STAFF", addedMember.farmRole().toUpperCase());
         assertEquals("Field Technician", addedMember.jobTitle());
 
         // Staff can view farm details
-        FarmResponse staffView = farmService.getFarmById(staffUser.getId(), farm.id());
+        FarmResp staffView = farmService.getFarmById(staffUser.getId(), farm.id());
         assertEquals("STAFF", staffView.currentUserRole().toUpperCase());
 
         // Staff cannot update farm details (Permission check)
-        UpdateFarmRequest updateReq = new UpdateFarmRequest(
+        UpdateFarmReq updateReq = new UpdateFarmReq(
                 "Unauthorized Update Name",
                 "New Address",
                 "Can Tho", "Ninh Kieu", "An Hoa",

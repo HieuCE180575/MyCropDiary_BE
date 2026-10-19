@@ -3,9 +3,9 @@ package com.mycropdiary.api.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mycropdiary.api.controller.cultivation.MaterialUsageController;
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageRequest;
-import com.mycropdiary.api.dto.cultivation.MaterialUsageResponse;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
+import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
 import com.mycropdiary.api.service.cultivation.MaterialUsageService;
 import com.mycropdiary.api.util.SecurityUtils;
 
@@ -27,7 +27,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -52,12 +51,12 @@ class MaterialUsageControllerTest {
     @InjectMocks
     private MaterialUsageController materialUsageController;
 
-    private final UUID userId = UUID.randomUUID();
-    private final UUID materialUsageId = UUID.randomUUID();
-    private final UUID farmingActivityId = UUID.randomUUID();
-    private final UUID cropSeasonId = UUID.randomUUID();
-    private final UUID materialId = UUID.randomUUID();
-    private final UUID recordedByMemberId = UUID.randomUUID();
+    private final Integer userId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer materialUsageId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer farmingActivityId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer cropSeasonId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer materialId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer recordedByMemberId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
 
     @BeforeEach
     void setUp() {
@@ -70,16 +69,16 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("POST /api/v1/material-usages -> 201 Created khi tạo thành công")
     void createMaterialUsage_Success() throws Exception {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
+        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
                 farmingActivityId, materialId, null, LocalDateTime.now(), new BigDecimal("2.500"), "kg", "50g/gốc", "Rải gốc", null, "Ghi chú"
         );
 
-        MaterialUsageResponse response = new MaterialUsageResponse(
+        MaterialUsageResp response = new MaterialUsageResp(
                 materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
                 request.usedAt(), request.quantity(), "kg", "50g/gốc", "Rải gốc", null, "Ghi chú"
         );
 
-        when(materialUsageService.createMaterialUsage(eq(userId), any(CreateMaterialUsageRequest.class))).thenReturn(response);
+        when(materialUsageService.createMaterialUsage(eq(userId), any(CreateMaterialUsageReq.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/material-usages")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -93,7 +92,7 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("POST /api/v1/material-usages -> 400 Bad Request khi validation thất bại")
     void createMaterialUsage_ValidationFailed() throws Exception {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
+        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
                 null, materialId, null, null, new BigDecimal("-1.000"), "", null, null, null, null
         );
 
@@ -104,14 +103,14 @@ class MaterialUsageControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/material-usages?farmingActivityId=... -> 200 OK với PageResponse<MaterialUsageResponse>")
+    @DisplayName("GET /api/v1/material-usages?farmingActivityId=... -> 200 OK với PageResp<MaterialUsageResp>")
     void getMaterialUsagesByActivity_Success() throws Exception {
-        MaterialUsageResponse response = new MaterialUsageResponse(
+        MaterialUsageResp response = new MaterialUsageResp(
                 materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
                 LocalDateTime.now(), new BigDecimal("2.500"), "kg", null, null, null, null
         );
 
-        PageResponse<MaterialUsageResponse> pageResponse = PageResponse.from(new PageImpl<>(List.of(response)));
+        PageResp<MaterialUsageResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
 
         when(materialUsageService.getMaterialUsagesByActivity(eq(userId), eq(farmingActivityId), any(Pageable.class)))
                 .thenReturn(pageResponse);
@@ -126,7 +125,7 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("GET /api/v1/material-usages/{id} -> 200 OK với chi tiết vật tư")
     void getMaterialUsageById_Success() throws Exception {
-        MaterialUsageResponse response = new MaterialUsageResponse(
+        MaterialUsageResp response = new MaterialUsageResp(
                 materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
                 LocalDateTime.now(), new BigDecimal("2.500"), "kg", null, null, null, null
         );

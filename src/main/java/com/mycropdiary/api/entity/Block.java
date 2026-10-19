@@ -3,7 +3,6 @@ package com.mycropdiary.api.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Entity biểu diễn bảng [Block] (Lô / Thửa đất sản xuất trong Zone).
@@ -15,9 +14,9 @@ import java.util.UUID;
 })
 public class Block {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "block_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "zone_id", nullable = false)
@@ -61,8 +60,8 @@ public class Block {
         this.areaUnit = "m2";
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public Zone getZone() { return zone; }
     public void setZone(Zone zone) { this.zone = zone; }

@@ -1,6 +1,6 @@
 package com.mycropdiary.api.exception;
 
-import com.mycropdiary.api.dto.common.ApiResponse;
+import com.mycropdiary.api.dto.common.ApiResp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -19,87 +19,87 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    ApiResponse<Void> handleNotFound(ResourceNotFoundException exception) {
-        return ApiResponse.error(exception.getMessage());
+    ApiResp<Void> handleNotFound(ResourceNotFoundException exception) {
+        return ApiResp.error(exception.getMessage());
     }
 
     @ExceptionHandler(ResourceConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    ApiResponse<Void> handleConflict(ResourceConflictException exception) {
-        return ApiResponse.error(exception.getMessage());
+    ApiResp<Void> handleConflict(ResourceConflictException exception) {
+        return ApiResp.error(exception.getMessage());
     }
 
     @ExceptionHandler(BusinessRuleException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    ApiResponse<Void> handleBusinessRule(BusinessRuleException exception) {
-        return ApiResponse.error(exception.getMessage());
+    ApiResp<Void> handleBusinessRule(BusinessRuleException exception) {
+        return ApiResp.error(exception.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    ApiResponse<Void> handleAccessDenied(AccessDeniedException exception) {
-        return ApiResponse.error(exception.getMessage());
+    ApiResp<Void> handleAccessDenied(AccessDeniedException exception) {
+        return ApiResp.error(exception.getMessage());
     }
 
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    ApiResponse<Void> handleBadRequest(RuntimeException exception) {
-        return ApiResponse.error(exception.getMessage());
+    ApiResp<Void> handleBadRequest(RuntimeException exception) {
+        return ApiResp.error(exception.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    ApiResponse<Void> handleValidation(MethodArgumentNotValidException exception) {
+    ApiResp<Void> handleValidation(MethodArgumentNotValidException exception) {
         String message = exception.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .orElse("Dữ liệu không hợp lệ");
-        return ApiResponse.error(message);
+        return ApiResp.error(message);
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    ApiResponse<Void> handleMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException exception) {
-        return ApiResponse.error("Định dạng dữ liệu gửi lên không hợp lệ (ví dụ: ngày giờ, JSON sai cú pháp).");
+    ApiResp<Void> handleMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException exception) {
+        return ApiResp.error("Định dạng dữ liệu gửi lên không hợp lệ (ví dụ: ngày giờ, JSON sai cú pháp).");
     }
 
     // [AI_CHANGE] Root cause: AuthService ném BadRequestException cho các lỗi nghiệp vụ (email trùng, OTP sai)
     @ExceptionHandler(BadRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    ApiResponse<Void> handleBadRequest(BadRequestException exception) {
-        return ApiResponse.error(exception.getMessage());
+    ApiResp<Void> handleBadRequest(BadRequestException exception) {
+        return ApiResp.error(exception.getMessage());
     }
 
     // [AI_CHANGE] Root cause: Spring Security ném exception khi sai mật khẩu hoặc tài khoản bị khóa
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    ApiResponse<Void> handleBadCredentials(BadCredentialsException exception) {
-        return ApiResponse.error("Email hoặc mật khẩu không chính xác.");
+    ApiResp<Void> handleBadCredentials(BadCredentialsException exception) {
+        return ApiResp.error("Email hoặc mật khẩu không chính xác.");
     }
 
     @ExceptionHandler(DisabledException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    ApiResponse<Void> handleDisabled(DisabledException exception) {
-        return ApiResponse.error("Tài khoản chưa được kích hoạt. Vui lòng xác thực OTP qua email.");
+    ApiResp<Void> handleDisabled(DisabledException exception) {
+        return ApiResp.error("Tài khoản chưa được kích hoạt. Vui lòng xác thực OTP qua email.");
     }
 
     @ExceptionHandler(LockedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    ApiResponse<Void> handleLocked(LockedException exception) {
-        return ApiResponse.error("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+    ApiResp<Void> handleLocked(LockedException exception) {
+        return ApiResp.error("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
     }
 
     @ExceptionHandler(ForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    ApiResponse<Void> handleForbidden(ForbiddenException exception) {
-        return ApiResponse.error(exception.getMessage());
+    ApiResp<Void> handleForbidden(ForbiddenException exception) {
+        return ApiResp.error(exception.getMessage());
     }
 
     // [AI_CHANGE] Bắt mọi exception không xác định để không lộ stack trace ra client
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    ApiResponse<Void> handleGeneral(Exception exception) {
+    ApiResp<Void> handleGeneral(Exception exception) {
         log.error("Unhandled exception: ", exception);
-        return ApiResponse.error("Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
+        return ApiResp.error("Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
     }
 }

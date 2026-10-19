@@ -12,7 +12,6 @@ import com.mycropdiary.api.repository.ZoneRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 
 /**
  * Lớp hỗ trợ bảo mật và phân quyền truy cập theo phạm vi trang trại (Farm Scope & Staff Zone Scope).
@@ -40,7 +39,7 @@ public class FarmAccessGuard {
     /**
      * Kiểm tra người dùng có phải là Quản trị viên hệ thống (System ADMIN) hay không.
      */
-    public boolean isSystemAdmin(UUID userId) {
+    public boolean isSystemAdmin(Integer userId) {
         if (userId == null) {
             return false;
         }
@@ -52,7 +51,7 @@ public class FarmAccessGuard {
     /**
      * Lấy vai trò hoạt động của người dùng trong một trang trại cụ thể.
      */
-    public String getUserRoleInFarm(UUID userId, UUID farmId) {
+    public String getUserRoleInFarm(Integer userId, Integer farmId) {
         if (isSystemAdmin(userId)) {
             return "admin";
         }
@@ -63,7 +62,7 @@ public class FarmAccessGuard {
     /**
      * Yêu cầu người dùng phải là thành viên đang hoạt động (active) của trang trại.
      */
-    public FarmMember requireFarmMember(UUID userId, UUID farmId) {
+    public FarmMember requireFarmMember(Integer userId, Integer farmId) {
         if (isSystemAdmin(userId)) {
             return null;
         }
@@ -71,7 +70,7 @@ public class FarmAccessGuard {
                 .orElseThrow(() -> new AccessDeniedException("Access denied: You are not an active member of this farm (Farm ID: " + farmId + ")"));
     }
 
-    public FarmMember requireFarmAccess(UUID userId, UUID farmId) {
+    public FarmMember requireFarmAccess(Integer userId, Integer farmId) {
         if (isSystemAdmin(userId)) {
             return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active").orElse(null);
         }
@@ -82,7 +81,7 @@ public class FarmAccessGuard {
     /**
      * Yêu cầu người dùng phải là Chủ trang trại (Farm OWNER) hoặc Quản trị hệ thống (System ADMIN).
      */
-    public FarmMember requireOwnerOrAdmin(UUID userId, UUID farmId) {
+    public FarmMember requireOwnerOrAdmin(Integer userId, Integer farmId) {
         if (isSystemAdmin(userId)) {
             return null;
         }
@@ -93,7 +92,7 @@ public class FarmAccessGuard {
         return member;
     }
 
-    public FarmMember requireFarmOwner(UUID userId, UUID farmId) {
+    public FarmMember requireFarmOwner(Integer userId, Integer farmId) {
         if (isSystemAdmin(userId)) {
             return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active").orElse(null);
         }
@@ -104,7 +103,7 @@ public class FarmAccessGuard {
         return member;
     }
 
-    public void requireZoneAccess(UUID userId, UUID farmId, UUID zoneId) {
+    public void requireZoneAccess(Integer userId, Integer farmId, Integer zoneId) {
         if (isSystemAdmin(userId)) {
             return;
         }
@@ -118,7 +117,7 @@ public class FarmAccessGuard {
         }
     }
 
-    public Zone requireZoneAccess(UUID userId, UUID zoneId) {
+    public Zone requireZoneAccess(Integer userId, Integer zoneId) {
         Zone zone = zoneRepository.findById(zoneId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khu vực sản xuất ID: " + zoneId));
 
@@ -143,7 +142,7 @@ public class FarmAccessGuard {
         return zone;
     }
 
-    public Block requireBlockAccess(UUID userId, UUID blockId) {
+    public Block requireBlockAccess(Integer userId, Integer blockId) {
         Block block = blockRepository.findById(blockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thửa đất ID: " + blockId));
 
@@ -151,7 +150,7 @@ public class FarmAccessGuard {
         return block;
     }
 
-    public boolean isOwner(UUID userId, UUID farmId) {
+    public boolean isOwner(Integer userId, Integer farmId) {
         if (isSystemAdmin(userId)) {
             return true;
         }

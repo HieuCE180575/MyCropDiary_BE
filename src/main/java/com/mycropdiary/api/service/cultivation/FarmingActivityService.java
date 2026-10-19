@@ -1,12 +1,11 @@
 package com.mycropdiary.api.service.cultivation;
 
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateFarmingActivityRequest;
-import com.mycropdiary.api.dto.cultivation.FarmingActivityResponse;
-import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryResponse;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateFarmingActivityReq;
+import com.mycropdiary.api.dto.cultivation.FarmingActivityResp;
+import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryResp;
 import org.springframework.data.domain.Pageable;
 
-import java.util.UUID;
 
 /**
  * Service định nghĩa các thao tác quản lý Nhật ký canh tác (UC-24).
@@ -20,7 +19,7 @@ public interface FarmingActivityService {
      * @param request Thông tin nhật ký mới
      * @return Chi tiết nhật ký vừa tạo
      */
-    FarmingActivityResponse createActivity(UUID currentUserId, CreateFarmingActivityRequest request);
+    FarmingActivityResp createActivity(Integer currentUserId, CreateFarmingActivityReq request);
 
     /**
      * Lấy danh sách lịch sử nhật ký canh tác theo Mùa vụ (Có phân trang).
@@ -30,7 +29,7 @@ public interface FarmingActivityService {
      * @param pageable Thông tin phân trang
      * @return Danh sách tóm tắt nhật ký canh tác dạng phân trang
      */
-    PageResponse<FarmingActivitySummaryResponse> getActivitiesByCropSeason(UUID currentUserId, UUID cropSeasonId, Pageable pageable);
+    PageResp<FarmingActivitySummaryResp> getActivitiesByCropSeason(Integer currentUserId, Integer cropSeasonId, Pageable pageable);
 
     /**
      * Xem chi tiết một nhật ký canh tác theo ID.
@@ -39,5 +38,5 @@ public interface FarmingActivityService {
      * @param activityId ID nhật ký canh tác
      * @return Chi tiết nhật ký canh tác kèm danh sách công nhân thực hiện (nếu có)
      */
-    FarmingActivityResponse getActivityDetail(UUID currentUserId, UUID activityId);
+    FarmingActivityResp getActivityDetail(Integer currentUserId, Integer activityId);
 }

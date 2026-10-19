@@ -2,15 +2,14 @@ package com.mycropdiary.api.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "AccountToken")
 public class AccountToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "token_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -71,8 +70,8 @@ public class AccountToken {
     }
 
     // --- Getters & Setters ---
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
     public String getTokenHash() { return tokenHash; }

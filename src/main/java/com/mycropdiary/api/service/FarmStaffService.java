@@ -1,15 +1,14 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.staff.AddStaffRequest;
-import com.mycropdiary.api.dto.staff.FarmMemberResponse;
-import com.mycropdiary.api.dto.staff.UpdateStaffRequest;
+import com.mycropdiary.api.dto.staff.AddStaffReq;
+import com.mycropdiary.api.dto.staff.FarmMemberResp;
+import com.mycropdiary.api.dto.staff.UpdateStaffReq;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface FarmStaffService {
-    List<FarmMemberResponse> getStaffList(UUID currentUserId, UUID farmId, String status, String keyword);
-    FarmMemberResponse addStaff(UUID currentUserId, UUID farmId, AddStaffRequest request);
-    FarmMemberResponse updateStaff(UUID currentUserId, UUID farmId, UUID memberId, UpdateStaffRequest request);
-    void deactivateStaff(UUID currentUserId, UUID farmId, UUID memberId);
+    List<FarmMemberResp> getStaffList(Integer currentUserId, Integer farmId, String status, String keyword);
+    FarmMemberResp addStaff(Integer currentUserId, Integer farmId, AddStaffReq request);
+    FarmMemberResp updateStaff(Integer currentUserId, Integer farmId, Integer memberId, UpdateStaffReq request);
+    void deactivateStaff(Integer currentUserId, Integer farmId, Integer memberId);
 }

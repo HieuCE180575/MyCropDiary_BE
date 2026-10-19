@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller.cultivation;
 
-import com.mycropdiary.api.dto.common.ApiResponse;
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageRequest;
-import com.mycropdiary.api.dto.cultivation.MaterialUsageResponse;
+import com.mycropdiary.api.dto.common.ApiResp;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
+import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
 import com.mycropdiary.api.service.cultivation.MaterialUsageService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +15,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 
 /**
  * Controller quản lý REST API cho Nhật ký sử dụng vật tư (UC-25).
@@ -40,10 +39,10 @@ public class MaterialUsageController {
     @Operation(summary = "Tạo mới nhật ký sử dụng vật tư", description = "Ghi nhận sử dụng vật tư (phân bón, thuốc BVTV, v.v.) cho một hoạt động canh tác.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<MaterialUsageResponse> createMaterialUsage(@Valid @RequestBody CreateMaterialUsageRequest request) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        MaterialUsageResponse response = materialUsageService.createMaterialUsage(currentUserId, request);
-        return ApiResponse.ok("Ghi nhận sử dụng vật tư thành công.", response);
+    public ApiResp<MaterialUsageResp> createMaterialUsage(@Valid @RequestBody CreateMaterialUsageReq request) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        MaterialUsageResp response = materialUsageService.createMaterialUsage(currentUserId, request);
+        return ApiResp.ok("Ghi nhận sử dụng vật tư thành công.", response);
     }
 
     /**
@@ -51,12 +50,12 @@ public class MaterialUsageController {
      */
     @Operation(summary = "Xem lịch sử sử dụng vật tư theo hoạt động canh tác", description = "Lấy danh sách vật tư đã sử dụng trong một hoạt động canh tác (có phân trang).")
     @GetMapping
-    public ApiResponse<PageResponse<MaterialUsageResponse>> getMaterialUsagesByActivity(
-            @RequestParam("farmingActivityId") UUID farmingActivityId,
+    public ApiResp<PageResp<MaterialUsageResp>> getMaterialUsagesByActivity(
+            @RequestParam("farmingActivityId") Integer farmingActivityId,
             @PageableDefault(size = 20) Pageable pageable) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        PageResponse<MaterialUsageResponse> response = materialUsageService.getMaterialUsagesByActivity(currentUserId, farmingActivityId, pageable);
-        return ApiResponse.ok("Lấy danh sách sử dụng vật tư thành công.", response);
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        PageResp<MaterialUsageResp> response = materialUsageService.getMaterialUsagesByActivity(currentUserId, farmingActivityId, pageable);
+        return ApiResp.ok("Lấy danh sách sử dụng vật tư thành công.", response);
     }
 
     /**
@@ -64,9 +63,9 @@ public class MaterialUsageController {
      */
     @Operation(summary = "Xem chi tiết bản ghi sử dụng vật tư", description = "Lấy thông tin chi tiết của bản ghi sử dụng vật tư theo ID.")
     @GetMapping("/{materialUsageId}")
-    public ApiResponse<MaterialUsageResponse> getMaterialUsageById(@PathVariable("materialUsageId") UUID materialUsageId) {
-        UUID currentUserId = securityUtils.getCurrentUserId();
-        MaterialUsageResponse response = materialUsageService.getMaterialUsageById(currentUserId, materialUsageId);
-        return ApiResponse.ok("Lấy chi tiết sử dụng vật tư thành công.", response);
+    public ApiResp<MaterialUsageResp> getMaterialUsageById(@PathVariable("materialUsageId") Integer materialUsageId) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        MaterialUsageResp response = materialUsageService.getMaterialUsageById(currentUserId, materialUsageId);
+        return ApiResp.ok("Lấy chi tiết sử dụng vật tư thành công.", response);
     }
 }

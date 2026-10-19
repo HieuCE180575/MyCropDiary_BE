@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * Entity biểu diễn bảng [HarvestRecord] (Nhật ký thu hoạch sản phẩm).
@@ -19,9 +18,9 @@ import java.util.UUID;
 public class HarvestRecord {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "harvest_record_id", updatable = false, nullable = false)
-    private UUID id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "farm_id", nullable = false)
@@ -76,8 +75,8 @@ public class HarvestRecord {
 
     public HarvestRecord() {}
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public Farm getFarm() { return farm; }
     public void setFarm(Farm farm) { this.farm = farm; }
@@ -127,7 +126,7 @@ public class HarvestRecord {
     }
 
     public String getHarvestLotCode() {
-        return id != null ? "LOT-" + id.toString().substring(0, 8).toUpperCase() : "LOT-PENDING";
+        return id != null ? String.format("LOT-%06d", id) : "LOT-PENDING";
     }
     public void setHarvestLotCode(String lot) { }
 

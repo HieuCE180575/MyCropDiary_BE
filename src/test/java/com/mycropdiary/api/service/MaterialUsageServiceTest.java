@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.common.PageResponse;
-import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageRequest;
-import com.mycropdiary.api.dto.cultivation.MaterialUsageResponse;
+import com.mycropdiary.api.dto.common.PageResp;
+import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
+import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -33,7 +33,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,20 +67,20 @@ class MaterialUsageServiceTest {
     private Material pesticideMaterial;
     private Material inactiveMaterial;
 
-    private final UUID farmId = UUID.randomUUID();
-    private final UUID zoneId = UUID.randomUUID();
-    private final UUID blockId = UUID.randomUUID();
-    private final UUID ownerUserId = UUID.randomUUID();
-    private final UUID staffUserId = UUID.randomUUID();
-    private final UUID ownerMemberId = UUID.randomUUID();
-    private final UUID staffMemberId = UUID.randomUUID();
-    private final UUID activeSeasonId = UUID.randomUUID();
-    private final UUID completedSeasonId = UUID.randomUUID();
-    private final UUID activityId = UUID.randomUUID();
-    private final UUID fertilizerId = UUID.randomUUID();
-    private final UUID pesticideId = UUID.randomUUID();
-    private final UUID inactiveMaterialId = UUID.randomUUID();
-    private final UUID usageId = UUID.randomUUID();
+    private final Integer farmId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer zoneId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer blockId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer ownerUserId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer staffUserId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer ownerMemberId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer staffMemberId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer activeSeasonId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer completedSeasonId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer activityId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer fertilizerId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer pesticideId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer inactiveMaterialId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
+    private final Integer usageId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
 
     @BeforeEach
     void setUp() {
@@ -154,7 +153,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thành công với vai trò OWNER")
     void createMaterialUsage_AsOwner_Success() {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
+        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
                 activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("2.500"), "kg", "50g/gốc", "Rải gốc", null, "Thời tiết nắng"
         );
 
@@ -173,7 +172,7 @@ class MaterialUsageServiceTest {
 
         when(materialUsageRepository.save(any(MaterialUsage.class))).thenReturn(savedUsage);
 
-        MaterialUsageResponse response = materialUsageService.createMaterialUsage(ownerUserId, request);
+        MaterialUsageResp response = materialUsageService.createMaterialUsage(ownerUserId, request);
 
         assertNotNull(response);
         assertEquals(usageId, response.materialUsageId());
@@ -184,7 +183,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thất bại nếu không phải active member của farm")
     void createMaterialUsage_NotMember_ThrowsForbidden() {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
+        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
                 activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
         );
 
@@ -199,7 +198,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thất bại khi Unit trong request không khớp với Material.unit (kg vs L)")
     void createMaterialUsage_UnitMismatch_ThrowsBadRequest() {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
+        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
                 activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("1.000"), "L", null, null, null, null
         );
 
@@ -217,12 +216,12 @@ class MaterialUsageServiceTest {
     @DisplayName("Tạo MaterialUsage thất bại nếu Material thuộc Farm khác")
     void createMaterialUsage_MaterialBelongsToDifferentFarm_ThrowsBadRequest() {
         Farm farmB = new Farm();
-        farmB.setId(UUID.randomUUID());
-        UUID otherMatId = UUID.randomUUID();
+        farmB.setId(java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000));
+        Integer otherMatId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000);
         Material otherFarmMaterial = new Material(farmB, "Phân Farm B", "fertilizer", "kg");
         otherFarmMaterial.setId(otherMatId);
 
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
+        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
                 activityId, otherMatId, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
         );
 
@@ -239,7 +238,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thất bại nếu Material inactive")
     void createMaterialUsage_MaterialInactive_ThrowsBadRequest() {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
+        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
                 activityId, inactiveMaterialId, null, LocalDateTime.now(), new BigDecimal("1.000"), "cái", null, null, null, null
         );
 
@@ -256,7 +255,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thất bại nếu Quantity <= 0")
     void createMaterialUsage_QuantityInvalid_ThrowsBadRequest() {
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
+        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
                 activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("0.000"), "kg", null, null, null, null
         );
 
@@ -274,11 +273,11 @@ class MaterialUsageServiceTest {
     @DisplayName("Tạo MaterialUsage thất bại khi CropSeason đã COMPLETED")
     void createMaterialUsage_ClosedSeason_ThrowsBadRequest() {
         FarmingActivity closedActivity = new FarmingActivity();
-        closedActivity.setId(UUID.randomUUID());
+        closedActivity.setId(java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000));
         closedActivity.setFarm(farm);
         closedActivity.setCropSeason(completedSeason);
 
-        CreateMaterialUsageRequest request = new CreateMaterialUsageRequest(
+        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
                 closedActivity.getId(), fertilizerId, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
         );
 
@@ -307,7 +306,7 @@ class MaterialUsageServiceTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
         when(materialUsageRepository.findByFarmingActivityId(activityId, pageable)).thenReturn(new PageImpl<>(List.of(usage)));
 
-        PageResponse<MaterialUsageResponse> result = materialUsageService.getMaterialUsagesByActivity(ownerUserId, activityId, pageable);
+        PageResp<MaterialUsageResp> result = materialUsageService.getMaterialUsagesByActivity(ownerUserId, activityId, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.content().size());
