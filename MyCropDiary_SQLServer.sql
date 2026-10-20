@@ -81,6 +81,7 @@ CREATE TABLE [FarmRegistration] (
     ward NVARCHAR(100),
     document_url NVARCHAR(1000),
     registration_note NVARCHAR(MAX),
+    rejection_reason NVARCHAR(1000),
     registration_status NVARCHAR(20) NOT NULL DEFAULT 'pending'
         CHECK (registration_status IN ('pending','approved','rejected','cancelled')),
     reviewed_by INT REFERENCES [User](user_id) ON DELETE NO ACTION,

@@ -288,4 +288,30 @@ class FarmRegistrationServiceTest {
         assertEquals("https://cert.url", resp.documentUrl());
         assertEquals(adminUser.getFullName(), resp.handlerFullName());
     }
+
+    @Test
+    @DisplayName("handleRegistration: Admin tu choi don luu rejectionReason rieng va khong ghi de mo ta description")
+    void handleRegistration_Rejected_DoesNotOverwriteDescription() {
+        when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
+
+        FarmRegistration reg = new FarmRegistration(
+                testUser, "Nong Trai Rau", "123 Duong Le Duan", "Ha Noi", "Hoan Kiem", "Trang Tien",
+                "https://cert.url", "Trong rau sach huu co"
+        );
+        reg.setId(601);
+        reg.setRegistrationStatus("pending");
+
+        when(farmRegistrationRepository.findById(601)).thenReturn(Optional.of(reg));
+        when(farmRegistrationRepository.save(any(FarmRegistration.class))).thenAnswer(i -> i.getArgument(0));
+
+        HandleRegistrationReq req = new HandleRegistrationReq("REJECTED", "Thieu giay to chung nhan");
+        var resp = farmRegistrationService.handleRegistration(1, 601, req);
+
+        assertNotNull(resp);
+        assertEquals("REJECTED", resp.status());
+        assertEquals("Trong rau sach huu co", resp.description());
+        assertEquals("Thieu giay to chung nhan", resp.rejectionReason());
+        assertEquals("Trong rau sach huu co", reg.getRegistrationNote());
+        assertEquals("Thieu giay to chung nhan", reg.getRejectionReason());
+    }
 }

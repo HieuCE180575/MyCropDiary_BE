@@ -38,6 +38,9 @@ public class FarmRegistration {
     @Column(name = "registration_note", columnDefinition = "NVARCHAR(MAX)")
     private String registrationNote;
 
+    @Column(name = "rejection_reason", length = 1000)
+    private String rejectionReason;
+
     @Column(name = "registration_status", nullable = false, length = 20)
     private String registrationStatus = "pending"; // pending, approved, rejected, cancelled
 
@@ -155,8 +158,13 @@ public class FarmRegistration {
     public String getDescription() { return registrationNote; }
     public void setDescription(String description) { this.registrationNote = description; }
 
-    public String getRejectionReason() { return registrationNote; }
-    public void setRejectionReason(String rejectionReason) { this.registrationNote = rejectionReason; }
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
 
     public FarmRegistrationStatus getStatus() {
         if ("approved".equalsIgnoreCase(registrationStatus)) return FarmRegistrationStatus.APPROVED;

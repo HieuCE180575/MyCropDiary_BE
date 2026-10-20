@@ -232,7 +232,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         registration.setRegistrationStatus("rejected");
         registration.setReviewedBy(adminUser);
         registration.setReviewedAt(Instant.now());
-        registration.setRegistrationNote(rejectionReason.trim());
+        registration.setRejectionReason(rejectionReason.trim());
         farmRegistrationRepository.save(registration);
 
         log.info("UC-39: Admin {} đã TỪ CHỐI đơn đăng ký #{} với lý do: {}",
