@@ -76,6 +76,10 @@ CREATE TABLE [FarmRegistration] (
     user_id INT NOT NULL REFERENCES [User](user_id) ON DELETE NO ACTION,
     farm_name NVARCHAR(160) NOT NULL,
     address NVARCHAR(MAX),
+    province NVARCHAR(100),
+    district NVARCHAR(100),
+    ward NVARCHAR(100),
+    document_url NVARCHAR(1000),
     registration_note NVARCHAR(MAX),
     registration_status NVARCHAR(20) NOT NULL DEFAULT 'pending'
         CHECK (registration_status IN ('pending','approved','rejected','cancelled')),
@@ -669,12 +673,12 @@ GO
 
 -- 4. FARM REGISTRATIONS (IDs: 1 to 4)
 SET IDENTITY_INSERT [FarmRegistration] ON;
-INSERT INTO [FarmRegistration] (registration_id, user_id, farm_name, address, registration_note, registration_status, reviewed_by, reviewed_at, resulting_farm_id)
+INSERT INTO [FarmRegistration] (registration_id, user_id, farm_name, address, province, district, ward, document_url, registration_note, registration_status, reviewed_by, reviewed_at, resulting_farm_id)
 VALUES
-(1, 2, N'Trang Trại Rau Củ Sạch Đà Lạt', N'123 Mai Anh Đào, Phường 8, TP Đà Lạt, Lâm Đồng', N'Đơn đăng ký hợp lệ, đầy đủ giấy chứng nhận VietGAP', 'approved', 1, '2025-01-02 10:00:00', 1),
-(2, 3, N'Hợp Tác Xã Cây Ăn Trái Mekong', N'Ấp Bình Hòa, Xã Mỹ Xương, Huyện Cao Lãnh, Đồng Tháp', N'Đơn đăng ký hợp tác xã đạt chuẩn xuất khẩu', 'approved', 1, '2025-02-15 14:30:00', 2),
-(3, 9, N'Nông Trại Xanh Tây Nguyên', N'Thôn 4, Xã Ea Kao, TP Buôn Ma Thuột, Đắk Lắk', N'Đăng ký nông trại cà phê & sầu riêng sạch, đang chờ admin xem xét duyệt', 'pending', NULL, NULL, NULL),
-(4, 9, N'Vườn Dược Liệu Kon Tum', N'Xã Măng Cành, Huyện Kon Plông, Kon Tum', N'Thiếu giấy tờ quyền sử dụng đất và tọa độ GPS', 'rejected', 1, '2025-11-20 09:15:00', NULL);
+(1, 2, N'Trang Trại Rau Củ Sạch Đà Lạt', N'123 Mai Anh Đào', N'Lâm Đồng', N'TP Đà Lạt', N'Phường 8', 'https://example.com/docs/vietgap-dalat.pdf', N'Đơn đăng ký hợp lệ, đầy đủ giấy chứng nhận VietGAP', 'approved', 1, '2025-01-02 10:00:00', 1),
+(2, 3, N'Hợp Tác Xã Cây Ăn Trái Mekong', N'Ấp Bình Hòa', N'Đồng Tháp', N'Huyện Cao Lãnh', N'Xã Mỹ Xương', 'https://example.com/docs/globalgap-mekong.pdf', N'Đơn đăng ký hợp tác xã đạt chuẩn xuất khẩu', 'approved', 1, '2025-02-15 14:30:00', 2),
+(3, 9, N'Nông Trại Xanh Tây Nguyên', N'Thôn 4', N'Đắk Lắk', N'TP Buôn Ma Thuột', N'Xã Ea Kao', 'https://example.com/docs/taynguyen-farm.pdf', N'Đăng ký nông trại cà phê & sầu riêng sạch, đang chờ admin xem xét duyệt', 'pending', NULL, NULL, NULL),
+(4, 9, N'Vườn Dược Liệu Kon Tum', N'Xã Măng Cành', N'Kon Tum', N'Huyện Kon Plông', N'Xã Măng Cành', NULL, N'Thiếu giấy tờ quyền sử dụng đất và tọa độ GPS', 'rejected', 1, '2025-11-20 09:15:00', NULL);
 SET IDENTITY_INSERT [FarmRegistration] OFF;
 GO
 

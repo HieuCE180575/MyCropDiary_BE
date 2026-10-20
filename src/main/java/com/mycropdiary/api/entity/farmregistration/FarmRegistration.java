@@ -23,6 +23,18 @@ public class FarmRegistration {
     @Column(name = "address", columnDefinition = "NVARCHAR(MAX)")
     private String address;
 
+    @Column(name = "province", length = 100)
+    private String province;
+
+    @Column(name = "district", length = 100)
+    private String district;
+
+    @Column(name = "ward", length = 100)
+    private String ward;
+
+    @Column(name = "document_url", length = 1000)
+    private String documentUrl;
+
     @Column(name = "registration_note", columnDefinition = "NVARCHAR(MAX)")
     private String registrationNote;
 
@@ -48,6 +60,18 @@ public class FarmRegistration {
         this.user = user;
         this.farmName = farmName;
         this.address = address;
+        this.registrationStatus = "pending";
+    }
+
+    public FarmRegistration(User user, String farmName, String address, String province, String district, String ward, String documentUrl, String registrationNote) {
+        this.user = user;
+        this.farmName = farmName;
+        this.address = address;
+        this.province = province;
+        this.district = district;
+        this.ward = ward;
+        this.documentUrl = documentUrl;
+        this.registrationNote = registrationNote;
         this.registrationStatus = "pending";
     }
 
@@ -116,17 +140,17 @@ public class FarmRegistration {
     public String getAddressLine() { return address; }
     public void setAddressLine(String addressLine) { this.address = addressLine; }
 
-    public String getProvince() { return null; }
-    public void setProvince(String province) { }
+    public String getProvince() { return province; }
+    public void setProvince(String province) { this.province = province; }
 
-    public String getDistrict() { return null; }
-    public void setDistrict(String district) { }
+    public String getDistrict() { return district; }
+    public void setDistrict(String district) { this.district = district; }
 
-    public String getWard() { return null; }
-    public void setWard(String ward) { }
+    public String getWard() { return ward; }
+    public void setWard(String ward) { this.ward = ward; }
 
-    public String getDocumentUrl() { return null; }
-    public void setDocumentUrl(String documentUrl) { }
+    public String getDocumentUrl() { return documentUrl; }
+    public void setDocumentUrl(String documentUrl) { this.documentUrl = documentUrl; }
 
     public String getDescription() { return registrationNote; }
     public void setDescription(String description) { this.registrationNote = description; }

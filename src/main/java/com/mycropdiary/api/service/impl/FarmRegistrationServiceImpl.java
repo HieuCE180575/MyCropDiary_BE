@@ -87,7 +87,11 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         registration.setUser(applicantUser);
         registration.setFarmName(request.farmName().trim());
         registration.setAddress(request.addressLine().trim());
-        registration.setRegistrationNote(request.description() != null ? request.description().trim() : null);
+        registration.setProvince(request.province() != null && !request.province().isBlank() ? request.province().trim() : null);
+        registration.setDistrict(request.district() != null && !request.district().isBlank() ? request.district().trim() : null);
+        registration.setWard(request.ward() != null && !request.ward().isBlank() ? request.ward().trim() : null);
+        registration.setRegistrationNote(request.description() != null && !request.description().isBlank() ? request.description().trim() : null);
+        registration.setDocumentUrl(request.documentUrl() != null && !request.documentUrl().isBlank() ? request.documentUrl().trim() : null);
         registration.setRegistrationStatus("pending");
         registration.setReviewedBy(null);
         registration.setReviewedAt(null);
@@ -338,6 +342,9 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
                 reg.getId(),
                 reg.getFarmName(),
                 reg.getAddress(),
+                reg.getProvince(),
+                reg.getDistrict(),
+                reg.getWard(),
                 reg.getStatus(),
                 reg.getSubmittedAt(),
                 reg.getHandledAt(),

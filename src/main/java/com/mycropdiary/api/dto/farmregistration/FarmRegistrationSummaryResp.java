@@ -10,8 +10,23 @@ public record FarmRegistrationSummaryResp(
         Integer registrationId,
         String farmName,
         String addressLine,
+        String province,
+        String district,
+        String ward,
         FarmRegistrationStatus status,
         LocalDateTime submittedAt,
         LocalDateTime handledAt,
         String rejectionReason
-) {}
+) {
+    public FarmRegistrationSummaryResp(
+            Integer registrationId,
+            String farmName,
+            String addressLine,
+            FarmRegistrationStatus status,
+            LocalDateTime submittedAt,
+            LocalDateTime handledAt,
+            String rejectionReason
+    ) {
+        this(registrationId, farmName, addressLine, null, null, null, status, submittedAt, handledAt, rejectionReason);
+    }
+}
