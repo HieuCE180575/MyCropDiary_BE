@@ -1,15 +1,20 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.block.CreateBlockReq;
+import com.mycropdiary.api.dto.block.BlockConditionResp;
 import com.mycropdiary.api.dto.block.BlockResp;
+import com.mycropdiary.api.dto.block.CreateBlockReq;
+import com.mycropdiary.api.dto.block.RecordBlockConditionReq;
 import com.mycropdiary.api.dto.block.UpdateBlockReq;
 import com.mycropdiary.api.entity.Block;
+import com.mycropdiary.api.entity.BlockConditionObservation;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.StaffZoneAssignment;
 import com.mycropdiary.api.entity.Zone;
 import com.mycropdiary.api.exception.BusinessRuleException;
 import com.mycropdiary.api.exception.ResourceConflictException;
+import com.mycropdiary.api.repository.BlockConditionObservationRepository;
 import com.mycropdiary.api.repository.BlockRepository;
+import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.service.BlockService;
@@ -18,12 +23,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Service xử lý nghiệp vụ quản lý Lô / Thửa đất (Block).
+ * Service xử lý nghiệp vụ quản lý Lô / Thửa đất (Block) - UC-17.
  */
 @Service
 @Transactional
@@ -31,15 +37,21 @@ public class BlockServiceImpl implements BlockService {
     private final BlockRepository blockRepository;
     private final ZoneRepository zoneRepository;
     private final StaffZoneAssignmentRepository assignmentRepository;
+    private final BlockConditionObservationRepository conditionObservationRepository;
+    private final FarmMemberRepository farmMemberRepository;
     private final FarmAccessGuard accessGuard;
 
     public BlockServiceImpl(BlockRepository blockRepository,
                             ZoneRepository zoneRepository,
                             StaffZoneAssignmentRepository assignmentRepository,
+                            BlockConditionObservationRepository conditionObservationRepository,
+                            FarmMemberRepository farmMemberRepository,
                             FarmAccessGuard accessGuard) {
         this.blockRepository = blockRepository;
         this.zoneRepository = zoneRepository;
         this.assignmentRepository = assignmentRepository;
+        this.conditionObservationRepository = conditionObservationRepository;
+        this.farmMemberRepository = farmMemberRepository;
         this.accessGuard = accessGuard;
     }
 
@@ -153,6 +165,33 @@ public class BlockServiceImpl implements BlockService {
         blockRepository.delete(block);
     }
 
+    @Override
+    public BlockConditionResp recordBlockCondition(Integer currentUserId, Integer blockId, RecordBlockConditionReq request) {
+        Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
+        Integer farmId = block.getZone().getFarm().getId();
+        FarmMember recorder = farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, currentUserId, "active").orElse(null);
+
+        BlockConditionObservation observation = new BlockConditionObservation(
+                block,
+                recorder,
+                request.conditionType(),
+                request.description(),
+                request.imageUrl(),
+                request.observedAt() != null ? request.observedAt() : Instant.now()
+        );
+
+        BlockConditionObservation saved = conditionObservationRepository.save(observation);
+        return toBlockConditionResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BlockConditionResp> getBlockConditions(Integer currentUserId, Integer blockId) {
+        accessGuard.requireBlockAccess(currentUserId, blockId);
+        List<BlockConditionObservation> list = conditionObservationRepository.findByBlockIdOrderByObservedAtDesc(blockId);
+        return list.stream().map(this::toBlockConditionResponse).toList();
+    }
+
     private void validateCoordinates(BigDecimal latitude, BigDecimal longitude) {
         if ((latitude != null && longitude == null) || (latitude == null && longitude != null)) {
             throw new BusinessRuleException("Tọa độ phải bao gồm đầy đủ cả Vĩ độ (Latitude) và Kinh độ (Longitude)");
@@ -186,6 +225,24 @@ public class BlockServiceImpl implements BlockService {
                 null,
                 null,
                 b.getCreatedAt()
+        );
+    }
+
+    private BlockConditionResp toBlockConditionResponse(BlockConditionObservation obs) {
+        Integer recorderId = obs.getRecordedBy() != null ? obs.getRecordedBy().getId() : null;
+        String recorderName = (obs.getRecordedBy() != null && obs.getRecordedBy().getUser() != null)
+                ? obs.getRecordedBy().getUser().getFullName() : null;
+
+        return new BlockConditionResp(
+                obs.getId(),
+                obs.getBlock().getId(),
+                obs.getBlock().getBlockName(),
+                recorderId,
+                recorderName,
+                obs.getConditionType(),
+                obs.getDescription(),
+                obs.getImageUrl(),
+                obs.getObservedAt()
         );
     }
 }

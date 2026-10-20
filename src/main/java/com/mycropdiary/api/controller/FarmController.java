@@ -112,23 +112,4 @@ public class FarmController {
         farmService.removeMember(currentUserId, farmId, memberId);
         return ApiResp.ok("Member removed successfully", null);
     }
-
-    @Operation(summary = "Tạo vùng sản xuất / Zone mới", description = "Tạo phân khu sản xuất mới trong trang trại.")
-    @PostMapping({"/{farmId}/zones", "/{farmId}/production-areas"})
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<ZoneResp> createZone(
-            @PathVariable Integer farmId,
-            @Valid @RequestBody CreateZoneReq request) {
-        Integer currentUserId = securityUtils.getCurrentUserId();
-        ZoneResp response = farmService.createZone(currentUserId, farmId, request);
-        return ApiResp.ok("Zone created successfully", response);
-    }
-
-    @Operation(summary = "Lấy danh sách vùng sản xuất / Zones", description = "Lấy danh sách các vùng sản xuất thuộc trang trại.")
-    @GetMapping({"/{farmId}/zones", "/{farmId}/production-areas"})
-    public ApiResp<List<ZoneResp>> getZones(@PathVariable Integer farmId) {
-        Integer currentUserId = securityUtils.getCurrentUserId();
-        List<ZoneResp> response = farmService.getZones(currentUserId, farmId);
-        return ApiResp.ok("Zones retrieved successfully", response);
-    }
 }

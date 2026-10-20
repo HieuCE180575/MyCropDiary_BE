@@ -18,7 +18,7 @@ public class ModuleCatalogController {
     @GetMapping
     public ApiResp<List<String>> listModules() {
         return ApiResp.ok("MyCropDiary UC modules", List.of(
-                "auth-profile", "farm-registration", "farm-members", "production-areas", "plots",
+                "auth-profile", "farm-registration", "farm-members", "zones", "blocks",
                 "environmental-assessments", "crop-seasons", "tasks", "farming-activities",
                 "materials-purchases-expenses", "harvest-traceability", "training",
                 "vietgap-checklists", "internal-assessments", "reports", "ai-assistance", "admin"));
