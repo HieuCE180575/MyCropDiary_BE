@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface ActivityWorkerRepository extends JpaRepository<ActivityWorker, ActivityWorkerId> {
     List<ActivityWorker> findByFarmingActivityId(Integer farmingActivityId);
+    void deleteByFarmingActivityId(Integer farmingActivityId);
 }
+

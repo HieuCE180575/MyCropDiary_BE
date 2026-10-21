@@ -5,6 +5,7 @@ import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.cultivation.CreateFarmingActivityReq;
 import com.mycropdiary.api.dto.cultivation.FarmingActivityResp;
 import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryResp;
+import com.mycropdiary.api.dto.cultivation.UpdateFarmingActivityReq;
 import com.mycropdiary.api.service.cultivation.FarmingActivityService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,8 +14,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 
 /**
@@ -51,19 +55,46 @@ public class FarmingActivityController {
     }
 
     /**
-     * Lấy danh sách nhật ký canh tác theo Mùa vụ (Có phân trang).
+     * Cập nhật nhật ký canh tác (UC-24.3).
+     *
+     * @param activityId ID nhật ký canh tác cần sửa
+     * @param request Thông tin cập nhật nhật ký
+     * @return Thông tin nhật ký sau khi cập nhật
+     */
+    @Operation(summary = "Cập nhật nhật ký canh tác", description = "Chỉnh sửa thông tin nhật ký canh tác đã tạo (UC-24.3).")
+    @PutMapping("/{activityId}")
+    public ApiResp<FarmingActivityResp> updateActivity(
+            @PathVariable Integer activityId,
+            @Valid @RequestBody UpdateFarmingActivityReq request) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        FarmingActivityResp response = farmingActivityService.updateActivity(currentUserId, activityId, request);
+        return ApiResp.ok("Cập nhật nhật ký canh tác thành công.", response);
+    }
+
+    /**
+     * Lấy danh sách nhật ký canh tác theo Mùa vụ (Có phân trang, tìm kiếm và lọc).
      *
      * @param cropSeasonId ID của mùa vụ canh tác
+     * @param keyword Từ khóa tìm kiếm theo tên hoặc mô tả hoạt động
+     * @param activityType Loại hoạt động canh tác
+     * @param fromDate Thời gian bắt đầu
+     * @param toDate Thời gian kết thúc
      * @param pageable Cấu hình phân trang
      * @return Danh sách lịch sử nhật ký canh tác dạng phân trang
      */
-    @Operation(summary = "Xem lịch sử nhật ký canh tác theo mùa vụ", description = "Lấy danh sách nhật ký canh tác của mùa vụ (Có phân trang).")
+    @Operation(summary = "Xem lịch sử nhật ký canh tác theo mùa vụ", description = "Lấy danh sách nhật ký canh tác của mùa vụ (Có phân trang, tìm kiếm theo từ khóa và lọc nâng cao).")
     @GetMapping
     public ApiResp<PageResp<FarmingActivitySummaryResp>> getActivitiesByCropSeason(
             @RequestParam Integer cropSeasonId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String activityType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
             @PageableDefault(size = 20) Pageable pageable) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        PageResp<FarmingActivitySummaryResp> response = farmingActivityService.getActivitiesByCropSeason(currentUserId, cropSeasonId, pageable);
+        PageResp<FarmingActivitySummaryResp> response = farmingActivityService.searchAndFilterActivities(
+                currentUserId, cropSeasonId, keyword, activityType, fromDate, toDate, pageable
+        );
         return ApiResp.ok("Danh sách lịch sử nhật ký canh tác.", response);
     }
 
@@ -81,3 +112,4 @@ public class FarmingActivityController {
         return ApiResp.ok("Chi tiết nhật ký canh tác.", response);
     }
 }
+
