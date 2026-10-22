@@ -2,9 +2,7 @@ package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
-import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
-import com.mycropdiary.api.dto.cultivation.UpdateMaterialUsageReq;
+import com.mycropdiary.api.dto.cultivation.*;
 import com.mycropdiary.api.service.cultivation.MaterialUsageService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,9 +62,10 @@ public class MaterialUsageController {
     /**
      * Xem danh sách lịch sử sử dụng vật tư (Có phân trang, tìm kiếm và lọc).
      */
-    @Operation(summary = "Xem lịch sử sử dụng vật tư", description = "Lấy danh sách vật tư đã sử dụng theo hoạt động canh tác hoặc mùa vụ (có phân trang, tìm kiếm theo từ khóa và lọc nâng cao).")
+    @Operation(summary = "Xem lịch sử sử dụng vật tư", description = "Lấy danh sách vật tư đã sử dụng theo trang trại, hoạt động canh tác hoặc mùa vụ (có phân trang, tìm kiếm theo từ khóa và lọc nâng cao).")
     @GetMapping
     public ApiResp<PageResp<MaterialUsageResp>> getMaterialUsages(
+            @RequestParam(required = false) Integer farmId,
             @RequestParam(required = false) Integer farmingActivityId,
             @RequestParam(required = false) Integer cropSeasonId,
             @RequestParam(required = false) String keyword,
@@ -75,9 +74,49 @@ public class MaterialUsageController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
             @PageableDefault(size = 20) Pageable pageable) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        PageResp<MaterialUsageResp> response = materialUsageService.searchAndFilterMaterialUsages(
-                currentUserId, farmingActivityId, cropSeasonId, keyword, materialType, fromDate, toDate, pageable);
+        PageResp<MaterialUsageResp> response;
+        if (farmId != null) {
+            response = materialUsageService.searchAndFilterMaterialUsages(
+                    currentUserId, farmId, farmingActivityId, cropSeasonId, keyword, materialType, fromDate, toDate, pageable);
+        } else {
+            response = materialUsageService.searchAndFilterMaterialUsages(
+                    currentUserId, farmingActivityId, cropSeasonId, keyword, materialType, fromDate, toDate, pageable);
+        }
         return ApiResp.ok("Lấy danh sách sử dụng vật tư thành công.", response);
+    }
+
+    /**
+     * Xóa một bản ghi nhật ký sử dụng vật tư.
+     */
+    @Operation(summary = "Xóa nhật ký sử dụng vật tư", description = "Xóa bản ghi nhật ký sử dụng vật tư đã ghi nhận.")
+    @DeleteMapping("/{materialUsageId}")
+    public ApiResp<Void> deleteMaterialUsage(@PathVariable Integer materialUsageId) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        materialUsageService.deleteMaterialUsage(currentUserId, materialUsageId);
+        return ApiResp.ok("Xóa nhật ký sử dụng vật tư thành công.", null);
+    }
+
+    /**
+     * Lấy danh mục vật tư của một nông trại.
+     */
+    @Operation(summary = "Danh sách vật tư của trang trại", description = "Lấy danh mục vật tư (phân bón, thuốc BVTV sinh học, hạt giống...) đang khả dụng của trang trại.")
+    @GetMapping("/materials")
+    public ApiResp<java.util.List<MaterialOptionResp>> getMaterials(@RequestParam Integer farmId) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        java.util.List<MaterialOptionResp> response = materialUsageService.getMaterialsByFarm(currentUserId, farmId);
+        return ApiResp.ok("Lấy danh mục vật tư thành công.", response);
+    }
+
+    /**
+     * Tạo mới vật tư vào danh mục nông trại.
+     */
+    @Operation(summary = "Tạo mới vật tư cho trang trại", description = "Thêm một loại vật tư mới vào danh mục của trang trại.")
+    @PostMapping("/materials")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResp<MaterialOptionResp> createMaterial(@Valid @RequestBody CreateMaterialReq request) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        MaterialOptionResp response = materialUsageService.createMaterial(currentUserId, request);
+        return ApiResp.ok("Tạo mới vật tư thành công.", response);
     }
 
     /**

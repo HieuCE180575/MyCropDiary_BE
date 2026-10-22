@@ -12,4 +12,7 @@ import java.util.Optional;
 @Repository
 public interface MaterialRepository extends JpaRepository<Material, Integer> {
     Optional<Material> findByIdAndFarmId(Integer id, Integer farmId);
+    java.util.List<Material> findAllByFarmId(Integer farmId);
+    java.util.List<Material> findAllByFarmIdAndIsActiveTrue(Integer farmId);
+    Optional<Material> findByFarmIdAndMaterialNameIgnoreCase(Integer farmId, String materialName);
 }

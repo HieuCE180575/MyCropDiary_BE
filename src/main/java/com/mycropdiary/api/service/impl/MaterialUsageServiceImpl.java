@@ -1,9 +1,7 @@
 package com.mycropdiary.api.service.impl;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
-import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
-import com.mycropdiary.api.dto.cultivation.UpdateMaterialUsageReq;
+import com.mycropdiary.api.dto.cultivation.*;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.cultivation.*;
@@ -11,9 +9,11 @@ import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.repository.FarmMemberRepository;
+import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.*;
 import com.mycropdiary.api.service.cultivation.MaterialUsageService;
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,6 +39,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
     private final FarmingActivityRepository farmingActivityRepository;
     private final FarmMemberRepository farmMemberRepository;
     private final CropSeasonRepository cropSeasonRepository;
+    private final FarmRepository farmRepository;
 
     public MaterialUsageServiceImpl(
             MaterialUsageRepository materialUsageRepository,
@@ -46,11 +47,23 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             FarmingActivityRepository farmingActivityRepository,
             FarmMemberRepository farmMemberRepository,
             CropSeasonRepository cropSeasonRepository) {
+        this(materialUsageRepository, materialRepository, farmingActivityRepository, farmMemberRepository, cropSeasonRepository, null);
+    }
+
+    @Autowired
+    public MaterialUsageServiceImpl(
+            MaterialUsageRepository materialUsageRepository,
+            MaterialRepository materialRepository,
+            FarmingActivityRepository farmingActivityRepository,
+            FarmMemberRepository farmMemberRepository,
+            CropSeasonRepository cropSeasonRepository,
+            @Autowired(required = false) FarmRepository farmRepository) {
         this.materialUsageRepository = materialUsageRepository;
         this.materialRepository = materialRepository;
         this.farmingActivityRepository = farmingActivityRepository;
         this.farmMemberRepository = farmMemberRepository;
         this.cropSeasonRepository = cropSeasonRepository;
+        this.farmRepository = farmRepository;
     }
 
     @Override
@@ -211,7 +224,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
     @Override
     public PageResp<MaterialUsageResp> getMaterialUsagesByActivity(Integer userId, Integer farmingActivityId, Pageable pageable) {
-        return searchAndFilterMaterialUsages(userId, farmingActivityId, null, null, null, null, null, pageable);
+        return searchAndFilterMaterialUsages(userId, null, farmingActivityId, null, null, null, null, null, pageable);
     }
 
     @Override
@@ -224,8 +237,22 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             LocalDateTime fromDate,
             LocalDateTime toDate,
             Pageable pageable) {
+        return searchAndFilterMaterialUsages(userId, null, farmingActivityId, cropSeasonId, keyword, materialType, fromDate, toDate, pageable);
+    }
 
-        if (farmingActivityId == null && cropSeasonId == null) {
+    @Override
+    public PageResp<MaterialUsageResp> searchAndFilterMaterialUsages(
+            Integer userId,
+            Integer farmId,
+            Integer farmingActivityId,
+            Integer cropSeasonId,
+            String keyword,
+            String materialType,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable) {
+
+        if (farmingActivityId == null && cropSeasonId == null && farmId == null) {
             throw new BadRequestException("Cần cung cấp farmingActivityId hoặc cropSeasonId để tra cứu sử dụng vật tư.");
         }
 
@@ -233,12 +260,15 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             FarmingActivity activity = farmingActivityRepository.findById(farmingActivityId)
                     .orElseThrow(() -> new ResourceNotFoundException("Hoạt động canh tác không tồn tại."));
             validateAndGetActiveMember(userId, activity);
-        } else {
+        } else if (cropSeasonId != null) {
             CropSeason season = cropSeasonRepository.findById(cropSeasonId)
                     .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại."));
             Farm farm = season.getFarm();
             farmMemberRepository.findByFarmIdAndUserIdAndStatus(farm.getId(), userId, "active")
                     .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập hoặc ghi nhật ký cho mùa vụ của trang trại này."));
+        } else {
+            farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active")
+                    .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập hoặc ghi nhật ký cho trang trại này."));
         }
 
         Specification<MaterialUsage> spec = (root, query, cb) -> {
@@ -246,8 +276,10 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
             if (farmingActivityId != null) {
                 predicates.add(cb.equal(root.get("farmingActivity").get("id"), farmingActivityId));
-            } else {
+            } else if (cropSeasonId != null) {
                 predicates.add(cb.equal(root.get("farmingActivity").get("cropSeason").get("id"), cropSeasonId));
+            } else if (farmId != null) {
+                predicates.add(cb.equal(root.get("farm").get("id"), farmId));
             }
 
             if (keyword != null && !keyword.trim().isEmpty()) {
@@ -276,6 +308,69 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
         Page<MaterialUsage> usagesPage = materialUsageRepository.findAll(spec, pageable);
         return PageResp.map(usagesPage, this::mapToResponse);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMaterialUsage(Integer userId, Integer materialUsageId) {
+        MaterialUsage usage = materialUsageRepository.findById(materialUsageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bản ghi sử dụng vật tư không tồn tại."));
+
+        FarmingActivity activity = usage.getFarmingActivity();
+        if (activity != null) {
+            validateAndGetActiveMember(userId, activity);
+            CropSeason season = activity.getCropSeason();
+            if (season != null) {
+                String seasonStatus = season.getSeasonStatus();
+                if (seasonStatus != null && ("completed".equalsIgnoreCase(seasonStatus)
+                        || "cancelled".equalsIgnoreCase(seasonStatus)
+                        || "archived".equalsIgnoreCase(seasonStatus))) {
+                    throw new BadRequestException("Không thể xóa sử dụng vật tư cho mùa vụ đã đóng hoặc đã hủy.");
+                }
+            }
+        } else if (usage.getFarm() != null) {
+            farmMemberRepository.findByFarmIdAndUserIdAndStatus(usage.getFarm().getId(), userId, "active")
+                    .orElseThrow(() -> new ForbiddenException("Bạn không có quyền thao tác trên trang trại này."));
+        }
+
+        materialUsageRepository.delete(usage);
+    }
+
+    @Override
+    public List<MaterialOptionResp> getMaterialsByFarm(Integer userId, Integer farmId) {
+        farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active")
+                .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập trang trại này."));
+
+        List<Material> materials = materialRepository.findAllByFarmIdAndIsActiveTrue(farmId);
+        return materials.stream().map(MaterialOptionResp::fromEntity).toList();
+    }
+
+    @Override
+    @Transactional
+    public MaterialOptionResp createMaterial(Integer userId, CreateMaterialReq request) {
+        farmMemberRepository.findByFarmIdAndUserIdAndStatus(request.farmId(), userId, "active")
+                .orElseThrow(() -> new ForbiddenException("Bạn không có quyền quản lý vật tư của trang trại này."));
+
+        Farm farm;
+        if (farmRepository != null) {
+            farm = farmRepository.findById(request.farmId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Trang trại không tồn tại."));
+        } else {
+            farm = new Farm();
+            farm.setId(request.farmId());
+        }
+
+        Material material = new Material(
+                farm,
+                request.materialName().trim(),
+                request.materialType() != null ? request.materialType().trim() : null,
+                request.unit().trim()
+        );
+        if (request.description() != null) {
+            material.setDescription(request.description().trim());
+        }
+        Material saved = materialRepository.save(material);
+        return MaterialOptionResp.fromEntity(saved);
     }
 
     @Override
