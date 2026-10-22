@@ -6,6 +6,7 @@ import com.mycropdiary.api.controller.cultivation.MaterialUsageController;
 import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
 import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
+import com.mycropdiary.api.dto.cultivation.UpdateMaterialUsageReq;
 import com.mycropdiary.api.service.cultivation.MaterialUsageService;
 import com.mycropdiary.api.util.SecurityUtils;
 
@@ -30,10 +31,12 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -103,6 +106,42 @@ class MaterialUsageControllerTest {
     }
 
     @Test
+    @DisplayName("PUT /api/v1/material-usages/{id} -> 200 OK khi cập nhật thành công")
+    void updateMaterialUsage_Success() throws Exception {
+        UpdateMaterialUsageReq request = new UpdateMaterialUsageReq(
+                materialId, LocalDateTime.now(), new BigDecimal("3.000"), "kg", "60g/gốc", "Rải gốc", 5, "Cập nhật liều"
+        );
+
+        MaterialUsageResp response = new MaterialUsageResp(
+                materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
+                request.usedAt(), request.quantity(), "kg", "60g/gốc", "Rải gốc", 5, "Cập nhật liều"
+        );
+
+        when(materialUsageService.updateMaterialUsage(eq(userId), eq(materialUsageId), any(UpdateMaterialUsageReq.class))).thenReturn(response);
+
+        mockMvc.perform(put("/api/v1/material-usages/" + materialUsageId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.materialUsageId").value(materialUsageId.toString()))
+                .andExpect(jsonPath("$.data.notes").value("Cập nhật liều"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/material-usages/{id} -> 400 Bad Request khi số lượng âm")
+    void updateMaterialUsage_InvalidQuantity_ReturnsBadRequest() throws Exception {
+        UpdateMaterialUsageReq request = new UpdateMaterialUsageReq(
+                null, null, new BigDecimal("-5.000"), null, null, null, null, null
+        );
+
+        mockMvc.perform(put("/api/v1/material-usages/" + materialUsageId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("GET /api/v1/material-usages?farmingActivityId=... -> 200 OK với PageResp<MaterialUsageResp>")
     void getMaterialUsagesByActivity_Success() throws Exception {
         MaterialUsageResp response = new MaterialUsageResp(
@@ -112,11 +151,35 @@ class MaterialUsageControllerTest {
 
         PageResp<MaterialUsageResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
 
-        when(materialUsageService.getMaterialUsagesByActivity(eq(userId), eq(farmingActivityId), any(Pageable.class)))
+        when(materialUsageService.searchAndFilterMaterialUsages(eq(userId), eq(farmingActivityId), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/v1/material-usages")
                         .param("farmingActivityId", farmingActivityId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.items[0].materialUsageId").value(materialUsageId.toString()));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/material-usages với bộ lọc nâng cao -> 200 OK")
+    void getMaterialUsages_WithFilters_Success() throws Exception {
+        MaterialUsageResp response = new MaterialUsageResp(
+                materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
+                LocalDateTime.now(), new BigDecimal("2.500"), "kg", null, null, null, null
+        );
+
+        PageResp<MaterialUsageResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
+
+        when(materialUsageService.searchAndFilterMaterialUsages(eq(userId), isNull(), eq(cropSeasonId), eq("NPK"), eq("FERTILIZER"), any(), any(), any(Pageable.class)))
+                .thenReturn(pageResponse);
+
+        mockMvc.perform(get("/api/v1/material-usages")
+                        .param("cropSeasonId", cropSeasonId.toString())
+                        .param("keyword", "NPK")
+                        .param("materialType", "FERTILIZER")
+                        .param("fromDate", "2026-10-01T00:00:00")
+                        .param("toDate", "2026-10-22T23:59:59"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.items[0].materialUsageId").value(materialUsageId.toString()));

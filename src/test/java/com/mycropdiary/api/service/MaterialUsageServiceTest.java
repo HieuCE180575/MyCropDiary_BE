@@ -3,6 +3,7 @@ package com.mycropdiary.api.service;
 import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
 import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
+import com.mycropdiary.api.dto.cultivation.UpdateMaterialUsageReq;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -12,6 +13,7 @@ import com.mycropdiary.api.entity.cultivation.*;
 
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
+import com.mycropdiary.api.exception.ResourceNotFoundException;
 
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.cultivation.*;
@@ -28,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -36,6 +39,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,6 +53,8 @@ class MaterialUsageServiceTest {
     private FarmingActivityRepository farmingActivityRepository;
     @Mock
     private FarmMemberRepository farmMemberRepository;
+    @Mock
+    private CropSeasonRepository cropSeasonRepository;
 
     @InjectMocks
     private MaterialUsageServiceImpl materialUsageService;
@@ -304,12 +310,134 @@ class MaterialUsageServiceTest {
 
         when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
-        when(materialUsageRepository.findByFarmingActivityId(activityId, pageable)).thenReturn(new PageImpl<>(List.of(usage)));
+        when(materialUsageRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(usage)));
 
         PageResp<MaterialUsageResp> result = materialUsageService.getMaterialUsagesByActivity(ownerUserId, activityId, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.content().size());
         assertEquals(usageId, result.content().get(0).materialUsageId());
+    }
+
+    @Test
+    @DisplayName("Cập nhật MaterialUsage thành công")
+    void updateMaterialUsage_Success() {
+        MaterialUsage existing = new MaterialUsage();
+        existing.setId(usageId);
+        existing.setFarm(farm);
+        existing.setFarmingActivity(activity);
+        existing.setMaterial(fertilizerMaterial);
+        existing.setUsedBy(ownerMember);
+        existing.setQuantity(new BigDecimal("2.000"));
+
+        UpdateMaterialUsageReq req = new UpdateMaterialUsageReq(
+                null, LocalDateTime.now(), new BigDecimal("3.500"), "kg", "70g/gốc", "Rải đều", 3, "Đã tăng liều"
+        );
+
+        when(materialUsageRepository.findById(usageId)).thenReturn(Optional.of(existing));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+        when(materialUsageRepository.save(any(MaterialUsage.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        MaterialUsageResp response = materialUsageService.updateMaterialUsage(ownerUserId, usageId, req);
+
+        assertNotNull(response);
+        assertEquals(usageId, response.materialUsageId());
+        assertEquals(new BigDecimal("3.500"), response.quantity());
+        assertEquals("Đã tăng liều", response.notes());
+        verify(materialUsageRepository).save(existing);
+    }
+
+    @Test
+    @DisplayName("Cập nhật MaterialUsage thất bại khi không tìm thấy ID")
+    void updateMaterialUsage_NotFound_ThrowsException() {
+        UpdateMaterialUsageReq req = new UpdateMaterialUsageReq(
+                null, null, new BigDecimal("3.000"), null, null, null, null, null
+        );
+
+        when(materialUsageRepository.findById(usageId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> materialUsageService.updateMaterialUsage(ownerUserId, usageId, req));
+        verify(materialUsageRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Cập nhật MaterialUsage thất bại khi mùa vụ đã đóng")
+    void updateMaterialUsage_ClosedSeason_ThrowsBadRequest() {
+        FarmingActivity closedActivity = new FarmingActivity();
+        closedActivity.setId(java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000));
+        closedActivity.setCropSeason(completedSeason);
+        closedActivity.setFarm(farm);
+
+        MaterialUsage existing = new MaterialUsage();
+        existing.setId(usageId);
+        existing.setFarm(farm);
+        existing.setFarmingActivity(closedActivity);
+        existing.setMaterial(fertilizerMaterial);
+
+        UpdateMaterialUsageReq req = new UpdateMaterialUsageReq(
+                null, null, new BigDecimal("3.000"), null, null, null, null, null
+        );
+
+        when(materialUsageRepository.findById(usageId)).thenReturn(Optional.of(existing));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> materialUsageService.updateMaterialUsage(ownerUserId, usageId, req));
+        assertTrue(ex.getMessage().contains("mùa vụ đã đóng"));
+    }
+
+    @Test
+    @DisplayName("Cập nhật MaterialUsage thất bại khi số lượng <= 0")
+    void updateMaterialUsage_QuantityInvalid_ThrowsBadRequest() {
+        MaterialUsage existing = new MaterialUsage();
+        existing.setId(usageId);
+        existing.setFarm(farm);
+        existing.setFarmingActivity(activity);
+        existing.setMaterial(fertilizerMaterial);
+
+        UpdateMaterialUsageReq req = new UpdateMaterialUsageReq(
+                null, null, new BigDecimal("-2.000"), null, null, null, null, null
+        );
+
+        when(materialUsageRepository.findById(usageId)).thenReturn(Optional.of(existing));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> materialUsageService.updateMaterialUsage(ownerUserId, usageId, req));
+        assertTrue(ex.getMessage().contains("lớn hơn 0"));
+    }
+
+    @Test
+    @DisplayName("Tìm kiếm và lọc MaterialUsage theo CropSeason thành công")
+    void searchAndFilterMaterialUsages_BySeason_Success() {
+        MaterialUsage usage = new MaterialUsage();
+        usage.setId(usageId);
+        usage.setFarm(farm);
+        usage.setFarmingActivity(activity);
+        usage.setMaterial(fertilizerMaterial);
+
+        Pageable pageable = PageRequest.of(0, 20);
+
+        when(cropSeasonRepository.findById(activeSeasonId)).thenReturn(Optional.of(activeSeason));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
+        when(materialUsageRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(usage)));
+
+        PageResp<MaterialUsageResp> result = materialUsageService.searchAndFilterMaterialUsages(
+                ownerUserId, null, activeSeasonId, "NPK", "FERTILIZER", null, null, pageable
+        );
+
+        assertNotNull(result);
+        assertEquals(1, result.content().size());
+        assertEquals(usageId, result.content().get(0).materialUsageId());
+    }
+
+    @Test
+    @DisplayName("Tìm kiếm MaterialUsage thất bại khi thiếu cả farmingActivityId và cropSeasonId")
+    void searchAndFilterMaterialUsages_MissingBothIds_ThrowsBadRequest() {
+        Pageable pageable = PageRequest.of(0, 20);
+
+        assertThrows(BadRequestException.class,
+                () -> materialUsageService.searchAndFilterMaterialUsages(ownerUserId, null, null, null, null, null, null, pageable));
     }
 }

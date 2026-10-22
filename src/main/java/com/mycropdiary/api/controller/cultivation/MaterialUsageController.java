@@ -4,6 +4,7 @@ import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
 import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
+import com.mycropdiary.api.dto.cultivation.UpdateMaterialUsageReq;
 import com.mycropdiary.api.service.cultivation.MaterialUsageService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,9 +13,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 
 /**
  * Controller quản lý REST API cho Nhật ký sử dụng vật tư (UC-25).
@@ -46,15 +49,34 @@ public class MaterialUsageController {
     }
 
     /**
-     * Xem danh sách lịch sử sử dụng vật tư theo Hoạt động canh tác (Có phân trang).
+     * Cập nhật nhật ký sử dụng vật tư (UC-25.3).
      */
-    @Operation(summary = "Xem lịch sử sử dụng vật tư theo hoạt động canh tác", description = "Lấy danh sách vật tư đã sử dụng trong một hoạt động canh tác (có phân trang).")
+    @Operation(summary = "Cập nhật nhật ký sử dụng vật tư", description = "Chỉnh sửa thông tin bản ghi sử dụng vật tư đã tạo (UC-25.3).")
+    @PutMapping("/{materialUsageId}")
+    public ApiResp<MaterialUsageResp> updateMaterialUsage(
+            @PathVariable Integer materialUsageId,
+            @Valid @RequestBody UpdateMaterialUsageReq request) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        MaterialUsageResp response = materialUsageService.updateMaterialUsage(currentUserId, materialUsageId, request);
+        return ApiResp.ok("Cập nhật sử dụng vật tư thành công.", response);
+    }
+
+    /**
+     * Xem danh sách lịch sử sử dụng vật tư (Có phân trang, tìm kiếm và lọc).
+     */
+    @Operation(summary = "Xem lịch sử sử dụng vật tư", description = "Lấy danh sách vật tư đã sử dụng theo hoạt động canh tác hoặc mùa vụ (có phân trang, tìm kiếm theo từ khóa và lọc nâng cao).")
     @GetMapping
-    public ApiResp<PageResp<MaterialUsageResp>> getMaterialUsagesByActivity(
-            @RequestParam("farmingActivityId") Integer farmingActivityId,
+    public ApiResp<PageResp<MaterialUsageResp>> getMaterialUsages(
+            @RequestParam(required = false) Integer farmingActivityId,
+            @RequestParam(required = false) Integer cropSeasonId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String materialType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
             @PageableDefault(size = 20) Pageable pageable) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        PageResp<MaterialUsageResp> response = materialUsageService.getMaterialUsagesByActivity(currentUserId, farmingActivityId, pageable);
+        PageResp<MaterialUsageResp> response = materialUsageService.searchAndFilterMaterialUsages(
+                currentUserId, farmingActivityId, cropSeasonId, keyword, materialType, fromDate, toDate, pageable);
         return ApiResp.ok("Lấy danh sách sử dụng vật tư thành công.", response);
     }
 
