@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -204,7 +205,7 @@ public class FE08_FarmingActivityUnitTest {
 
         when(cropSeasonRepository.findById(10)).thenReturn(Optional.of(activeSeason));
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 5, "active")).thenReturn(Optional.of(supervisorMember));
-        when(farmingActivityRepository.findByCropSeasonId(10, pageable))
+        when(farmingActivityRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(act1), pageable, 1));
 
         PageResp<FarmingActivitySummaryResp> resp = farmingActivityService.getActivitiesByCropSeason(5, 10, pageable);

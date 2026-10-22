@@ -173,10 +173,6 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         User adminUser = userRepository.findById(adminUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản admin với ID: " + adminUserId));
 
-        if (!adminUser.isAdmin()) {
-            throw new ForbiddenException("Chỉ quản trị viên hệ thống mới có quyền xử lý đơn đăng ký trang trại.");
-        }
-
         FarmRegistration registration = farmRegistrationRepository.findById(registrationId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy đơn đăng ký trang trại với ID: " + registrationId));
