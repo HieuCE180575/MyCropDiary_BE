@@ -6,6 +6,7 @@ import com.mycropdiary.api.controller.cultivation.HarvestRecordController;
 import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
 import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
+import com.mycropdiary.api.dto.cultivation.UpdateHarvestRecordReq;
 import com.mycropdiary.api.service.cultivation.HarvestRecordService;
 import com.mycropdiary.api.util.SecurityUtils;
 
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -103,8 +105,45 @@ class HarvestRecordControllerTest {
     }
 
     @Test
+    @DisplayName("PUT /api/v1/harvest-records/{id} -> 200 OK khi cập nhật thành công")
+    void updateHarvestRecord_Success() throws Exception {
+        UpdateHarvestRecordReq request = new UpdateHarvestRecordReq(
+                LocalDateTime.now(), new BigDecimal("200.000"), "kg", "Loại A", "Kho C", "Ghi chú cập nhật"
+        );
+
+        HarvestRecordResp response = new HarvestRecordResp(
+                harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
+                recordedByMemberId, "Chủ Nông Trại", "LOT-001", request.harvestedAt(), request.quantity(), "kg", "Loại A", "Kho C", "TR-001", "Ghi chú cập nhật"
+        );
+
+        when(harvestRecordService.updateHarvestRecord(eq(userId), eq(harvestRecordId), any(UpdateHarvestRecordReq.class)))
+                .thenReturn(response);
+
+        mockMvc.perform(put("/api/v1/harvest-records/" + harvestRecordId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.harvestRecordId").value(harvestRecordId.toString()))
+                .andExpect(jsonPath("$.data.quantity").value(200.000));
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/harvest-records/{id} -> 400 Bad Request khi quantity <= 0")
+    void updateHarvestRecord_ValidationFailed() throws Exception {
+        UpdateHarvestRecordReq request = new UpdateHarvestRecordReq(
+                LocalDateTime.now(), new BigDecimal("-5.000"), "kg", "Loại A", "Kho C", "Ghi chú"
+        );
+
+        mockMvc.perform(put("/api/v1/harvest-records/" + harvestRecordId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("GET /api/v1/harvest-records?cropSeasonId=... -> 200 OK với PageResp")
-    void getHarvestRecordsBySeason_Success() throws Exception {
+    void getHarvestRecords_Success() throws Exception {
         HarvestRecordResp response = new HarvestRecordResp(
                 harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
                 recordedByMemberId, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
@@ -112,11 +151,33 @@ class HarvestRecordControllerTest {
 
         PageResp<HarvestRecordResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
 
-        when(harvestRecordService.getHarvestRecordsBySeason(eq(userId), eq(cropSeasonId), any(Pageable.class)))
+        when(harvestRecordService.searchAndFilterHarvestRecords(eq(userId), eq(cropSeasonId), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/v1/harvest-records")
                         .param("cropSeasonId", cropSeasonId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.items[0].harvestRecordId").value(harvestRecordId.toString()));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/harvest-records với bộ lọc -> 200 OK với PageResp")
+    void getHarvestRecords_WithFilters_Success() throws Exception {
+        HarvestRecordResp response = new HarvestRecordResp(
+                harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
+                recordedByMemberId, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại A", "Kho A", "TR-001", "Ghi chú"
+        );
+
+        PageResp<HarvestRecordResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
+
+        when(harvestRecordService.searchAndFilterHarvestRecords(eq(userId), eq(cropSeasonId), eq("nông sản"), eq("Loại A"), any(), any(), any(Pageable.class)))
+                .thenReturn(pageResponse);
+
+        mockMvc.perform(get("/api/v1/harvest-records")
+                        .param("cropSeasonId", cropSeasonId.toString())
+                        .param("keyword", "nông sản")
+                        .param("qualityGrade", "Loại A"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.items[0].harvestRecordId").value(harvestRecordId.toString()));
