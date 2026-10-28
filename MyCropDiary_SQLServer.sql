@@ -1,4 +1,4 @@
--- MyCropDiary database schema derived from the conceptual ERDs
+﻿-- MyCropDiary database schema derived from the conceptual ERDs
 -- Target: Microsoft SQL Server 2019+
 -- Notes:
 -- 1) Table names follow the ERD entity labels; join tables were added for many-to-many relations.
@@ -563,6 +563,10 @@ CREATE TABLE [KnowledgeArticle] (
     summary NVARCHAR(MAX),
     body NVARCHAR(MAX) NOT NULL,
     cover_image_url NVARCHAR(MAX),
+    category NVARCHAR(100),
+    tags NVARCHAR(500),
+    view_count INT NOT NULL DEFAULT 0,
+    source_url NVARCHAR(500),
     article_status NVARCHAR(20) NOT NULL DEFAULT 'draft'
         CHECK (article_status IN ('draft','published','archived')),
     published_at DATETIME2(0),
@@ -1054,7 +1058,7 @@ GO
 
 -- 43. KNOWLEDGE ARTICLES (IDs: 1 to 2)
 SET IDENTITY_INSERT [KnowledgeArticle] ON;
-INSERT INTO [KnowledgeArticle] (knowledge_article_id, created_by, title, slug, summary, body, cover_image_url, article_status, published_at)
+INSERT INTO [KnowledgeArticle] (knowledge_article_id, created_by, title, slug, summary, body, cover_image_url, category, tags, view_count, source_url, article_status, published_at)
 VALUES
 (1, 1, N'Kỹ thuật trồng dưa lưới nhà màng VietGAP', 'ky-thuat-trong-dua-luoi-nha-mang-vietgap', N'Hướng dẫn tổng quan về quy trình chuẩn bị giá thể, chế độ dinh dưỡng và kiểm soát ẩm độ', N'# Kỹ thuật canh tác dưa lưới công nghệ cao VietGAP
 
@@ -1064,7 +1068,7 @@ Xơ dừa cần được ngâm xả chát tannin và lignin kỹ qua 3-4 lần n
 ## 2. Quản lý dinh dưỡng nhỏ giọt
 - Giai đoạn cây con (ngày 1-15): EC 1.2 - 1.5 mS/cm, pH 5.8 - 6.2.
 - Giai đoạn ra hoa thụ phấn (ngày 20-35): EC 1.8 - 2.0 mS/cm.
-- Giai đoạn nuôi trái và tạo lưới (ngày 40-60): Tăng tỷ lệ Kali, duy trì EC 2.2 - 2.5 mS/cm.', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37', 'published', SYSUTCDATETIME()),
+- Giai đoạn nuôi trái và tạo lưới (ngày 40-60): Tăng tỷ lệ Kali, duy trì EC 2.2 - 2.5 mS/cm.', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37', 'seed-cultivation', N'dưa lưới, vietgap, nhà màng', 128, 'https://vietgap.gov.vn', 'published', SYSUTCDATETIME()),
 (2, 1, N'Phòng trừ bọ trĩ và rệp phấn trắng bằng giải pháp sinh học', 'phong-tru-bo-tri-bo-phan-trang-bang-sinh-hoc', N'Cẩm nang nhận biết và quản lý dịch hại trên cây dưa lưới không sử dụng hóa chất độc hại', N'# Giải pháp sinh học phòng trừ dịch hại chích hút
 
 Bọ trĩ (Thrips) là đối tượng nguy hiểm nhất gây xoăn đọt non và truyền virus khảm lá.
@@ -1072,7 +1076,7 @@ Bọ trĩ (Thrips) là đối tượng nguy hiểm nhất gây xoăn đọt non 
 ### Biện pháp canh tác
 1. Che chắn nhà màng bằng lưới chắn côn trùng mắt lưới tối thiểu 50 mesh.
 2. Treo bẫy dính màu vàng cách mặt ngọn dưa 15-20cm.
-3. Phun luân phiên dầu khoáng sinh học và chế phẩm nấm ký sinh Beauveria bassiana.', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83', 'published', SYSUTCDATETIME());
+3. Phun luân phiên dầu khoáng sinh học và chế phẩm nấm ký sinh Beauveria bassiana.', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83', 'fertilizer-pesticide', N'bọ trĩ, sinh học, rệp phấn trắng', 95, 'https://bvtv.gov.vn', 'published', SYSUTCDATETIME());
 SET IDENTITY_INSERT [KnowledgeArticle] OFF;
 GO
 
