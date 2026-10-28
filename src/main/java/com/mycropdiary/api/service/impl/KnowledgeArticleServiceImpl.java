@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Lớp hiện thực hóa dịch vụ xử lý nghiệp vụ cho Bài viết Kiến thức Nông nghiệp.
+ * Lớp hiện thực hóa dịch vụ xử lý nghiệp vụ cho Bài viết Kiến thức Nông nghiệp (Public).
  */
 @Service
 @Transactional(readOnly = true)
@@ -36,25 +36,43 @@ public class KnowledgeArticleServiceImpl implements KnowledgeArticleService {
         this.knowledgeArticleMapper = knowledgeArticleMapper;
     }
 
-    /**
-     * UC-01: Lấy danh sách các bài viết công khai có phân trang, lọc và tìm kiếm.
-     */
     @Override
     public PageResp<KnowledgeArticleRespDTO> getPublicArticles(int page, int size, String keyword, String categoryId) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "publishedAt", "createdAt"));
+        return getPublicArticles(page, size, keyword, categoryId, "newest");
+    }
+
+    @Override
+    public PageResp<KnowledgeArticleRespDTO> getPublicArticles(int page, int size, String keyword, String categoryId, String sort) {
+        Sort sortOrder;
+        if ("popular".equalsIgnoreCase(sort)) {
+            sortOrder = Sort.by(Sort.Direction.DESC, "viewCount").and(Sort.by(Sort.Direction.DESC, "publishedAt"));
+        } else {
+            sortOrder = Sort.by(Sort.Direction.DESC, "publishedAt", "createdAt");
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
 
         Specification<KnowledgeArticle> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Trạng thái bài viết BẮT BUỘC là published
+            // 1. Trạng thái bài viết BẮT BUỘC là published
             predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("articleStatus")), "published"));
 
-            // Lọc theo từ khóa (tìm tương đối trong Tiêu đề HOẶC Tóm tắt)
+            // 2. Lọc theo danh mục nếu được truyền và khác "all"
+            if (StringUtils.hasText(categoryId) && !"all".equalsIgnoreCase(categoryId.trim())) {
+                predicates.add(criteriaBuilder.equal(
+                        criteriaBuilder.lower(root.get("category")),
+                        categoryId.trim().toLowerCase()
+                ));
+            }
+
+            // 3. Lọc theo từ khóa (tìm tương đối trong Tiêu đề, Tóm tắt hoặc Thẻ Tags)
             if (StringUtils.hasText(keyword)) {
                 String pattern = "%" + keyword.trim().toLowerCase() + "%";
                 Predicate titleLike = criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), pattern);
                 Predicate summaryLike = criteriaBuilder.like(criteriaBuilder.lower(root.get("summary")), pattern);
-                predicates.add(criteriaBuilder.or(titleLike, summaryLike));
+                Predicate tagsLike = criteriaBuilder.like(criteriaBuilder.lower(root.get("tags")), pattern);
+                predicates.add(criteriaBuilder.or(titleLike, summaryLike, tagsLike));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
@@ -66,10 +84,8 @@ public class KnowledgeArticleServiceImpl implements KnowledgeArticleService {
         return PageResp.from(dtoPage);
     }
 
-    /**
-     * UC-02: Lấy thông tin chi tiết một bài viết công khai theo ID.
-     */
     @Override
+    @Transactional
     public KnowledgeArticleRespDTO getPublicArticleById(Integer id) {
         KnowledgeArticle article = knowledgeArticleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài viết kiến thức với ID: " + id));
@@ -77,6 +93,21 @@ public class KnowledgeArticleServiceImpl implements KnowledgeArticleService {
         if (!"published".equalsIgnoreCase(article.getArticleStatus())) {
             throw new ResourceNotFoundException("Không tìm thấy bài viết kiến thức với ID: " + id);
         }
+
+        article.incrementViewCount();
+        knowledgeArticleRepository.save(article);
+
+        return knowledgeArticleMapper.toDTO(article);
+    }
+
+    @Override
+    @Transactional
+    public KnowledgeArticleRespDTO getPublicArticleBySlug(String slug) {
+        KnowledgeArticle article = knowledgeArticleRepository.findBySlugAndArticleStatusIgnoreCase(slug, "published")
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài viết kiến thức với đường dẫn: " + slug));
+
+        article.incrementViewCount();
+        knowledgeArticleRepository.save(article);
 
         return knowledgeArticleMapper.toDTO(article);
     }

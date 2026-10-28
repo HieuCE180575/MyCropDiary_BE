@@ -38,6 +38,18 @@ public class KnowledgeArticle extends BaseEntity {
     @Column(name = "article_status", nullable = false, length = 20)
     private String articleStatus = "draft"; // draft, published, archived
 
+    @Column(name = "category", length = 100)
+    private String category;
+
+    @Column(name = "tags", length = 500)
+    private String tags;
+
+    @Column(name = "view_count", nullable = false)
+    private Integer viewCount = 0;
+
+    @Column(name = "source_url", length = 500)
+    private String sourceUrl;
+
     @Column(name = "published_at")
     private Instant publishedAt;
 
@@ -49,6 +61,7 @@ public class KnowledgeArticle extends BaseEntity {
         this.slug = slug;
         this.body = body;
         this.articleStatus = "draft";
+        this.viewCount = 0;
     }
 
     public Integer getId() { return id; }
@@ -77,6 +90,22 @@ public class KnowledgeArticle extends BaseEntity {
         this.articleStatus = articleStatus != null ? articleStatus.toLowerCase() : "draft";
     }
 
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
+    public String getTags() { return tags; }
+    public void setTags(String tags) { this.tags = tags; }
+
+    public Integer getViewCount() { return viewCount != null ? viewCount : 0; }
+    public void setViewCount(Integer viewCount) { this.viewCount = viewCount != null ? viewCount : 0; }
+
+    public void incrementViewCount() {
+        this.viewCount = (this.viewCount == null ? 0 : this.viewCount) + 1;
+    }
+
+    public String getSourceUrl() { return sourceUrl; }
+    public void setSourceUrl(String sourceUrl) { this.sourceUrl = sourceUrl; }
+
     public Instant getPublishedAt() { return publishedAt; }
     public void setPublishedAt(Instant publishedAt) { this.publishedAt = publishedAt; }
 
@@ -95,12 +124,6 @@ public class KnowledgeArticle extends BaseEntity {
     public void setStatus(KnowledgeStatus status) {
         this.articleStatus = status != null ? status.name().toLowerCase() : "draft";
     }
-
-    public String getCategory() { return null; }
-    public void setCategory(String category) { }
-
-    public String getSourceUrl() { return null; }
-    public void setSourceUrl(String sourceUrl) { }
 
     public Boolean getIsPublic() { return "published".equalsIgnoreCase(articleStatus); }
     public void setIsPublic(Boolean isPublic) { }
