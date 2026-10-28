@@ -30,6 +30,9 @@ public class Farm extends BaseEntity {
     @Column(name = "longitude", precision = 9, scale = 6)
     private BigDecimal longitude;
 
+    @Column(name = "boundary_coordinates", columnDefinition = "NVARCHAR(MAX)")
+    private String boundaryCoordinates;
+
     @Column(name = "cover_image_url", columnDefinition = "NVARCHAR(MAX)")
     private String coverImageUrl;
 
@@ -70,6 +73,9 @@ public class Farm extends BaseEntity {
 
     public BigDecimal getLongitude() { return longitude; }
     public void setLongitude(BigDecimal longitude) { this.longitude = longitude; }
+
+    public String getBoundaryCoordinates() { return boundaryCoordinates; }
+    public void setBoundaryCoordinates(String boundaryCoordinates) { this.boundaryCoordinates = boundaryCoordinates; }
 
     public String getCoverImageUrl() { return coverImageUrl; }
     public void setCoverImageUrl(String coverImageUrl) { this.coverImageUrl = coverImageUrl; }

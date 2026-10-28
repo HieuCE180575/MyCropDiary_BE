@@ -9,7 +9,6 @@ import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.farmregistration.FarmRegistration;
-import com.mycropdiary.api.entity.farmregistration.FarmRegistrationStatus;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
@@ -34,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 /**
  * Service implementation cho cả nghiệp vụ Admin duyệt đơn (UC-39) và User đăng ký trang trại (UC-09).
@@ -92,6 +90,9 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         registration.setWard(request.ward() != null && !request.ward().isBlank() ? request.ward().trim() : null);
         registration.setRegistrationNote(request.description() != null && !request.description().isBlank() ? request.description().trim() : null);
         registration.setDocumentUrl(request.documentUrl() != null && !request.documentUrl().isBlank() ? request.documentUrl().trim() : null);
+        registration.setLatitude(request.latitude());
+        registration.setLongitude(request.longitude());
+        registration.setBoundaryCoordinates(request.boundaryCoordinates() != null && !request.boundaryCoordinates().isBlank() ? request.boundaryCoordinates().trim() : null);
         registration.setRegistrationStatus("pending");
         registration.setReviewedBy(null);
         registration.setReviewedAt(null);
@@ -196,6 +197,9 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         farm.setFarmName(registration.getFarmName());
         farm.setAddress(registration.getAddress());
         farm.setDescription(registration.getRegistrationNote());
+        farm.setLatitude(registration.getLatitude());
+        farm.setLongitude(registration.getLongitude());
+        farm.setBoundaryCoordinates(registration.getBoundaryCoordinates());
         farm.setCreatedBy(registration.getUser());
         farm.setFarmStatus("active");
         farm = farmRepository.save(farm);
@@ -316,7 +320,10 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
                 handler != null ? handler.getFullName() : null,
                 reg.getSubmittedAt(),
                 reg.getHandledAt(),
-                reg.getRejectionReason()
+                reg.getRejectionReason(),
+                reg.getLatitude(),
+                reg.getLongitude(),
+                reg.getBoundaryCoordinates()
         );
     }
 
@@ -333,7 +340,10 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
                 reg.getStatus(),
                 reg.getSubmittedAt(),
                 reg.getHandledAt(),
-                reg.getRejectionReason()
+                reg.getRejectionReason(),
+                reg.getLatitude(),
+                reg.getLongitude(),
+                reg.getBoundaryCoordinates()
         );
     }
 
@@ -348,7 +358,10 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
                 reg.getStatus(),
                 reg.getSubmittedAt(),
                 reg.getHandledAt(),
-                reg.getRejectionReason()
+                reg.getRejectionReason(),
+                reg.getLatitude(),
+                reg.getLongitude(),
+                reg.getBoundaryCoordinates()
         );
     }
 }

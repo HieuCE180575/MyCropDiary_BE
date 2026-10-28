@@ -2,6 +2,7 @@ package com.mycropdiary.api.entity.farmregistration;
 
 import com.mycropdiary.api.entity.User;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -31,6 +32,15 @@ public class FarmRegistration {
 
     @Column(name = "ward", length = 100)
     private String ward;
+
+    @Column(name = "latitude", precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(name = "longitude", precision = 9, scale = 6)
+    private BigDecimal longitude;
+
+    @Column(name = "boundary_coordinates", columnDefinition = "NVARCHAR(MAX)")
+    private String boundaryCoordinates;
 
     @Column(name = "document_url", length = 1000)
     private String documentUrl;
@@ -151,6 +161,15 @@ public class FarmRegistration {
 
     public String getWard() { return ward; }
     public void setWard(String ward) { this.ward = ward; }
+
+    public BigDecimal getLatitude() { return latitude; }
+    public void setLatitude(BigDecimal latitude) { this.latitude = latitude; }
+
+    public BigDecimal getLongitude() { return longitude; }
+    public void setLongitude(BigDecimal longitude) { this.longitude = longitude; }
+
+    public String getBoundaryCoordinates() { return boundaryCoordinates; }
+    public void setBoundaryCoordinates(String boundaryCoordinates) { this.boundaryCoordinates = boundaryCoordinates; }
 
     public String getDocumentUrl() { return documentUrl; }
     public void setDocumentUrl(String documentUrl) { this.documentUrl = documentUrl; }

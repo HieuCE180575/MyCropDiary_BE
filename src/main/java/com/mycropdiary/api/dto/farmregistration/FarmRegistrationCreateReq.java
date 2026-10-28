@@ -1,8 +1,12 @@
 package com.mycropdiary.api.dto.farmregistration;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+import java.math.BigDecimal;
 
 /**
  * DTO yêu cầu gửi đơn đăng ký trang trại mới từ phía người dùng.
@@ -14,6 +18,9 @@ import jakarta.validation.constraints.Size;
  * @param ward Phường/Xã (tùy chọn, tối đa 100 ký tự)
  * @param description Mô tả trang trại (tùy chọn, tối đa 1000 ký tự)
  * @param documentUrl Đường dẫn tài liệu/giấy chứng nhận đính kèm (tùy chọn, dạng URL, tối đa 1000 ký tự)
+ * @param latitude Vĩ độ tâm trang trại (tùy chọn, -90 đến 90)
+ * @param longitude Kinh độ tâm trang trại (tùy chọn, -180 đến 180)
+ * @param boundaryCoordinates Dữ liệu tọa độ ranh giới đa giác của trang trại trên bản đồ (JSON)
  */
 public record FarmRegistrationCreateReq(
         @NotBlank(message = "Tên trang trại không được để trống")
@@ -38,5 +45,28 @@ public record FarmRegistrationCreateReq(
 
         @Size(max = 1000, message = "Đường dẫn tài liệu không được vượt quá 1000 ký tự")
         @Pattern(regexp = "^(https?://.*)?$", message = "Đường dẫn tài liệu phải là định dạng URL hợp lệ (bắt đầu bằng http:// hoặc https://)")
-        String documentUrl
-) {}
+        String documentUrl,
+
+        @DecimalMin(value = "-90.0", message = "Vĩ độ phải nằm trong khoảng -90 đến 90")
+        @DecimalMax(value = "90.0", message = "Vĩ độ phải nằm trong khoảng -90 đến 90")
+        BigDecimal latitude,
+
+        @DecimalMin(value = "-180.0", message = "Kinh độ phải nằm trong khoảng -180 đến 180")
+        @DecimalMax(value = "180.0", message = "Kinh độ phải nằm trong khoảng -180 đến 180")
+        BigDecimal longitude,
+
+        @Size(max = 20000, message = "Tọa độ ranh giới không vượt quá 20000 ký tự")
+        String boundaryCoordinates
+) {
+    public FarmRegistrationCreateReq(
+            String farmName,
+            String addressLine,
+            String province,
+            String district,
+            String ward,
+            String description,
+            String documentUrl
+    ) {
+        this(farmName, addressLine, province, district, ward, description, documentUrl, null, null, null);
+    }
+}

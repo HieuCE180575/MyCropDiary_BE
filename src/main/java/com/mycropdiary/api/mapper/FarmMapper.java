@@ -42,6 +42,7 @@ public class FarmMapper {
                 farm.getAddress(),
                 farm.getLatitude(),
                 farm.getLongitude(),
+                farm.getBoundaryCoordinates(),
                 farm.getCoverImageUrl(),
                 farm.getFarmStatus(),
                 farm.getCreatedAt(),

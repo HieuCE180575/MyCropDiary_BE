@@ -63,6 +63,7 @@ CREATE TABLE [Farm] (
     address NVARCHAR(MAX),
     latitude NUMERIC(9,6),
     longitude NUMERIC(9,6),
+    boundary_coordinates NVARCHAR(MAX),
     cover_image_url NVARCHAR(MAX),
     created_by INT REFERENCES [User](user_id) ON DELETE NO ACTION,
     farm_status NVARCHAR(20) NOT NULL DEFAULT 'active'
@@ -79,6 +80,9 @@ CREATE TABLE [FarmRegistration] (
     province NVARCHAR(100),
     district NVARCHAR(100),
     ward NVARCHAR(100),
+    latitude NUMERIC(9,6),
+    longitude NUMERIC(9,6),
+    boundary_coordinates NVARCHAR(MAX),
     document_url NVARCHAR(1000),
     registration_note NVARCHAR(MAX),
     rejection_reason NVARCHAR(1000),
