@@ -8,3 +8,4 @@ public record UpdateFarmTaskStatusReq(
         @Size(max = 20, message = "Trạng thái tối đa 20 ký tự")
         String status // planned, in_progress, completed, cancelled
 ) {}
+

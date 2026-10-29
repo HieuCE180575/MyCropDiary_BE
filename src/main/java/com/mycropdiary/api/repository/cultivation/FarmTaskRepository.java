@@ -18,3 +18,4 @@ public interface FarmTaskRepository extends JpaRepository<FarmTask, Integer>, Jp
     boolean existsByFarmId(Integer farmId);
     long countByFarmId(Integer farmId);
 }
+

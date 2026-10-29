@@ -39,3 +39,4 @@ public class TaskAssignmentId implements Serializable {
         return Objects.hash(farmTaskId, farmWorkerId);
     }
 }
+

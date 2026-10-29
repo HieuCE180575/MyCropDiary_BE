@@ -12,3 +12,4 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
     List<TaskAssignment> findByFarmTaskId(Integer farmTaskId);
     void deleteByFarmTaskId(Integer farmTaskId);
 }
+

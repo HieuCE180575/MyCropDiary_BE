@@ -26,3 +26,4 @@ public interface FarmTaskService {
 
     void deleteTask(Integer userId, Integer taskId);
 }
+

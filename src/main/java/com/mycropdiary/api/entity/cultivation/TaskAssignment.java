@@ -85,3 +85,4 @@ public class TaskAssignment {
         this.assignmentStatus = assignmentStatus != null ? assignmentStatus.toLowerCase() : "assigned";
     }
 }
+

@@ -181,9 +181,9 @@ public class FarmTaskServiceImpl implements FarmTaskService {
             List<FarmWorker> workers = farmWorkerRepository.findByIdInAndFarmId(request.assignedWorkerIds(), farmId);
             for (FarmWorker worker : workers) {
                 TaskAssignment assignment = new TaskAssignment(savedTask, worker, creator, "assigned");
+                taskAssignmentRepository.save(assignment);
                 savedTask.addAssignment(assignment);
             }
-            savedTask = farmTaskRepository.save(savedTask);
         }
 
         return mapToResponse(savedTask);
@@ -238,16 +238,18 @@ public class FarmTaskServiceImpl implements FarmTaskService {
         taskAssignmentRepository.deleteByFarmTaskId(taskId);
         taskAssignmentRepository.flush();
 
+        FarmTask updated = farmTaskRepository.save(task);
+
         if (request.assignedWorkerIds() != null && !request.assignedWorkerIds().isEmpty()) {
             User currentUser = userRepository.findById(userId).orElse(null);
             List<FarmWorker> workers = farmWorkerRepository.findByIdInAndFarmId(request.assignedWorkerIds(), farmId);
             for (FarmWorker worker : workers) {
-                TaskAssignment assignment = new TaskAssignment(task, worker, currentUser, "assigned");
-                task.addAssignment(assignment);
+                TaskAssignment assignment = new TaskAssignment(updated, worker, currentUser, "assigned");
+                taskAssignmentRepository.save(assignment);
+                updated.addAssignment(assignment);
             }
         }
 
-        FarmTask updated = farmTaskRepository.save(task);
         return mapToResponse(updated);
     }
 
@@ -269,6 +271,8 @@ public class FarmTaskServiceImpl implements FarmTaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Công việc không tồn tại ID: " + taskId));
 
         farmAccessGuard.requireFarmMember(userId, task.getFarm().getId());
+        taskAssignmentRepository.deleteByFarmTaskId(taskId);
+        taskAssignmentRepository.flush();
         farmTaskRepository.delete(task);
     }
 
@@ -279,20 +283,21 @@ public class FarmTaskServiceImpl implements FarmTaskService {
         User creator = userRepository.findById(userId).orElse(null);
 
         List<FarmWorker> workers = farmWorkerRepository.findByFarmId(farmId);
+        LocalDateTime now = LocalDateTime.now().withNano(0);
 
         List<FarmTask> defaultTasks = List.of(
                 buildTemplateTask(farm, creator, "Pha chế dịch dinh dưỡng và kiểm tra hệ thống tưới nhỏ giọt",
                         "Đo EC và pH bồn chứa dinh dưỡng trước khi bật bơm tự động", "Tưới tiêu & Dinh dưỡng", "high", "planned",
-                        LocalDateTime.now().plusDays(1)),
+                        now, now.plusDays(1)),
                 buildTemplateTask(farm, creator, "Phun chế phẩm vi sinh ngừa bọ trĩ luống A2-A4",
                         "Dùng Neem Oil nồng độ 0.2%, phun lúc chiều râm mát", "Bảo vệ thực vật", "urgent", "in_progress",
-                        LocalDateTime.now().plusDays(2)),
+                        now, now.plusDays(2)),
                 buildTemplateTask(farm, creator, "Cắt tỉa nhánh phụ và cố định dây leo giàn dưa",
                         "Giữ lại 1 nhánh chính và tỉa bỏ các chồi nách dưới mắt lá số 5", "Chăm sóc sinh trưởng", "normal", "in_progress",
-                        LocalDateTime.now().plusDays(3)),
+                        now, now.plusDays(3)),
                 buildTemplateTask(farm, creator, "Lấy mẫu đất và nước tưới gửi xét nghiệm định kỳ VietGAP",
                         "Lấy mẫu ngẫu nhiên tại 5 điểm giao dịch, gửi trung tâm kiểm nghiệm Vinacert", "Tuân thủ VietGAP", "high", "completed",
-                        LocalDateTime.now().minusDays(1))
+                        now.minusDays(3), now.minusDays(1))
         );
 
         for (int i = 0; i < defaultTasks.size(); i++) {
@@ -300,13 +305,13 @@ public class FarmTaskServiceImpl implements FarmTaskService {
             if (!workers.isEmpty()) {
                 FarmWorker w = workers.get(i % workers.size());
                 TaskAssignment assignment = new TaskAssignment(saved, w, creator, "assigned");
+                taskAssignmentRepository.save(assignment);
                 saved.addAssignment(assignment);
-                farmTaskRepository.save(saved);
             }
         }
     }
 
-    private FarmTask buildTemplateTask(Farm farm, User creator, String name, String desc, String type, String priority, String status, LocalDateTime dueAt) {
+    private FarmTask buildTemplateTask(Farm farm, User creator, String name, String desc, String type, String priority, String status, LocalDateTime startsAt, LocalDateTime dueAt) {
         FarmTask task = new FarmTask();
         task.setFarm(farm);
         task.setCreatedBy(creator);
@@ -315,7 +320,7 @@ public class FarmTaskServiceImpl implements FarmTaskService {
         task.setTaskType(type);
         task.setPriority(priority);
         task.setStatus(status);
-        task.setStartsAt(LocalDateTime.now());
+        task.setStartsAt(startsAt);
         task.setDueAt(dueAt);
         return task;
     }
@@ -391,3 +396,4 @@ public class FarmTaskServiceImpl implements FarmTaskService {
         );
     }
 }
+
