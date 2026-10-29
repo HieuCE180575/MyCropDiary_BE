@@ -130,6 +130,9 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         usage.setQuantity(request.quantity());
         usage.setBlock(activity.getBlock());
         usage.setNotes(request.notes() != null ? request.notes().trim() : null);
+        usage.setDosage(request.dosage() != null && !request.dosage().trim().isEmpty() ? request.dosage().trim() : null);
+        usage.setMethod(request.method() != null && !request.method().trim().isEmpty() ? request.method().trim() : null);
+        usage.setSafetyIntervalDays(request.safetyIntervalDays());
 
         MaterialUsage savedUsage = materialUsageRepository.save(usage);
         return mapToResponse(savedUsage);
@@ -209,10 +212,10 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
         // 8. Cập nhật các trường bổ sung
         if (request.dosage() != null) {
-            usage.setDosage(request.dosage().trim());
+            usage.setDosage(request.dosage().trim().isEmpty() ? null : request.dosage().trim());
         }
         if (request.method() != null) {
-            usage.setMethod(request.method().trim());
+            usage.setMethod(request.method().trim().isEmpty() ? null : request.method().trim());
         }
         if (request.notes() != null) {
             usage.setNotes(request.notes().trim());

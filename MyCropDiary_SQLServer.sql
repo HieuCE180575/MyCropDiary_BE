@@ -388,6 +388,9 @@ CREATE TABLE [MaterialUsage] (
     block_id INT REFERENCES [Block](block_id) ON DELETE NO ACTION,
     used_by INT REFERENCES [FarmMember](farm_member_id) ON DELETE NO ACTION,
     quantity NUMERIC(14,3) NOT NULL CHECK (quantity > 0),
+    dosage NVARCHAR(100),
+    method NVARCHAR(200),
+    safety_interval_days INT,
     used_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     notes NVARCHAR(MAX),
     image_url NVARCHAR(MAX)
@@ -932,10 +935,10 @@ GO
 
 -- 29. MATERIAL USAGES (IDs: 1 to 2)
 SET IDENTITY_INSERT [MaterialUsage] ON;
-INSERT INTO [MaterialUsage] (material_usage_id, farm_id, material_id, farm_task_id, farming_activity_id, block_id, used_by, quantity, used_at, notes)
+INSERT INTO [MaterialUsage] (material_usage_id, farm_id, material_id, farm_task_id, farming_activity_id, block_id, used_by, quantity, dosage, method, safety_interval_days, used_at, notes)
 VALUES
-(1, 1, 2, 3, 1, 1, 2, 10.000, '2026-02-10 08:30:00', N'Pha vào bồn mẹ dung tích 1000 lít tưới nhỏ giọt'),
-(2, 1, 3, NULL, 3, 1, 2, 2.000, '2026-03-01 16:30:00', N'Phun sương đều 2 mặt lá lúc trời dịu mát');
+(1, 1, 2, 3, 1, 1, 2, 10.000, N'10kg/1000L', N'Tưới nhỏ giọt', 0, '2026-02-10 08:30:00', N'Pha vào bồn mẹ dung tích 1000 lít tưới nhỏ giọt'),
+(2, 1, 3, NULL, 3, 1, 2, 2.000, N'20ml/bình 16L', N'Phun qua lá', 7, '2026-03-01 16:30:00', N'Phun sương đều 2 mặt lá lúc trời dịu mát');
 SET IDENTITY_INSERT [MaterialUsage] OFF;
 GO
 

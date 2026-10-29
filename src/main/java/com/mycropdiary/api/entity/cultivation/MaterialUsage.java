@@ -11,7 +11,7 @@ import java.time.ZoneId;
 
 /**
  * Entity biểu diễn bảng [MaterialUsage] (Nhật ký sử dụng vật tư).
- * Khớp 100% với ERD mới.
+ * Khớp 100% với ERD và lưu trữ đầy đủ liều lượng, phương thức, cách ly.
  */
 @Entity
 @Table(name = "MaterialUsage")
@@ -44,6 +44,15 @@ public class MaterialUsage {
 
     @Column(name = "quantity", nullable = false, precision = 14, scale = 3)
     private BigDecimal quantity;
+
+    @Column(name = "dosage", length = 100)
+    private String dosage;
+
+    @Column(name = "method", length = 200)
+    private String method;
+
+    @Column(name = "safety_interval_days")
+    private Integer safetyIntervalDays;
 
     @Column(name = "used_at", nullable = false)
     private Instant usedAt;
@@ -84,6 +93,15 @@ public class MaterialUsage {
     public BigDecimal getQuantity() { return quantity; }
     public void setQuantity(BigDecimal quantity) { this.quantity = quantity; }
 
+    public String getDosage() { return dosage; }
+    public void setDosage(String dosage) { this.dosage = dosage; }
+
+    public String getMethod() { return method; }
+    public void setMethod(String method) { this.method = method; }
+
+    public Integer getSafetyIntervalDays() { return safetyIntervalDays; }
+    public void setSafetyIntervalDays(Integer safetyIntervalDays) { this.safetyIntervalDays = safetyIntervalDays; }
+
     public Instant getUsedAt() { return usedAt; }
     public void setUsedAt(Instant usedAt) { this.usedAt = usedAt; }
 
@@ -99,15 +117,6 @@ public class MaterialUsage {
 
     public String getUnit() { return material != null ? material.getUnit() : "kg"; }
     public void setUnit(String unit) { }
-
-    public String getDosage() { return null; }
-    public void setDosage(String dosage) { }
-
-    public String getMethod() { return null; }
-    public void setMethod(String method) { }
-
-    public Integer getSafetyIntervalDays() { return null; }
-    public void setSafetyIntervalDays(Integer safetyIntervalDays) { }
 
     public InputPurchaseDetail getInputPurchaseDetail() { return null; }
     public void setInputPurchaseDetail(InputPurchaseDetail inputPurchaseDetail) { }
