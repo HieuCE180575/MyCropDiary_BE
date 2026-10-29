@@ -8,12 +8,31 @@ import java.time.LocalDateTime;
 public record FarmingActivitySummaryResp(
         Integer farmingActivityId,
         Integer cropSeasonId,
+        Integer blockId,
+        String blockName,
         String activityType,
         String activityName,
+        String description,
         LocalDateTime startedAt,
         LocalDateTime endedAt,
         Integer supervisedByMemberId,
         String supervisorFullName,
         int workerCount,
         LocalDateTime createdAt
-) {}
+) {
+    public FarmingActivitySummaryResp(
+            Integer farmingActivityId,
+            Integer cropSeasonId,
+            String activityType,
+            String activityName,
+            LocalDateTime startedAt,
+            LocalDateTime endedAt,
+            Integer supervisedByMemberId,
+            String supervisorFullName,
+            int workerCount,
+            LocalDateTime createdAt
+    ) {
+        this(farmingActivityId, cropSeasonId, null, null, activityType, activityName, null,
+                startedAt, endedAt, supervisedByMemberId, supervisorFullName, workerCount, createdAt);
+    }
+}
