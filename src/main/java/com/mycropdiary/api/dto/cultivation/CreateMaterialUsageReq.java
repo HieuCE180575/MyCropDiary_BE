@@ -40,12 +40,40 @@ public record CreateMaterialUsageReq(
         @Size(max = 200, message = "Method must not exceed 200 characters")
         String method,
 
+        @Size(max = 60, message = "Dạng vật tư tối đa 60 ký tự")
+        String materialForm,
+
+        @DecimalMin(value = "0.0001", message = "Diện tích áp dụng phải lớn hơn 0")
+        BigDecimal appliedArea,
+
+        @Size(max = 20, message = "Đơn vị diện tích tối đa 20 ký tự")
+        String appliedAreaUnit,
+
+        @Min(value = 1, message = "Số cây áp dụng phải lớn hơn 0")
+        Integer appliedPlantCount,
+
         @Min(value = 0, message = "Safety interval days must be non-negative")
         Integer safetyIntervalDays,
 
         @Size(max = 1000, message = "Notes must not exceed 1000 characters")
         String notes
 ) {
+    public CreateMaterialUsageReq(
+            Integer farmingActivityId,
+            Integer materialId,
+            Integer inputPurchaseDetailId,
+            Integer blockId,
+            LocalDateTime usedAt,
+            BigDecimal quantity,
+            String unit,
+            String dosage,
+            String method,
+            Integer safetyIntervalDays,
+            String notes
+    ) {
+        this(farmingActivityId, materialId, inputPurchaseDetailId, blockId, usedAt, quantity, unit, dosage, method, null, null, null, null, safetyIntervalDays, notes);
+    }
+
     public CreateMaterialUsageReq(
             Integer farmingActivityId,
             Integer materialId,
@@ -58,6 +86,6 @@ public record CreateMaterialUsageReq(
             Integer safetyIntervalDays,
             String notes
     ) {
-        this(farmingActivityId, materialId, inputPurchaseDetailId, null, usedAt, quantity, unit, dosage, method, safetyIntervalDays, notes);
+        this(farmingActivityId, materialId, inputPurchaseDetailId, null, usedAt, quantity, unit, dosage, method, null, null, null, null, safetyIntervalDays, notes);
     }
 }

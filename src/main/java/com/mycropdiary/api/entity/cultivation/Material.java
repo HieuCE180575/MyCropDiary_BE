@@ -29,6 +29,9 @@ public class Material {
     @Column(name = "material_type", length = 80)
     private String materialType;
 
+    @Column(name = "material_form", length = 60)
+    private String materialForm;
+
     @Column(name = "unit", nullable = false, length = 30)
     private String unit;
 
@@ -61,6 +64,15 @@ public class Material {
         this.isActive = true;
     }
 
+    public Material(Farm farm, String materialName, String materialType, String materialForm, String unit) {
+        this.farm = farm;
+        this.materialName = materialName;
+        this.materialType = materialType;
+        this.materialForm = materialForm;
+        this.unit = unit;
+        this.isActive = true;
+    }
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -72,6 +84,9 @@ public class Material {
 
     public String getMaterialType() { return materialType; }
     public void setMaterialType(String materialType) { this.materialType = materialType; }
+
+    public String getMaterialForm() { return materialForm; }
+    public void setMaterialForm(String materialForm) { this.materialForm = materialForm; }
 
     public String getUnit() { return unit; }
     public void setUnit(String unit) { this.unit = unit; }

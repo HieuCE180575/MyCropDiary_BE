@@ -15,10 +15,22 @@ public record CreateMaterialReq(
         @Size(max = 80, message = "Phân loại vật tư tối đa 80 ký tự")
         String materialType,
 
+        @Size(max = 60, message = "Dạng vật tư tối đa 60 ký tự")
+        String materialForm,
+
         @NotBlank(message = "Đơn vị tính không được để trống")
         @Size(max = 30, message = "Đơn vị tính tối đa 30 ký tự")
         String unit,
 
         String description
 ) {
+    public CreateMaterialReq(
+            Integer farmId,
+            String materialName,
+            String materialType,
+            String unit,
+            String description
+    ) {
+        this(farmId, materialName, materialType, null, unit, description);
+    }
 }

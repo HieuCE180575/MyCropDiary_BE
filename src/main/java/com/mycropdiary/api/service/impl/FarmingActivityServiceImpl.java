@@ -5,7 +5,6 @@ import com.mycropdiary.api.dto.cultivation.*;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
-import com.mycropdiary.api.entity.Zone;
 import com.mycropdiary.api.entity.cultivation.*;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
@@ -26,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
-
 
 @Service
 public class FarmingActivityServiceImpl implements FarmingActivityService {
@@ -125,13 +123,13 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public PageResp<FarmingActivitySummaryResp> getActivitiesByCropSeason(Integer currentUserId, Integer cropSeasonId, Pageable pageable) {
         return searchAndFilterActivities(currentUserId, cropSeasonId, null, null, null, null, pageable);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public PageResp<FarmingActivitySummaryResp> searchAndFilterActivities(
             Integer currentUserId,
             Integer cropSeasonId,
@@ -174,7 +172,40 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         };
 
         Page<FarmingActivity> page = farmingActivityRepository.findAll(spec, pageable);
+        boolean noFilter = (keyword == null || keyword.trim().isEmpty())
+                && (activityType == null || activityType.trim().isEmpty())
+                && fromDate == null && toDate == null;
+        String status = cropSeason.getSeasonStatus();
+        boolean openSeason = status == null || (!"completed".equalsIgnoreCase(status)
+                && !"cancelled".equalsIgnoreCase(status)
+                && !"archived".equalsIgnoreCase(status));
+        if (page.isEmpty() && noFilter && openSeason && cropSeason.getFarm() != null) {
+            List<FarmingActivity> defaults = List.of(
+                    buildDefaultActivity(cropSeason, member, "Làm đất", "Làm đất & xử lý giá thể đầu vụ", "Vệ sinh đồng ruộng, kiểm tra pH đất và xử lý giá thể chuẩn VietGAP."),
+                    buildDefaultActivity(cropSeason, member, "Gieo cấy", "Gieo hạt / xuống giống mùa vụ", "Xuống giống theo mật độ khuyến cáo và kiểm tra tỷ lệ nảy mầm."),
+                    buildDefaultActivity(cropSeason, member, "Bón phân", "Bón phân & bổ sung dinh dưỡng định kỳ", "Cung cấp dinh dưỡng hữu cơ vi sinh và khoáng đa trung vi lượng cho cây trồng."),
+                    buildDefaultActivity(cropSeason, member, "Tưới nước", "Tưới nước & duy trì độ ẩm", "Tưới tiêu kiểm soát độ ẩm đất và EC/pH nguồn nước tưới."),
+                    buildDefaultActivity(cropSeason, member, "Phun thuốc", "Phòng trừ sâu bệnh bằng chế phẩm sinh học", "Phun chế phẩm sinh học phòng ngừa sâu bệnh hại và tuân thủ thời gian cách ly PHI.")
+            );
+            List<FarmingActivity> savedDefaults = farmingActivityRepository.saveAll(defaults);
+            if (savedDefaults != null && !savedDefaults.isEmpty()) {
+                page = farmingActivityRepository.findAll(spec, pageable);
+            }
+        }
         return PageResp.map(page, act -> mapToSummaryResponse(act, member));
+    }
+
+    private FarmingActivity buildDefaultActivity(CropSeason cropSeason, FarmMember member, String type, String name, String desc) {
+        FarmingActivity act = new FarmingActivity();
+        act.setFarm(cropSeason.getFarm());
+        act.setCropSeason(cropSeason);
+        act.setBlock(cropSeason.getPlot());
+        act.setCreatedBy(member != null ? member.getUser() : null);
+        act.setActivityType(type);
+        act.setActivityName(name);
+        act.setStartedAt(LocalDateTime.now());
+        act.setDescription(desc);
+        return act;
     }
 
     @Override
@@ -255,7 +286,6 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
         return mapToResponse(savedActivity, workerResponses, supervisor);
     }
-
 
     @Override
     @Transactional(readOnly = true)

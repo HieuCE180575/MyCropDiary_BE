@@ -10,16 +10,30 @@ public record MaterialOptionResp(
         Integer farmId,
         String materialName,
         String materialType,
+        String materialForm,
         String unit,
         String description,
         Boolean isActive
 ) {
+    public MaterialOptionResp(
+            Integer id,
+            Integer farmId,
+            String materialName,
+            String materialType,
+            String unit,
+            String description,
+            Boolean isActive
+    ) {
+        this(id, farmId, materialName, materialType, null, unit, description, isActive);
+    }
+
     public static MaterialOptionResp fromEntity(Material material) {
         return new MaterialOptionResp(
                 material.getId(),
                 material.getFarm() != null ? material.getFarm().getId() : null,
                 material.getMaterialName(),
                 material.getMaterialType(),
+                material.getMaterialForm(),
                 material.getUnit(),
                 material.getDescription(),
                 material.getIsActive()

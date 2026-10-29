@@ -1,4 +1,4 @@
-﻿-- MyCropDiary database schema derived from the conceptual ERDs
+-- MyCropDiary database schema derived from the conceptual ERDs
 -- Target: Microsoft SQL Server 2019+
 -- Notes:
 -- 1) Table names follow the ERD entity labels; join tables were added for many-to-many relations.
@@ -328,6 +328,7 @@ CREATE TABLE [Material] (
     farm_id INT NOT NULL REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
     material_name NVARCHAR(160) NOT NULL,
     material_type NVARCHAR(80),
+    material_form NVARCHAR(60),
     unit NVARCHAR(30) NOT NULL,
     description NVARCHAR(MAX),
     image_url NVARCHAR(MAX),
@@ -390,6 +391,10 @@ CREATE TABLE [MaterialUsage] (
     quantity NUMERIC(14,3) NOT NULL CHECK (quantity > 0),
     dosage NVARCHAR(100),
     method NVARCHAR(200),
+    material_form NVARCHAR(60),
+    applied_area NUMERIC(12,2),
+    applied_area_unit NVARCHAR(20),
+    applied_plant_count INT,
     safety_interval_days INT,
     used_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     notes NVARCHAR(MAX),
@@ -886,7 +891,7 @@ SET IDENTITY_INSERT [Material] ON;
 INSERT INTO [Material] (material_id, farm_id, material_name, material_type, unit, description, is_active)
 VALUES
 (1, 1, N'Phân NPK 20-20-20 Haifa', N'Phân bón hòa tan', 'kg', N'Phân bón NPK tinh khiết tan hoàn toàn nhập khẩu Israel', 1),
-(2, 2, N'Dung Dịch Thủy Canh A+B GreenHydro', N'Dinh dưỡng lỏng', 'lít', N'Cặp dinh dưỡng khoáng đa trung vi lượng đậm đặc chuyên dưa lưới', 1),
+(2, 1, N'Dung Dịch Thủy Canh A+B GreenHydro', N'Dinh dưỡng lỏng', 'lít', N'Cặp dinh dưỡng khoáng đa trung vi lượng đậm đặc chuyên dưa lưới', 1),
 (3, 1, N'Chế Phẩm Sinh Học Trừ Sâu Neem Chito', N'Thuốc BVTV sinh học', 'chai', N'Dầu neem kết hợp chitosan xua đuổi bọ trĩ và nấm bệnh', 1),
 (4, 1, N'Hạt Giống Dưa Lưới F1 Taka Nhật Bản', N'Hạt giống', 'gói', N'Hạt giống tỉ lệ nảy mầm > 98%, độ ngọt brix từ 14-16%', 1),
 (5, 1, N'Thùng Carton Đóng Dưa Lưới 5kg', N'Bao bì & Đóng gói', 'cái', N'Thùng giấy 5 lớp in ấn chuẩn thương hiệu MyCropDiary', 1);

@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service implementation cho nghiệp vụ nhật ký sử dụng vật tư (UC-25).
@@ -111,13 +112,31 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         if (request.unit() == null || request.unit().trim().isEmpty()) {
             throw new BadRequestException("Đơn vị tính không được để trống.");
         }
-        if (material.getUnit() != null && !material.getUnit().equalsIgnoreCase(request.unit().trim())) {
+        if (material.getUnit() != null && !isCompatibleUnit(material.getUnit(), request.unit().trim())) {
             throw new BadRequestException("Đơn vị tính (" + request.unit().trim() + ") không khớp với đơn vị tính của vật tư (" + material.getUnit() + ").");
         }
 
-        // 9. Validate Pesticide Safety Interval
+        // 9. Validate Pesticide Safety Interval & Applied Area / Plant Count
         if (request.safetyIntervalDays() != null && request.safetyIntervalDays() < 0) {
             throw new BadRequestException("Thời gian cách ly phải >= 0.");
+        }
+        if (request.appliedArea() != null && request.appliedArea().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Diện tích áp dụng phải lớn hơn 0.");
+        }
+        if (request.appliedPlantCount() != null && request.appliedPlantCount() <= 0) {
+            throw new BadRequestException("Số cây áp dụng phải lớn hơn 0.");
+        }
+
+        String resolvedMaterialForm = cleanText(request.materialForm());
+        if (resolvedMaterialForm == null) {
+            resolvedMaterialForm = cleanText(material.getMaterialForm());
+        }
+        if (resolvedMaterialForm == null) {
+            resolvedMaterialForm = inferMaterialForm(material.getMaterialType(), material.getUnit());
+        }
+        if (material.getMaterialForm() == null && resolvedMaterialForm != null) {
+            material.setMaterialForm(resolvedMaterialForm);
+            materialRepository.save(material);
         }
 
         // 10. Tạo mới MaterialUsage
@@ -130,8 +149,14 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         usage.setQuantity(request.quantity());
         usage.setBlock(activity.getBlock());
         usage.setNotes(request.notes() != null ? request.notes().trim() : null);
-        usage.setDosage(request.dosage() != null && !request.dosage().trim().isEmpty() ? request.dosage().trim() : null);
-        usage.setMethod(request.method() != null && !request.method().trim().isEmpty() ? request.method().trim() : null);
+        usage.setDosage(cleanText(request.dosage()));
+        usage.setMethod(cleanText(request.method()));
+        usage.setMaterialForm(resolvedMaterialForm);
+        usage.setAppliedArea(request.appliedArea());
+        usage.setAppliedAreaUnit(request.appliedArea() != null
+                ? (cleanText(request.appliedAreaUnit()) != null ? cleanText(request.appliedAreaUnit()) : "m²")
+                : null);
+        usage.setAppliedPlantCount(request.appliedPlantCount());
         usage.setSafetyIntervalDays(request.safetyIntervalDays());
 
         MaterialUsage savedUsage = materialUsageRepository.save(usage);
@@ -191,7 +216,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         // 5. Nếu cập nhật đơn vị tính (unit)
         if (request.unit() != null && !request.unit().trim().isEmpty()) {
             if (currentMaterial != null && currentMaterial.getUnit() != null
-                    && !currentMaterial.getUnit().equalsIgnoreCase(request.unit().trim())) {
+                    && !isCompatibleUnit(currentMaterial.getUnit(), request.unit().trim())) {
                 throw new BadRequestException("Đơn vị tính (" + request.unit().trim() + ") không khớp với đơn vị tính của vật tư (" + currentMaterial.getUnit() + ").");
             }
             usage.setUnit(request.unit().trim());
@@ -202,21 +227,37 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             usage.setUsedAt(request.usedAt());
         }
 
-        // 7. Validate thời gian cách ly (safetyIntervalDays)
+        // 7. Validate thời gian cách ly (safetyIntervalDays) & diện tích / số cây
         if (request.safetyIntervalDays() != null) {
             if (request.safetyIntervalDays() < 0) {
                 throw new BadRequestException("Thời gian cách ly phải >= 0.");
             }
             usage.setSafetyIntervalDays(request.safetyIntervalDays());
         }
+        if (request.appliedArea() != null && request.appliedArea().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Diện tích áp dụng phải lớn hơn 0.");
+        }
+        if (request.appliedPlantCount() != null && request.appliedPlantCount() <= 0) {
+            throw new BadRequestException("Số cây áp dụng phải lớn hơn 0.");
+        }
 
         // 8. Cập nhật các trường bổ sung
         if (request.dosage() != null) {
-            usage.setDosage(request.dosage().trim().isEmpty() ? null : request.dosage().trim());
+            usage.setDosage(cleanText(request.dosage()));
         }
         if (request.method() != null) {
-            usage.setMethod(request.method().trim().isEmpty() ? null : request.method().trim());
+            usage.setMethod(cleanText(request.method()));
         }
+        if (request.materialForm() != null) {
+            String form = cleanText(request.materialForm());
+            usage.setMaterialForm(form != null ? form : (currentMaterial != null ? currentMaterial.getMaterialForm() : null));
+        }
+        usage.setAppliedArea(request.appliedArea());
+        usage.setAppliedAreaUnit(request.appliedArea() != null
+                ? (cleanText(request.appliedAreaUnit()) != null ? cleanText(request.appliedAreaUnit()) : "m²")
+                : null);
+        usage.setAppliedPlantCount(request.appliedPlantCount());
+
         if (request.notes() != null) {
             usage.setNotes(request.notes().trim());
         }
@@ -340,12 +381,39 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
     }
 
     @Override
+    @Transactional
     public List<MaterialOptionResp> getMaterialsByFarm(Integer userId, Integer farmId) {
         farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active")
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập trang trại này."));
 
         List<Material> materials = materialRepository.findAllByFarmIdAndIsActiveTrue(farmId);
+        if (materials.isEmpty() && farmRepository != null) {
+            Optional<Farm> farmOpt = farmRepository.findById(farmId);
+            if (farmOpt.isPresent() && materialRepository.findAllByFarmId(farmId).isEmpty()) {
+                Farm farm = farmOpt.get();
+                List<Material> defaults = List.of(
+                        createDefaultMaterial(farm, "Phân trùn quế Vermicompost", "Phân bón hữu cơ", "Dạng hữu cơ vi sinh", "kg", "Phân hữu cơ vi sinh giàu mùn cải tạo đất chuẩn VietGAP"),
+                        createDefaultMaterial(farm, "Phân NPK 20-20-20 Haifa", "Phân bón hòa tan", "Dạng bột", "kg", "Phân bón NPK tinh khiết tan hoàn toàn dùng cho hệ thống tưới"),
+                        createDefaultMaterial(farm, "Dung dịch thủy canh A+B GreenHydro", "Dinh dưỡng lỏng", "Dạng lỏng / dung dịch", "L", "Dinh dưỡng khoáng đa trung vi lượng đậm đặc"),
+                        createDefaultMaterial(farm, "Chế phẩm sinh học trừ sâu Neem Chito", "Thuốc BVTV sinh học", "Dạng nhũ dầu", "chai", "Dầu neem kết hợp chitosan phòng trừ bọ trĩ và nấm bệnh"),
+                        createDefaultMaterial(farm, "Chế phẩm nấm đối kháng Trichoderma", "Chế phẩm sinh học", "Dạng bột", "gói", "Chế phẩm vi sinh ủ phân và phòng nấm bệnh rễ"),
+                        createDefaultMaterial(farm, "Hạt giống dưa lưới F1 Taka Nhật Bản", "Hạt giống", "Hạt / cây giống", "gói", "Hạt giống tỷ lệ nảy mầm cao đạt chuẩn VietGAP")
+                );
+                materials = materialRepository.saveAll(defaults);
+            }
+        }
+        for (Material m : materials) {
+            if (m.getMaterialForm() == null || m.getMaterialForm().isBlank()) {
+                m.setMaterialForm(inferMaterialForm(m.getMaterialType(), m.getUnit()));
+            }
+        }
         return materials.stream().map(MaterialOptionResp::fromEntity).toList();
+    }
+
+    private Material createDefaultMaterial(Farm farm, String name, String type, String form, String unit, String description) {
+        Material m = new Material(farm, name, type, form, unit);
+        m.setDescription(description);
+        return m;
     }
 
     @Override
@@ -353,6 +421,31 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
     public MaterialOptionResp createMaterial(Integer userId, CreateMaterialReq request) {
         farmMemberRepository.findByFarmIdAndUserIdAndStatus(request.farmId(), userId, "active")
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền quản lý vật tư của trang trại này."));
+
+        String trimmedName = request.materialName().trim();
+        String trimmedType = cleanText(request.materialType());
+        String trimmedUnit = request.unit().trim();
+        String resolvedForm = cleanText(request.materialForm());
+        if (resolvedForm == null) {
+            resolvedForm = inferMaterialForm(trimmedType, trimmedUnit);
+        }
+
+        Optional<Material> existingOpt = materialRepository.findByFarmIdAndMaterialNameIgnoreCase(request.farmId(), trimmedName);
+        if (existingOpt.isPresent()) {
+            Material existing = existingOpt.get();
+            existing.setIsActive(true);
+            if (trimmedType != null) {
+                existing.setMaterialType(trimmedType);
+            }
+            if (resolvedForm != null) {
+                existing.setMaterialForm(resolvedForm);
+            }
+            existing.setUnit(trimmedUnit);
+            if (request.description() != null && !request.description().trim().isEmpty()) {
+                existing.setDescription(request.description().trim());
+            }
+            return MaterialOptionResp.fromEntity(materialRepository.save(existing));
+        }
 
         Farm farm;
         if (farmRepository != null) {
@@ -365,9 +458,10 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
         Material material = new Material(
                 farm,
-                request.materialName().trim(),
-                request.materialType() != null ? request.materialType().trim() : null,
-                request.unit().trim()
+                trimmedName,
+                trimmedType,
+                resolvedForm,
+                trimmedUnit
         );
         if (request.description() != null) {
             material.setDescription(request.description().trim());
@@ -381,7 +475,12 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         MaterialUsage usage = materialUsageRepository.findById(materialUsageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bản ghi sử dụng vật tư không tồn tại."));
 
-        validateAndGetActiveMember(userId, usage.getFarmingActivity());
+        if (usage.getFarmingActivity() != null) {
+            validateAndGetActiveMember(userId, usage.getFarmingActivity());
+        } else if (usage.getFarm() != null) {
+            farmMemberRepository.findByFarmIdAndUserIdAndStatus(usage.getFarm().getId(), userId, "active")
+                    .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập hoặc ghi nhật ký cho mùa vụ của trang trại này."));
+        }
 
         return mapToResponse(usage);
     }
@@ -394,22 +493,73 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập hoặc ghi nhật ký cho mùa vụ của trang trại này."));
     }
 
+    private boolean isCompatibleUnit(String materialUnit, String requestUnit) {
+        if (materialUnit == null || requestUnit == null) return true;
+        String a = materialUnit.trim();
+        String b = requestUnit.trim();
+        if (a.equalsIgnoreCase(b)) return true;
+        return isLiterUnit(a) && isLiterUnit(b);
+    }
+
+    private boolean isLiterUnit(String unit) {
+        return "l".equalsIgnoreCase(unit) || "lít".equalsIgnoreCase(unit) || "lit".equalsIgnoreCase(unit);
+    }
+
+    private String cleanText(String value) {
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String inferMaterialForm(String materialType, String unit) {
+        String type = materialType != null ? materialType.toLowerCase() : "";
+        String u = unit != null ? unit.toLowerCase() : "";
+        if (type.contains("lỏng") || u.equals("l") || u.equals("lít") || u.equals("ml") || u.equals("can")) {
+            return "Dạng lỏng / dung dịch";
+        }
+        if (type.contains("bvtv") || u.equals("chai")) {
+            return "Dạng nhũ dầu";
+        }
+        if (type.contains("hòa tan")) {
+            return "Dạng bột";
+        }
+        if (type.contains("hữu cơ") || type.contains("sinh học")) {
+            return "Dạng hữu cơ vi sinh";
+        }
+        if (type.contains("giống") || u.equals("hạt") || u.equals("cây") || u.equals("khay")) {
+            return "Hạt / cây giống";
+        }
+        if (u.equals("viên")) {
+            return "Dạng viên nén";
+        }
+        return "Dạng hạt";
+    }
+
     private MaterialUsageResp mapToResponse(MaterialUsage usage) {
         String recorderName = usage.getUsedBy() != null && usage.getUsedBy().getUser() != null
                 ? usage.getUsedBy().getUser().getFullName()
                 : null;
         FarmingActivity act = usage.getFarmingActivity();
         CropSeason cs = act != null ? act.getCropSeason() : null;
+        Material mat = usage.getMaterial();
+        String materialForm = cleanText(usage.getMaterialForm());
+        if (materialForm == null && mat != null) {
+            materialForm = cleanText(mat.getMaterialForm());
+            if (materialForm == null) {
+                materialForm = inferMaterialForm(mat.getMaterialType(), mat.getUnit());
+            }
+        }
 
         return new MaterialUsageResp(
                 usage.getId(),
                 act != null ? act.getId() : null,
                 act != null ? act.getActivityName() : null,
                 cs != null ? cs.getId() : null,
-                usage.getMaterial().getId(),
-                usage.getMaterial().getMaterialName(),
-                usage.getMaterial().getMaterialName(),
-                usage.getMaterial().getMaterialType(),
+                mat != null ? mat.getId() : null,
+                mat != null ? mat.getMaterialName() : null,
+                mat != null ? mat.getMaterialName() : null,
+                mat != null ? mat.getMaterialType() : null,
+                materialForm,
                 null,
                 usage.getUsedBy() != null ? usage.getUsedBy().getId() : null,
                 recorderName,
@@ -418,6 +568,9 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
                 usage.getUnit(),
                 usage.getDosage(),
                 usage.getMethod(),
+                usage.getAppliedArea(),
+                usage.getAppliedAreaUnit(),
+                usage.getAppliedPlantCount(),
                 usage.getSafetyIntervalDays(),
                 usage.getNotes()
         );

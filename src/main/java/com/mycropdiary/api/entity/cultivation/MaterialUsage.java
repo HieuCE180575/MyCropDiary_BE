@@ -11,7 +11,7 @@ import java.time.ZoneId;
 
 /**
  * Entity biểu diễn bảng [MaterialUsage] (Nhật ký sử dụng vật tư).
- * Khớp 100% với ERD và lưu trữ đầy đủ liều lượng, phương thức, cách ly.
+ * Khớp 100% với ERD và lưu trữ đầy đủ liều lượng, phương thức, diện tích, số cây, cách ly.
  */
 @Entity
 @Table(name = "MaterialUsage")
@@ -50,6 +50,18 @@ public class MaterialUsage {
 
     @Column(name = "method", length = 200)
     private String method;
+
+    @Column(name = "material_form", length = 60)
+    private String materialForm;
+
+    @Column(name = "applied_area", precision = 12, scale = 2)
+    private BigDecimal appliedArea;
+
+    @Column(name = "applied_area_unit", length = 20)
+    private String appliedAreaUnit;
+
+    @Column(name = "applied_plant_count")
+    private Integer appliedPlantCount;
 
     @Column(name = "safety_interval_days")
     private Integer safetyIntervalDays;
@@ -98,6 +110,18 @@ public class MaterialUsage {
 
     public String getMethod() { return method; }
     public void setMethod(String method) { this.method = method; }
+
+    public String getMaterialForm() { return materialForm; }
+    public void setMaterialForm(String materialForm) { this.materialForm = materialForm; }
+
+    public BigDecimal getAppliedArea() { return appliedArea; }
+    public void setAppliedArea(BigDecimal appliedArea) { this.appliedArea = appliedArea; }
+
+    public String getAppliedAreaUnit() { return appliedAreaUnit; }
+    public void setAppliedAreaUnit(String appliedAreaUnit) { this.appliedAreaUnit = appliedAreaUnit; }
+
+    public Integer getAppliedPlantCount() { return appliedPlantCount; }
+    public void setAppliedPlantCount(Integer appliedPlantCount) { this.appliedPlantCount = appliedPlantCount; }
 
     public Integer getSafetyIntervalDays() { return safetyIntervalDays; }
     public void setSafetyIntervalDays(Integer safetyIntervalDays) { this.safetyIntervalDays = safetyIntervalDays; }
