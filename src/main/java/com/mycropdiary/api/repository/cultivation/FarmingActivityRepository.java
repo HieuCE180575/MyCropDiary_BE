@@ -13,5 +13,5 @@ import java.util.Optional;
 public interface FarmingActivityRepository extends JpaRepository<FarmingActivity, Integer>, JpaSpecificationExecutor<FarmingActivity> {
     Page<FarmingActivity> findByCropSeasonId(Integer cropSeasonId, Pageable pageable);
     Optional<FarmingActivity> findByIdAndCropSeasonId(Integer id, Integer cropSeasonId);
+    boolean existsByCropSeasonId(Integer cropSeasonId);
 }
-

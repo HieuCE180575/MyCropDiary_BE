@@ -16,4 +16,5 @@ import java.util.Optional;
 public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Integer>, JpaSpecificationExecutor<HarvestRecord> {
     Page<HarvestRecord> findByCropSeasonId(Integer cropSeasonId, Pageable pageable);
     Optional<HarvestRecord> findByIdAndCropSeasonId(Integer id, Integer cropSeasonId);
+    boolean existsByCropSeasonId(Integer cropSeasonId);
 }
