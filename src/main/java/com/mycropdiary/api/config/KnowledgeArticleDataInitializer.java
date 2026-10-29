@@ -40,7 +40,6 @@ public class KnowledgeArticleDataInitializer implements CommandLineRunner {
     ) {}
 
     @Override
-    @Transactional
     public void run(String... args) {
         try {
             List<SeedArticle> seeds = List.of(
