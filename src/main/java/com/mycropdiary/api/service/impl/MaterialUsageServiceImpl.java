@@ -8,6 +8,7 @@ import com.mycropdiary.api.entity.cultivation.*;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.MaterialUsageMapper;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.*;
@@ -40,6 +41,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
     private final FarmMemberRepository farmMemberRepository;
     private final CropSeasonRepository cropSeasonRepository;
     private final FarmRepository farmRepository;
+    private MaterialUsageMapper materialUsageMapper = new MaterialUsageMapper();
 
     public MaterialUsageServiceImpl(
             MaterialUsageRepository materialUsageRepository,
@@ -64,6 +66,13 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         this.farmMemberRepository = farmMemberRepository;
         this.cropSeasonRepository = cropSeasonRepository;
         this.farmRepository = farmRepository;
+    }
+
+    @Autowired(required = false)
+    public void setMaterialUsageMapper(MaterialUsageMapper materialUsageMapper) {
+        if (materialUsageMapper != null) {
+            this.materialUsageMapper = materialUsageMapper;
+        }
     }
 
     @Override
@@ -395,31 +404,6 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
     }
 
     private MaterialUsageResp mapToResponse(MaterialUsage usage) {
-        String recorderName = usage.getUsedBy() != null && usage.getUsedBy().getUser() != null
-                ? usage.getUsedBy().getUser().getFullName()
-                : null;
-        FarmingActivity act = usage.getFarmingActivity();
-        CropSeason cs = act != null ? act.getCropSeason() : null;
-
-        return new MaterialUsageResp(
-                usage.getId(),
-                act != null ? act.getId() : null,
-                act != null ? act.getActivityName() : null,
-                cs != null ? cs.getId() : null,
-                usage.getMaterial().getId(),
-                usage.getMaterial().getMaterialName(),
-                usage.getMaterial().getMaterialName(),
-                usage.getMaterial().getMaterialType(),
-                null,
-                usage.getUsedBy() != null ? usage.getUsedBy().getId() : null,
-                recorderName,
-                usage.getUsedAtLdt(),
-                usage.getQuantity(),
-                usage.getUnit(),
-                usage.getDosage(),
-                usage.getMethod(),
-                usage.getSafetyIntervalDays(),
-                usage.getNotes()
-        );
+        return materialUsageMapper.toResponse(usage);
     }
 }

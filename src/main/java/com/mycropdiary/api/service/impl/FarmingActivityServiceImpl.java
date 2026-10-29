@@ -10,11 +10,13 @@ import com.mycropdiary.api.entity.cultivation.*;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.FarmingActivityMapper;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.cultivation.*;
 import com.mycropdiary.api.service.cultivation.FarmingActivityService;
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -37,6 +39,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
     private final FarmMemberRepository farmMemberRepository;
     private final FarmWorkerRepository farmWorkerRepository;
     private final StaffZoneAssignmentRepository staffZoneAssignmentRepository;
+    private FarmingActivityMapper farmingActivityMapper = new FarmingActivityMapper();
 
     public FarmingActivityServiceImpl(FarmingActivityRepository farmingActivityRepository,
                                       ActivityWorkerRepository activityWorkerRepository,
@@ -50,6 +53,13 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         this.farmMemberRepository = farmMemberRepository;
         this.farmWorkerRepository = farmWorkerRepository;
         this.staffZoneAssignmentRepository = staffZoneAssignmentRepository;
+    }
+
+    @Autowired(required = false)
+    public void setFarmingActivityMapper(FarmingActivityMapper farmingActivityMapper) {
+        if (farmingActivityMapper != null) {
+            this.farmingActivityMapper = farmingActivityMapper;
+        }
     }
 
     private FarmMember validateAndGetActiveMember(Integer userId, CropSeason cropSeason) {
@@ -121,7 +131,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
             activityWorkerRepository.saveAll(activityWorkers);
         }
 
-        return mapToResponse(savedActivity, workerResponses, supervisor);
+        return farmingActivityMapper.toResponse(savedActivity, workerResponses, supervisor);
     }
 
     @Override
@@ -174,7 +184,10 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         };
 
         Page<FarmingActivity> page = farmingActivityRepository.findAll(spec, pageable);
-        return PageResp.map(page, act -> mapToSummaryResponse(act, member));
+        return PageResp.map(page, act -> {
+            List<ActivityWorker> workers = activityWorkerRepository.findByFarmingActivityId(act.getId());
+            return farmingActivityMapper.toSummary(act, member, workers);
+        });
     }
 
     @Override
@@ -184,7 +197,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
                 .orElseThrow(() -> new ResourceNotFoundException("Nhật ký canh tác không tồn tại."));
 
         CropSeason cropSeason = activity.getCropSeason();
-        if (cropSeason != null && ("completed".equalsIgnoreCase(cropSeason.getSeasonStatus()) || "cancelled".equalsIgnoreCase(cropSeason.getSeasonStatus()))) {
+        if ("completed".equalsIgnoreCase(cropSeason.getSeasonStatus()) || "cancelled".equalsIgnoreCase(cropSeason.getSeasonStatus())) {
             throw new BadRequestException("Không thể chỉnh sửa nhật ký canh tác của mùa vụ đã hoàn thành hoặc đã bị hủy.");
         }
 
@@ -253,7 +266,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
             }
         }
 
-        return mapToResponse(savedActivity, workerResponses, supervisor);
+        return farmingActivityMapper.toResponse(savedActivity, workerResponses, supervisor);
     }
 
 
@@ -276,53 +289,6 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
                 ))
                 .toList();
 
-        return mapToResponse(activity, workerResponses, member);
-    }
-
-    private FarmingActivityResp mapToResponse(FarmingActivity act, List<ActivityWorkerResp> workers, FarmMember supervisor) {
-        CropSeason cs = act.getCropSeason();
-        Farm farm = cs != null ? cs.getFarm() : act.getFarm();
-        Block block = act.getBlock();
-
-        return new FarmingActivityResp(
-                act.getId(),
-                cs != null ? cs.getId() : null,
-                cs != null ? cs.getSeasonName() : null,
-                cs != null ? cs.getSeasonName() : null,
-                farm != null ? farm.getId() : null,
-                farm != null ? farm.getFarmName() : null,
-                block != null ? block.getId() : null,
-                block != null ? block.getBlockName() : null,
-                block != null ? block.getBlockName() : null,
-                supervisor != null ? supervisor.getId() : null,
-                supervisor != null && supervisor.getUser() != null ? supervisor.getUser().getFullName() : null,
-                act.getActivityType(),
-                act.getActivityName(),
-                act.getStartedAt(),
-                act.getEndedAt(),
-                act.getDescription(),
-                act.getResultNotes(),
-                act.getWeatherNotes(),
-                act.getFarmTaskId(),
-                workers,
-                act.getStartedAt()
-        );
-    }
-
-    private FarmingActivitySummaryResp mapToSummaryResponse(FarmingActivity act, FarmMember supervisor) {
-        List<ActivityWorker> workers = activityWorkerRepository.findByFarmingActivityId(act.getId());
-
-        return new FarmingActivitySummaryResp(
-                act.getId(),
-                act.getCropSeason() != null ? act.getCropSeason().getId() : null,
-                act.getActivityType(),
-                act.getActivityName(),
-                act.getStartedAt(),
-                act.getEndedAt(),
-                supervisor != null ? supervisor.getId() : null,
-                supervisor != null && supervisor.getUser() != null ? supervisor.getUser().getFullName() : null,
-                workers.size(),
-                act.getStartedAt()
-        );
+        return farmingActivityMapper.toResponse(activity, workerResponses, member);
     }
 }

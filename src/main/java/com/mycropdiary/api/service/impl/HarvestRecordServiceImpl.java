@@ -12,6 +12,7 @@ import com.mycropdiary.api.entity.cultivation.HarvestRecord;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.HarvestRecordMapper;
 import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
@@ -42,6 +43,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
     private final CropSeasonRepository cropSeasonRepository;
     private final FarmMemberRepository farmMemberRepository;
     private final BlockRepository blockRepository;
+    private HarvestRecordMapper harvestRecordMapper = new HarvestRecordMapper();
 
     @Autowired
     public HarvestRecordServiceImpl(
@@ -60,6 +62,13 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
             CropSeasonRepository cropSeasonRepository,
             FarmMemberRepository farmMemberRepository) {
         this(harvestRecordRepository, cropSeasonRepository, farmMemberRepository, null);
+    }
+
+    @Autowired(required = false)
+    public void setHarvestRecordMapper(HarvestRecordMapper harvestRecordMapper) {
+        if (harvestRecordMapper != null) {
+            this.harvestRecordMapper = harvestRecordMapper;
+        }
     }
 
     @Override
@@ -112,42 +121,29 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
         CropSeason season = record.getCropSeason();
         validateAndGetActiveMember(userId, season);
 
-        if (season != null) {
-            String seasonStatus = season.getSeasonStatus();
-            if (seasonStatus != null && ("completed".equalsIgnoreCase(seasonStatus)
-                    || "cancelled".equalsIgnoreCase(seasonStatus)
-                    || "archived".equalsIgnoreCase(seasonStatus))) {
-                throw new BadRequestException("Không thể chỉnh sửa bản ghi thu hoạch cho mùa vụ đã đóng hoặc đã hủy.");
-            }
+        String seasonStatus = season != null ? season.getSeasonStatus() : null;
+        if (seasonStatus != null && ("completed".equalsIgnoreCase(seasonStatus)
+                || "cancelled".equalsIgnoreCase(seasonStatus)
+                || "archived".equalsIgnoreCase(seasonStatus))) {
+            throw new BadRequestException("Không thể chỉnh sửa thu hoạch của mùa vụ đã đóng hoặc đã hủy.");
         }
 
-        if (request.quantity() != null) {
-            if (request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new BadRequestException("Sản lượng thu hoạch phải lớn hơn 0.");
-            }
-            record.setQuantity(request.quantity());
+        if (request.quantity() == null || request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Sản lượng thu hoạch phải lớn hơn 0.");
         }
 
-        if (request.unit() != null && !request.unit().trim().isEmpty()) {
-            record.setUnit(request.unit().trim());
+        if (request.unit() == null || request.unit().trim().isEmpty()) {
+            throw new BadRequestException("Đơn vị tính không được để trống.");
         }
 
-        if (request.harvestedAt() != null) {
-            record.setHarvestDate(request.harvestedAt().toLocalDate());
-        }
-
-        if (request.qualityGrade() != null) {
-            record.setQualityGrade(request.qualityGrade().trim());
-        }
-
-        if (request.notes() != null) {
-            record.setNotes(request.notes().trim());
-        }
+        record.setHarvestDate(request.harvestedAt() != null ? request.harvestedAt().toLocalDate() : record.getHarvestDate());
+        record.setQuantity(request.quantity());
+        record.setUnit(request.unit().trim());
+        record.setQualityGrade(request.qualityGrade() != null ? request.qualityGrade().trim() : null);
+        record.setNotes(request.notes() != null ? request.notes().trim() : null);
 
         if (request.blockId() != null && blockRepository != null) {
-            Block block = blockRepository.findById(request.blockId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Khu đất canh tác không tồn tại."));
-            record.setBlock(block);
+            blockRepository.findById(request.blockId()).ifPresent(record::setBlock);
         }
 
         HarvestRecord savedRecord = harvestRecordRepository.save(record);
@@ -168,7 +164,6 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
             LocalDateTime fromDate,
             LocalDateTime toDate,
             Pageable pageable) {
-
         CropSeason season = cropSeasonRepository.findById(cropSeasonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại."));
 
@@ -180,9 +175,9 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
 
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String pattern = "%" + keyword.trim().toLowerCase() + "%";
+                Predicate gradeMatch = cb.like(cb.lower(root.get("qualityGrade")), pattern);
                 Predicate notesMatch = cb.like(cb.lower(root.get("notes")), pattern);
-                Predicate qualityMatch = cb.like(cb.lower(root.get("qualityGrade")), pattern);
-                predicates.add(cb.or(notesMatch, qualityMatch));
+                predicates.add(cb.or(gradeMatch, notesMatch));
             }
 
             if (qualityGrade != null && !qualityGrade.trim().isEmpty()) {
@@ -221,34 +216,6 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
     }
 
     private HarvestRecordResp mapToResponse(HarvestRecord record) {
-        CropSeason season = record.getCropSeason();
-        Farm farm = season != null ? season.getFarm() : record.getFarm();
-        Block block = record.getBlock();
-
-        String recorderName = record.getRecordedBy() != null && record.getRecordedBy().getUser() != null
-                ? record.getRecordedBy().getUser().getFullName()
-                : null;
-
-        return new HarvestRecordResp(
-                record.getId(),
-                season != null ? season.getId() : null,
-                season != null ? season.getSeasonName() : null,
-                season != null ? season.getSeasonName() : null,
-                farm != null ? farm.getId() : null,
-                farm != null ? farm.getFarmName() : null,
-                block != null ? block.getId() : null,
-                block != null ? block.getBlockName() : null,
-                block != null ? block.getBlockName() : null,
-                record.getRecordedBy() != null ? record.getRecordedBy().getId() : null,
-                recorderName,
-                record.getHarvestLotCode(),
-                record.getHarvestedAt(),
-                record.getQuantity(),
-                record.getUnit(),
-                record.getQualityGrade(),
-                record.getStorageLocation(),
-                record.getTraceabilityCode(),
-                record.getNotes()
-        );
+        return harvestRecordMapper.toResponse(record);
     }
 }

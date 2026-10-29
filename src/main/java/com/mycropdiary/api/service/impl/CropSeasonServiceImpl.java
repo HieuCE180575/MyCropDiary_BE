@@ -13,6 +13,7 @@ import com.mycropdiary.api.entity.cultivation.CropSeason;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceConflictException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.CropSeasonMapper;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.cultivation.CropCategoryRepository;
@@ -44,6 +45,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
     private final FarmAccessGuard farmAccessGuard;
     private final FarmingActivityRepository farmingActivityRepository;
     private final HarvestRecordRepository harvestRecordRepository;
+    private final CropSeasonMapper cropSeasonMapper;
 
     public CropSeasonServiceImpl(CropSeasonRepository cropSeasonRepository,
                                  CropCategoryRepository cropCategoryRepository,
@@ -51,7 +53,8 @@ public class CropSeasonServiceImpl implements CropSeasonService {
                                  UserRepository userRepository,
                                  FarmAccessGuard farmAccessGuard,
                                  FarmingActivityRepository farmingActivityRepository,
-                                 HarvestRecordRepository harvestRecordRepository) {
+                                 HarvestRecordRepository harvestRecordRepository,
+                                 CropSeasonMapper cropSeasonMapper) {
         this.cropSeasonRepository = cropSeasonRepository;
         this.cropCategoryRepository = cropCategoryRepository;
         this.farmRepository = farmRepository;
@@ -59,6 +62,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
         this.farmAccessGuard = farmAccessGuard;
         this.farmingActivityRepository = farmingActivityRepository;
         this.harvestRecordRepository = harvestRecordRepository;
+        this.cropSeasonMapper = cropSeasonMapper;
     }
 
     @Override
@@ -89,18 +93,9 @@ public class CropSeasonServiceImpl implements CropSeasonService {
             initialStatus = !request.startDate().isAfter(LocalDate.now()) ? "active" : "planned";
         }
 
-        CropSeason season = new CropSeason();
-        season.setFarm(farm);
-        season.setCropCategory(category);
-        season.setSeasonName(trimmedName);
-        season.setStartDate(request.startDate());
-        season.setEndDate(request.endDate());
-        season.setSeasonStatus(initialStatus);
-        season.setNotes(request.notes() != null ? request.notes().trim() : null);
-        season.setCreatedBy(creator);
-
+        CropSeason season = cropSeasonMapper.toEntity(request, farm, category, creator, initialStatus);
         CropSeason saved = cropSeasonRepository.save(season);
-        return mapToResponse(saved);
+        return cropSeasonMapper.toResponse(saved);
     }
 
     @Override
@@ -135,7 +130,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
         season.setNotes(request.notes() != null ? request.notes().trim() : null);
 
         CropSeason saved = cropSeasonRepository.save(season);
-        return mapToResponse(saved);
+        return cropSeasonMapper.toResponse(saved);
     }
 
     @Override
@@ -152,7 +147,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
 
         season.setSeasonStatus(newStatus);
         CropSeason saved = cropSeasonRepository.save(season);
-        return mapToResponse(saved);
+        return cropSeasonMapper.toResponse(saved);
     }
 
     @Override
@@ -163,7 +158,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
 
         farmAccessGuard.requireFarmMember(userId, season.getFarm().getId());
 
-        return mapToResponse(season);
+        return cropSeasonMapper.toResponse(season);
     }
 
     @Override
@@ -195,7 +190,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
         };
 
         Page<CropSeasonResp> page = cropSeasonRepository.findAll(spec, pageable)
-                .map(this::mapToResponse);
+                .map(cropSeasonMapper::toResponse);
 
         return PageResp.from(page);
     }
@@ -221,32 +216,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
     @Transactional(readOnly = true)
     public List<CropCategoryResp> getCropCategories() {
         return cropCategoryRepository.findAll().stream()
-                .map(c -> new CropCategoryResp(c.getId(), c.getCategoryName(), c.getDescription(), c.getImageUrl()))
+                .map(cropSeasonMapper::toCategoryResponse)
                 .toList();
     }
-
-    private CropSeasonResp mapToResponse(CropSeason cs) {
-        String farmName = cs.getFarm() != null ? cs.getFarm().getFarmName() : null;
-        Integer cropCatId = cs.getCropCategory() != null ? cs.getCropCategory().getId() : null;
-        String cropCatName = cs.getCropCategory() != null ? cs.getCropCategory().getCategoryName() : null;
-        Integer creatorId = cs.getCreatedBy() != null ? cs.getCreatedBy().getId() : null;
-        String creatorName = cs.getCreatedBy() != null ? cs.getCreatedBy().getFullName() : null;
-
-        return new CropSeasonResp(
-                cs.getId(),
-                cs.getFarm() != null ? cs.getFarm().getId() : null,
-                farmName,
-                cropCatId,
-                cropCatName,
-                cs.getSeasonName(),
-                cs.getStartDate(),
-                cs.getEndDate(),
-                cs.getSeasonStatus(),
-                cs.getNotes(),
-                creatorId,
-                creatorName,
-                cs.getCreatedAt()
-        );
-    }
 }
-

@@ -6,10 +6,10 @@ import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonBlockReq;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.cultivation.CropSeason;
 import com.mycropdiary.api.entity.cultivation.CropSeasonBlock;
-import com.mycropdiary.api.entity.cultivation.CropSeasonBlockId;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceConflictException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.CropSeasonBlockMapper;
 import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonBlockRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
@@ -35,19 +35,22 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
     private final FarmAccessGuard farmAccessGuard;
     private final FarmingActivityRepository farmingActivityRepository;
     private final HarvestRecordRepository harvestRecordRepository;
+    private final CropSeasonBlockMapper cropSeasonBlockMapper;
 
     public CropSeasonBlockServiceImpl(CropSeasonBlockRepository cropSeasonBlockRepository,
                                      CropSeasonRepository cropSeasonRepository,
                                      BlockRepository blockRepository,
                                      FarmAccessGuard farmAccessGuard,
                                      FarmingActivityRepository farmingActivityRepository,
-                                     HarvestRecordRepository harvestRecordRepository) {
+                                     HarvestRecordRepository harvestRecordRepository,
+                                     CropSeasonBlockMapper cropSeasonBlockMapper) {
         this.cropSeasonBlockRepository = cropSeasonBlockRepository;
         this.cropSeasonRepository = cropSeasonRepository;
         this.blockRepository = blockRepository;
         this.farmAccessGuard = farmAccessGuard;
         this.farmingActivityRepository = farmingActivityRepository;
         this.harvestRecordRepository = harvestRecordRepository;
+        this.cropSeasonBlockMapper = cropSeasonBlockMapper;
     }
 
     @Override
@@ -89,10 +92,10 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
                     ") không được vượt quá diện tích thực tế của lô đất (" + block.getAreaValue() + " " + block.getAreaUnit() + ").");
         }
 
-        CropSeasonBlock csb = new CropSeasonBlock(season, block, plantedArea, areaUnit, plantedAt, expectedHarvestAt);
+        CropSeasonBlock csb = cropSeasonBlockMapper.toEntity(season, block, plantedArea, areaUnit, plantedAt, expectedHarvestAt);
         CropSeasonBlock saved = cropSeasonBlockRepository.save(csb);
 
-        return mapToResponse(saved);
+        return cropSeasonBlockMapper.toResponse(saved);
     }
 
     @Override
@@ -104,7 +107,7 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
         farmAccessGuard.requireFarmMember(userId, season.getFarm().getId());
 
         return cropSeasonBlockRepository.findByCropSeasonIdWithDetails(cropSeasonId).stream()
-                .map(this::mapToResponse)
+                .map(cropSeasonBlockMapper::toResponse)
                 .toList();
     }
 
@@ -116,7 +119,7 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
 
         farmAccessGuard.requireFarmMember(userId, csb.getCropSeason().getFarm().getId());
 
-        return mapToResponse(csb);
+        return cropSeasonBlockMapper.toResponse(csb);
     }
 
     @Override
@@ -154,7 +157,7 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
         csb.setExpectedHarvestAt(expectedHarvestAt);
 
         CropSeasonBlock saved = cropSeasonBlockRepository.save(csb);
-        return mapToResponse(saved);
+        return cropSeasonBlockMapper.toResponse(saved);
     }
 
     @Override
@@ -178,36 +181,5 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
         }
 
         cropSeasonBlockRepository.delete(csb);
-    }
-
-    private CropSeasonBlockResp mapToResponse(CropSeasonBlock csb) {
-        CropSeason season = csb.getCropSeason();
-        Block block = csb.getBlock();
-
-        Integer seasonId = season != null ? season.getId() : null;
-        String seasonName = season != null ? season.getSeasonName() : null;
-        Integer blockId = block != null ? block.getId() : null;
-        String blockName = block != null ? block.getBlockName() : null;
-        Integer zoneId = (block != null && block.getZone() != null) ? block.getZone().getId() : null;
-        String zoneName = (block != null && block.getZone() != null) ? block.getZone().getZoneName() : null;
-        BigDecimal blockArea = block != null ? block.getAreaValue() : null;
-        String blockAreaUnit = block != null ? block.getAreaUnit() : null;
-        String soilType = block != null ? block.getSoilType() : null;
-
-        return new CropSeasonBlockResp(
-                seasonId,
-                seasonName,
-                blockId,
-                blockName,
-                zoneId,
-                zoneName,
-                blockArea,
-                blockAreaUnit,
-                soilType,
-                csb.getPlantedArea(),
-                csb.getAreaUnit(),
-                csb.getPlantedAt(),
-                csb.getExpectedHarvestAt()
-        );
     }
 }
