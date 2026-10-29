@@ -17,4 +17,5 @@ public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, In
     Page<HarvestRecord> findByCropSeasonId(Integer cropSeasonId, Pageable pageable);
     Optional<HarvestRecord> findByIdAndCropSeasonId(Integer id, Integer cropSeasonId);
     boolean existsByCropSeasonId(Integer cropSeasonId);
+    boolean existsByCropSeasonIdAndBlockId(Integer cropSeasonId, Integer blockId);
 }

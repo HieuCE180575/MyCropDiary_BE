@@ -14,4 +14,5 @@ public interface FarmingActivityRepository extends JpaRepository<FarmingActivity
     Page<FarmingActivity> findByCropSeasonId(Integer cropSeasonId, Pageable pageable);
     Optional<FarmingActivity> findByIdAndCropSeasonId(Integer id, Integer cropSeasonId);
     boolean existsByCropSeasonId(Integer cropSeasonId);
+    boolean existsByCropSeasonIdAndBlockId(Integer cropSeasonId, Integer blockId);
 }
