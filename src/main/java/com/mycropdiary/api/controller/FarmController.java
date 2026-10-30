@@ -103,13 +103,5 @@ public class FarmController {
         return ApiResp.ok("Farm members retrieved successfully", response);
     }
 
-    @Operation(summary = "Xóa thành viên khỏi trang trại", description = "Vô hiệu hóa thành viên. Yêu cầu quyền OWNER hoặc ADMIN.")
-    @DeleteMapping("/{farmId}/members/{memberId}")
-    public ApiResp<Void> removeMember(
-            @PathVariable Integer farmId,
-            @PathVariable Integer memberId) {
-        Integer currentUserId = securityUtils.getCurrentUserId();
-        farmService.removeMember(currentUserId, farmId, memberId);
-        return ApiResp.ok("Member removed successfully", null);
-    }
+    
 }
