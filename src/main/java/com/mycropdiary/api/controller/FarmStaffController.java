@@ -2,6 +2,7 @@ package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.dto.staff.AddStaffReq;
+import com.mycropdiary.api.dto.staff.CandidateUserResp;
 import com.mycropdiary.api.dto.staff.FarmMemberResp;
 import com.mycropdiary.api.dto.staff.UpdateStaffReq;
 import com.mycropdiary.api.service.FarmStaffService;
@@ -33,6 +34,15 @@ public class FarmStaffController {
         return ApiResp.ok("Danh sách nhân viên trang trại", list);
     }
 
+    @GetMapping("/candidates")
+    public ApiResp<List<CandidateUserResp>> getCandidateUsers(
+            @PathVariable Integer farmId,
+            @RequestParam(required = false) String keyword) {
+        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
+        List<CandidateUserResp> list = farmStaffService.getCandidateUsers(currentUserId, farmId, keyword);
+        return ApiResp.ok("Danh sách ứng viên tài khoản", list);
+    }
+
     @PostMapping("/staff")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResp<FarmMemberResp> addStaff(
@@ -60,5 +70,14 @@ public class FarmStaffController {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
         farmStaffService.deactivateStaff(currentUserId, farmId, memberId);
         return ApiResp.ok("Đã vô hiệu hóa thành viên thành công", null);
+    }
+
+    @DeleteMapping("/{memberId}")
+    public ApiResp<Void> deleteStaff(
+            @PathVariable Integer farmId,
+            @PathVariable Integer memberId) {
+        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
+        farmStaffService.deleteStaff(currentUserId, farmId, memberId);
+        return ApiResp.ok("Đã xóa thành viên khỏi trang trại", null);
     }
 }

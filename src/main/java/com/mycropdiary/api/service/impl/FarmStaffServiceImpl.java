@@ -1,5 +1,12 @@
 package com.mycropdiary.api.service.impl;
 
+import com.mycropdiary.api.dto.staff.CandidateUserResp;
+import com.mycropdiary.api.dto.staff.FarmInvitationResp;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
+import java.util.Set;
 import com.mycropdiary.api.dto.staff.AddStaffReq;
 import com.mycropdiary.api.dto.staff.FarmMemberResp;
 import com.mycropdiary.api.dto.staff.UpdateStaffReq;
@@ -107,7 +114,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
             member.setMemberRole(role);
             member.setJoinedAt(Instant.now());
         } else {
-            member = new FarmMember(farm, user, role, "active");
+            member = new FarmMember(farm, user, role, "invited");
         }
 
         FarmMember saved = farmMemberRepository.save(member);
@@ -205,6 +212,85 @@ public class FarmStaffServiceImpl implements FarmStaffService {
         } catch (Exception ex) {
             member.setMembershipStatus("left");
             farmMemberRepository.save(member);
+        }
+    }
+
+        @Override
+    @Transactional(readOnly = true)
+    public List<CandidateUserResp> getCandidateUsers(Integer currentUserId, Integer farmId, String keyword) {
+        accessGuard.requireFarmOwner(currentUserId, farmId);
+
+        List<FarmMember> existingMembers = farmMemberRepository.findByFarmId(farmId);
+        Set<Integer> excludedUserIds = existingMembers.stream()
+                .filter(m -> "active".equalsIgnoreCase(m.getMembershipStatus()) || "invited".equalsIgnoreCase(m.getMembershipStatus()))
+                .map(m -> m.getUser().getId())
+                .collect(Collectors.toSet());
+        excludedUserIds.add(currentUserId);
+
+        String search = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        Page<User> usersPage = userRepository.searchUsers("active", search, PageRequest.of(0, 30, Sort.by("fullName").ascending()));
+
+        return usersPage.getContent().stream()
+                .filter(u -> !excludedUserIds.contains(u.getId()))
+                .map(u -> new CandidateUserResp(
+                        u.getId(),
+                        u.getFullName(),
+                        u.getEmail(),
+                        u.getPhone(),
+                        u.getAvatarUrl(),
+                        u.getSystemRole()
+                ))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FarmInvitationResp> getPendingInvitations(Integer currentUserId) {
+        List<FarmMember> invitations = farmMemberRepository.findByUserIdAndStatus(currentUserId, "invited");
+
+        return invitations.stream().map(inv -> {
+            Farm farm = inv.getFarm();
+            String ownerName = farmMemberRepository.findByFarmIdAndStatus(farm.getId(), "active").stream()
+                    .filter(FarmMember::isOwner)
+                    .map(m -> m.getUser().getFullName())
+                    .findFirst()
+                    .orElse("Chủ trang trại");
+
+            return new FarmInvitationResp(
+                    inv.getId(),
+                    farm.getId(),
+                    farm.getFarmName(),
+                    farm.getAddress(),
+                    ownerName,
+                    inv.getMemberRole(),
+                    inv.getJobTitle(),
+                    inv.getJoinedAt()
+            );
+        }).toList();
+    }
+
+    @Override
+    public void respondInvitation(Integer currentUserId, Integer memberId, String action) {
+        FarmMember member = farmMemberRepository.findById(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lời mời với ID: " + memberId));
+
+        if (!member.getUser().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("Bạn không có quyền phản hồi lời mời của tài khoản khác");
+        }
+
+        if (!"invited".equalsIgnoreCase(member.getMembershipStatus())) {
+            throw new BusinessRuleException("Lời mời này không ở trạng thái chờ phản hồi (Trạng thái hiện tại: " + member.getMembershipStatus() + ")");
+        }
+
+        if ("approve".equalsIgnoreCase(action)) {
+            member.setMembershipStatus("active");
+            member.setJoinedAt(Instant.now());
+            farmMemberRepository.save(member);
+        } else if ("reject".equalsIgnoreCase(action)) {
+            member.setMembershipStatus("left");
+            farmMemberRepository.save(member);
+        } else {
+            throw new BusinessRuleException("Hành động không hợp lệ: " + action + ". Chỉ chấp nhận 'approve' hoặc 'reject'.");
         }
     }
 

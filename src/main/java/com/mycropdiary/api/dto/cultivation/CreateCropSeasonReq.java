@@ -11,8 +11,9 @@ public record CreateCropSeasonReq(
         @Size(max = 120, message = "Tên mùa vụ không được vượt quá 120 ký tự")
         String seasonName,
 
-        @NotNull(message = "Loại cây trồng không được để trống")
         Integer cropCategoryId,
+
+        String cropCategoryName,
 
         @NotNull(message = "Ngày bắt đầu mùa vụ không được để trống")
         LocalDate startDate,
@@ -25,4 +26,3 @@ public record CreateCropSeasonReq(
         String notes
 ) {
 }
-

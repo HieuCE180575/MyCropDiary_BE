@@ -722,14 +722,30 @@ VALUES
 SET IDENTITY_INSERT [FarmWorker] OFF;
 GO
 
--- 7. CROP CATEGORIES (IDs: 1 to 4)
+-- 7. CROP CATEGORIES (IDs: 1 to 20)
 SET IDENTITY_INSERT [CropCategory] ON;
 INSERT INTO [CropCategory] (crop_category_id, category_name, description, image_url)
 VALUES
 (1, N'Dưa Lưới', N'Dưa lưới ruột cam giống Nhật Bản công nghệ cao', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
 (2, N'Ớt Chuông Đà Lạt', N'Ớt chuông đỏ, vàng, cam ngọt giòn nhà kính', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83'),
 (3, N'Cà Chua Cherry', N'Cà chua bi ngọt chùm xuất khẩu', 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea'),
-(4, N'Xoài Cát Chu', N'Đặc sản xoài cát chu Đồng Tháp', 'https://images.unsplash.com/photo-1553279768-865429fa0078');
+(4, N'Xoài Cát Chu', N'Đặc sản xoài cát chu Đồng Tháp', 'https://images.unsplash.com/photo-1553279768-865429fa0078'),
+(5, N'Rau Muống', N'Cây rau ngắn ngày ăn lá, chu kỳ thu hoạch 25-30 ngày', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
+(6, N'Xà Lách Mỡ (Lettuce)', N'Cây rau ăn lá ngắn ngày trồng thủy canh hoặc đất sạch, chu kỳ 35-45 ngày', 'https://images.unsplash.com/photo-1556801712-76c8eb07bbc9'),
+(7, N'Cải Thìa (Bok Choy)', N'Rau ăn lá ngắn ngày giàu dinh dưỡng VietGAP, chu kỳ 30-40 ngày', 'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f'),
+(8, N'Cải Bó Xôi (Spinach)', N'Cây rau ngắn ngày ôn đới giàu sắt và khoáng chất, chu kỳ 35-45 ngày', 'https://images.unsplash.com/photo-1576045057995-568f588f82fb'),
+(9, N'Cải Ngọt', N'Cây rau ngắn ngày phổ biến, sinh trưởng khỏe, chu kỳ 25-35 ngày', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
+(10, N'Dưa Leo (Dưa Chuột)', N'Cây rau ăn quả ngắn ngày giàn leo năng suất cao, chu kỳ 45-60 ngày', 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e'),
+(11, N'Đậu Cô Ve (Đậu Que)', N'Cây họ đậu ngắn ngày cố định đạm sinh học, chu kỳ 50-60 ngày', 'https://images.unsplash.com/photo-1551462147-37885acc36f1'),
+(12, N'Đậu Bắp', N'Cây ăn quả ngắn ngày chịu nhiệt tốt, giàu chất xơ, chu kỳ 45-55 ngày', 'https://images.unsplash.com/photo-1425543103986-22abb7d7e8d2'),
+(13, N'Cà Rốt Baby', N'Cây ăn củ ngắn ngày VietGAP giòn ngọt, chu kỳ 60-75 ngày', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
+(14, N'Củ Cải Trắng', N'Cây ăn củ ngắn ngày sinh trưởng nhanh, chu kỳ 40-50 ngày', 'https://images.unsplash.com/photo-1590779033100-9f60a05a013d'),
+(15, N'Hành Lá & Rau Thơm', N'Cây gia vị ngắn ngày thu hoạch liên tục quanh năm, chu kỳ 30-40 ngày', 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5'),
+(16, N'Rau Mồng Tơi', N'Cây rau ăn lá ngắn ngày thanh nhiệt mùa hè, chu kỳ 30-40 ngày', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
+(17, N'Bắp Cải', N'Cây rau cuốn bắp ngắn ngày vụ đông xuân, chu kỳ 65-75 ngày', 'https://images.unsplash.com/photo-1550828520-4cb496926fc9'),
+(18, N'Dưa Hấu', N'Cây ăn quả ngắn ngày ruột đỏ ngọt mát, chu kỳ 60-70 ngày', 'https://images.unsplash.com/photo-1587049352846-4a222e784d38'),
+(19, N'Bí Đao Chanh', N'Cây ăn quả ngắn ngày leo giàn VietGAP, chu kỳ 60-70 ngày', 'https://images.unsplash.com/photo-1570715621210-b74704bdfa57'),
+(20, N'Bắp Ngọt (Ngô)', N'Cây lương thực ngắn ngày chất lượng cao, chu kỳ 70-80 ngày', 'https://images.unsplash.com/photo-1551754655-cd27e38d2076');
 SET IDENTITY_INSERT [CropCategory] OFF;
 GO
 

@@ -248,5 +248,24 @@ public class CropSeasonServiceImpl implements CropSeasonService {
                 cs.getCreatedAt()
         );
     }
-}
 
+    private CropCategory resolveCategory(Integer categoryId, String categoryName) {
+        if (categoryId != null && categoryId > 0) {
+            CropCategory found = cropCategoryRepository.findById(categoryId).orElse(null);
+            if (found != null) return found;
+        }
+        if (StringUtils.hasText(categoryName)) {
+            String trimmed = categoryName.trim();
+            return cropCategoryRepository.findByCategoryNameIgnoreCase(trimmed)
+                    .orElseGet(() -> {
+                        CropCategory newCat = new CropCategory(trimmed, "Cây ngắn ngày canh tác theo quy trình VietGAP");
+                        return cropCategoryRepository.save(newCat);
+                    });
+        }
+        if (categoryId != null) {
+            throw new ResourceNotFoundException("Loại cây trồng không tồn tại ID: " + categoryId);
+        }
+        throw new BadRequestException("Vui lòng chọn hoặc nhập tên loại cây trồng hợp lệ.");
+    }
+
+}
