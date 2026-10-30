@@ -42,4 +42,9 @@ public interface StaffZoneAssignmentRepository extends JpaRepository<StaffZoneAs
     List<StaffZoneAssignment> findAssignments(@Param("farmId") Integer farmId,
                                               @Param("zoneId") Integer zoneId,
                                               @Param("isActive") Boolean isActive);
+
+    @Query("SELECT sa.farmMember.id, COUNT(sa.id) FROM StaffZoneAssignment sa " +
+           "WHERE sa.zone.farm.id = :farmId AND sa.endedAt IS NULL " +
+           "GROUP BY sa.farmMember.id")
+    List<Object[]> countActiveAssignmentsGroupedByMember(@Param("farmId") Integer farmId);
 }

@@ -21,7 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -53,7 +55,21 @@ public class FarmStaffServiceImpl implements FarmStaffService {
         String trimmedStatus = (status != null && !status.isBlank()) ? status.trim().toLowerCase() : null;
 
         List<FarmMember> members = farmMemberRepository.searchMembers(farmId, trimmedStatus, trimmedKeyword);
-        return members.stream().map(this::toResponse).toList();
+        if (members.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Integer, Integer> assignmentCountMap = assignmentRepository.countActiveAssignmentsGroupedByMember(farmId)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Integer) row[0],
+                        row -> ((Number) row[1]).intValue(),
+                        (existing, replacement) -> existing
+                ));
+
+        return members.stream()
+                .map(member -> toResponse(member, assignmentCountMap.getOrDefault(member.getId(), 0)))
+                .toList();
     }
 
     @Override
@@ -95,7 +111,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
         }
 
         FarmMember saved = farmMemberRepository.save(member);
-        return toResponse(saved);
+        return toResponse(saved, 0);
     }
 
     @Override
@@ -122,13 +138,13 @@ public class FarmStaffServiceImpl implements FarmStaffService {
         if (request.status() != null && !request.status().equalsIgnoreCase(member.getMembershipStatus())) {
             if ("suspended".equalsIgnoreCase(request.status()) || "left".equalsIgnoreCase(request.status()) || "inactive".equalsIgnoreCase(request.status())) {
                 deactivateStaff(currentUserId, farmId, memberId);
-                return toResponse(member);
+                return toResponse(member, 0);
             }
             member.setMembershipStatus(request.status().toLowerCase());
         }
 
         FarmMember saved = farmMemberRepository.save(member);
-        return toResponse(saved);
+        return toResponse(saved, null);
     }
 
     @Override
@@ -192,8 +208,11 @@ public class FarmStaffServiceImpl implements FarmStaffService {
         }
     }
 
-    private FarmMemberResp toResponse(FarmMember member) {
-        List<StaffZoneAssignment> activeAssignments = assignmentRepository.findByFarmMemberIdAndEndedAtIsNull(member.getId());
+    private FarmMemberResp toResponse(FarmMember member, Integer activeAssignmentCount) {
+        int count = (activeAssignmentCount != null)
+                ? activeAssignmentCount
+                : assignmentRepository.findByFarmMemberIdAndEndedAtIsNull(member.getId()).size();
+
         return new FarmMemberResp(
                 member.getId(),
                 member.getFarm().getId(),
@@ -203,11 +222,11 @@ public class FarmStaffServiceImpl implements FarmStaffService {
                 member.getUser().getEmail(),
                 member.getUser().getPhone(),
                 member.getMemberRole(),
-                null,
+                member.getJobTitle(),
                 member.getJoinedAt(),
                 null,
                 member.getMembershipStatus(),
-                activeAssignments.size()
+                count
         );
     }
 }

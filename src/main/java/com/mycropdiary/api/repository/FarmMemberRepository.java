@@ -41,6 +41,7 @@ public interface FarmMemberRepository extends JpaRepository<FarmMember, Integer>
 
     @Query("SELECT fm FROM FarmMember fm " +
            "JOIN FETCH fm.user u " +
+           "JOIN FETCH fm.farm f " +
            "WHERE fm.farm.id = :farmId " +
            "AND (:status IS NULL OR LOWER(fm.membershipStatus) = LOWER(:status)) " +
            "AND (:keyword IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
