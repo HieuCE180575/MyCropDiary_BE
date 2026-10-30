@@ -906,9 +906,9 @@ GO
 SET IDENTITY_INSERT [Material] ON;
 INSERT INTO [Material] (material_id, farm_id, material_name, material_type, unit, description, is_active)
 VALUES
-(1, 1, N'Phân NPK 20-20-20 Haifa', N'Phân bón hòa tan', 'kg', N'Phân bón NPK tinh khiết tan hoàn toàn nhập khẩu Israel', 1),
-(2, 1, N'Dung Dịch Thủy Canh A+B GreenHydro', N'Dinh dưỡng lỏng', 'lít', N'Cặp dinh dưỡng khoáng đa trung vi lượng đậm đặc chuyên dưa lưới', 1),
-(3, 1, N'Chế Phẩm Sinh Học Trừ Sâu Neem Chito', N'Thuốc BVTV sinh học', 'chai', N'Dầu neem kết hợp chitosan xua đuổi bọ trĩ và nấm bệnh', 1),
+(1, 1, N'Phân NPK 20-20-20 Haifa', N'Phân bón hòa tan', 'bao', N'Phân bón NPK tinh khiết tan hoàn toàn nhập khẩu Israel (Bao 25kg)', 1),
+(2, 1, N'Dung Dịch Thủy Canh A+B GreenHydro', N'Dinh dưỡng lỏng', 'can', N'Cặp dinh dưỡng khoáng đa trung vi lượng đậm đặc chuyên dưa lưới (Can 5L)', 1),
+(3, 1, N'Chế Phẩm Sinh Học Trừ Sâu Neem Chito', N'Thuốc BVTV sinh học', 'chai', N'Dầu neem kết hợp chitosan xua đuổi bọ trĩ và nấm bệnh (Chai 1L)', 1),
 (4, 1, N'Hạt Giống Dưa Lưới F1 Taka Nhật Bản', N'Hạt giống', 'gói', N'Hạt giống tỉ lệ nảy mầm > 98%, độ ngọt brix từ 14-16%', 1),
 (5, 1, N'Thùng Carton Đóng Dưa Lưới 5kg', N'Bao bì & Đóng gói', 'cái', N'Thùng giấy 5 lớp in ấn chuẩn thương hiệu MyCropDiary', 1);
 SET IDENTITY_INSERT [Material] OFF;

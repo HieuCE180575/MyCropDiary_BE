@@ -392,10 +392,10 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             if (farmOpt.isPresent() && materialRepository.findAllByFarmId(farmId).isEmpty()) {
                 Farm farm = farmOpt.get();
                 List<Material> defaults = List.of(
-                        createDefaultMaterial(farm, "Phân trùn quế Vermicompost", "Phân bón hữu cơ", "Dạng hữu cơ vi sinh", "kg", "Phân hữu cơ vi sinh giàu mùn cải tạo đất chuẩn VietGAP"),
-                        createDefaultMaterial(farm, "Phân NPK 20-20-20 Haifa", "Phân bón hòa tan", "Dạng bột", "kg", "Phân bón NPK tinh khiết tan hoàn toàn dùng cho hệ thống tưới"),
-                        createDefaultMaterial(farm, "Dung dịch thủy canh A+B GreenHydro", "Dinh dưỡng lỏng", "Dạng lỏng / dung dịch", "L", "Dinh dưỡng khoáng đa trung vi lượng đậm đặc"),
-                        createDefaultMaterial(farm, "Chế phẩm sinh học trừ sâu Neem Chito", "Thuốc BVTV sinh học", "Dạng nhũ dầu", "chai", "Dầu neem kết hợp chitosan phòng trừ bọ trĩ và nấm bệnh"),
+                        createDefaultMaterial(farm, "Phân trùn quế Vermicompost", "Phân bón hữu cơ", "Dạng hữu cơ vi sinh", "bao", "Phân hữu cơ vi sinh giàu mùn cải tạo đất chuẩn VietGAP (Bao 50kg)"),
+                        createDefaultMaterial(farm, "Phân NPK 20-20-20 Haifa", "Phân bón hòa tan", "Dạng bột", "bao", "Phân bón NPK tinh khiết tan hoàn toàn dùng cho hệ thống tưới (Bao 25kg)"),
+                        createDefaultMaterial(farm, "Dung dịch thủy canh A+B GreenHydro", "Dinh dưỡng lỏng", "Dạng lỏng / dung dịch", "can", "Dinh dưỡng khoáng đa trung vi lượng đậm đặc (Can 5L)"),
+                        createDefaultMaterial(farm, "Chế phẩm sinh học trừ sâu Neem Chito", "Thuốc BVTV sinh học", "Dạng nhũ dầu", "chai", "Dầu neem kết hợp chitosan phòng trừ bọ trĩ và nấm bệnh (Chai 1L)"),
                         createDefaultMaterial(farm, "Chế phẩm nấm đối kháng Trichoderma", "Chế phẩm sinh học", "Dạng bột", "gói", "Chế phẩm vi sinh ủ phân và phòng nấm bệnh rễ"),
                         createDefaultMaterial(farm, "Hạt giống dưa lưới F1 Taka Nhật Bản", "Hạt giống", "Hạt / cây giống", "gói", "Hạt giống tỷ lệ nảy mầm cao đạt chuẩn VietGAP")
                 );
@@ -495,14 +495,32 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
     private boolean isCompatibleUnit(String materialUnit, String requestUnit) {
         if (materialUnit == null || requestUnit == null) return true;
-        String a = materialUnit.trim();
-        String b = requestUnit.trim();
-        if (a.equalsIgnoreCase(b)) return true;
-        return isLiterUnit(a) && isLiterUnit(b);
+        String a = materialUnit.trim().toLowerCase();
+        String b = requestUnit.trim().toLowerCase();
+        if (a.equals(b)) return true;
+
+        // Liter / Liquid / Bottle (chai) / Can / Thùng compatibility
+        if (isLiquidPackagingUnit(a) && isLiquidPackagingUnit(b)) return true;
+
+        // Solid / Fertilizer / Bag (bao) / Ton (tấn) / Kg compatibility
+        if (isSolidPackagingUnit(a) && isSolidPackagingUnit(b)) return true;
+
+        return false;
     }
 
-    private boolean isLiterUnit(String unit) {
-        return "l".equalsIgnoreCase(unit) || "lít".equalsIgnoreCase(unit) || "lit".equalsIgnoreCase(unit);
+    private boolean isLiquidPackagingUnit(String u) {
+        if (u == null) return false;
+        String s = u.toLowerCase();
+        return s.equals("l") || s.equals("lít") || s.equals("lit") || s.equals("ml")
+                || s.contains("chai") || s.contains("can") || s.contains("thùng") || s.contains("lọ");
+    }
+
+    private boolean isSolidPackagingUnit(String u) {
+        if (u == null) return false;
+        String s = u.toLowerCase();
+        return s.equals("kg") || s.equals("kilogram") || s.equals("g") || s.equals("gram")
+                || s.contains("bao") || s.equals("tấn") || s.equals("tan") || s.equals("tạ") || s.equals("ta")
+                || s.contains("gói") || s.contains("thùng");
     }
 
     private String cleanText(String value) {
