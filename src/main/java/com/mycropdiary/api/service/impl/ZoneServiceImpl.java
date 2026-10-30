@@ -24,6 +24,7 @@ import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -82,6 +83,16 @@ public class ZoneServiceImpl implements ZoneService {
         String zoneName = request.zoneName().trim();
         if (zoneRepository.existsByFarmIdAndZoneNameIgnoreCaseAndIdNot(zone.getFarm().getId(), zoneName, zoneId)) {
             throw new ResourceConflictException("Tên phân khu (Zone) '" + zoneName + "' đã được sử dụng bởi phân khu khác");
+        }
+
+        // Business Rule: Diện tích phân khu mới không được nhỏ hơn tổng diện tích các lô đất hiện có trực thuộc
+        if (request.areaValue() != null && request.areaValue().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal currentBlocksTotal = blockRepository.sumAreaValueByZoneId(zoneId, null);
+            if (currentBlocksTotal != null && currentBlocksTotal.compareTo(request.areaValue()) > 0) {
+                String unit = request.areaUnit() != null ? request.areaUnit() : zone.getAreaUnit();
+                throw new BusinessRuleException("Diện tích phân khu mới (" + request.areaValue() + " " + unit +
+                        ") không được nhỏ hơn tổng diện tích các lô đất hiện có (" + currentBlocksTotal + " " + zone.getAreaUnit() + ")");
+            }
         }
 
         zone.setZoneName(zoneName);

@@ -14,6 +14,7 @@ import com.mycropdiary.api.exception.ForbiddenException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
+import com.mycropdiary.api.repository.cultivation.CropSeasonBlockRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
 import com.mycropdiary.api.repository.cultivation.HarvestRecordRepository;
 import com.mycropdiary.api.service.cultivation.HarvestRecordService;
@@ -42,24 +43,35 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
     private final CropSeasonRepository cropSeasonRepository;
     private final FarmMemberRepository farmMemberRepository;
     private final BlockRepository blockRepository;
+    private final CropSeasonBlockRepository cropSeasonBlockRepository;
 
     @Autowired
     public HarvestRecordServiceImpl(
             HarvestRecordRepository harvestRecordRepository,
             CropSeasonRepository cropSeasonRepository,
             FarmMemberRepository farmMemberRepository,
-            BlockRepository blockRepository) {
+            BlockRepository blockRepository,
+            CropSeasonBlockRepository cropSeasonBlockRepository) {
         this.harvestRecordRepository = harvestRecordRepository;
         this.cropSeasonRepository = cropSeasonRepository;
         this.farmMemberRepository = farmMemberRepository;
         this.blockRepository = blockRepository;
+        this.cropSeasonBlockRepository = cropSeasonBlockRepository;
+    }
+
+    public HarvestRecordServiceImpl(
+            HarvestRecordRepository harvestRecordRepository,
+            CropSeasonRepository cropSeasonRepository,
+            FarmMemberRepository farmMemberRepository,
+            BlockRepository blockRepository) {
+        this(harvestRecordRepository, cropSeasonRepository, farmMemberRepository, blockRepository, null);
     }
 
     public HarvestRecordServiceImpl(
             HarvestRecordRepository harvestRecordRepository,
             CropSeasonRepository cropSeasonRepository,
             FarmMemberRepository farmMemberRepository) {
-        this(harvestRecordRepository, cropSeasonRepository, farmMemberRepository, null);
+        this(harvestRecordRepository, cropSeasonRepository, farmMemberRepository, null, null);
     }
 
     @Override
@@ -85,11 +97,25 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
             throw new BadRequestException("Đơn vị tính không được để trống.");
         }
 
+        LocalDate harvestDate = request.harvestedAt() != null ? request.harvestedAt().toLocalDate() : LocalDate.now();
+        if (season.getStartDate() != null && harvestDate.isBefore(season.getStartDate())) {
+            throw new BadRequestException("Ngày thu hoạch (" + harvestDate + ") không thể trước ngày bắt đầu mùa vụ (" + season.getStartDate() + ").");
+        }
+
+        if (request.blockId() != null && cropSeasonBlockRepository != null) {
+            cropSeasonBlockRepository.findByCropSeasonIdAndBlockIdWithDetails(season.getId(), request.blockId())
+                    .ifPresent(csb -> {
+                        if (csb.getPlantedAt() != null && harvestDate.isBefore(csb.getPlantedAt())) {
+                            throw new BadRequestException("Ngày thu hoạch (" + harvestDate + ") không thể trước ngày xuống giống tại lô đất (" + csb.getPlantedAt() + ").");
+                        }
+                    });
+        }
+
         HarvestRecord record = new HarvestRecord();
         record.setFarm(season.getFarm());
         record.setCropSeason(season);
         record.setRecordedBy(recordedByMember);
-        record.setHarvestDate(request.harvestedAt() != null ? request.harvestedAt().toLocalDate() : LocalDate.now());
+        record.setHarvestDate(harvestDate);
         record.setQuantity(request.quantity());
         record.setUnit(request.unit().trim());
         record.setQualityGrade(request.qualityGrade() != null ? request.qualityGrade().trim() : null);
@@ -132,8 +158,23 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
             record.setUnit(request.unit().trim());
         }
 
+        LocalDate nextHarvestDate = request.harvestedAt() != null ? request.harvestedAt().toLocalDate() : record.getHarvestDate();
+        if (season != null && season.getStartDate() != null && nextHarvestDate != null && nextHarvestDate.isBefore(season.getStartDate())) {
+            throw new BadRequestException("Ngày thu hoạch (" + nextHarvestDate + ") không thể trước ngày bắt đầu mùa vụ (" + season.getStartDate() + ").");
+        }
+
+        Integer nextBlockId = request.blockId() != null ? request.blockId() : (record.getBlock() != null ? record.getBlock().getId() : null);
+        if (season != null && nextBlockId != null && cropSeasonBlockRepository != null && nextHarvestDate != null) {
+            cropSeasonBlockRepository.findByCropSeasonIdAndBlockIdWithDetails(season.getId(), nextBlockId)
+                    .ifPresent(csb -> {
+                        if (csb.getPlantedAt() != null && nextHarvestDate.isBefore(csb.getPlantedAt())) {
+                            throw new BadRequestException("Ngày thu hoạch (" + nextHarvestDate + ") không thể trước ngày xuống giống tại lô đất (" + csb.getPlantedAt() + ").");
+                        }
+                    });
+        }
+
         if (request.harvestedAt() != null) {
-            record.setHarvestDate(request.harvestedAt().toLocalDate());
+            record.setHarvestDate(nextHarvestDate);
         }
 
         if (request.qualityGrade() != null) {

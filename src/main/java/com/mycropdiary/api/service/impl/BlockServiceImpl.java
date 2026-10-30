@@ -69,7 +69,7 @@ public class BlockServiceImpl implements BlockService {
         // Business Rule: Kiểm tra tọa độ nếu có
         validateCoordinates(request.latitude(), request.longitude());
 
-        // Business Rule: Tổng diện tích các thửa không vượt quá diện tích khu vực sản xuất (nếu có giới hạn)
+        // Business Rule: Diện tích lô không lớn hơn khu vực và Tổng diện tích các thửa không vượt quá diện tích khu vực
         validateZoneCapacity(zone, request.areaValue(), null);
 
         Block block = new Block();
@@ -100,7 +100,7 @@ public class BlockServiceImpl implements BlockService {
         // Business Rule: Kiểm tra tọa độ
         validateCoordinates(request.latitude(), request.longitude());
 
-        // Business Rule: Kiểm tra diện tích khu vực
+        // Business Rule: Diện tích lô không lớn hơn khu vực và Tổng diện tích các thửa không vượt quá diện tích khu vực
         validateZoneCapacity(zone, request.areaValue(), blockId);
 
         block.setBlockName(blockName);
@@ -130,7 +130,7 @@ public class BlockServiceImpl implements BlockService {
     @Transactional(readOnly = true)
     public List<BlockResp> searchBlocks(Integer currentUserId, Integer farmId, Integer zoneId, String status, String keyword) {
         // Business Rule: Kiểm tra quyền truy cập vào trang trại
-        FarmMember currentMember = accessGuard.requireFarmAccess(currentUserId, farmId);
+        FarmMember currentMember = accessGuard.requireFarmMember(currentUserId, farmId);
 
         Set<Integer> allowedZoneIds = null;
         // Chặn truy cập trái quyền đối với Staff:
@@ -200,10 +200,14 @@ public class BlockServiceImpl implements BlockService {
 
     private void validateZoneCapacity(Zone zone, BigDecimal newBlockArea, Integer excludeBlockId) {
         if (zone.getAreaValue() != null && zone.getAreaValue().compareTo(BigDecimal.ZERO) > 0) {
+            String unit = zone.getAreaUnit() != null ? zone.getAreaUnit() : "m2";
+            if (newBlockArea != null && newBlockArea.compareTo(zone.getAreaValue()) > 0) {
+                throw new BusinessRuleException("Diện tích lô đất (" + newBlockArea + " " + unit + ") không được lớn hơn diện tích của phân khu (" + zone.getAreaValue() + " " + unit + ")");
+            }
             BigDecimal currentTotal = blockRepository.sumAreaValueByZoneId(zone.getId(), excludeBlockId);
-            BigDecimal totalWithNew = currentTotal.add(newBlockArea);
+            BigDecimal totalWithNew = currentTotal.add(newBlockArea != null ? newBlockArea : BigDecimal.ZERO);
             if (totalWithNew.compareTo(zone.getAreaValue()) > 0) {
-                throw new BusinessRuleException("Tổng diện tích các thửa đất (" + totalWithNew + " " + zone.getAreaUnit() + ") vượt quá diện tích của khu vực sản xuất (" + zone.getAreaValue() + " " + zone.getAreaUnit() + ")");
+                throw new BusinessRuleException("Tổng diện tích các thửa đất (" + totalWithNew + " " + unit + ") vượt quá diện tích của khu vực sản xuất (" + zone.getAreaValue() + " " + unit + ")");
             }
         }
     }

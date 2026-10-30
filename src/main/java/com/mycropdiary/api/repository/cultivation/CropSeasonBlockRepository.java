@@ -30,6 +30,12 @@ public interface CropSeasonBlockRepository extends JpaRepository<CropSeasonBlock
             @Param("cropSeasonId") Integer cropSeasonId,
             @Param("blockId") Integer blockId);
 
+    @Query("SELECT csb FROM CropSeasonBlock csb " +
+            "JOIN FETCH csb.cropSeason cs " +
+            "JOIN FETCH csb.block b " +
+            "WHERE b.id = :blockId")
+    List<CropSeasonBlock> findByBlockIdWithDetails(@Param("blockId") Integer blockId);
+
     boolean existsByIdCropSeasonIdAndIdBlockId(Integer cropSeasonId, Integer blockId);
 
     void deleteByIdCropSeasonIdAndIdBlockId(Integer cropSeasonId, Integer blockId);

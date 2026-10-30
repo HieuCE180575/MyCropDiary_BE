@@ -37,11 +37,11 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
     private final HarvestRecordRepository harvestRecordRepository;
 
     public CropSeasonBlockServiceImpl(CropSeasonBlockRepository cropSeasonBlockRepository,
-                                     CropSeasonRepository cropSeasonRepository,
-                                     BlockRepository blockRepository,
-                                     FarmAccessGuard farmAccessGuard,
-                                     FarmingActivityRepository farmingActivityRepository,
-                                     HarvestRecordRepository harvestRecordRepository) {
+                                      CropSeasonRepository cropSeasonRepository,
+                                      BlockRepository blockRepository,
+                                      FarmAccessGuard farmAccessGuard,
+                                      FarmingActivityRepository farmingActivityRepository,
+                                      HarvestRecordRepository harvestRecordRepository) {
         this.cropSeasonBlockRepository = cropSeasonBlockRepository;
         this.cropSeasonRepository = cropSeasonRepository;
         this.blockRepository = blockRepository;
@@ -80,6 +80,9 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
         if (expectedHarvestAt != null && plantedAt != null && expectedHarvestAt.isBefore(plantedAt)) {
             throw new BadRequestException("Ngày dự kiến thu hoạch không thể trước ngày xuống giống.");
         }
+
+        // Business Rule: Kiểm tra xung đột thời gian canh tác trên cùng 1 lô đất giữa các mùa vụ
+        validateBlockSeasonScheduleConflict(season, block, plantedAt, expectedHarvestAt);
 
         BigDecimal plantedArea = request.plantedArea() != null ? request.plantedArea() : block.getAreaValue();
         String areaUnit = StringUtils.hasText(request.areaUnit()) ? request.areaUnit().trim() : block.getAreaUnit();
@@ -140,6 +143,10 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
         }
 
         Block block = csb.getBlock();
+
+        // Business Rule: Kiểm tra xung đột thời gian canh tác trên cùng 1 lô đất giữa các mùa vụ
+        validateBlockSeasonScheduleConflict(csb.getCropSeason(), block, plantedAt, expectedHarvestAt);
+
         BigDecimal plantedArea = request.plantedArea() != null ? request.plantedArea() : csb.getPlantedArea();
         String areaUnit = StringUtils.hasText(request.areaUnit()) ? request.areaUnit().trim() : csb.getAreaUnit();
 
@@ -178,6 +185,59 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
         }
 
         cropSeasonBlockRepository.delete(csb);
+    }
+
+    private void validateBlockSeasonScheduleConflict(CropSeason currentSeason, Block block, LocalDate newStart, LocalDate newEnd) {
+        if (newStart == null) {
+            newStart = currentSeason.getStartDate();
+        }
+        if (newEnd == null) {
+            newEnd = currentSeason.getEndDate();
+        }
+
+        List<CropSeasonBlock> existingAssignments = cropSeasonBlockRepository.findByBlockIdWithDetails(block.getId());
+        for (CropSeasonBlock csb : existingAssignments) {
+            CropSeason otherSeason = csb.getCropSeason();
+            if (otherSeason == null || otherSeason.getId().equals(currentSeason.getId())) {
+                continue;
+            }
+
+            String status = otherSeason.getSeasonStatus();
+            if ("cancelled".equalsIgnoreCase(status)) {
+                continue;
+            }
+
+            LocalDate otherStart = csb.getPlantedAt() != null ? csb.getPlantedAt() : otherSeason.getStartDate();
+            LocalDate otherEnd = csb.getExpectedHarvestAt() != null ? csb.getExpectedHarvestAt() : otherSeason.getEndDate();
+
+            if (otherStart == null && otherEnd == null) {
+                continue;
+            }
+
+            boolean overlap;
+            if (newStart == null && newEnd == null) {
+                overlap = true;
+            } else if (newStart != null && newEnd != null && otherStart != null && otherEnd != null) {
+                overlap = !newStart.isAfter(otherEnd) && !otherStart.isAfter(newEnd);
+            } else if (newStart != null && newEnd == null) {
+                overlap = otherEnd == null || !newStart.isAfter(otherEnd);
+            } else if (newStart != null && otherEnd == null) {
+                overlap = newEnd == null || !otherStart.isAfter(newEnd);
+            } else {
+                overlap = true;
+            }
+
+            if (overlap) {
+                String otherTimeStr = (otherStart != null ? otherStart.toString() : "Chưa xác định") +
+                        " đến " + (otherEnd != null ? otherEnd.toString() : "Đang diễn ra");
+                String newTimeStr = (newStart != null ? newStart.toString() : "Chưa xác định") +
+                        " đến " + (newEnd != null ? newEnd.toString() : "Đang diễn ra");
+
+                throw new BadRequestException("Lô đất '" + block.getBlockName() + "' đã được phân bổ cho mùa vụ '" +
+                        otherSeason.getSeasonName() + "' (" + otherTimeStr +
+                        "). Không thể gán vào mùa vụ trùng thời gian (" + newTimeStr + ").");
+            }
+        }
     }
 
     private CropSeasonBlockResp mapToResponse(CropSeasonBlock csb) {
