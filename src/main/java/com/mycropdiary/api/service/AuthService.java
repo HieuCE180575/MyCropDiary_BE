@@ -32,4 +32,7 @@ public interface AuthService {
     // [AI_CHANGE] UC-06: Xác minh OTP và đặt lại mật khẩu mới
     /** UC-06: Đặt lại mật khẩu sau khi xác minh OTP */
     void resetPassword(ResetPasswordReq request);
+
+    /** Đăng nhập / Đăng ký tài khoản nhanh qua Google OAuth2 / ID Token */
+    AuthResp loginWithGoogle(GoogleAuthReq request);
 }

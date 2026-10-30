@@ -30,6 +30,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Base64;
+import java.util.UUID;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @Transactional(readOnly = true)
@@ -275,6 +279,82 @@ public class AuthServiceImpl implements AuthService {
         revokeAllOldTokens(user.getId(), "refresh");
 
         log.info("UC-06: Đặt lại mật khẩu thành công cho email: {}", user.getEmail());
+    }
+
+    // ==================== Google OAuth2 Sign-In / Register ====================
+    @Override
+    @Transactional
+    public AuthResp loginWithGoogle(GoogleAuthReq request) {
+        if (request == null) {
+            throw new BadRequestException("Dữ liệu xác thực Google không hợp lệ.");
+        }
+
+        String email = request.email();
+        String fullName = request.fullName();
+        String avatarUrl = request.avatarUrl();
+
+        if (request.idToken() != null && !request.idToken().isBlank()) {
+            String[] parts = request.idToken().split("\\.");
+            if (parts.length >= 2) {
+                try {
+                    byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode claims = mapper.readTree(decoded);
+                    if (claims.hasNonNull("email")) {
+                        email = claims.get("email").asText();
+                    }
+                    if (claims.hasNonNull("name") && (fullName == null || fullName.isBlank())) {
+                        fullName = claims.get("name").asText();
+                    }
+                    if (claims.hasNonNull("picture") && (avatarUrl == null || avatarUrl.isBlank())) {
+                        avatarUrl = claims.get("picture").asText();
+                    }
+                } catch (Exception e) {
+                    log.warn("Không thể giải mã Google ID token payload: {}", e.getMessage());
+                }
+            }
+        }
+
+        if (email == null || email.isBlank()) {
+            throw new BadRequestException("Không xác định được email từ tài khoản Google.");
+        }
+
+        email = email.trim().toLowerCase();
+
+        User user = userRepository.findByEmailIgnoreCase(email).orElse(null);
+
+        if (user != null) {
+            if (!user.isActive()) {
+                user.setAccountStatus("active");
+                user.setEmailVerifiedAt(Instant.now());
+            }
+            if ((user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()) && avatarUrl != null && !avatarUrl.isBlank()) {
+                user.setAvatarUrl(avatarUrl);
+            }
+            user.setLastLoginAt(Instant.now());
+            userRepository.save(user);
+            log.info("Google Sign-In thành công cho tài khoản hiện có: {}", user.getEmail());
+            return issueTokens(user);
+        } else {
+            String randomPassword = UUID.randomUUID().toString();
+            String name = (fullName != null && !fullName.isBlank()) ? fullName.trim() : email.split("@")[0];
+            User newUser = new User(
+                    email,
+                    passwordEncoder.encode(randomPassword),
+                    name,
+                    null,
+                    "user",
+                    "active"
+            );
+            if (avatarUrl != null && !avatarUrl.isBlank()) {
+                newUser.setAvatarUrl(avatarUrl);
+            }
+            newUser.setEmailVerifiedAt(Instant.now());
+            newUser.setLastLoginAt(Instant.now());
+            User saved = userRepository.save(newUser);
+            log.info("Tạo mới tài khoản và đăng nhập thành công qua Google: {}", saved.getEmail());
+            return issueTokens(saved);
+        }
     }
 
     // ==================== Private helpers ====================

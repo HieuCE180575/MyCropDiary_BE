@@ -61,6 +61,16 @@ public class AuthController {
     }
 
     /**
+     * Đăng nhập / Đăng ký nhanh bằng Google OAuth2 / ID Token.
+     */
+    @Operation(summary = "Đăng nhập / Đăng ký bằng Google", description = "Xác thực qua Google OAuth2 / Identity Services (GSI). Tự động kích hoạt hoặc khởi tạo tài khoản nếu chưa tồn tại.")
+    @PostMapping("/google")
+    public ApiResp<AuthResp> loginWithGoogle(@Valid @RequestBody GoogleAuthReq request) {
+        AuthResp response = authService.loginWithGoogle(request);
+        return ApiResp.ok("Xác thực Google thành công.", response);
+    }
+
+    /**
      * Gửi lại OTP nếu email chưa nhận được hoặc OTP đã hết hạn.
      */
     @Operation(summary = "Gửi lại mã OTP qua email", description = "Tạo mã OTP mới và gửi lại vào email người dùng nếu mã cũ bị hết hạn hoặc thất lạc.")
