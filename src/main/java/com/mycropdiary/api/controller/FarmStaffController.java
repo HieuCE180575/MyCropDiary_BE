@@ -61,13 +61,4 @@ public class FarmStaffController {
         farmStaffService.deactivateStaff(currentUserId, farmId, memberId);
         return ApiResp.ok("Đã vô hiệu hóa thành viên thành công", null);
     }
-
-    @DeleteMapping("/{memberId}")
-    public ApiResp<Void> deleteStaff(
-            @PathVariable Integer farmId,
-            @PathVariable Integer memberId) {
-        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        farmStaffService.deleteStaff(currentUserId, farmId, memberId);
-        return ApiResp.ok("Xóa thành viên khỏi trang trại thành công", null);
-    }
 }
