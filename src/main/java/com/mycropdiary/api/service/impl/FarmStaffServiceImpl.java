@@ -159,6 +159,39 @@ public class FarmStaffServiceImpl implements FarmStaffService {
         }
     }
 
+    @Override
+    public void deleteStaff(Integer currentUserId, Integer farmId, Integer memberId) {
+        accessGuard.requireFarmOwner(currentUserId, farmId);
+
+        FarmMember member = farmMemberRepository.findById(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên ID: " + memberId));
+
+        if (!member.getFarm().getId().equals(farmId)) {
+            throw new BusinessRuleException("Thành viên không thuộc trang trại này");
+        }
+
+        if (member.isOwner()) {
+            long activeOwners = farmMemberRepository.countByFarmIdAndFarmRoleAndStatus(farmId, "owner", "active");
+            if (activeOwners <= 1) {
+                throw new BusinessRuleException("Không thể xóa Chủ trang trại duy nhất của trang trại");
+            }
+        }
+
+        List<StaffZoneAssignment> activeAssignments = assignmentRepository.findActiveAssignmentsByMemberId(memberId);
+        for (StaffZoneAssignment assignment : activeAssignments) {
+            assignment.setEndedAt(Instant.now());
+            assignmentRepository.save(assignment);
+        }
+
+        try {
+            farmMemberRepository.delete(member);
+            farmMemberRepository.flush();
+        } catch (Exception ex) {
+            member.setMembershipStatus("left");
+            farmMemberRepository.save(member);
+        }
+    }
+
     private FarmMemberResp toResponse(FarmMember member) {
         List<StaffZoneAssignment> activeAssignments = assignmentRepository.findByFarmMemberIdAndEndedAtIsNull(member.getId());
         return new FarmMemberResp(

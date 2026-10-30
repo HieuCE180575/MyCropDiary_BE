@@ -11,4 +11,5 @@ public interface FarmStaffService {
     FarmMemberResp addStaff(Integer currentUserId, Integer farmId, AddStaffReq request);
     FarmMemberResp updateStaff(Integer currentUserId, Integer farmId, Integer memberId, UpdateStaffReq request);
     void deactivateStaff(Integer currentUserId, Integer farmId, Integer memberId);
+    void deleteStaff(Integer currentUserId, Integer farmId, Integer memberId);
 }
