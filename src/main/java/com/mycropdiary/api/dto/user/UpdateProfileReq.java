@@ -15,7 +15,7 @@ public record UpdateProfileReq(
         @Pattern(regexp = "^(0[35789]\\d{8})?$", message = "Số điện thoại không hợp lệ (định dạng 10 số Việt Nam)")
         String phone,
 
-        @Size(max = 1000, message = "URL ảnh đại diện không vượt quá 1000 ký tự")
+        @Size(max = 2000000, message = "Ảnh đại diện không vượt quá 2MB")
         String avatarUrl
 ) {
 }
