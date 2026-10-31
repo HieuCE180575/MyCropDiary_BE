@@ -93,3 +93,4 @@ public class SoilAssessment {
     public Instant getAssessedAt() { return assessedAt; }
     public void setAssessedAt(Instant assessedAt) { this.assessedAt = assessedAt; }
 }
+

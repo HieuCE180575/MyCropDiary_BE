@@ -96,3 +96,4 @@ public class SoilAssessmentServiceImpl implements SoilAssessmentService {
         soilRepository.delete(entity);
     }
 }
+

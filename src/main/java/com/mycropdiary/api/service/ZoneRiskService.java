@@ -37,3 +37,4 @@ public interface ZoneRiskService {
      */
     void deleteZoneRisk(Integer currentUserId, Integer riskId);
 }
+

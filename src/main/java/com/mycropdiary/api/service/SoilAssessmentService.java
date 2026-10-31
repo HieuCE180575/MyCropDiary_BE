@@ -31,3 +31,4 @@ public interface SoilAssessmentService {
      */
     void deleteSoilAssessment(Integer currentUserId, Integer assessmentId);
 }
+

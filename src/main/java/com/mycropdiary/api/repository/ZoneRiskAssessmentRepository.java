@@ -28,3 +28,4 @@ public interface ZoneRiskAssessmentRepository extends JpaRepository<ZoneRiskAsse
             "ORDER BY r.assessedAt DESC")
     List<ZoneRiskAssessment> findByFarmIdOrderByAssessedAtDesc(@Param("farmId") Integer farmId);
 }
+

@@ -30,3 +30,4 @@ public record CreateZoneRiskReq(
         Instant assessedAt
 ) {
 }
+

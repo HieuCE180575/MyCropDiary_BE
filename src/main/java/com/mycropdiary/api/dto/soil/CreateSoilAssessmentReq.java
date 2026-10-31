@@ -32,3 +32,4 @@ public record CreateSoilAssessmentReq(
         Instant assessedAt
 ) {
 }
+

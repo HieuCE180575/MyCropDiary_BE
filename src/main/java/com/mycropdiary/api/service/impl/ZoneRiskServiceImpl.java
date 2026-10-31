@@ -127,3 +127,4 @@ public class ZoneRiskServiceImpl implements ZoneRiskService {
         riskRepository.delete(entity);
     }
 }
+

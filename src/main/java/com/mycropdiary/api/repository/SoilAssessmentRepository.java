@@ -30,3 +30,4 @@ public interface SoilAssessmentRepository extends JpaRepository<SoilAssessment, 
             "ORDER BY s.assessedAt DESC")
     List<SoilAssessment> findByFarmIdOrderByAssessedAtDesc(@Param("farmId") Integer farmId);
 }
+
