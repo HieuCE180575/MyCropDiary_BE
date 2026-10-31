@@ -657,15 +657,15 @@ GO
 SET IDENTITY_INSERT [User] ON;
 INSERT INTO [User] (user_id, full_name, email, phone, password_hash, system_role, account_status, email_verified_at)
 VALUES 
-(1, N'Quản Trị Viên Hệ Thống', 'admin@cropdiary.com', '0901234567', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'admin', 'active', SYSUTCDATETIME()),
-(2, N'Trần Văn Chủ Nông Trại Đà Lạt', 'owner1@dalatfarm.com', '0912345678', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(3, N'Lê Thị Chủ Vườn Miền Tây', 'owner2@mekongfarm.com', '0923456789', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(4, N'Nguyễn Kỹ Thuật Viên Đà Lạt', 'staff1@dalatfarm.com', '0934567890', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(5, N'Hoàng Quản Lý Vùng Trồng', 'staff2@dalatfarm.com', '0945678901', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(6, N'Phạm Đăng Ký Chờ Kích Hoạt', 'pending.user@cropdiary.com', '0956789012', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'pending', NULL),
-(7, N'Trần Văn Bình (Công Nhân Chăm Sóc)', 'worker1@dalatfarm.com', '0967890123', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(8, N'Lê Thị Hoa (Công Nhân Thu Hoạch)', 'worker2@dalatfarm.com', '0978901234', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(9, N'Đặng Hữu Phúc (Chủ Hộ Đăng Ký)', 'register.farm@cropdiary.com', '0989012345', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME());
+(1, N'System Administrator', 'admin@cropdiary.com', '0901234567', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'admin', 'active', SYSUTCDATETIME()),
+(2, N'Tran Van (Da Lat Farm Owner)', 'owner1@dalatfarm.com', '0912345678', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
+(3, N'Le Thi (Mekong Orchard Owner)', 'owner2@mekongfarm.com', '0923456789', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
+(4, N'Nguyen Van (Da Lat Farm Technician)', 'staff1@dalatfarm.com', '0934567890', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
+(5, N'Hoang Minh (Production Area Supervisor)', 'staff2@dalatfarm.com', '0945678901', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
+(6, N'Pham Van (Pending Activation)', 'pending.user@cropdiary.com', '0956789012', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'pending', NULL),
+(7, N'Tran Van Binh (Field Care Worker)', 'worker1@dalatfarm.com', '0967890123', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
+(8, N'Le Thi Hoa (Harvest Worker)', 'worker2@dalatfarm.com', '0978901234', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
+(9, N'Dang Huu Phuc (Applicant Farm Owner)', 'register.farm@cropdiary.com', '0989012345', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME());
 SET IDENTITY_INSERT [User] OFF;
 GO
 
@@ -682,9 +682,9 @@ GO
 SET IDENTITY_INSERT [Farm] ON;
 INSERT INTO [Farm] (farm_id, farm_name, description, address, latitude, longitude, cover_image_url, created_by, farm_status)
 VALUES
-(1, N'Trang Trại Rau Củ Sạch Đà Lạt', N'Chuyên canh dưa lưới, ớt chuông công nghệ cao VietGAP', N'123 Mai Anh Đào, Phường 8, TP Đà Lạt, Lâm Đồng', 11.954500, 108.445200, 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854', 2, 'active'),
-(2, N'Hợp Tác Xã Cây Ăn Trái Mekong', N'Chuyên canh xoài cát chu xuất khẩu tiêu chuẩn GlobalGAP', N'Ấp Bình Hòa, Xã Mỹ Xương, Huyện Cao Lãnh, Đồng Tháp', 10.450100, 105.632200, 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9', 3, 'active'),
-(3, N'Nông Trại Hữu Cơ Ba Vì', N'Nông trại rau hữu cơ sinh thái đang quy hoạch', N'Xã Yên Bài, Huyện Ba Vì, TP Hà Nội', 21.054300, 105.352100, NULL, 1, 'inactive');
+(1, N'Da Lat Clean Produce Farm', N'High-tech VietGAP melon and sweet bell pepper specialist farm', N'123 Mai Anh Dao, Ward 8, Da Lat City, Lam Dong', 11.954500, 108.445200, 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854', 2, 'active'),
+(2, N'Mekong Fruit Tree Cooperative', N'Export-grade Cat Chu mango cooperative under GlobalGAP standards', N'Binh Hoa Hamlet, My Xuong Commune, Cao Lanh District, Dong Thap', 10.450100, 105.632200, 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9', 3, 'active'),
+(3, N'Ba Vi Ecological Organic Farm', N'Ecological organic vegetable farm under planning', N'Yen Bai Commune, Ba Vi District, Hanoi', 21.054300, 105.352100, NULL, 1, 'inactive');
 SET IDENTITY_INSERT [Farm] OFF;
 GO
 
@@ -692,10 +692,10 @@ GO
 SET IDENTITY_INSERT [FarmRegistration] ON;
 INSERT INTO [FarmRegistration] (registration_id, user_id, farm_name, address, province, district, ward, document_url, registration_note, registration_status, reviewed_by, reviewed_at, resulting_farm_id)
 VALUES
-(1, 2, N'Trang Trại Rau Củ Sạch Đà Lạt', N'123 Mai Anh Đào', N'Lâm Đồng', N'TP Đà Lạt', N'Phường 8', 'https://example.com/docs/vietgap-dalat.pdf', N'Đơn đăng ký hợp lệ, đầy đủ giấy chứng nhận VietGAP', 'approved', 1, '2025-01-02 10:00:00', 1),
-(2, 3, N'Hợp Tác Xã Cây Ăn Trái Mekong', N'Ấp Bình Hòa', N'Đồng Tháp', N'Huyện Cao Lãnh', N'Xã Mỹ Xương', 'https://example.com/docs/globalgap-mekong.pdf', N'Đơn đăng ký hợp tác xã đạt chuẩn xuất khẩu', 'approved', 1, '2025-02-15 14:30:00', 2),
-(3, 9, N'Nông Trại Xanh Tây Nguyên', N'Thôn 4', N'Đắk Lắk', N'TP Buôn Ma Thuột', N'Xã Ea Kao', 'https://example.com/docs/taynguyen-farm.pdf', N'Đăng ký nông trại cà phê & sầu riêng sạch, đang chờ admin xem xét duyệt', 'pending', NULL, NULL, NULL),
-(4, 9, N'Vườn Dược Liệu Kon Tum', N'Xã Măng Cành', N'Kon Tum', N'Huyện Kon Plông', N'Xã Măng Cành', NULL, N'Thiếu giấy tờ quyền sử dụng đất và tọa độ GPS', 'rejected', 1, '2025-11-20 09:15:00', NULL);
+(1, 2, N'Da Lat Clean Produce Farm', N'123 Mai Anh Đào', N'Lâm Đồng', N'TP Đà Lạt', N'Phường 8', 'https://example.com/docs/vietgap-dalat.pdf', N'Valid application with full VietGAP certification attached', 'approved', 1, '2025-01-02 10:00:00', 1),
+(2, 3, N'Mekong Fruit Tree Cooperative', N'Ấp Bình Hòa', N'Đồng Tháp', N'Huyện Cao Lãnh', N'Xã Mỹ Xương', 'https://example.com/docs/globalgap-mekong.pdf', N'Export-ready cooperative application complying with GlobalGAP', 'approved', 1, '2025-02-15 14:30:00', 2),
+(3, 9, N'Central Highlands Green Farm', N'Thôn 4', N'Đắk Lắk', N'TP Buôn Ma Thuột', N'Xã Ea Kao', 'https://example.com/docs/taynguyen-farm.pdf', N'Clean coffee and durian farm application, pending admin review', 'pending', NULL, NULL, NULL),
+(4, 9, N'Kon Tum Herbal Garden', N'Xã Măng Cành', N'Kon Tum', N'Huyện Kon Plông', N'Xã Măng Cành', NULL, N'Missing official land use rights certificate and GPS survey coordinates', 'rejected', 1, '2025-11-20 09:15:00', NULL);
 SET IDENTITY_INSERT [FarmRegistration] OFF;
 GO
 
@@ -716,9 +716,9 @@ GO
 SET IDENTITY_INSERT [FarmWorker] ON;
 INSERT INTO [FarmWorker] (farm_worker_id, farm_member_id, worker_code, job_title, employment_status, hired_at, notes)
 VALUES
-(1, 2, 'CN-DL-01', N'Kỹ Sư Dinh Dưỡng & Tưới Tiêu', 'active', '2025-01-01', N'Phụ trách kiểm soát pha dung dịch dinh dưỡng A+B'),
-(2, 4, 'CN-DL-02', N'Công Nhân Chăm Sóc Cây & Cắt Tỉa', 'active', '2025-03-01', N'Lành nghề tỉa chồi nách và thụ phấn dưa'),
-(3, 5, 'CN-DL-03', N'Công Nhân Thu Hoạch & Đóng Gói', 'seasonal', '2025-09-01', N'Hợp đồng mùa vụ thu hoạch nông sản');
+(1, 2, 'CN-DL-01', N'Nutrition & Irrigation Engineer', 'active', '2025-01-01', N'Responsible for A+B hydroponic stock solution formula and dosage control'),
+(2, 4, 'CN-DL-02', N'Plant Pruning & Care Worker', 'active', '2025-03-01', N'Skilled in lateral shoot pruning, canopy management, and manual pollination'),
+(3, 5, 'CN-DL-03', N'Harvest & Packaging Specialist', 'seasonal', '2025-09-01', N'Seasonal harvest and refrigerated packaging contract');
 SET IDENTITY_INSERT [FarmWorker] OFF;
 GO
 
@@ -726,26 +726,26 @@ GO
 SET IDENTITY_INSERT [CropCategory] ON;
 INSERT INTO [CropCategory] (crop_category_id, category_name, description, image_url)
 VALUES
-(1, N'Dưa Lưới', N'Dưa lưới ruột cam giống Nhật Bản công nghệ cao', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
-(2, N'Ớt Chuông Đà Lạt', N'Ớt chuông đỏ, vàng, cam ngọt giòn nhà kính', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83'),
-(3, N'Cà Chua Cherry', N'Cà chua bi ngọt chùm xuất khẩu', 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea'),
-(4, N'Xoài Cát Chu', N'Đặc sản xoài cát chu Đồng Tháp', 'https://images.unsplash.com/photo-1553279768-865429fa0078'),
-(5, N'Rau Muống', N'Cây rau ngắn ngày ăn lá, chu kỳ thu hoạch 25-30 ngày', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
-(6, N'Xà Lách Mỡ (Lettuce)', N'Cây rau ăn lá ngắn ngày trồng thủy canh hoặc đất sạch, chu kỳ 35-45 ngày', 'https://images.unsplash.com/photo-1556801712-76c8eb07bbc9'),
-(7, N'Cải Thìa (Bok Choy)', N'Rau ăn lá ngắn ngày giàu dinh dưỡng VietGAP, chu kỳ 30-40 ngày', 'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f'),
-(8, N'Cải Bó Xôi (Spinach)', N'Cây rau ngắn ngày ôn đới giàu sắt và khoáng chất, chu kỳ 35-45 ngày', 'https://images.unsplash.com/photo-1576045057995-568f588f82fb'),
-(9, N'Cải Ngọt', N'Cây rau ngắn ngày phổ biến, sinh trưởng khỏe, chu kỳ 25-35 ngày', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
-(10, N'Dưa Leo (Dưa Chuột)', N'Cây rau ăn quả ngắn ngày giàn leo năng suất cao, chu kỳ 45-60 ngày', 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e'),
-(11, N'Đậu Cô Ve (Đậu Que)', N'Cây họ đậu ngắn ngày cố định đạm sinh học, chu kỳ 50-60 ngày', 'https://images.unsplash.com/photo-1551462147-37885acc36f1'),
-(12, N'Đậu Bắp', N'Cây ăn quả ngắn ngày chịu nhiệt tốt, giàu chất xơ, chu kỳ 45-55 ngày', 'https://images.unsplash.com/photo-1425543103986-22abb7d7e8d2'),
-(13, N'Cà Rốt Baby', N'Cây ăn củ ngắn ngày VietGAP giòn ngọt, chu kỳ 60-75 ngày', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
-(14, N'Củ Cải Trắng', N'Cây ăn củ ngắn ngày sinh trưởng nhanh, chu kỳ 40-50 ngày', 'https://images.unsplash.com/photo-1590779033100-9f60a05a013d'),
-(15, N'Hành Lá & Rau Thơm', N'Cây gia vị ngắn ngày thu hoạch liên tục quanh năm, chu kỳ 30-40 ngày', 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5'),
-(16, N'Rau Mồng Tơi', N'Cây rau ăn lá ngắn ngày thanh nhiệt mùa hè, chu kỳ 30-40 ngày', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
-(17, N'Bắp Cải', N'Cây rau cuốn bắp ngắn ngày vụ đông xuân, chu kỳ 65-75 ngày', 'https://images.unsplash.com/photo-1550828520-4cb496926fc9'),
-(18, N'Dưa Hấu', N'Cây ăn quả ngắn ngày ruột đỏ ngọt mát, chu kỳ 60-70 ngày', 'https://images.unsplash.com/photo-1587049352846-4a222e784d38'),
-(19, N'Bí Đao Chanh', N'Cây ăn quả ngắn ngày leo giàn VietGAP, chu kỳ 60-70 ngày', 'https://images.unsplash.com/photo-1570715621210-b74704bdfa57'),
-(20, N'Bắp Ngọt (Ngô)', N'Cây lương thực ngắn ngày chất lượng cao, chu kỳ 70-80 ngày', 'https://images.unsplash.com/photo-1551754655-cd27e38d2076');
+(1, N'Cantaloupe Melon', N'High-tech Japanese orange flesh cantaloupe melon', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
+(2, N'Dalat Bell Pepper', N'Greenhouse red, yellow and orange sweet crisp bell peppers', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83'),
+(3, N'Cherry Tomato', N'Sweet truss cherry tomatoes for export', 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea'),
+(4, N'Cat Chu Mango', N'Dong Thap specialty Cat Chu export mango', 'https://images.unsplash.com/photo-1553279768-865429fa0078'),
+(5, N'Water Spinach', N'Short-cycle leafy vegetable, 25-30 days to harvest', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
+(6, N'Butterhead Lettuce', N'Hydroponic or clean soil leafy greens, 35-45 days cycle', 'https://images.unsplash.com/photo-1556801712-76c8eb07bbc9'),
+(7, N'Bok Choy', N'Nutrient-rich VietGAP leafy green, 30-40 days cycle', 'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f'),
+(8, N'Spinach', N'Temperate leafy green rich in iron and minerals, 35-45 days cycle', 'https://images.unsplash.com/photo-1576045057995-568f588f82fb'),
+(9, N'Choy Sum', N'Popular fast-growing Asian green, 25-35 days cycle', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
+(10, N'Cucumber', N'High-yielding trellised fruiting crop, 45-60 days cycle', 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e'),
+(11, N'Green Beans', N'Nitrogen-fixing bush bean, 50-60 days cycle', 'https://images.unsplash.com/photo-1551462147-37885acc36f1'),
+(12, N'Okra', N'Heat-tolerant fiber-rich fruiting vegetable, 45-55 days cycle', 'https://images.unsplash.com/photo-1425543103986-22abb7d7e8d2'),
+(13, N'Baby Carrot', N'Crisp and sweet VietGAP root vegetable, 60-75 days cycle', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
+(14, N'White Radish', N'Fast-growing nutritious daikon radish, 40-50 days cycle', 'https://images.unsplash.com/photo-1590779033100-9f60a05a013d'),
+(15, N'Scallion & Fresh Herbs', N'Continuous harvest culinary herbs, 30-40 days cycle', 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5'),
+(16, N'Malabar Spinach', N'Summer cooling leafy vine green, 30-40 days cycle', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
+(17, N'Cabbage', N'Winter-spring heading brassica, 65-75 days cycle', 'https://images.unsplash.com/photo-1550828520-4cb496926fc9'),
+(18, N'Watermelon', N'Crisp sweet red flesh fruit, 60-70 days cycle', 'https://images.unsplash.com/photo-1587049352846-4a222e784d38'),
+(19, N'Winter Melon', N'Trellised VietGAP wax gourd, 60-70 days cycle', 'https://images.unsplash.com/photo-1570715621210-b74704bdfa57'),
+(20, N'Sweet Corn', N'High-grade sweet cereal crop, 70-80 days cycle', 'https://images.unsplash.com/photo-1551754655-cd27e38d2076');
 SET IDENTITY_INSERT [CropCategory] OFF;
 GO
 
@@ -753,9 +753,9 @@ GO
 SET IDENTITY_INSERT [CropSeason] ON;
 INSERT INTO [CropSeason] (crop_season_id, farm_id, crop_category_id, season_name, start_date, end_date, season_status, notes, created_by)
 VALUES
-(1, 1, 1, N'Vụ Dưa Lưới Xuân 2026', '2026-01-15', '2026-04-30', 'active', N'Vụ dưa lưới trọng điểm phục vụ thị trường dịp lễ', 2),
-(2, 1, 2, N'Vụ Ớt Chuông Đông 2025', '2025-09-01', '2025-12-25', 'completed', N'Vụ mùa đã thu hoạch và thanh toán hoàn tất', 2),
-(3, 1, 3, N'Vụ Cà Chua Hè 2026', '2026-05-01', '2026-08-30', 'planned', N'Kế hoạch gieo trồng nhà màng số 2', 2);
+(1, 1, 1, N'Spring 2026 Cantaloupe Season', '2026-01-15', '2026-04-30', 'active', N'Key spring melon season serving festival market demand', 2),
+(2, 1, 2, N'Winter 2025 Bell Pepper Season', '2025-09-01', '2025-12-25', 'completed', N'Season fully harvested, packed, and accounts settled', 2),
+(3, 1, 3, N'Summer 2026 Tomato Season', '2026-05-01', '2026-08-30', 'planned', N'Planned planting schedule for Greenhouse #2', 2);
 SET IDENTITY_INSERT [CropSeason] OFF;
 GO
 
@@ -763,10 +763,10 @@ GO
 SET IDENTITY_INSERT [Zone] ON;
 INSERT INTO [Zone] (zone_id, farm_id, zone_name, description, area_value, area_unit)
 VALUES
-(1, 1, N'Khu Vực A - Nhà Màng', N'Khu nhà màng công nghệ cao trồng dưa lưới thủy canh', 5000.00, 'm2'),
-(2, 2, N'Khu Vực B - Luống Hở', N'Khu trồng ớt chuông và rau ăn củ ngoài trời', 8000.00, 'm2'),
-(3, 1, N'Khu Vực C - Vườn Ươm', N'Vườn ươm cây giống sạch bệnh đạt chuẩn', 2000.00, 'm2'),
-(4, 2, N'Khu Vực 1 - Vườn Xoài', N'Vườn xoài cát chu ghép cành lâu năm', 15000.00, 'm2');
+(1, 1, N'Zone A - High-Tech Greenhouse', N'Automated hydroponic greenhouse zone for cantaloupe melons', 5000.00, 'm2'),
+(2, 2, N'Zone B - Open Field Beds', N'Outdoor cultivation zone for bell peppers and root crops', 8000.00, 'm2'),
+(3, 1, N'Zone C - Certified Nursery', N'Certified disease-free seedling nursery zone', 2000.00, 'm2'),
+(4, 2, N'Zone 1 - Mango Orchard', N'Mature grafted Cat Chu mango orchard zone', 15000.00, 'm2');
 SET IDENTITY_INSERT [Zone] OFF;
 GO
 
@@ -774,11 +774,11 @@ GO
 SET IDENTITY_INSERT [Block] ON;
 INSERT INTO [Block] (block_id, zone_id, block_name, description, area_value, area_unit, soil_type)
 VALUES
-(1, 1, N'Lô A1', N'Lô dưa lưới giống F1 Taka Nhật Bản', 2500.00, 'm2', N'Xơ dừa xả chát thủy canh'),
-(2, 1, N'Lô A2', N'Lô dưa lưới giống Huỳnh Long ruột vàng', 2500.00, 'm2', N'Xơ dừa xả chát thủy canh'),
-(3, 2, N'Lô B1', N'Lô ớt chuông đỏ ngọt', 4000.00, 'm2', N'Đất đỏ bazan Lâm Đồng'),
-(4, 2, N'Lô B2', N'Lô ớt chuông vàng ngọt', 4000.00, 'm2', N'Đất đỏ bazan Lâm Đồng'),
-(5, 3, N'Lô C1', N'Lô ươm khay hạt mầm dưa lưới', 2000.00, 'm2', N'Mùn dừa trộn tro trấu vi sinh');
+(1, 1, N'Block A1', N'Block F1 Japanese Taka cantaloupe melon', 2500.00, 'm2', N'Desalinated coco peat hydroponic substrate'),
+(2, 1, N'Block A2', N'Block Huynh Long golden cantaloupe melon', 2500.00, 'm2', N'Desalinated coco peat hydroponic substrate'),
+(3, 2, N'Block B1', N'Block sweet red bell peppers', 4000.00, 'm2', N'Lam Dong basalt red soil'),
+(4, 2, N'Block B2', N'Block sweet yellow bell peppers', 4000.00, 'm2', N'Lam Dong basalt red soil'),
+(5, 3, N'Block C1', N'Block melon nursery seedling trays', 2000.00, 'm2', N'Coco peat with bio-char and beneficial microbes');
 SET IDENTITY_INSERT [Block] OFF;
 GO
 
@@ -804,12 +804,12 @@ GO
 SET IDENTITY_INSERT [FarmTask] ON;
 INSERT INTO [FarmTask] (farm_task_id, farm_id, crop_season_id, zone_id, block_id, task_name, description, task_type, priority, status, starts_at, due_at, created_by)
 VALUES
-(1, 1, 1, 1, 1, N'Xử lý giá thể xơ dừa', N'Ngâm rửa xả chát tannin và xử lý nấm trichoderma', N'Làm đất', 'high', 'completed', '2026-01-10 07:00:00', '2026-01-14 17:00:00', 2),
-(2, 1, 1, 1, 1, N'Xuống giống cây con dưa lưới', N'Chuyển cây con 12 ngày tuổi từ vườn ươm sang bầu trồng', N'Gieo trồng', 'urgent', 'completed', '2026-01-15 06:30:00', '2026-01-16 11:30:00', 2),
-(3, 1, 1, 1, 1, N'Châm dinh dưỡng nhỏ giọt đợt 3', N'Pha dinh dưỡng A+B nồng độ EC 1.8 và chạy tưới nhỏ giọt', N'Bón phân & Tưới', 'normal', 'completed', '2026-02-10 08:00:00', '2026-02-10 11:00:00', 2),
-(4, 1, 1, 1, 1, N'Thụ phấn nhân tạo dưa lưới', N'Thụ phấn hoa cái tầng nách lá thứ 9 đến 12', N'Chăm sóc', 'high', 'in_progress', '2026-02-25 07:00:00', '2026-03-05 10:00:00', 2),
-(5, 1, 1, 1, 1, N'Phòng trừ bọ trĩ sinh học', N'Phun chế phẩm vi sinh thảo mộc Neem Chito ngừa bọ trĩ', N'Bảo vệ thực vật', 'normal', 'planned', '2026-03-08 16:00:00', '2026-03-08 18:00:00', 2),
-(6, 1, 1, 1, 1, N'Thu hoạch dưa lưới chín đạt độ ngọt', N'Cắt cuống hình chữ T, cân khối lượng và dán tem QR truy xuất', N'Thu hoạch', 'urgent', 'planned', '2026-04-22 06:00:00', '2026-04-25 17:00:00', 2);
+(1, 1, 1, 1, 1, N'Coco peat substrate conditioning', N'Rinse tannins and treat with Trichoderma fungal biocontrol', N'Land Prep', 'high', 'completed', '2026-01-10 07:00:00', '2026-01-14 17:00:00', 2),
+(2, 1, 1, 1, 1, N'Transplant melon seedlings', N'Move 12-day-old nursery seedlings to production grow bags', N'Planting', 'urgent', 'completed', '2026-01-15 06:30:00', '2026-01-16 11:30:00', 2),
+(3, 1, 1, 1, 1, N'Drip fertigation run #3', N'Mix nutrient solution A+B at EC 1.8 and execute automated drip cycle', N'Fertilization & Irrigation', 'normal', 'completed', '2026-02-10 08:00:00', '2026-02-10 11:00:00', 2),
+(4, 1, 1, 1, 1, N'Manual melon pollination', N'Hand pollinate female flowers at nodes 9 through 12', N'Crop Care', 'high', 'in_progress', '2026-02-25 07:00:00', '2026-03-05 10:00:00', 2),
+(5, 1, 1, 1, 1, N'Biological thrips prevention', N'Apply organic Neem Chito botanical spray against thrips', N'Plant Protection', 'normal', 'planned', '2026-03-08 16:00:00', '2026-03-08 18:00:00', 2),
+(6, 1, 1, 1, 1, N'Harvest ripe sweet melons', N'Cut T-stems, weigh batches, and apply QR traceability labels', N'Harvest', 'urgent', 'planned', '2026-04-22 06:00:00', '2026-04-25 17:00:00', 2);
 SET IDENTITY_INSERT [FarmTask] OFF;
 GO
 
@@ -825,20 +825,20 @@ GO
 SET IDENTITY_INSERT [FarmingActivity] ON;
 INSERT INTO [FarmingActivity] (farming_activity_id, farm_id, farm_task_id, crop_season_id, zone_id, block_id, activity_name, activity_type, activity_notes, performed_at, image_url, created_by)
 VALUES
-(1, 1, 3, 1, 1, 1, N'Châm dinh dưỡng nhỏ giọt A+B EC 1.8', N'Bón phân & Tưới', N'Đã hoàn thành châm 10 lít dung dịch A+B vào bồn tưới 1000L', '2026-02-10 08:30:00', NULL, 4),
-(2, 1, 4, 1, 1, 1, N'Tỉa nhánh nách và thụ phấn dưa lưới', N'Chăm sóc', N'Thụ phấn được khoảng 1200 gốc tại hàng 1 đến 15', '2026-02-28 07:45:00', NULL, 4),
-(3, 1, NULL, 1, 1, 1, N'Phun phòng ngừa nấm bệnh sinh học', N'Bảo vệ thực vật', N'Phun 2 chai chế phẩm Neem Chito lúc 16h30 trời mát', '2026-03-01 16:30:00', NULL, 4),
-(4, 1, NULL, 2, 2, 3, N'Thu hoạch ớt chuông đợt cuối vụ đông 2025', N'Thu hoạch', N'Thu hoạch toàn bộ trái đạt độ chín đỏ', '2025-12-20 09:00:00', NULL, 4);
+(1, 1, 3, 1, 1, 1, N'Drip fertigation run A+B EC 1.8', N'Fertilization & Irrigation', N'Dispensed 10L of A+B stock solution into 1000L central tank', '2026-02-10 08:30:00', NULL, 4),
+(2, 1, 4, 1, 1, 1, N'Shoot pruning and melon pollination', N'Crop Care', N'Pollinated approx 1,200 plants along rows 1 through 15', '2026-02-28 07:45:00', NULL, 4),
+(3, 1, NULL, 1, 1, 1, N'Organic preventative fungal spray', N'Plant Protection', N'Applied 2 bottles of Neem Chito in late afternoon cool weather', '2026-03-01 16:30:00', NULL, 4),
+(4, 1, NULL, 2, 2, 3, N'Final harvest of Winter 2025 bell peppers', N'Harvest', N'Harvested all red ripe fruit across the parcel', '2025-12-20 09:00:00', NULL, 4);
 SET IDENTITY_INSERT [FarmingActivity] OFF;
 GO
 
 -- 16. ACTIVITY WORKERS (Composite PK)
 INSERT INTO [ActivityWorker] (farming_activity_id, farm_worker_id, participation_role)
 VALUES
-(1, 1, N'Kỹ thuật viên pha dinh dưỡng'),
-(2, 2, N'Công nhân thụ phấn chính'),
-(4, 2, N'Hái trái'),
-(4, 3, N'Phân loại và đóng két nhựa');
+(1, 1, N'Nutrient mixing technician'),
+(2, 2, N'Lead pollination worker'),
+(4, 2, N'Picker'),
+(4, 3, N'Grading and crate packing worker');
 GO
 
 -- 17. ACTIVITY SUPERVISORS (Composite PK)
@@ -852,8 +852,8 @@ GO
 SET IDENTITY_INSERT [ZoneRiskAssessment] ON;
 INSERT INTO [ZoneRiskAssessment] (zone_risk_assessment_id, zone_id, assessed_by, risk_type, risk_level, description, mitigation_plan, assessed_at)
 VALUES
-(1, 1, 3, N'Ẩm độ cao & Nấm sương mai', 'medium', N'Độ ẩm ban đêm trong nhà màng vượt 92% dễ phát sinh nấm hại', N'Bật quạt đối lưu và mở hé cửa nóc thông gió từ 05:00 sáng', '2026-01-20 10:00:00'),
-(2, 2, 3, N'Xói mòn đất sườn dốc', 'low', N'Mưa to có thể cuốn trôi tầng đất mặt ở luống rìa', N'Trồng cỏ vetiver gia cố mép taluy và đào rãnh thoát nước cắt ngang', '2026-01-22 14:00:00');
+(1, 1, 3, N'High Humidity & Downy Mildew', 'medium', N'Nighttime greenhouse humidity exceeds 92%, increasing downy mildew fungal risk', N'Activate convection fans and crack roof ventilation open starting at 05:00 AM', '2026-01-20 10:00:00'),
+(2, 2, 3, N'Hillside Soil Erosion', 'low', N'Heavy rains may erode surface topsoil along edge beds', N'Plant vetiver grass along embankment edges and dig cross-slope drainage trenches', '2026-01-22 14:00:00');
 SET IDENTITY_INSERT [ZoneRiskAssessment] OFF;
 GO
 
@@ -861,8 +861,8 @@ GO
 SET IDENTITY_INSERT [WaterSource] ON;
 INSERT INTO [WaterSource] (water_source_id, farm_id, source_name, source_type, description)
 VALUES
-(1, 1, N'Hồ Lắng Nước Suối Cam Ly', N'Hồ chứa bề mặt', N'Dung tích 2.500 m3 có trang bị hệ thống lọc cát và đĩa lọc vi sinh'),
-(2, 1, N'Giếng Khoan Tầng Nông Số 1', N'Nước ngầm', N'Độ sâu giếng 70m, nước trong, độ cứng thấp');
+(1, 1, N'Cam Ly Stream Settling Reservoir', N'Surface reservoir', N'Capacity 2,500 m3 equipped with sand filtration and microbial disc filtration systems'),
+(2, 1, N'Shallow Aquifer Borehole Well #1', N'Groundwater', N'Well depth 70m, clear water with low mineral hardness');
 SET IDENTITY_INSERT [WaterSource] OFF;
 GO
 
@@ -870,8 +870,8 @@ GO
 SET IDENTITY_INSERT [WaterAssessment] ON;
 INSERT INTO [WaterAssessment] (water_assessment_id, water_source_id, block_id, conducted_by, water_ph, temperature_c, quality_status, notes, assessed_at)
 VALUES
-(1, 1, 1, 2, 6.60, 20.50, N'Đạt chuẩn tưới VietGAP', N'Hàm lượng kim loại nặng và vi khuẩn E.coli đều dưới ngưỡng cho phép', '2026-01-12 08:30:00'),
-(2, 2, 1, 2, 6.20, 21.00, N'Rất tốt', N'Nước ngầm rất ngọt và mềm, tối ưu cho việc phối trộn dinh dưỡng thủy canh', '2026-02-15 09:00:00');
+(1, 1, 1, 2, 6.60, 20.50, N'VietGAP Irrigation Compliant', N'Heavy metal content and E. coli counts are well below permissible safety thresholds', '2026-01-12 08:30:00'),
+(2, 2, 1, 2, 6.20, 21.00, N'Excellent Quality', N'Groundwater is exceptionally soft and clean, optimal for hydroponic nutrient formulation', '2026-02-15 09:00:00');
 SET IDENTITY_INSERT [WaterAssessment] OFF;
 GO
 
@@ -879,8 +879,8 @@ GO
 SET IDENTITY_INSERT [SoilAssessment] ON;
 INSERT INTO [SoilAssessment] (soil_assessment_id, block_id, conducted_by, soil_ph, moisture_percent, nutrient_data, notes, assessed_at)
 VALUES
-(1, 1, 2, 6.40, 72.50, N'{"EC_mS_cm": 1.82, "N_ppm": 140, "P_ppm": 45, "K_ppm": 210, "Ca_ppm": 160, "Mg_ppm": 55}', N'Giá thể xơ dừa ổn định, độ dẫn điện EC đạt mức tối ưu cho dưa ra hoa đậu quả', '2026-02-18 10:15:00'),
-(2, 3, 2, 5.80, 65.00, N'{"EC_mS_cm": 1.15, "N_ppm": 95, "P_ppm": 32, "K_ppm": 140, "Organic_matter_pct": 3.8}', N'Đất bazan màu mỡ, cần bón bổ sung vôi nông nghiệp nâng nhẹ pH lên 6.2 trước vụ mới', '2026-02-20 11:00:00');
+(1, 1, 2, 6.40, 72.50, N'{"EC_mS_cm": 1.82, "N_ppm": 140, "P_ppm": 45, "K_ppm": 210, "Ca_ppm": 160, "Mg_ppm": 55}', N'Coco peat substrate is stable, electrical conductivity (EC) is at optimal level for flowering and fruit set', '2026-02-18 10:15:00'),
+(2, 3, 2, 5.80, 65.00, N'{"EC_mS_cm": 1.15, "N_ppm": 95, "P_ppm": 32, "K_ppm": 140, "Organic_matter_pct": 3.8}', N'Basalt red soil is fertile; apply agricultural lime to slightly raise pH to 6.2 prior to new crop cycle', '2026-02-20 11:00:00');
 SET IDENTITY_INSERT [SoilAssessment] OFF;
 GO
 
@@ -888,8 +888,8 @@ GO
 SET IDENTITY_INSERT [BlockConditionObservation] ON;
 INSERT INTO [BlockConditionObservation] (observation_id, block_id, recorded_by, condition_type, description, observed_at)
 VALUES
-(1, 1, 2, N'Sinh trưởng cây', N'Cây dưa lưới tầng lá 10 phát triển đồng đều, nụ hoa cái mập mạp, không có dấu hiệu thiếu vi lượng', '2026-02-26 08:00:00'),
-(2, 3, 2, N'Tình trạng dịch hại', N'Đất khô ráo, phát hiện rải rác một vài vết đốm phấn trắng trên lá già góc đông nam', '2026-02-27 15:30:00');
+(1, 1, 2, N'Crop Growth', N'Cantaloupe plants at node 10 develop uniformly, female flower buds are robust with no micro-nutrient deficiency signs', '2026-02-26 08:00:00'),
+(2, 3, 2, N'Pest & Disease Status', N'Soil is dry, scattered light powdery mildew spots observed on older leaves in the southeast corner', '2026-02-27 15:30:00');
 SET IDENTITY_INSERT [BlockConditionObservation] OFF;
 GO
 
@@ -897,8 +897,8 @@ GO
 SET IDENTITY_INSERT [Supplier] ON;
 INSERT INTO [Supplier] (supplier_id, farm_id, supplier_name, contact_name, phone, email, address, notes)
 VALUES
-(1, 1, N'Công Ty Nông Dược Xanh Đà Lạt', N'Nguyễn Phi Hùng', '0988123456', 'contact@nongduocxanh.vn', N'Khu Công Nghiệp Lộc Phát, TP Bảo Lộc, Lâm Đồng', N'Nhà cung cấp phân bón hòa tan và vật tư nhà màng uy tín'),
-(2, 1, N'Đại Lý Dinh Dưỡng Thủy Canh AgriBio', N'Lê Thị Mai', '0977234567', 'sales@agribio.com.vn', N'54 Hùng Vương, Phường 9, TP Đà Lạt', N'Đại lý độc quyền dinh dưỡng thủy canh GreenHydro');
+(1, 1, N'Da Lat Green Agrochemical Co.', N'Nguyễn Phi Hùng', '0988123456', 'contact@nongduocxanh.vn', N'Loc Phat Industrial Zone, Bao Loc City, Lam Dong', N'Reputable supplier of soluble fertilizers and greenhouse materials'),
+(2, 1, N'AgriBio Hydroponics Solutions', N'Lê Thị Mai', '0977234567', 'sales@agribio.com.vn', N'54 Hung Vuong, Ward 9, Da Lat City', N'Exclusive regional distributor of GreenHydro hydroponic nutrient solutions');
 SET IDENTITY_INSERT [Supplier] OFF;
 GO
 
@@ -906,11 +906,11 @@ GO
 SET IDENTITY_INSERT [Material] ON;
 INSERT INTO [Material] (material_id, farm_id, material_name, material_type, unit, description, is_active)
 VALUES
-(1, 1, N'Phân NPK 20-20-20 Haifa', N'Phân bón hòa tan', 'bao', N'Phân bón NPK tinh khiết tan hoàn toàn nhập khẩu Israel (Bao 25kg)', 1),
-(2, 1, N'Dung Dịch Thủy Canh A+B GreenHydro', N'Dinh dưỡng lỏng', 'can', N'Cặp dinh dưỡng khoáng đa trung vi lượng đậm đặc chuyên dưa lưới (Can 5L)', 1),
-(3, 1, N'Chế Phẩm Sinh Học Trừ Sâu Neem Chito', N'Thuốc BVTV sinh học', 'chai', N'Dầu neem kết hợp chitosan xua đuổi bọ trĩ và nấm bệnh (Chai 1L)', 1),
-(4, 1, N'Hạt Giống Dưa Lưới F1 Taka Nhật Bản', N'Hạt giống', 'gói', N'Hạt giống tỉ lệ nảy mầm > 98%, độ ngọt brix từ 14-16%', 1),
-(5, 1, N'Thùng Carton Đóng Dưa Lưới 5kg', N'Bao bì & Đóng gói', 'cái', N'Thùng giấy 5 lớp in ấn chuẩn thương hiệu MyCropDiary', 1);
+(1, 1, N'Haifa NPK 20-20-20 Soluble Fertilizer', N'Soluble Fertilizer', 'bag', N'Pure fully-soluble NPK fertilizer imported from Israel (25kg Bag)', 1),
+(2, 1, N'GreenHydro A+B Hydroponic Solution', N'Liquid Nutrient', 'canister', N'Concentrated macro and micro mineral solution for melons (5L Canister)', 1),
+(3, 1, N'Neem Chito Organic Insecticide', N'Biological Pest Control', 'bottle', N'Cold-pressed neem oil and chitosan formulation against thrips (1L Bottle)', 1),
+(4, 1, N'Japanese F1 Taka Cantaloupe Seeds', N'Seeds', 'pack', N'Certified hybrid seed stock with >98% germination and 14-16 brix potential', 1),
+(5, 1, N'5kg Export Cantaloupe Carton Boxes', N'Packaging & Storage', 'box', N'5-ply corrugated carton boxes branded with VietGAP MyCropDiary QR codes', 1);
 SET IDENTITY_INSERT [Material] OFF;
 GO
 
@@ -918,8 +918,8 @@ GO
 SET IDENTITY_INSERT [Warehouse] ON;
 INSERT INTO [Warehouse] (warehouse_id, farm_id, warehouse_name, address)
 VALUES
-(1, 1, N'Kho Vật Tư Nông Nghiệp Trung Tâm', N'Khu kỹ thuật số 1, Trang trại Đà Lạt'),
-(2, 1, N'Kho Mát Bảo Quản Nông Sản', N'Khu sơ chế đóng gói, Trang trại Đà Lạt');
+(1, 1, N'Central Agricultural Supplies Warehouse', N'Technical Facility #1, Da Lat Farm'),
+(2, 1, N'Cold Storage Facility for Fresh Produce', N'Packaging & Post-Harvest Center, Da Lat Farm');
 SET IDENTITY_INSERT [Warehouse] OFF;
 GO
 
@@ -939,8 +939,8 @@ GO
 SET IDENTITY_INSERT [InputPurchase] ON;
 INSERT INTO [InputPurchase] (input_purchase_id, farm_id, supplier_id, purchased_by, purchase_date, reference_no, total_amount, notes)
 VALUES
-(1, 1, 2, 3, '2026-01-05', 'PO-2026-001', 18500000.00, N'Nhập dinh dưỡng và phân bón hòa tan đầu vụ dưa lưới'),
-(2, 1, 1, 3, '2026-01-20', 'PO-2026-002', 7200000.00, N'Nhập chế phẩm trừ sâu sinh học Neem Chito');
+(1, 1, 2, 3, '2026-01-05', 'PO-2026-001', 18500000.00, N'Procurement of nutrients and soluble fertilizers for early cantaloupe season'),
+(2, 1, 1, 3, '2026-01-20', 'PO-2026-002', 7200000.00, N'Procurement of Neem Chito biological insecticide');
 SET IDENTITY_INSERT [InputPurchase] OFF;
 GO
 
@@ -958,8 +958,8 @@ GO
 SET IDENTITY_INSERT [MaterialUsage] ON;
 INSERT INTO [MaterialUsage] (material_usage_id, farm_id, material_id, farm_task_id, farming_activity_id, block_id, used_by, quantity, dosage, method, safety_interval_days, used_at, notes)
 VALUES
-(1, 1, 2, 3, 1, 1, 2, 10.000, N'10kg/1000L', N'Tưới nhỏ giọt', 0, '2026-02-10 08:30:00', N'Pha vào bồn mẹ dung tích 1000 lít tưới nhỏ giọt'),
-(2, 1, 3, NULL, 3, 1, 2, 2.000, N'20ml/bình 16L', N'Phun qua lá', 7, '2026-03-01 16:30:00', N'Phun sương đều 2 mặt lá lúc trời dịu mát');
+(1, 1, 2, 3, 1, 1, 2, 10.000, N'10kg/1000L', N'Drip irrigation', 0, '2026-02-10 08:30:00', N'Mixed into 1,000L mother tank for automated drip irrigation cycle'),
+(2, 1, 3, NULL, 3, 1, 2, 2.000, N'20ml/16L knapsack', N'Foliar spray', 7, '2026-03-01 16:30:00', N'Fine mist sprayed evenly on both sides of foliage in late afternoon cool weather');
 SET IDENTITY_INSERT [MaterialUsage] OFF;
 GO
 
@@ -967,9 +967,9 @@ GO
 SET IDENTITY_INSERT [InventoryTransaction] ON;
 INSERT INTO [InventoryTransaction] (inventory_transaction_id, inventory_id, transaction_type, quantity_change, reference_type, reference_id, notes, created_by)
 VALUES
-(1, 1, 'purchase', 300.000, 'InputPurchase', 1, N'Nhập kho PO-2026-001', 2),
-(2, 2, 'purchase', 160.000, 'InputPurchase', 1, N'Nhập kho PO-2026-001', 2),
-(3, 2, 'usage', -10.000, 'MaterialUsage', 1, N'Xuất kho châm tưới Lô A1', 4);
+(1, 1, 'purchase', 300.000, 'InputPurchase', 1, N'Warehouse receipt for PO-2026-001', 2),
+(2, 2, 'purchase', 160.000, 'InputPurchase', 1, N'Warehouse receipt for PO-2026-001', 2),
+(3, 2, 'usage', -10.000, 'MaterialUsage', 1, N'Warehouse dispatch for fertigation on Block A1', 4);
 SET IDENTITY_INSERT [InventoryTransaction] OFF;
 GO
 
@@ -977,9 +977,9 @@ GO
 SET IDENTITY_INSERT [Expense] ON;
 INSERT INTO [Expense] (expense_id, farm_id, crop_season_id, farm_task_id, expense_category, description, amount, expense_date, recorded_by)
 VALUES
-(1, 1, 1, NULL, N'Vật tư & Phân bón', N'Chi phí mua phân bón hòa tan và dung dịch dinh dưỡng đầu vụ', 18500000.00, '2026-01-05', 3),
-(2, 1, 1, 1, N'Nhân công', N'Tiền công xử lý ngâm xả chát 5000 bao xơ dừa', 4500000.00, '2026-01-14', 3),
-(3, 1, 1, NULL, N'Điện nước vận hành', N'Tiền điện chạy hệ thống bơm tưới tự động tháng 01/2026', 2800000.00, '2026-02-01', 3);
+(1, 1, 1, NULL, N'Materials & Fertilizers', N'Purchased soluble fertilizers and concentrated mineral solutions', 18500000.00, '2026-01-05', 3),
+(2, 1, 1, 1, N'Labor', N'Wages for washing and conditioning 5,000 coco peat grow bags', 4500000.00, '2026-01-14', 3),
+(3, 1, 1, NULL, N'Utilities & Power', N'Electricity utility bill for automated pump operations in Jan 2026', 2800000.00, '2026-02-01', 3);
 SET IDENTITY_INSERT [Expense] OFF;
 GO
 
@@ -987,8 +987,8 @@ GO
 SET IDENTITY_INSERT [HarvestRecord] ON;
 INSERT INTO [HarvestRecord] (harvest_record_id, farm_id, crop_season_id, block_id, farming_activity_id, recorded_by, harvest_date, quantity, unit, quality_grade, notes)
 VALUES
-(1, 1, 2, 3, 4, 2, '2025-12-20', 1250.000, 'kg', N'Loại 1 (Xuất khẩu)', N'Ớt chuông đỏ đều, quả căng mọng, cuống tươi xanh'),
-(2, 1, 2, 3, 4, 2, '2025-12-20', 350.000, 'kg', N'Loại 2 (Nội địa)', N'Ớt hơi cong nhẹ, vị ngọt giòn không đổi');
+(1, 1, 2, 3, 4, 2, '2025-12-20', 1250.000, 'kg', N'Grade 1 (Export)', N'Uniform red bell peppers, firm fruit with fresh green calyxes'),
+(2, 1, 2, 3, 4, 2, '2025-12-20', 350.000, 'kg', N'Grade 2 (Domestic)', N'Slight curvature, sweet and crisp quality preserved');
 SET IDENTITY_INSERT [HarvestRecord] OFF;
 GO
 
@@ -996,8 +996,8 @@ GO
 SET IDENTITY_INSERT [ProductSale] ON;
 INSERT INTO [ProductSale] (product_sale_id, farm_id, harvest_record_id, recorded_by, buyer_name, sale_date, quantity, unit, unit_price, notes)
 VALUES
-(1, 1, 1, 3, N'Hệ Thống Siêu Thị WinMart Miền Nam', '2025-12-21', 1200.000, 'kg', 42000.00, N'Hợp đồng cung ứng nông sản tươi VietGAP'),
-(2, 1, 2, 3, N'Chuỗi Thực Phẩm Sạch Bác Tôm Hà Nội', '2025-12-22', 350.000, 'kg', 28000.00, N'Vận chuyển xe lạnh bay trong đêm');
+(1, 1, 1, 3, N'WinMart Southern Supermarket Chain', '2025-12-21', 1200.000, 'kg', 42000.00, N'VietGAP fresh produce supply agreement contract'),
+(2, 1, 2, 3, N'Bac Tom Clean Food Chain Hanoi', '2025-12-22', 350.000, 'kg', 28000.00, N'Overnight air freight refrigerated express distribution');
 SET IDENTITY_INSERT [ProductSale] OFF;
 GO
 
@@ -1005,9 +1005,9 @@ GO
 SET IDENTITY_INSERT [ChecklistRule] ON;
 INSERT INTO [ChecklistRule] (checklist_rule_id, farm_id, created_by, rule_name, description, category, is_active)
 VALUES
-(1, 1, 2, N'Kiểm soát chỉ số pH và EC hệ thống tưới', N'Kiểm tra nồng độ dinh dưỡng và độ pH của nước tưới trước ca làm việc buổi sáng', N'Tưới tiêu & Dinh dưỡng', 1),
-(2, 1, 2, N'Tuân thủ thời gian cách ly thuốc BVTV (PHI)', N'Cách ly tối thiểu 14 ngày trước khi tiến hành hái quả', N'An toàn thực phẩm VietGAP', 1),
-(3, 1, 2, N'Trang bị bảo hộ lao động cho công nhân', N'Trang bị đầy đủ găng tay, khẩu trang than hoạt tính và ủng cao su', N'An toàn lao động', 1);
+(1, 1, 2, N'Monitor irrigation system pH and EC levels', N'Inspect irrigation nutrient concentration and pH prior to morning operational shift', N'Irrigation & Nutrition', 1),
+(2, 1, 2, N'Observe Pre-Harvest Interval (PHI) compliance', N'Strict quarantine of at least 14 days following pest control before commencing harvest', N'VietGAP Food Safety', 1),
+(3, 1, 2, N'Provide certified worker personal protective gear', N'Equip operators with nitrile gloves, activated carbon respirators, and rubber boots', N'Occupational Safety', 1);
 SET IDENTITY_INSERT [ChecklistRule] OFF;
 GO
 
@@ -1025,8 +1025,8 @@ GO
 SET IDENTITY_INSERT [ChecklistResult] ON;
 INSERT INTO [ChecklistResult] (checklist_result_id, checklist_run_id, checked_by, result_status, notes)
 VALUES
-(1, 1, 2, 'pass', N'pH đạt 6.35, EC đạt 1.82 mS/cm - Đạt chuẩn'),
-(2, 2, 3, 'pass', N'Đã cách ly 18 ngày sau lần phun dầu neem cuối, đủ điều kiện thu hoạch');
+(1, 1, 2, 'pass', N'pH measured at 6.35, EC measured at 1.82 mS/cm - Fully compliant'),
+(2, 2, 3, 'pass', N'18 days observed since final neem oil application, pre-harvest safety criteria satisfied');
 SET IDENTITY_INSERT [ChecklistResult] OFF;
 GO
 
@@ -1034,7 +1034,7 @@ GO
 SET IDENTITY_INSERT [ProductionReport] ON;
 INSERT INTO [ProductionReport] (production_report_id, farm_id, crop_season_id, generated_by, report_title, report_data)
 VALUES
-(1, 1, 2, 3, N'Báo cáo tổng kết sản xuất Vụ Ớt Chuông Đông 2025', N'{"season":"Vụ Đông 2025","crop":"Ớt Chuông","planted_area_m2":4000,"total_yield_kg":1600.0,"grade_1_kg":1250.0,"grade_2_kg":350.0,"total_revenue_vnd":60200000,"production_cost_vnd":25800000,"profit_vnd":34400000,"roi_pct":133.3}');
+(1, 1, 2, 3, N'Production Summary Report - Winter 2025 Bell Pepper Season', N'{"season":"Winter Season 2025","crop":"Bell Pepper","planted_area_m2":4000,"total_yield_kg":1600.0,"grade_1_kg":1250.0,"grade_2_kg":350.0,"total_revenue_vnd":60200000,"production_cost_vnd":25800000,"profit_vnd":34400000,"roi_pct":133.3}');
 SET IDENTITY_INSERT [ProductionReport] OFF;
 GO
 
@@ -1042,27 +1042,27 @@ GO
 SET IDENTITY_INSERT [TrainingRecord] ON;
 INSERT INTO [TrainingRecord] (training_record_id, farm_id, organized_by, training_title, description, training_date)
 VALUES
-(1, 1, 3, N'Tập huấn kỹ thuật thụ phấn nhân tạo dưa lưới', N'Hướng dẫn thao tác nhổ nhị hoa đực và chấm phấn hoa cái đúng thời điểm', '2026-01-25'),
-(2, 1, 3, N'Quy trình thu hoạch và bao bọc bảo vệ trái VietGAP', N'Kỹ thuật cắt cuống và đóng thùng giấy lạnh', '2025-12-15');
+(1, 1, 3, N'Manual Cantaloupe Pollination Technical Workshop', N'Standardized training on selecting male flowers, detaching stamens, and dusting female stigmas at optimal hours', '2026-01-25'),
+(2, 1, 3, N'VietGAP Fruit Harvesting and Net Packaging Protocols', N'Proper pedicel T-cut technique, grading tolerances, and temperature-controlled carton boxing', '2025-12-15');
 SET IDENTITY_INSERT [TrainingRecord] OFF;
 GO
 
 -- 39. TRAINING ATTENDEES (Composite PK)
 INSERT INTO [TrainingAttendee] (training_record_id, farm_worker_id, attendance_status, notes)
 VALUES
-(1, 1, 'attended', N'Nắm vững quy trình kỹ thuật'),
-(1, 2, 'attended', N'Thực hành đạt yêu cầu'),
-(2, 2, 'attended', N'Tham gia trọn buổi'),
-(2, 3, 'attended', N'Tham gia trọn buổi');
+(1, 1, 'attended', N'Demonstrated comprehensive mastery of technical procedures'),
+(1, 2, 'attended', N'Practical performance evaluated as meeting standards'),
+(2, 2, 'attended', N'Attended full session duration'),
+(2, 3, 'attended', N'Attended full session duration');
 GO
 
 -- 40. ASSESSMENT CRITERIA (IDs: 1 to 3)
 SET IDENTITY_INSERT [AssessmentCriterion] ON;
 INSERT INTO [AssessmentCriterion] (assessment_criterion_id, farm_id, criterion_name, description, max_score, is_active)
 VALUES
-(1, 1, N'Hồ sơ ghi chép nhật ký canh tác', N'Ghi chép đầy đủ các lần tưới phân, phun thuốc và người phụ trách', 100.00, 1),
-(2, 1, N'Vệ sinh an toàn khu vực sản xuất', N'Khuôn viên nhà màng sạch sẽ, có lưới chắn côn trùng nguyên vẹn', 100.00, 1),
-(3, 1, N'Quản lý kho hóa chất và bao bì', N'Kho thuốc BVTV có khóa, có găng tay bảo hộ và vòi rửa mắt', 100.00, 1);
+(1, 1, N'Farming Logbook Recordkeeping Integrity', N'Detailed and timely logging of fertigation schedules, chemical applications, and assigned supervisors', 100.00, 1),
+(2, 1, N'Production Area Sanitation and Biosecurity', N'Greenhouse perimeter is clean and weed-free, insect netting mesh is fully intact with airlock entry', 100.00, 1),
+(3, 1, N'Agrochemical Storage and Packaging Safety', N'Agrochemical storage is secured with lock and key, hazardous warning signage, personal PPE, and eyewash stations', 100.00, 1);
 SET IDENTITY_INSERT [AssessmentCriterion] OFF;
 GO
 
@@ -1070,7 +1070,7 @@ GO
 SET IDENTITY_INSERT [InternalAssessment] ON;
 INSERT INTO [InternalAssessment] (internal_assessment_id, farm_id, crop_season_id, zone_id, assessed_by, assessment_title, notes)
 VALUES
-(1, 1, 1, 1, 3, N'Đánh giá nội bộ tiêu chuẩn VietGAP Nhà màng Quý 1/2026', N'Nông trại duy trì tốt các tiêu chuẩn canh tác sạch');
+(1, 1, 1, 1, 3, N'Quarterly VietGAP Internal Audit - High-Tech Greenhouse Q1/2026', N'The farm rigorously adheres to good agricultural practice standards and environmental safety protocols');
 SET IDENTITY_INSERT [InternalAssessment] OFF;
 GO
 
@@ -1078,33 +1078,111 @@ GO
 SET IDENTITY_INSERT [InternalAssessmentItem] ON;
 INSERT INTO [InternalAssessmentItem] (internal_assessment_item_id, internal_assessment_id, assessment_criterion_id, score, result_notes)
 VALUES
-(1, 1, 1, 96.00, N'Hệ thống phần mềm MyCropDiary lưu vết minh bạch'),
-(2, 1, 2, 92.00, N'Lưới chắn côn trùng sạch và kín khít'),
-(3, 1, 3, 98.00, N'Tất cả vật tư đều có tem nhãn rõ nguồn gốc xuất xứ');
+(1, 1, 1, 96.00, N'MyCropDiary digital logging provides end-to-end transparent traceability'),
+(2, 1, 2, 92.00, N'Insect exclusion mesh is clean, sealed, and devoid of tears'),
+(3, 1, 3, 98.00, N'All agrochemical containers carry authentic manufacturer labels and traceable batch numbers');
 SET IDENTITY_INSERT [InternalAssessmentItem] OFF;
 GO
 
--- 43. KNOWLEDGE ARTICLES (IDs: 1 to 2)
+-- 43. KNOWLEDGE ARTICLES (IDs: 1 to 30)
 SET IDENTITY_INSERT [KnowledgeArticle] ON;
 INSERT INTO [KnowledgeArticle] (knowledge_article_id, created_by, title, slug, summary, body, cover_image_url, category, tags, view_count, source_url, article_status, published_at)
 VALUES
-(1, 1, N'Kỹ thuật trồng dưa lưới nhà màng VietGAP', 'ky-thuat-trong-dua-luoi-nha-mang-vietgap', N'Hướng dẫn tổng quan về quy trình chuẩn bị giá thể, chế độ dinh dưỡng và kiểm soát ẩm độ', N'# Kỹ thuật canh tác dưa lưới công nghệ cao VietGAP
+(1, 1, N'High-Tech Greenhouse Cantaloupe Cultivation under VietGAP', 'high-tech-greenhouse-cantaloupe-cultivation-vietgap', N'Comprehensive guidelines on substrate preparation, fertigation management, and humidity control', N'# High-Tech Greenhouse Cantaloupe Cultivation under VietGAP
 
-## 1. Chuẩn bị giá thể
-Xơ dừa cần được ngâm xả chát tannin và lignin kỹ qua 3-4 lần nước ngọt, sau đó ngâm nước vôi 1% trong 24 giờ.
+## 1. Substrate Preparation
+Coco peat must be thoroughly desalted and rinsed 3-4 times with fresh water to flush out tannins and lignin, followed by soaking in 1% agricultural lime solution for 24 hours.
 
-## 2. Quản lý dinh dưỡng nhỏ giọt
-- Giai đoạn cây con (ngày 1-15): EC 1.2 - 1.5 mS/cm, pH 5.8 - 6.2.
-- Giai đoạn ra hoa thụ phấn (ngày 20-35): EC 1.8 - 2.0 mS/cm.
-- Giai đoạn nuôi trái và tạo lưới (ngày 40-60): Tăng tỷ lệ Kali, duy trì EC 2.2 - 2.5 mS/cm.', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37', 'seed-cultivation', N'dưa lưới, vietgap, nhà màng', 128, 'https://vietgap.gov.vn', 'published', SYSUTCDATETIME()),
-(2, 1, N'Phòng trừ bọ trĩ và rệp phấn trắng bằng giải pháp sinh học', 'phong-tru-bo-tri-bo-phan-trang-bang-sinh-hoc', N'Cẩm nang nhận biết và quản lý dịch hại trên cây dưa lưới không sử dụng hóa chất độc hại', N'# Giải pháp sinh học phòng trừ dịch hại chích hút
+## 2. Automated Drip Fertigation
+- Seedling Stage (Days 1-15): EC 1.2 - 1.5 mS/cm, pH 5.8 - 6.2.
+- Flowering and Pollination (Days 20-35): EC 1.8 - 2.0 mS/cm.
+- Fruit Sizing and Netting (Days 40-60): Increase Potassium ratio, maintain EC 2.2 - 2.5 mS/cm.', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37', 'seed-cultivation', N'cantaloupe, vietgap, greenhouse', 128, 'https://vietgap.gov.vn', 'published', SYSUTCDATETIME()),
+(2, 1, N'Biological Control of Thrips and Whiteflies in Greenhouses', 'biological-control-thrips-whiteflies-greenhouses', N'Practical manual for scouting, trapping, and biologically suppressing sucking insect pests without toxic chemicals', N'# Biological Control of Sucking Pests in Greenhouses
 
-Bọ trĩ (Thrips) là đối tượng nguy hiểm nhất gây xoăn đọt non và truyền virus khảm lá.
+Thrips are among the most destructive pests in melon production, causing leaf curling, deformed shoots, and transmitting viral mosaic pathogens.
 
-### Biện pháp canh tác
-1. Che chắn nhà màng bằng lưới chắn côn trùng mắt lưới tối thiểu 50 mesh.
-2. Treo bẫy dính màu vàng cách mặt ngọn dưa 15-20cm.
-3. Phun luân phiên dầu khoáng sinh học và chế phẩm nấm ký sinh Beauveria bassiana.', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83', 'fertilizer-pesticide', N'bọ trĩ, sinh học, rệp phấn trắng', 95, 'https://bvtv.gov.vn', 'published', SYSUTCDATETIME());
+### Recommended Integrated Pest Management (IPM) Practices
+1. Seal all greenhouse ventilation openings with insect netting of at least 50 mesh density.
+2. Hang sticky yellow and blue traps 15-20cm above the plant canopy to detect and capture adult pests.
+3. Apply alternating preventative sprays of biological neem extract and Beauveria bassiana entomopathogenic fungus.', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83', 'fertilizer-pesticide', N'thrips, biological control, whiteflies', 95, 'https://bvtv.gov.vn', 'published', SYSUTCDATETIME()),
+(3, 1, N'What is VietGAP and Why Should Farm Households Adopt It?', 'vietgap-la-gi-va-vi-sao-nong-ho-nen-ap-dung', N'An overview of Good Agricultural Practices in Vietnam (VietGAP - TCVN 11892-1:2017), economic benefits for smallholders, and access to supermarket chains and export channels.', N'VietGAP (Vietnamese Good Agricultural Practices) is a comprehensive set of principles, procedures, and guidance for agricultural producers during cultivation, harvesting, and post-harvest handling. It guarantees food safety, elevates product quality, safeguards farmer and consumer health, protects natural ecosystems, and ensures end-to-end traceability.
+
+By adopting VietGAP standards, farm owners and agricultural cooperatives establish steadfast trust with retail supermarkets, institutional food services, and export traders, while substantially optimizing expenditure on fertilizers and crop protection materials through quantifiable logging records.', 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80', 'regulation', N'overview, standards, certification', 1520, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -2, SYSUTCDATETIME())),
+(4, 1, N'4 Mandatory Criteria Groups for VietGAP Certification', '4-nhom-tieu-chi-bat-buoc-trong-chung-nhan-vietgap', N'Detailed breakdown of the 4 core pillars of VietGAP: Food Safety, Environmental Protection, Occupational Health & Safety, and Product Traceability.', N'The VietGAP crop production standard comprises four foundational requirement pillars:
+1. Assessment and selection of suitable production zones free from chemical and microbial contamination hazards.
+2. Management of certified disease-free seeds, rootstocks, and propagules with authentic origin records.
+3. Safe utilization of soils, substrates, organic fertilizers, irrigation water, and crop protection materials from approved registries.
+4. Comprehensive farm logging and record archiving for a minimum of 12-24 months to support audit inspections and product traceability.
+
+Every individual criterion is classified into Level A (100% mandatory compliance), Level B (recommended, requiring at least 90% compliance), and Level C (advisory best practices).', 'https://images.unsplash.com/photo-1738598668890-5f4d28842df5?auto=format&fit=crop&w=800&q=80', 'regulation', N'criteria, certification, class A standards', 1180, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -4, SYSUTCDATETIME())),
+(5, 1, N'Step-by-Step Procedure for VietGAP Application and Certification', 'quy-trinh-dang-ky-va-cap-giay-chung-nhan-vietgap', N'Step-by-step guidance from site surveying, soil/water laboratory testing, and internal auditing to submitting official applications to MARD-accredited certification bodies.', N'The standard VietGAP certification pathway follows 6 structured phases:
+- Step 1: Conduct site surveys, collect soil and irrigation water samples for accredited laboratory analysis of heavy metals and microbial pathogens.
+- Step 2: Establish standardized operating procedures (SOPs) and institute farm production logbooks.
+- Step 3: Organize comprehensive internal training workshops for farm staff and operators.
+- Step 4: Execute cultivation, log all farm activities for at least one complete crop cycle, and conduct internal audit checklists.
+- Step 5: Implement corrective actions for non-conformities and compile official documentation dossiers for accredited certification bodies.
+- Step 6: Host on-site auditor field evaluations, pre-harvest crop residue sampling, and receive official VietGAP certification (valid for up to 3 years).', 'https://images.unsplash.com/photo-1727099079513-952d40de9d78?auto=format&fit=crop&w=800&q=80', 'regulation', N'procedure, application, certification body', 860, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -6, SYSUTCDATETIME())),
+(6, 1, N'Comparing VietGAP, GlobalGAP, and Organic Agricultural Standards', 'so-sanh-tieu-chuan-vietgap-globalgap-va-huu-co', N'Similarities and operational distinctions among VietGAP, GlobalGAP, and Organic farming to help farm enterprises chart optimal certification pathways.', N'VietGAP is tailored specifically for Vietnamese cultivation conditions, permitting the judicious, regulated application of inorganic fertilizers and registered crop protection products subject to strict Pre-Harvest Intervals (PHI).
+
+In contrast, GlobalGAP imposes rigorous standards concerning fair labor welfare, energy resource management, environmental biodiversity, and supply chain integrity for high-value export markets in the EU, North America, and Japan. Certified Organic farming completely bans synthetic chemical fertilizers, artificial pesticides, and genetically modified organisms (GMOs).', 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80', 'regulation', N'VietGAP, GlobalGAP, organic', 945, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -7, SYSUTCDATETIME())),
+(7, 1, N'Assessing and Selecting Safe Production Zones for VietGAP', 'danh-gia-va-lua-chon-vung-san-xuat-an-toan', N'Essential site survey factors: historical land usage, flood risks, isolation distances from industrial zones, hospitals, and waste facilities.', N'Before designating a land parcel for VietGAP production, farm enterprises must investigate historical land usage for at least the preceding 2 years to identify persistent chemical residues or endemic soil-borne pathogens.
+
+Production zones must maintain adequate separation buffers from industrial parks, brick kilns, cemeteries, hospitals, and untreated municipal wastewater outfalls. Where contamination risks exist along perimeters, farms are mandated to establish perimeter dykes, independent drainage canals, and multi-layered agro-forestry vegetative shelterbelts (biological buffer zones).', 'https://images.unsplash.com/photo-1697897400733-46e12551a012?auto=format&fit=crop&w=800&q=80', 'soil-water', N'production zone, site survey, buffer zones', 640, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -9, SYSUTCDATETIME())),
+(8, 1, N'Sustainable Soil Management and Substrate Remediation Techniques', 'quan-ly-va-cai-tao-dat-trong-theo-huong-ben-vung', N'Leguminous crop rotation practices, mulching for moisture preservation, Trichoderma bio-inoculants, and microbial composts to combat soil degradation.', N'To preserve natural soil fertility and maintain porous, crumbly soil structure, farm operators should practice rotational cropping with leguminous green manures while minimizing aggressive deep tillage that disrupts beneficial mycorrhizal networks.
+
+Following each harvest cycle, complete thorough field sanitation, apply agricultural lime to neutralize acidity and sanitize soil, and incorporate fermented straw treated with Trichoderma fungal biocontrols. Conduct soil chemistry tests every 6-12 months for pH, electrical conductivity (EC), and organic matter percentage to calibrate fertilizer formulations accurately.', 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80', 'soil-water', N'soil management, sustainable farming, Trichoderma', 780, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -11, SYSUTCDATETIME())),
+(9, 1, N'Irrigation Water Quality Standards in VietGAP Agriculture', 'tieu-chuan-chat-luong-nuoc-tuoi-trong-vietgap', N'Permissible threshold limits for microbial contamination (E. coli, Coliforms) and heavy metals (As, Cd, Pb, Hg) in agricultural water sources.', N'Water utilized for crop irrigation, foliar fertigation, and chemical spraying must comply with national technical regulations governing surface water and groundwater for agricultural use (specifically monitoring 4 heavy metals: Arsenic, Cadmium, Lead, and Mercury alongside fecal coliform counts).
+
+Under no circumstances may untreated municipal sewage, animal manure slurry, or industrial effluent be channeled into crop irrigation reservoirs.', 'https://images.unsplash.com/photo-1752775312083-1cefe2f93358?auto=format&fit=crop&w=800&q=80', 'soil-water', N'irrigation water, testing standards, heavy metals', 540, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -13, SYSUTCDATETIME())),
+(10, 1, N'Proper Management and Disposal of Agricultural Waste and Packaging', 'quan-ly-va-xu-ly-chat-thai-nong-nghiep-dung-cach', N'Triple-rinse procedures for empty agrochemical containers, dedicated locked storage pits, and safe composting protocols for vegetative residues.', N'Empty chemical containers and bottles must undergo the mandatory triple-rinse procedure immediately after preparation (with rinse water poured directly back into the sprayer tank), followed by prompt deposit into dedicated, locked collection containment pits fitted with rainproof roofs and hazard warning signs.
+
+Burning or burying chemical packaging on farm grounds or discarding containers into irrigation ditches is strictly prohibited. Organic vegetative residues should be transferred to dedicated composting areas situated far from water sources to be recycled into organic mulch.', 'https://images.unsplash.com/photo-1742071853823-f9f87d9f3894?auto=format&fit=crop&w=800&q=80', 'soil-water', N'agricultural waste, environmental safety, chemical containers', 490, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -15, SYSUTCDATETIME())),
+(11, 1, N'Selecting Certified Seed Stocks and Seedlings under VietGAP', 'chon-giong-cay-trong-dat-chuan-vietgap', N'Mandatory procurement invoices, varietal certification labels, seed lot provenance records, and pre-sowing seed sanitization protocols.', N'All crop cultivars, certified hybrid seed stocks, and rootstocks integrated into VietGAP production must be registered on the official national registry of approved crop varieties permitted for commercial distribution in Vietnam.
+
+Farm enterprises must systematically archive commercial invoices, seed packets, and technical labels documenting lot numbers, germination test percentages, production dates, and expiration intervals.', 'https://images.unsplash.com/photo-1781782411066-c68b1e5610bc?auto=format&fit=crop&w=800&q=80', 'seed-cultivation', N'certified seed, varietal origin, seed lot provenance', 705, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -16, SYSUTCDATETIME())),
+(12, 1, N'Seasonal Planting Techniques and Optimal Canopy Density', 'ky-thuat-gieo-trong-va-mat-do-hop-ly-theo-mua-vu', N'Designing raised planting beds oriented along sunlight vectors, calculating plant-to-row spacing, and enhancing canopy aeration against fungal diseases.', N'Plant spacing and population density must be calibrated to the growth habits of each crop cultivar, seasonal weather patterns, and substrate fertility levels.
+
+Constructing raised beds 20-30 cm high during the rainy season promotes rapid surface drainage and prevents crown root rot. Maintaining adequate canopy spacing ensures uniform light penetration across all leaf layers, lowering local relative humidity and dramatically curbing downy mildew.', 'https://images.unsplash.com/photo-1773994788915-7fb0f462f223?auto=format&fit=crop&w=800&q=80', 'seed-cultivation', N'planting season, spacing density, raised beds', 530, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -18, SYSUTCDATETIME())),
+(13, 1, N'Nursery Management Protocols and Vigorous Seedling Production', 'ky-thuat-quan-ly-vuon-uom-va-cham-soc-cay-con', N'Preparing sterilized germination media, managing light and moisture regimes, and hardening off seedlings prior to field transplanting.', N'Vigorous, disease-free seedlings determine over 50% of eventual crop harvest success. Germination media (desalted coco peat, carbonized rice hulls, and vermicompost) must be sterile and tested free of damping-off pathogens and root-knot nematodes.
+
+Nursery facilities must be enclosed with ultra-fine insect netting and equipped with seedling benches elevated at least 50 cm above ground level.', 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=800&q=80', 'seed-cultivation', N'nursery management, germination media, seedlings', 625, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -19, SYSUTCDATETIME())),
+(14, 1, N'Canopy Pruning, Trellising, and Fruit Netting Techniques', 'ky-thuat-tia-canh-tao-tan-va-bao-trai', N'Timing suckering and pruning operations, fruit bagging methodologies to safeguard appearance, and eliminating fruit flies without chemical sprays.', N'For fruit trees and fruiting vegetables, systematic removal of side shoots, lateral suckers, and senescent bottom foliage channels assimilates directly to developing flowers and fruit clusters.
+
+Pruning shears must be disinfected with 70% alcohol when transitioning between plants showing disease symptoms and healthy specimens. Combining pruning with protective micro-perforated fruit bags shields produce against fruit flies without chemical applications.', 'https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=800&q=80', 'seed-cultivation', N'canopy pruning, fruit bagging, fruit crops', 710, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -20, SYSUTCDATETIME())),
+(15, 1, N'The "4 Rights" Principle in Responsible Agrochemical Usage', 'nguyen-tac-4-dung-khi-su-dung-thuoc-bao-ve-thuc-vat', N'Right product, right dosage, right timing, and right method to effectively control pests, prevent resistance, and guarantee food hygiene.', N'The "4 Rights" principle serves as the foundational cornerstone for crop protection under VietGAP:
+1. Right Product: Utilize only registered products officially permitted for agriculture; prioritize botanical and biological controls.
+2. Right Dosage: Formulate exact dilution concentrations in strict accordance with manufacturer packaging labels.
+3. Right Timing: Apply sprays when pest larvae are in early instars or when fungal lesions first appear.
+4. Right Method: Spray uniformly across the abaxial (underside) surfaces of leaves where insects conceal themselves, avoiding drift against wind vectors.', 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=800&q=80', 'fertilizer-pesticide', N'crop protection, 4 rights, chemical safety', 1120, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -21, SYSUTCDATETIME())),
+(16, 1, N'Pre-Harvest Interval (PHI) Compliance Prior to Fruit Picking', 'thoi-gian-cach-ly-thuoc-bvtv-truoc-khi-thu-hoach', N'Interpreting PHI specifications on agrochemical packaging, calculating safe harvest dates, and leveraging automated safeguards in MyCropDiary.', N'The Pre-Harvest Interval (PHI) designates the mandatory minimum duration that must elapse from the final chemical application or foliar spray until crops may be harvested for human consumption.
+
+When operators record a pesticide application in the MyCropDiary system, automated compliance algorithms immediately lock harvest authorization on the affected parcel until the PHI window safely clears, preventing Maximum Residue Limit (MRL) violations.', 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=800&q=80', 'fertilizer-pesticide', N'pre-harvest interval, PHI, residue limits', 980, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -22, SYSUTCDATETIME())),
+(17, 1, N'Balanced Application of Organic and Inorganic Crop Nutrition', 'su-dung-phan-bon-huu-co-va-vo-co-can-doi', N'Strict prohibition of raw manure, thermophilic aerobic composting protocols, and balanced NPK micronutrient delivery by phenological stage.', N'Under VietGAP standards, the direct application of raw nightsoil, fresh livestock manure, or untreated sewer sludge is strictly prohibited due to severe risks of Salmonella and pathogenic E. coli contamination.
+
+Animal manures must undergo complete thermophilic composting (reaching pile temperatures of 55-65°C for a minimum of 30-45 days) and be accompanied by aerobic composting temperature logs.', 'https://images.unsplash.com/photo-1729009511263-329748943004?auto=format&fit=crop&w=800&q=80', 'fertilizer-pesticide', N'fertilizers, aerobic composting, crop nutrition', 645, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -23, SYSUTCDATETIME())),
+(18, 1, N'Integrated Pest Management (IPM) to Reduce Chemical Dependency', 'quan-ly-dich-hai-tong-hop-ipm-giam-phu-thuoc-hoa-chat', N'Deploying chromatic yellow/blue sticky traps, pheromone lures, beneficial predatory insects, and bio-insecticides (Bt, Beauveria, Metarhizium).', N'Integrated Pest Management (IPM) is the bedrock of modern VietGAP farming, prioritizing preventative agro-ecological cultural measures prior to synthetic chemical interventions: crop rotation, resistant varieties, yellow and blue adhesive monitoring cards, sex pheromone traps, and the conservation of natural parasitoid wasps.', 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=800&q=80', 'fertilizer-pesticide', N'IPM, biological control, insect traps', 815, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -24, SYSUTCDATETIME())),
+(19, 1, N'Harvesting Techniques to Minimize Post-Harvest Losses', 'ky-thuat-thu-hoach-giam-ton-that-sau-thu-hoach', N'Selecting optimal diurnal harvesting windows, sanitary pedicel cutting protocols, and rapid pre-cooling to extend commercial produce shelf life.', N'Crops may only be harvested after all chemical Pre-Harvest Intervals (PHI) have fully elapsed and produce has achieved optimal physiological and commercial maturity.
+
+Harvest operations should take place in early morning or late afternoon cool hours. Use sanitized cutting shears and place fruit gently into foam-lined plastic crates, ensuring harvested produce never comes into contact with bare soil.', 'https://images.unsplash.com/photo-1746014929708-fcb859fd3185?auto=format&fit=crop&w=800&q=80', 'harvest-post-harvest', N'harvesting, post-harvest handling, shelf life', 610, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -25, SYSUTCDATETIME())),
+(20, 1, N'Sanitation Standards for Post-Harvest Handling and Sorting Facilities', 've-sinh-dung-cu-va-khu-vuc-so-che-nong-san', N'Unidirectional packhouse floor plans, physical segregation of produce crates from waste bins, and scheduled chemical sanitization protocols.', N'Packhouses, grading areas, and packaging stations must be well-ventilated, roofed, and elevated with impervious drainage floors, equipped with exclusion barriers to deter rodents, domestic animals, and pests.
+
+Crates designated for washed produce must be clearly color-coded and sanitized, strictly segregated from receptacles used for agricultural inputs or reject material.', 'https://images.unsplash.com/photo-1657288089316-c0350003ca49?auto=format&fit=crop&w=800&q=80', 'harvest-post-harvest', N'sanitation, post-harvest sorting, contamination prevention', 475, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -26, SYSUTCDATETIME())),
+(21, 1, N'Packaging, Labeling, and Cold Chain Storage for VietGAP Produce', 'quy-chuan-dong-goi-ghi-nhan-va-bao-quan-lanh-nong-san', N'Mandatory information on agricultural packaging labels, cold room temperature and humidity setpoints by vegetable and fruit category.', N'Packaging materials must be fabricated from virgin, food-contact certified materials that are clean and undamaged. VietGAP packaging labels must clearly indicate: Product Name, Producer Name & Physical Address, VietGAP Certification Code, Harvest Batch Lot / Traceability QR Code, and Packaging Date.', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=800&q=80', 'harvest-post-harvest', N'packaging, labeling, cold chain storage', 590, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -27, SYSUTCDATETIME())),
+(22, 1, N'Regulations for Sanitary Produce Transport from Farm to Market', 'quy-dinh-van-chuyen-nong-san-an-toan-tu-trang-trai', N'Pre-loading cargo hold sanitation inspections, stacking guidelines, and strict prohibition of co-transporting produce with chemicals or livestock.', N'Vehicles chartered for agricultural transportation from farm gate to market distribution centers must be thoroughly washed and inspected prior to produce pallet loading.
+
+Produce cargo compartments must never co-transport chemical fertilizers, agrochemical containers, petroleum fuels, or live animals under any circumstances.', 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80', 'harvest-post-harvest', N'transportation, cold logistics, food safety', 430, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -28, SYSUTCDATETIME())),
+(23, 1, N'Standardized VietGAP Farm Logbook Documentation System', 'he-thong-ghi-chep-nhat-ky-canh-tac-theo-vietgap', N'Compulsory operational registries: seed stock, fertilizer applications, crop protection sprays, irrigation events, yields, and customer feedback.', N'VietGAP farm records serve as the legal documentation scrutinized during certification audits. Farms must preserve comprehensive records of input purchases, inventory stock ledgers, block-level cultivation activity logs, spray logs, and harvest distribution manifests for a minimum duration of 24 months.', 'https://images.unsplash.com/photo-1748742633127-941ebec208da?auto=format&fit=crop&w=800&q=80', 'record-traceability', N'recordkeeping, farming logs, VietGAP audit forms', 830, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -29, SYSUTCDATETIME())),
+(24, 1, N'Planting Area Codes and Digital QR Traceability Systems', 'ma-so-vung-trong-va-truy-xuat-nguon-goc-dien-tu', N'Configuring production lot and batch codes linked to specific zones and blocks, generating consumer-facing VietGAP traceability QR codes.', N'Each batch of produce sold must be assigned an immutable Lot/Batch Code that directly traces back to the specific Production Zone, Block, and Crop Season.
+
+When consumers scan the packaging QR code with a smartphone, the digital ledger displays certified farm details, geolocation maps, crop cultivar information, and chronological care records.', 'https://images.unsplash.com/photo-1775681150283-04970adf1b98?auto=format&fit=crop&w=800&q=80', 'record-traceability', N'planting area code, QR code, electronic traceability', 670, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -30, SYSUTCDATETIME())),
+(25, 1, N'Recall Procedures for Compromised Produce and Incident Response', 'quy-trinh-thu-hoi-san-pham-khong-an-toan-va-xu-ly-su-co', N'Procedures for isolating compromised lots, notifying commercial buyers, conducting root-cause investigations, and recording corrective actions.', N'Under VietGAP standards, every commercial farm must possess written Standard Operating Procedures for initiating product recalls if food safety hazards are detected. Upon discovery of a non-conformance, farm management must halt distribution and cross-reference batch shipping records to notify consignees within 24 hours.', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80', 'record-traceability', N'product recall, incident management, audit compliance', 515, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -31, SYSUTCDATETIME())),
+(26, 1, N'Digital Farm Logging: Mobile Workflows Replacing Paper Records', 'so-hoa-nhat-ky-nong-trai-tren-dien-thoai-thay-the-so-giay', N'Empowering field technicians to record activities on mobile devices, attaching photographic evidence, and exporting automated audit reports.', N'With the MyCropDiary digital farm management system, field technicians assigned to specific Zones and Blocks can update cultural operations directly on mobile devices alongside timestamped photos. Farm owners monitor operational workflows in real time and export standardized VietGAP audit compliance dossiers on demand.', 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80', 'record-traceability', N'digital logbook, smart agriculture, MyCropDiary', 910, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -32, SYSUTCDATETIME())),
+(27, 1, N'Worker Safety Training and Personal Protective Equipment (PPE)', 'dao-tao-va-trang-bi-bao-ho-cho-nguoi-lao-dong', N'Mandatory annual training requirements, certified PPE gear for chemical handlers, and emergency first-aid station setup across field blocks.', N'All farm operators directly engaged in VietGAP agricultural production must undergo certified occupational training at least once per year on safe handling procedures, chemical dilution, and emergency poison control protocols.
+
+Personnel preparing or applying crop protection materials must wear approved PPE: nitrile chemical gloves, rubber boots, splash-proof goggles, and activated carbon respirators.', 'https://images.unsplash.com/photo-1781785186628-e1a04569776d?auto=format&fit=crop&w=800&q=80', 'training-certification', N'worker training, occupational safety, PPE gear', 560, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -33, SYSUTCDATETIME())),
+(28, 1, N'Conducting Internal Audits Prior to Official VietGAP Certification', 'danh-gia-noi-bo-truoc-khi-dang-ky-chung-nhan', N'Methodology for inspecting Class A and Class B criteria, compiling physical evidence, and closing Non-Conformance Reports (NCRs).', N'Internal audits are a mandatory pre-condition conducted at least once annually prior to inviting accredited external certification bodies. Farm technical supervisors use the comprehensive VietGAP checklist to evaluate chemical storage facilities, composting areas, field warning signage, container disposal pits, and logbooks.', 'https://images.unsplash.com/photo-1738244969496-eeabfacec172?auto=format&fit=crop&w=800&q=80', 'training-certification', N'internal audit, checklist, certification assessment', 615, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -34, SYSUTCDATETIME())),
+(29, 1, N'Design Standards for Chemical Storages and Farm Warning Signage', 'tieu-chuan-thiet-ke-kho-chua-phan-bon-thuoc-bvtv-va-bien-bao', N'Structural specifications for locked agrochemical storage, pallet elevation, containment curbing, dry sand spill kits, and warning signage.', N'Crop protection chemical warehouses must be physically isolated from living quarters and packing areas, equipped with secure locks, ventilation louvers, and dry sand spill containment kits. Liquid agrochemicals must be stored on bottom shelves, dry powders on upper tiers, with high-visibility warning signage installed across treated blocks.', 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=800&q=80', 'training-certification', N'chemical storage, warning signage, facility standards', 740, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -35, SYSUTCDATETIME())),
+(30, 1, N'Best Practices for Sustaining VietGAP Certification Through Surveillance Audits', 'kinh-nghiem-duy-tri-chung-nhan-vietgap-qua-cac-ky-giam-sat', N'Common non-conformances that trigger certification suspension, and strategies for maintaining persistent daily digital logging habits.', N'While VietGAP certificates carry a maximum validity of 3 years, accredited certification bodies conduct periodic surveillance audits every 12 months. Maintaining daily digital logging on MyCropDiary ensures the farm is continuously prepared for unannounced inspections and scheduled surveillance visits.', 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80', 'training-certification', N'certification maintenance, surveillance audits, best practices', 685, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -36, SYSUTCDATETIME()));
 SET IDENTITY_INSERT [KnowledgeArticle] OFF;
 GO
 
@@ -1112,7 +1190,7 @@ GO
 SET IDENTITY_INSERT [AIConversation] ON;
 INSERT INTO [AIConversation] (ai_conversation_id, user_id, farm_id, block_id, crop_season_id, conversation_title, conversation_status)
 VALUES
-(1, 2, 1, 1, 1, N'Tư vấn biểu hiện vàng viền lá trên dưa lưới', 'open');
+(1, 2, 1, 1, 1, N'Leaf edge yellowing consultation on 30-day-old melon plants', 'open');
 SET IDENTITY_INSERT [AIConversation] OFF;
 GO
 
@@ -1120,13 +1198,13 @@ GO
 SET IDENTITY_INSERT [AIMessage] ON;
 INSERT INTO [AIMessage] (ai_message_id, ai_conversation_id, sender_type, message_text, model_name)
 VALUES
-(1, 1, 'user', N'Cây dưa lưới 30 ngày tuổi của tôi ở Lô A1 bị vàng ở mép lá già bên dưới, gân lá vẫn xanh. Đây là dấu hiệu gì và tôi nên xử lý thế nào?', 'gemini-1.5-pro'),
-(2, 1, 'assistant', N'Chào bạn! Dựa trên mô tả triệu chứng vàng mép lá nhưng gân lá còn xanh ở tầng lá già, đây là biểu hiện điển hình của tình trạng thiếu Magie (Mg) hoặc mất cân đối tỷ lệ K/Mg trong dung dịch tưới.
+(1, 1, 'user', N'My 30-day-old cantaloupe plants in Block A1 show interveinal yellowing with yellow leaf margins on the lower mature leaves, while the main leaf veins remain green. What is this deficiency and how should I treat it?', 'gemini-1.5-pro'),
+(2, 1, 'assistant', N'Hello! Based on the symptom description—interveinal chlorosis and yellowing margins on mature lower leaves while primary veins stay dark green—this is a classic symptom of Magnesium (Mg) deficiency or an antagonistic Potassium/Magnesium (K/Mg) imbalance in your nutrient solution.
 
-Khuyến nghị khắc phục:
-1. Kiểm tra lại độ pH của giá thể: pH thích hợp từ 5.8 - 6.2 (nếu pH < 5.5 cây sẽ khó hấp thu Magie).
-2. Bổ sung muối Magie Sunfat (MgSO4) hòa tan nồng độ 1g/lít phun qua lá vào sáng sớm.
-3. Kiểm tra nồng độ Kali trong bồn mẹ, tránh châm Kali quá cao cạnh tranh hấp thu với Magie.', 'gemini-1.5-pro');
+Recommended Corrective Actions:
+1. Verify the root zone substrate pH: the ideal range is 5.8 - 6.2 (if pH drops below 5.5, Magnesium uptake is severely inhibited).
+2. Foliar application: Dissolve Magnesium Sulfate (MgSO4) heptahydrate at 1.0 g/L and apply a fine mist spray across both sides of the canopy in early morning.
+3. Review your fertigation injection ratio: Ensure Potassium (K) levels in the stock solution are not excessively high, as excessive K outcompetes Magnesium absorption.', 'gemini-1.5-pro');
 SET IDENTITY_INSERT [AIMessage] OFF;
 GO
 
@@ -1134,7 +1212,7 @@ GO
 SET IDENTITY_INSERT [AIFeedback] ON;
 INSERT INTO [AIFeedback] (ai_feedback_id, ai_message_id, user_id, rating, feedback_text)
 VALUES
-(1, 2, 2, 5, N'Tư vấn rất chính xác và khoa học. Sau 3 ngày bổ sung MgSO4 cây đã hồi phục màu xanh.');
+(1, 2, 2, 5, N'Accurate and scientifically sound diagnosis. Within 3 days of supplemental MgSO4 foliar treatment, healthy green canopy vigor was fully restored.');
 SET IDENTITY_INSERT [AIFeedback] OFF;
 GO
 
@@ -1142,7 +1220,7 @@ GO
 SET IDENTITY_INSERT [AIFeedbackReply] ON;
 INSERT INTO [AIFeedbackReply] (ai_feedback_reply_id, ai_feedback_id, user_id, reply_text)
 VALUES
-(1, 1, 1, N'Đội ngũ MyCropDiary rất vui được đồng hành cùng bạn. Chúc trang trại có một vụ mùa bội thu!');
+(1, 1, 1, N'The MyCropDiary agronomy team is glad to have assisted you. Wishing your farm an abundant and high-yielding harvest!');
 SET IDENTITY_INSERT [AIFeedbackReply] OFF;
 GO
 

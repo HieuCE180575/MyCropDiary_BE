@@ -6,15 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
- * Tự động khởi tạo bộ cẩm nang 28 bài viết Kiến thức VietGAP chuẩn quốc gia vào cơ sở dữ liệu
- * nếu chưa tồn tại theo slug, đảm bảo API /api/v1/knowledge/articles luôn đầy đủ dữ liệu cho cả 7 chuyên đề.
+ * Automatically initializes and synchronizes the 28 VietGAP knowledge articles in the database,
+ * ensuring the /api/v1/knowledge/articles endpoint provides comprehensive English-ready content for all 7 categories.
  */
 @Component
 public class KnowledgeArticleDataInitializer implements CommandLineRunner {
@@ -43,268 +42,269 @@ public class KnowledgeArticleDataInitializer implements CommandLineRunner {
     public void run(String... args) {
         try {
             List<SeedArticle> seeds = List.of(
-                    // 1. Quy định chung (regulation)
+                    // 1. General Regulations (regulation)
                     new SeedArticle(
                             "vietgap-la-gi-va-vi-sao-nong-ho-nen-ap-dung",
-                            "VietGAP là gì và vì sao nông hộ nên áp dụng?",
-                            "Tổng quan về tiêu chuẩn Thực hành nông nghiệp tốt tại Việt Nam (VietGAP - TCVN 11892-1:2017), lợi ích kinh tế cho nông hộ và cơ hội tiếp cận chuỗi siêu thị, xuất khẩu.",
-                            "VietGAP (Vietnamese Good Agricultural Practices) là tập hợp các nguyên tắc, trình tự và thủ tục hướng dẫn tổ chức, cá nhân sản xuất, thu hoạch, sơ chế nhằm đảm bảo an toàn thực phẩm, nâng cao chất lượng sản phẩm, bảo vệ sức khoẻ người sản xuất - người tiêu dùng, bảo vệ môi trường và truy xuất nguồn gốc sản phẩm.\n\nKhi áp dụng VietGAP, nông hộ và hợp tác xã tạo dựng được niềm tin vững chắc với hệ thống siêu thị, bếp ăn công nghiệp và thương lái xuất khẩu; đồng thời tối ưu chi phí phân bón, thuốc BVTV nhờ quy trình ghi chép định lượng rõ ràng.",
+                            "What is VietGAP and Why Should Farm Households Adopt It?",
+                            "An overview of Good Agricultural Practices in Vietnam (VietGAP - TCVN 11892-1:2017), economic benefits for smallholders, and access to supermarket chains and export channels.",
+                            "VietGAP (Vietnamese Good Agricultural Practices) is a comprehensive set of principles, procedures, and guidance for agricultural producers during cultivation, harvesting, and post-harvest handling. It guarantees food safety, elevates product quality, safeguards farmer and consumer health, protects natural ecosystems, and ensures end-to-end traceability.\n\nBy adopting VietGAP standards, farm owners and agricultural cooperatives establish steadfast trust with retail supermarkets, institutional food services, and export traders, while substantially optimizing expenditure on fertilizers and crop protection materials through quantifiable logging records.",
                             "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80",
-                            "regulation", "tổng quan, tiêu chuẩn, chứng nhận", 1520, 2
+                            "regulation", "overview, standards, certification", 1520, 2
                     ),
                     new SeedArticle(
                             "4-nhom-tieu-chi-bat-buoc-trong-chung-nhan-vietgap",
-                            "4 nhóm tiêu chí bắt buộc trong chứng nhận VietGAP",
-                            "Phân tích chi tiết 4 trụ cột của VietGAP: An toàn thực phẩm, Bảo vệ môi trường, Sức khỏe an toàn lao động và Truy xuất nguồn gốc sản phẩm.",
-                            "Bộ tiêu chí VietGAP trồng trọt được chia thành các nhóm yêu cầu cốt lõi:\n1. Đánh giá và lựa chọn vùng sản xuất phù hợp, không bị ô nhiễm hoá học và sinh học.\n2. Quản lý giống, gốc ghép có nguồn gốc rõ ràng và sạch bệnh.\n3. Quản lý đất, giá thể, phân bón, nước tưới và thuốc BVTV theo đúng danh mục cho phép.\n4. Ghi chép, lưu trữ hồ sơ tối thiểu 12–24 tháng phục vụ truy xuất nguồn gốc.\n\nMỗi tiêu chí được phân loại thành mức A (bắt buộc đạt 100%), mức B (khuyến khích, cần đạt tối thiểu 90%) và mức C (khuyến nghị).",
+                            "4 Mandatory Criteria Groups for VietGAP Certification",
+                            "Detailed breakdown of the 4 core pillars of VietGAP: Food Safety, Environmental Protection, Occupational Health & Safety, and Product Traceability.",
+                            "The VietGAP crop production standard comprises four foundational requirement pillars:\n1. Assessment and selection of suitable production zones free from chemical and microbial contamination hazards.\n2. Management of certified disease-free seeds, rootstocks, and propagules with authentic origin records.\n3. Safe utilization of soils, substrates, organic fertilizers, irrigation water, and crop protection materials from approved registries.\n4. Comprehensive farm logging and record archiving for a minimum of 12–24 months to support audit inspections and product traceability.\n\nEvery individual criterion is classified into Level A (100% mandatory compliance), Level B (recommended, requiring at least 90% compliance), and Level C (advisory best practices).",
                             "https://images.unsplash.com/photo-1738598668890-5f4d28842df5?auto=format&fit=crop&w=800&q=80",
-                            "regulation", "tiêu chí, chứng nhận, chỉ tiêu loại A", 1180, 4
+                            "regulation", "criteria, certification, class A standards", 1180, 4
                     ),
                     new SeedArticle(
                             "quy-trinh-dang-ky-va-cap-giay-chung-nhan-vietgap",
-                            "Quy trình đăng ký và cấp giấy chứng nhận VietGAP",
-                            "Hướng dẫn từng bước từ chuẩn bị hồ sơ vùng trồng, tự đánh giá nội bộ đến nộp đơn đăng ký với tổ chức chứng nhận được Bộ NN&PTNT chỉ định.",
-                            "Quy trình đăng ký chứng nhận VietGAP gồm 6 bước chuẩn:\n- Bước 1: Khảo sát vùng trồng, lấy mẫu đất - nước phân tích các chỉ tiêu kim loại nặng và vi sinh.\n- Bước 2: Xây dựng quy trình canh tác chuẩn và ban hành sổ nhật ký sản xuất.\n- Bước 3: Tập huấn nội bộ cho toàn bộ thành viên/lao động trong trang trại.\n- Bước 4: Thực hiện canh tác, ghi chép nhật ký ít nhất 1 vụ mùa và tiến hành đánh giá nội bộ.\n- Bước 5: Khắc phục các điểm không phù hợp và nộp hồ sơ cho Tổ chức chứng nhận.\n- Bước 6: Đoàn chuyên gia đánh giá thực địa, lấy mẫu nông sản trước thu hoạch và cấp Giấy chứng nhận VietGAP (hiệu lực tối đa 3 năm).",
+                            "Step-by-Step Procedure for VietGAP Application and Certification",
+                            "Step-by-step guidance from site surveying, soil/water laboratory testing, and internal auditing to submitting official applications to MARD-accredited certification bodies.",
+                            "The standard VietGAP certification pathway follows 6 structured phases:\n- Step 1: Conduct site surveys, collect soil and irrigation water samples for accredited laboratory analysis of heavy metals and microbial pathogens.\n- Step 2: Establish standardized operating procedures (SOPs) and institute farm production logbooks.\n- Step 3: Organize comprehensive internal training workshops for farm staff and operators.\n- Step 4: Execute cultivation, log all farm activities for at least one complete crop cycle, and conduct internal audit checklists.\n- Step 5: Implement corrective actions for non-conformities and compile official documentation dossiers for accredited certification bodies.\n- Step 6: Host on-site auditor field evaluations, pre-harvest crop residue sampling, and receive official VietGAP certification (valid for up to 3 years).",
                             "https://images.unsplash.com/photo-1727099079513-952d40de9d78?auto=format&fit=crop&w=800&q=80",
-                            "regulation", "quy trình, hồ sơ, tổ chức chứng nhận", 860, 6
+                            "regulation", "procedure, application, certification body", 860, 6
                     ),
                     new SeedArticle(
                             "so-sanh-tieu-chuan-vietgap-globalgap-va-huu-co",
-                            "So sánh tiêu chuẩn VietGAP, GlobalGAP và Hữu cơ (Organic)",
-                            "Điểm giống và khác nhau giữa VietGAP, GlobalGAP và canh tác hữu cơ để chủ trang trại lựa chọn lộ trình chứng nhận phù hợp với thị trường mục tiêu.",
-                            "VietGAP được thiết kế phù hợp với điều kiện canh tác tại Việt Nam, cho phép sử dụng phân bón vô cơ và thuốc BVTV có kiểm soát trong danh mục cho phép và tuân thủ thời gian cách ly (PHI).\n\nTrong khi đó, GlobalGAP bổ sung các tiêu chuẩn khắt khe hơn về phúc lợi người lao động, quản lý năng lượng và bảo tồn đa dạng sinh học phục vụ xuất khẩu sang EU, Mỹ, Nhật Bản. Tiêu chuẩn Hữu cơ (Organic) nghiêm cấm hoàn toàn phân bón hóa học, thuốc trừ sâu tổng hợp và giống biến đổi gen (GMO).",
+                            "Comparing VietGAP, GlobalGAP, and Organic Agricultural Standards",
+                            "Similarities and operational distinctions among VietGAP, GlobalGAP, and Organic farming to help farm enterprises chart optimal certification pathways.",
+                            "VietGAP is tailored specifically for Vietnamese cultivation conditions, permitting the judicious, regulated application of inorganic fertilizers and registered crop protection products subject to strict Pre-Harvest Intervals (PHI).\n\nIn contrast, GlobalGAP imposes rigorous standards concerning fair labor welfare, energy resource management, environmental biodiversity, and supply chain integrity for high-value export markets in the EU, North America, and Japan. Certified Organic farming completely bans synthetic chemical fertilizers, artificial pesticides, and genetically modified organisms (GMOs).",
                             "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80",
-                            "regulation", "VietGAP, GlobalGAP, hữu cơ", 945, 7
+                            "regulation", "VietGAP, GlobalGAP, organic", 945, 7
                     ),
 
-                    // 2. Đất & nguồn nước (soil-water)
+                    // 2. Soil & Water Resources (soil-water)
                     new SeedArticle(
                             "danh-gia-va-lua-chon-vung-san-xuat-an-toan",
-                            "Đánh giá và lựa chọn vùng sản xuất an toàn",
-                            "Các yếu tố bắt buộc khảo sát: lịch sử sử dụng đất, nguy cơ ngập úng, khoảng cách cách ly với khu công nghiệp, bệnh viện và bãi rác.",
-                            "Trước khi đưa lô đất vào sản xuất VietGAP, chủ trang trại cần khảo sát lịch sử canh tác tối thiểu 2 năm gần nhất, đánh giá nguy cơ tồn dư hóa chất hoặc mầm bệnh trong đất.\n\nVùng trồng phải nằm cách xa khu công nghiệp, lò gạch, nghĩa trang, bệnh viện hoặc nguồn nước thải chưa xử lý. Trường hợp gần khu vực có nguy cơ ô nhiễm, bắt buộc thiết lập bờ bao, rãnh thoát nước riêng và hàng cây chắn gió (vùng đệm sinh học).",
+                            "Assessing and Selecting Safe Production Zones for VietGAP",
+                            "Essential site survey factors: historical land usage, flood risks, isolation distances from industrial zones, hospitals, and waste facilities.",
+                            "Before designating a land parcel for VietGAP production, farm enterprises must investigate historical land usage for at least the preceding 2 years to identify persistent chemical residues or endemic soil-borne pathogens.\n\nProduction zones must maintain adequate separation buffers from industrial parks, brick kilns, cemeteries, hospitals, and untreated municipal wastewater outfalls. Where contamination risks exist along perimeters, farms are mandated to establish perimeter dykes, independent drainage canals, and multi-layered agro-forestry vegetative shelterbelts (biological buffer zones).",
                             "https://images.unsplash.com/photo-1697897400733-46e12551a012?auto=format&fit=crop&w=800&q=80",
-                            "soil-water", "vùng sản xuất, khảo sát, vùng đệm", 640, 9
+                            "soil-water", "production zone, site survey, buffer zones", 640, 9
                     ),
                     new SeedArticle(
                             "quan-ly-va-cai-tao-dat-trong-theo-huong-ben-vung",
-                            "Quản lý và cải tạo đất trồng theo hướng bền vững",
-                            "Biện pháp luân canh cây họ đậu, che phủ đất giữ ẩm, bổ sung nấm đối kháng Trichoderma và phân hữu cơ vi sinh để chống thoái hóa đất.",
-                            "Để duy trì độ phì nhiêu tự nhiên và cấu tượng đất tơi xốp, nông hộ nên áp dụng luân canh giữa cây trồng chính với cây họ đậu, hạn chế cày xới sâu làm đứt gãy hệ vi sinh vật có lợi.\n\nSau mỗi vụ thu hoạch, tiến hành vệ sinh đồng ruộng, bón vôi hạ phèn khử trùng kết hợp ủ rơm rạ với chế phẩm Trichoderma. Định kỳ 6–12 tháng kiểm tra độ pH, EC và hàm lượng mùn để điều chỉnh phác đồ bón phân chính xác.",
+                            "Sustainable Soil Management and Substrate Remediation Techniques",
+                            "Leguminous crop rotation practices, mulching for moisture preservation, Trichoderma bio-inoculants, and microbial composts to combat soil degradation.",
+                            "To preserve natural soil fertility and maintain porous, crumbly soil structure, farm operators should practice rotational cropping with leguminous green manures while minimizing aggressive deep tillage that disrupts beneficial mycorrhizal networks.\n\nFollowing each harvest cycle, complete thorough field sanitation, apply agricultural lime to neutralize acidity and sanitize soil, and incorporate fermented straw treated with Trichoderma fungal biocontrols. Conduct soil chemistry tests every 6–12 months for pH, electrical conductivity (EC), and organic matter percentage to calibrate fertilizer formulations accurately.",
                             "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80",
-                            "soil-water", "đất trồng, canh tác bền vững, Trichoderma", 780, 11
+                            "soil-water", "soil management, sustainable farming, Trichoderma", 780, 11
                     ),
                     new SeedArticle(
                             "tieu-chuan-chat-luong-nuoc-tuoi-trong-vietgap",
-                            "Tiêu chuẩn chất lượng nước tưới trong VietGAP",
-                            "Ngưỡng cho phép về vi sinh (E.coli, Coliform) và kim loại nặng (As, Cd, Pb, Hg) trong nước tưới cùng hướng dẫn lấy mẫu kiểm nghiệm định kỳ.",
-                            "Nước sử dụng cho tưới tiêu và pha thuốc BVTV phải đáp ứng quy chuẩn kỹ thuật quốc gia về chất lượng nước mặt hoặc nước ngầm phục vụ tưới tiêu (kiểm soát chặt 4 kim loại nặng: Asen, Cadimi, Chì, Thủy ngân và vi sinh vật E.coli).\n\nTuyệt đối không dùng nước thải sinh hoạt, nước thải chăn nuôi hoặc công nghiệp chưa qua xử lý.",
+                            "Irrigation Water Quality Standards in VietGAP Agriculture",
+                            "Permissible threshold limits for microbial contamination (E. coli, Coliforms) and heavy metals (As, Cd, Pb, Hg) in agricultural water sources.",
+                            "Water utilized for crop irrigation, foliar fertigation, and chemical spraying must comply with national technical regulations governing surface water and groundwater for agricultural use (specifically monitoring 4 heavy metals: Arsenic, Cadmium, Lead, and Mercury alongside fecal coliform counts).\n\nUnder no circumstances may untreated municipal sewage, animal manure slurry, or industrial effluent be channeled into crop irrigation reservoirs.",
                             "https://images.unsplash.com/photo-1752775312083-1cefe2f93358?auto=format&fit=crop&w=800&q=80",
-                            "soil-water", "nước tưới, kiểm nghiệm, kim loại nặng", 540, 13
+                            "soil-water", "irrigation water, testing standards, heavy metals", 540, 13
                     ),
                     new SeedArticle(
                             "quan-ly-va-xu-ly-chat-thai-nong-nghiep-dung-cach",
-                            "Quản lý và xử lý chất thải nông nghiệp đúng cách",
-                            "Quy định xây dựng bể thu gom vỏ bao bì thuốc BVTV sau súc rửa 3 lần và quy trình ủ compost phụ phẩm cây trồng an toàn.",
-                            "Bao bì, chai lọ đựng thuốc BVTV sau khi pha xong phải được súc rửa 3 lần (nước tráng đổ vào bình phun), sau đó thu gom ngay vào bể chứa chuyên dụng có mái che, khóa an toàn và biển cảnh báo.\n\nTuyệt đối không đốt hoặc chôn lấp vỏ thuốc BVTV tại trang trại hay vứt xuống kênh mương. Đối với phụ phẩm hữu cơ, thu gom về khu vực ủ compost cách xa nguồn nước tưới để tái tạo phân bón hữu cơ.",
+                            "Proper Management and Disposal of Agricultural Waste and Packaging",
+                            "Triple-rinse procedures for empty agrochemical containers, dedicated locked storage pits, and safe composting protocols for vegetative residues.",
+                            "Empty chemical containers and bottles must undergo the mandatory triple-rinse procedure immediately after preparation (with rinse water poured directly back into the sprayer tank), followed by prompt deposit into dedicated, locked collection containment pits fitted with rainproof roofs and hazard warning signs.\n\nBurning or burying chemical packaging on farm grounds or discarding containers into irrigation ditches is strictly prohibited. Organic vegetative residues should be transferred to dedicated composting areas situated far from water sources to be recycled into organic mulch.",
                             "https://images.unsplash.com/photo-1742071853823-f9f87d9f3894?auto=format&fit=crop&w=800&q=80",
-                            "soil-water", "chất thải, môi trường, bao bì BVTV", 490, 15
+                            "soil-water", "agricultural waste, environmental safety, chemical containers", 490, 15
                     ),
 
-                    // 3. Giống & gieo trồng (seed-cultivation)
+                    // 3. Seeds & Cultivation (seed-cultivation)
                     new SeedArticle(
                             "chon-giong-cay-trong-dat-chuan-vietgap",
-                            "Chọn giống cây trồng đạt chuẩn VietGAP",
-                            "Yêu cầu bắt buộc về hóa đơn, nhãn mác, nguồn gốc lô hạt giống/cây giống và quy trình xử lý hạt giống trước khi gieo.",
-                            "Giống cây trồng, hạt giống hoặc gốc ghép đưa vào sản xuất VietGAP phải nằm trong Danh mục giống cây trồng được phép sản xuất, kinh doanh tại Việt Nam.\n\nKhi mua giống, chủ trang trại cần lưu giữ đầy đủ hóa đơn, bao bì, nhãn mác ghi rõ số lô, ngày sản xuất và hạn sử dụng.",
+                            "Selecting Certified Seed Stocks and Seedlings under VietGAP",
+                            "Mandatory procurement invoices, varietal certification labels, seed lot provenance records, and pre-sowing seed sanitization protocols.",
+                            "All crop cultivars, certified hybrid seed stocks, and rootstocks integrated into VietGAP production must be registered on the official national registry of approved crop varieties permitted for commercial distribution in Vietnam.\n\nFarm enterprises must systematically archive commercial invoices, seed packets, and technical labels documenting lot numbers, germination test percentages, production dates, and expiration intervals.",
                             "https://images.unsplash.com/photo-1781782411066-c68b1e5610bc?auto=format&fit=crop&w=800&q=80",
-                            "seed-cultivation", "giống cây trồng, nguồn gốc, lô giống", 705, 16
+                            "seed-cultivation", "certified seed, varietal origin, seed lot provenance", 705, 16
                     ),
                     new SeedArticle(
                             "ky-thuat-gieo-trong-va-mat-do-hop-ly-theo-mua-vu",
-                            "Kỹ thuật gieo trồng và mật độ hợp lý theo mùa vụ",
-                            "Cách thiết kế luống trồng theo hướng nắng, tính toán khoảng cách cây x hàng để thông thoáng tán lá và hạn chế nấm bệnh phát sinh.",
-                            "Mật độ gieo trồng cần căn cứ vào đặc tính sinh trưởng của từng giống, mùa vụ và độ phì nhiêu của đất.\n\nLên luống cao 20–30 cm vào mùa mưa giúp thoát nước nhanh, hạn chế thối rễ. Việc bố trí khoảng cách hợp lý giúp ánh sáng phân bổ đều khắp tầng lá, giảm ẩm độ cục bộ trong tán cây.",
+                            "Seasonal Planting Techniques and Optimal Canopy Density",
+                            "Designing raised planting beds oriented along sunlight vectors, calculating plant-to-row spacing, and enhancing canopy aeration against fungal diseases.",
+                            "Plant spacing and population density must be calibrated to the growth habits of each crop cultivar, seasonal weather patterns, and substrate fertility levels.\n\nConstructing raised beds 20–30 cm high during the rainy season promotes rapid surface drainage and prevents crown root rot. Maintaining adequate canopy spacing ensures uniform light penetration across all leaf layers, lowering local relative humidity and dramatically curbing downy mildew.",
                             "https://images.unsplash.com/photo-1773994788915-7fb0f462f223?auto=format&fit=crop&w=800&q=80",
-                            "seed-cultivation", "thời vụ, mật độ trồng, lên luống", 530, 18
+                            "seed-cultivation", "planting season, spacing density, raised beds", 530, 18
                     ),
                     new SeedArticle(
                             "ky-thuat-quan-ly-vuon-uom-va-cham-soc-cay-con",
-                            "Kỹ thuật quản lý vườn ươm và chăm sóc cây con khỏe mạnh",
-                            "Chuẩn bị giá thể ươm vô trùng, kiểm soát ánh sáng - độ ẩm trong nhà ươm và tiêu chuẩn huấn luyện cây con trước khi đem trồng ra ruộng.",
-                            "Cây con khỏe mạnh quyết định 50% sự thành công của vụ mùa. Giá thể ươm hạt (xơ dừa đã xử lý chát, tro trấu, phân trùn quế) phải sạch mầm bệnh và tuyến trùng.\n\nNhà ươm cần có lưới chắn côn trùng và khay ươm đặt trên giàn cách mặt đất tối thiểu 50 cm.",
+                            "Nursery Management Protocols and Vigorous Seedling Production",
+                            "Preparing sterilized germination media, managing light and moisture regimes, and hardening off seedlings prior to field transplanting.",
+                            "Vigorous, disease-free seedlings determine over 50% of eventual crop harvest success. Germination media (desalted coco peat, carbonized rice hulls, and vermicompost) must be sterile and tested free of damping-off pathogens and root-knot nematodes.\n\nNursery facilities must be enclosed with ultra-fine insect netting and equipped with seedling benches elevated at least 50 cm above ground level.",
                             "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=800&q=80",
-                            "seed-cultivation", "vườn ươm, giá thể, cây con", 625, 19
+                            "seed-cultivation", "nursery management, germination media, seedlings", 625, 19
                     ),
                     new SeedArticle(
                             "ky-thuat-tia-canh-tao-tan-va-bao-trai",
-                            "Kỹ thuật tỉa cành, tạo tán và bao trái nâng cao phẩm chất nông sản",
-                            "Thời điểm cắt tỉa cành vượt, cành sâu bệnh và kỹ thuật bao trái đúng giai đoạn giúp mẫu mã quả đẹp, hạn chế ruồi đục quả mà không cần phun thuốc.",
-                            "Đối với cây ăn quả và rau ăn quả, việc tỉa bỏ cành tăm, cành vượt, lá già dưới gốc giúp tập trung dinh dưỡng nuôi hoa và quả non.\n\nDụng cụ cắt tỉa phải được khử trùng bằng cồn 70 độ khi chuyển từ cây có dấu hiệu bệnh sang cây khỏe. Kết hợp bao trái bằng túi chuyên dụng giúp ngăn chặn triệt để ruồi vàng đục quả.",
+                            "Canopy Pruning, Trellising, and Fruit Netting Techniques",
+                            "Timing suckering and pruning operations, fruit bagging methodologies to safeguard appearance, and eliminating fruit flies without chemical sprays.",
+                            "For fruit trees and fruiting vegetables, systematic removal of side shoots, lateral suckers, and senescent bottom foliage channels assimilates directly to developing flowers and fruit clusters.\n\nPruning shears must be disinfected with 70% alcohol when transitioning between plants showing disease symptoms and healthy specimens. Combining pruning with protective micro-perforated fruit bags shields produce against fruit flies without chemical applications.",
                             "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=800&q=80",
-                            "seed-cultivation", "tỉa cành, bao trái, cây ăn quả", 710, 20
+                            "seed-cultivation", "canopy pruning, fruit bagging, fruit crops", 710, 20
                     ),
 
-                    // 4. Phân bón & thuốc BVTV (fertilizer-pesticide)
+                    // 4. Fertilizers & Pesticides (fertilizer-pesticide)
                     new SeedArticle(
                             "nguyen-tac-4-dung-khi-su-dung-thuoc-bao-ve-thuc-vat",
-                            "Nguyên tắc \"4 đúng\" khi sử dụng thuốc bảo vệ thực vật",
-                            "Đúng thuốc, đúng liều lượng, đúng lúc và đúng cách để diệt trừ dịch hại hiệu quả, tránh kháng thuốc và đảm bảo an toàn vệ sinh thực phẩm.",
-                            "Nguyên tắc \"4 đúng\" là kim chỉ nam trong bảo vệ thực vật VietGAP:\n1. Đúng thuốc: Chỉ dùng thuốc nằm trong Danh mục được phép sử dụng tại Việt Nam; ưu tiên thuốc sinh học, thảo mộc.\n2. Đúng liều lượng: Pha đúng nồng độ khuyến cáo trên nhãn.\n3. Đúng lúc: Phun khi sâu non mới nở hoặc bệnh mới chớm xuất hiện.\n4. Đúng cách: Phun ướt đều mặt dưới lá nơi sâu rầy ẩn nấp, không phun ngược chiều gió.",
+                            "The "4 Rights" Principle in Responsible Agrochemical Usage",
+                            "Right product, right dosage, right timing, and right method to effectively control pests, prevent resistance, and guarantee food hygiene.",
+                            "The "4 Rights" principle serves as the foundational cornerstone for crop protection under VietGAP:\n1. Right Product: Utilize only registered products officially permitted for agriculture; prioritize botanical and biological controls.\n2. Right Dosage: Formulate exact dilution concentrations in strict accordance with manufacturer packaging labels.\n3. Right Timing: Apply sprays when pest larvae are in early instars or when fungal lesions first appear.\n4. Right Method: Spray uniformly across the abaxial (underside) surfaces of leaves where insects conceal themselves, avoiding drift against wind vectors.",
                             "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=800&q=80",
-                            "fertilizer-pesticide", "thuốc BVTV, 4 đúng, an toàn", 1120, 21
+                            "fertilizer-pesticide", "crop protection, 4 rights, chemical safety", 1120, 21
                     ),
                     new SeedArticle(
                             "thoi-gian-cach-ly-thuoc-bvtv-truoc-khi-thu-hoach",
-                            "Thời gian cách ly thuốc BVTV trước khi thu hoạch",
-                            "Cách tra cứu chỉ số PHI trên nhãn thuốc, tính toán ngày thu hoạch an toàn và cơ chế cảnh báo tự động trên nhật ký điện tử MyCropDiary.",
-                            "Thời gian cách ly (Pre-Harvest Interval - PHI) là khoảng thời gian tối thiểu tính từ ngày phun thuốc BVTV hoặc bón phân lần cuối cùng đến ngày được phép thu hoạch sản phẩm.\n\nKhi ghi nhận hoạt động phun thuốc trên phần mềm MyCropDiary, hệ thống sẽ tự động cảnh báo khóa thu hoạch trên lô đất đang trong thời gian cách ly để ngăn ngừa tuyệt đối nguy cơ vượt ngưỡng dư lượng MRL.",
+                            "Pre-Harvest Interval (PHI) Compliance Prior to Fruit Picking",
+                            "Interpreting PHI specifications on agrochemical packaging, calculating safe harvest dates, and leveraging automated safeguards in MyCropDiary.",
+                            "The Pre-Harvest Interval (PHI) designates the mandatory minimum duration that must elapse from the final chemical application or foliar spray until crops may be harvested for human consumption.\n\nWhen operators record a pesticide application in the MyCropDiary system, automated compliance algorithms immediately lock harvest authorization on the affected parcel until the PHI window safely clears, preventing Maximum Residue Limit (MRL) violations.",
                             "https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=800&q=80",
-                            "fertilizer-pesticide", "thời gian cách ly, PHI, dư lượng", 980, 22
+                            "fertilizer-pesticide", "pre-harvest interval, PHI, residue limits", 980, 22
                     ),
                     new SeedArticle(
                             "su-dung-phan-bon-huu-co-va-vo-co-can-doi",
-                            "Sử dụng phân bón hữu cơ và vô cơ cân đối",
-                            "Quy định nghiêm cấm sử dụng phân chuồng tươi và kỹ thuật phối trộn NPK - trung vi lượng theo từng giai đoạn sinh trưởng của cây.",
-                            "Trong tiêu chuẩn VietGAP, tuyệt đối không sử dụng phân bắc, phân chuồng tươi hoặc bùn thải chưa qua xử lý để bón trực tiếp cho cây trồng vì nguy cơ nhiễm khuẩn Salmonella và E.coli rất cao.\n\nPhân chuồng phải được ủ hoai mục hoàn toàn (nhiệt độ đống ủ đạt 55–65°C trong ít nhất 30–45 ngày) và có nhật ký theo dõi mẻ ủ.",
+                            "Balanced Application of Organic and Inorganic Crop Nutrition",
+                            "Strict prohibition of raw manure, thermophilic aerobic composting protocols, and balanced NPK micronutrient delivery by phenological stage.",
+                            "Under VietGAP standards, the direct application of raw nightsoil, fresh livestock manure, or untreated sewer sludge is strictly prohibited due to severe risks of Salmonella and pathogenic E. coli contamination.\n\nAnimal manures must undergo complete thermophilic composting (reaching pile temperatures of 55–65°C for a minimum of 30–45 days) and be accompanied by aerobic composting temperature logs.",
                             "https://images.unsplash.com/photo-1729009511263-329748943004?auto=format&fit=crop&w=800&q=80",
-                            "fertilizer-pesticide", "phân bón, ủ hoai mục, dinh dưỡng", 645, 23
+                            "fertilizer-pesticide", "fertilizers, aerobic composting, crop nutrition", 645, 23
                     ),
                     new SeedArticle(
                             "quan-ly-dich-hai-tong-hop-ipm-giam-phu-thuoc-hoa-chat",
-                            "Quản lý dịch hại tổng hợp (IPM) giảm phụ thuộc hóa chất",
-                            "Kết hợp bẫy dính màu vàng/xanh, bẫy pheromone, thiên địch có ích và chế phẩm vi sinh (Bt, Beauveria, Metarhizium) trong nhà màng và ngoài đồng.",
-                            "Quản lý dịch hại tổng hợp (IPM) là trụ cột của canh tác VietGAP hiện đại, ưu tiên các biện pháp phòng ngừa trước khi can thiệp hóa học: luân canh, chọn giống kháng bệnh, treo bẫy dính màu vàng/xanh, bẫy Pheromone và bảo vệ thiên địch tự nhiên.",
+                            "Integrated Pest Management (IPM) to Reduce Chemical Dependency",
+                            "Deploying chromatic yellow/blue sticky traps, pheromone lures, beneficial predatory insects, and bio-insecticides (Bt, Beauveria, Metarhizium).",
+                            "Integrated Pest Management (IPM) is the bedrock of modern VietGAP farming, prioritizing preventative agro-ecological cultural measures prior to synthetic chemical interventions: crop rotation, resistant varieties, yellow and blue adhesive monitoring cards, sex pheromone traps, and the conservation of natural parasitoid wasps.",
                             "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=800&q=80",
-                            "fertilizer-pesticide", "IPM, sinh học, bẫy côn trùng", 815, 24
+                            "fertilizer-pesticide", "IPM, biological control, insect traps", 815, 24
                     ),
 
-                    // 5. Thu hoạch & sau thu hoạch (harvest-post-harvest)
+                    // 5. Harvest & Post-Harvest (harvest-post-harvest)
                     new SeedArticle(
                             "ky-thuat-thu-hoach-giam-ton-that-sau-thu-hoach",
-                            "Kỹ thuật thu hoạch giảm tổn thất sau thu hoạch",
-                            "Lựa chọn thời điểm thu hoạch trong ngày, quy cách cắt cuống và biện pháp hạ nhiệt sơ bộ để kéo dài tuổi thọ bảo quản nông sản.",
-                            "Nông sản chỉ được thu hoạch khi đã hết thời gian cách ly thuốc BVTV và đạt độ chín sinh lý hoặc độ chín thương phẩm phù hợp.\n\nNên thu hoạch vào sáng sớm hoặc chiều mát, sử dụng kéo cắt chuyên dụng sạch, đặt nhẹ nhàng vào sọt nhựa có lót xốp, tuyệt đối không để nông sản tiếp xúc trực tiếp với mặt đất.",
+                            "Harvesting Techniques to Minimize Post-Harvest Losses",
+                            "Selecting optimal diurnal harvesting windows, sanitary pedicel cutting protocols, and rapid pre-cooling to extend commercial produce shelf life.",
+                            "Crops may only be harvested after all chemical Pre-Harvest Intervals (PHI) have fully elapsed and produce has achieved optimal physiological and commercial maturity.\n\nHarvest operations should take place in early morning or late afternoon cool hours. Use sanitized cutting shears and place fruit gently into foam-lined plastic crates, ensuring harvested produce never comes into contact with bare soil.",
                             "https://images.unsplash.com/photo-1746014929708-fcb859fd3185?auto=format&fit=crop&w=800&q=80",
-                            "harvest-post-harvest", "thu hoạch, bảo quản, giảm tổn thất", 610, 25
+                            "harvest-post-harvest", "harvesting, post-harvest handling, shelf life", 610, 25
                     ),
                     new SeedArticle(
                             "ve-sinh-dung-cu-va-khu-vuc-so-che-nong-san",
-                            "Vệ sinh dụng cụ và khu vực sơ chế nông sản",
-                            "Quy chuẩn thiết kế nhà sơ chế một chiều, phân biệt sọt đựng nông sản với sọt đựng phế phẩm và lịch vệ sinh khử trùng định kỳ.",
-                            "Nhà sơ chế, phân loại và đóng gói phải thông thoáng, có mái che, nền cao ráo dễ thoát nước và có biện pháp ngăn chặn chuột, côn trùng, gia súc xâm nhập.\n\nSọt chứa nông sản sạch phải được đánh dấu rõ ràng, không dùng chung với dụng cụ đựng phân bón hay hóa chất.",
+                            "Sanitation Standards for Post-Harvest Handling and Sorting Facilities",
+                            "Unidirectional packhouse floor plans, physical segregation of produce crates from waste bins, and scheduled chemical sanitization protocols.",
+                            "Packhouses, grading areas, and packaging stations must be well-ventilated, roofed, and elevated with impervious drainage floors, equipped with exclusion barriers to deter rodents, domestic animals, and pests.\n\nCrates designated for washed produce must be clearly color-coded and sanitized, strictly segregated from receptacles used for agricultural inputs or reject material.",
                             "https://images.unsplash.com/photo-1657288089316-c0350003ca49?auto=format&fit=crop&w=800&q=80",
-                            "harvest-post-harvest", "vệ sinh, sơ chế, lây nhiễm chéo", 475, 26
+                            "harvest-post-harvest", "sanitation, post-harvest sorting, contamination prevention", 475, 26
                     ),
                     new SeedArticle(
                             "quy-chuan-dong-goi-ghi-nhan-va-bao-quan-lanh-nong-san",
-                            "Quy chuẩn đóng gói, ghi nhãn và bảo quản lạnh nông sản VietGAP",
-                            "Các thông tin bắt buộc trên tem nhãn bao bì nông sản VietGAP và chế độ nhiệt độ - độ ẩm kho mát cho từng nhóm rau quả.",
-                            "Bao bì đóng gói nông sản phải làm từ vật liệu an toàn thực phẩm, sạch và mới. Trên nhãn sản phẩm VietGAP cần thể hiện rõ: Tên sản phẩm, Tên & địa chỉ cơ sở sản xuất, Mã số chứng nhận VietGAP, Mã lô thu hoạch / QR truy xuất nguồn gốc và Ngày thu hoạch.",
+                            "Packaging, Labeling, and Cold Chain Storage for VietGAP Produce",
+                            "Mandatory information on agricultural packaging labels, cold room temperature and humidity setpoints by vegetable and fruit category.",
+                            "Packaging materials must be fabricated from virgin, food-contact certified materials that are clean and undamaged. VietGAP packaging labels must clearly indicate: Product Name, Producer Name & Physical Address, VietGAP Certification Code, Harvest Batch Lot / Traceability QR Code, and Packaging Date.",
                             "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=800&q=80",
-                            "harvest-post-harvest", "đóng gói, ghi nhãn, bảo quản lạnh", 590, 27
+                            "harvest-post-harvest", "packaging, labeling, cold chain storage", 590, 27
                     ),
                     new SeedArticle(
                             "quy-dinh-van-chuyen-nong-san-an-toan-tu-trang-trai",
-                            "Quy định vận chuyển nông sản an toàn từ trang trại đến điểm tiêu thụ",
-                            "Kiểm tra vệ sinh thùng xe vận chuyển, quy tắc xếp dỡ hàng hóa và nghiêm cấm vận chuyển chung với hóa chất, vật tư nông nghiệp.",
-                            "Phương tiện vận chuyển nông sản từ trang trại đến nơi tiêu thụ phải được vệ sinh sạch sẽ trước khi bốc xếp hàng.\n\nTuyệt đối không vận chuyển nông sản chung khoang với phân bón, thuốc BVTV, xăng dầu hoặc động vật sống.",
+                            "Regulations for Sanitary Produce Transport from Farm to Market",
+                            "Pre-loading cargo hold sanitation inspections, stacking guidelines, and strict prohibition of co-transporting produce with chemicals or livestock.",
+                            "Vehicles chartered for agricultural transportation from farm gate to market distribution centers must be thoroughly washed and inspected prior to produce pallet loading.\n\nProduce cargo compartments must never co-transport chemical fertilizers, agrochemical containers, petroleum fuels, or live animals under any circumstances.",
                             "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
-                            "harvest-post-harvest", "vận chuyển, chuỗi cung ứng, an toàn thực phẩm", 430, 28
+                            "harvest-post-harvest", "transportation, cold logistics, food safety", 430, 28
                     ),
 
-                    // 6. Ghi chép & truy xuất nguồn gốc (record-traceability)
+                    // 6. Recordkeeping & Traceability (record-traceability)
                     new SeedArticle(
                             "he-thong-ghi-chep-nhat-ky-canh-tac-theo-vietgap",
-                            "Hệ thống ghi chép nhật ký canh tác theo VietGAP",
-                            "Danh mục các loại sổ nhật ký cần ghi chép đầy đủ: giống, phân bón, thuốc BVTV, tưới nước, thu hoạch, tiêu thụ và xử lý khiếu nại.",
-                            "Hồ sơ nhật ký VietGAP là bằng chứng pháp lý quan trọng nhất khi đoàn kiểm toán đánh giá. Trang trại cần duy trì đầy đủ sổ theo dõi nhập - xuất - tồn kho vật tư, nhật ký canh tác từng lô đất, nhật ký bón phân - phun thuốc BVTV và sổ ghi nhận thu hoạch trong tối thiểu 24 tháng.",
+                            "Standardized VietGAP Farm Logbook Documentation System",
+                            "Compulsory operational registries: seed stock, fertilizer applications, crop protection sprays, irrigation events, yields, and customer feedback.",
+                            "VietGAP farm records serve as the legal documentation scrutinized during certification audits. Farms must preserve comprehensive records of input purchases, inventory stock ledgers, block-level cultivation activity logs, spray logs, and harvest distribution manifests for a minimum duration of 24 months.",
                             "https://images.unsplash.com/photo-1748742633127-941ebec208da?auto=format&fit=crop&w=800&q=80",
-                            "record-traceability", "ghi chép, nhật ký, biểu mẫu VietGAP", 830, 29
+                            "record-traceability", "recordkeeping, farming logs, VietGAP audit forms", 830, 29
                     ),
                     new SeedArticle(
                             "ma-so-vung-trong-va-truy-xuat-nguon-goc-dien-tu",
-                            "Mã số vùng trồng và truy xuất nguồn gốc điện tử",
-                            "Hướng dẫn thiết lập mã lô sản xuất (Batch Code) gắn với từng khu vực (Zone/Block) và xuất mã QR minh bạch nhật ký canh tác.",
-                            "Mỗi lô nông sản xuất bán phải được gắn mã nhận diện (Lot/Batch Code) liên kết trực tiếp tới Khu sản xuất (Zone), Lô đất (Block) và Mùa vụ tương ứng.\n\nKhi người tiêu dùng quét mã QR trên bao bì, hệ thống hiển thị minh bạch tên trang trại, vị trí vùng trồng, giống cây và lịch sử chăm sóc.",
+                            "Planting Area Codes and Digital QR Traceability Systems",
+                            "Configuring production lot and batch codes linked to specific zones and blocks, generating consumer-facing VietGAP traceability QR codes.",
+                            "Each batch of produce sold must be assigned an immutable Lot/Batch Code that directly traces back to the specific Production Zone, Block, and Crop Season.\n\nWhen consumers scan the packaging QR code with a smartphone, the digital ledger displays certified farm details, geolocation maps, crop cultivar information, and chronological care records.",
                             "https://images.unsplash.com/photo-1775681150283-04970adf1b98?auto=format&fit=crop&w=800&q=80",
-                            "record-traceability", "mã vùng trồng, QR code, truy xuất nguồn gốc", 670, 30
+                            "record-traceability", "planting area code, QR code, electronic traceability", 670, 30
                     ),
                     new SeedArticle(
                             "quy-trinh-thu-hoi-san-pham-khong-an-toan-va-xu-ly-su-co",
-                            "Quy trình thu hồi sản phẩm không an toàn và xử lý sự cố VietGAP",
-                            "Các bước khoanh vùng lô hàng lỗi, thông báo khách hàng, điều tra nguyên nhân gốc rễ và lập biên bản hành động khắc phục.",
-                            "Theo tiêu chuẩn VietGAP, mọi cơ sở sản xuất phải có quy trình bằng văn bản về việc thu hồi sản phẩm khi phát hiện nguy cơ mất an toàn thực phẩm. Ngay khi phát hiện sự cố, chủ trang trại phải dừng xuất hàng, tra cứu sổ xuất bán theo mã lô để thông báo thu hồi trong vòng 24 giờ.",
+                            "Recall Procedures for Compromised Produce and Incident Response",
+                            "Procedures for isolating compromised lots, notifying commercial buyers, conducting root-cause investigations, and recording corrective actions.",
+                            "Under VietGAP standards, every commercial farm must possess written Standard Operating Procedures for initiating product recalls if food safety hazards are detected. Upon discovery of a non-conformance, farm management must halt distribution and cross-reference batch shipping records to notify consignees within 24 hours.",
                             "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-                            "record-traceability", "thu hồi sản phẩm, xử lý sự cố, kiểm toán", 515, 31
+                            "record-traceability", "product recall, incident management, audit compliance", 515, 31
                     ),
                     new SeedArticle(
                             "so-hoa-nhat-ky-nong-trai-tren-dien-thoai-thay-the-so-giay",
-                            "Số hóa nhật ký nông trại trên điện thoại thay thế sổ giấy truyền thống",
-                            "Cách phân quyền cho nhân sự kỹ thuật ghi nhật ký trực tiếp tại ruộng, đính kèm ảnh chụp thực tế và xuất báo cáo kiểm định nhanh chóng.",
-                            "Với ứng dụng nhật ký số MyCropDiary, nhân viên được phân công phụ trách từng Khu vực (Zone) có thể cập nhật công việc ngay tại ruộng kèm hình ảnh thực tế. Chủ trang trại theo dõi tiến độ theo thời gian thực và xuất file báo cáo tổng hợp đúng chuẩn biểu mẫu VietGAP bất cứ lúc nào.",
+                            "Digital Farm Logging: Mobile Workflows Replacing Paper Records",
+                            "Empowering field technicians to record activities on mobile devices, attaching photographic evidence, and exporting automated audit reports.",
+                            "With the MyCropDiary digital farm management system, field technicians assigned to specific Zones and Blocks can update cultural operations directly on mobile devices alongside timestamped photos. Farm owners monitor operational workflows in real time and export standardized VietGAP audit compliance dossiers on demand.",
                             "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
-                            "record-traceability", "nhật ký điện tử, chuyển đổi số, MyCropDiary", 910, 32
+                            "record-traceability", "digital logbook, smart agriculture, MyCropDiary", 910, 32
                     ),
 
-                    // 7. Đào tạo & chứng nhận (training-certification)
+                    // 7. Training & Certification (training-certification)
                     new SeedArticle(
                             "dao-tao-va-trang-bi-bao-ho-cho-nguoi-lao-dong",
-                            "Đào tạo và trang bị bảo hộ cho người lao động",
-                            "Yêu cầu tập huấn định kỳ cho công nhân, trang bị đồ bảo hộ khi pha phun thuốc và bố trí tủ thuốc sơ cứu tại khu sản xuất.",
-                            "Người lao động trực tiếp tham gia sản xuất VietGAP phải đủ sức khỏe và được tập huấn ít nhất 1 lần/năm về quy trình canh tác an toàn, kỹ thuật pha phun thuốc BVTV và cách xử lý sự cố ngộ độc hóa chất.\n\nKhi tiếp xúc với thuốc BVTV, người lao động bắt buộc mặc quần áo bảo hộ chuyên dụng, đeo găng tay cao su, ủng, kính chắn giọt bắn và mặt nạ phòng độc.",
+                            "Worker Safety Training and Personal Protective Equipment (PPE)",
+                            "Mandatory annual training requirements, certified PPE gear for chemical handlers, and emergency first-aid station setup across field blocks.",
+                            "All farm operators directly engaged in VietGAP agricultural production must undergo certified occupational training at least once per year on safe handling procedures, chemical dilution, and emergency poison control protocols.\n\nPersonnel preparing or applying crop protection materials must wear approved PPE: nitrile chemical gloves, rubber boots, splash-proof goggles, and activated carbon respirators.",
                             "https://images.unsplash.com/photo-1781785186628-e1a04569776d?auto=format&fit=crop&w=800&q=80",
-                            "training-certification", "đào tạo, an toàn lao động, bảo hộ PPE", 560, 33
+                            "training-certification", "worker training, occupational safety, PPE gear", 560, 33
                     ),
                     new SeedArticle(
                             "danh-gia-noi-bo-truoc-khi-dang-ky-chung-nhan",
-                            "Đánh giá nội bộ trước khi đăng ký chứng nhận",
-                            "Phương pháp rà soát từng chỉ tiêu loại A và loại B, cách ghi nhận bằng chứng tuân thủ và đóng các điểm không phù hợp (NCR).",
-                            "Đánh giá nội bộ là yêu cầu bắt buộc tối thiểu 1 lần/năm trước khi mời Tổ chức chứng nhận xuống thẩm định chính thức. Người phụ trách kỹ thuật sử dụng bảng Checklist VietGAP để kiểm tra thực tế kho vật tư, khu ủ phân, biển báo vùng trồng, bể thu gom vỏ thuốc và sổ nhật ký.",
+                            "Conducting Internal Audits Prior to Official VietGAP Certification",
+                            "Methodology for inspecting Class A and Class B criteria, compiling physical evidence, and closing Non-Conformance Reports (NCRs).",
+                            "Internal audits are a mandatory pre-condition conducted at least once annually prior to inviting accredited external certification bodies. Farm technical supervisors use the comprehensive VietGAP checklist to evaluate chemical storage facilities, composting areas, field warning signage, container disposal pits, and logbooks.",
                             "https://images.unsplash.com/photo-1738244969496-eeabfacec172?auto=format&fit=crop&w=800&q=80",
-                            "training-certification", "đánh giá nội bộ, checklist, thẩm định", 615, 34
+                            "training-certification", "internal audit, checklist, certification assessment", 615, 34
                     ),
                     new SeedArticle(
                             "tieu-chuan-thiet-ke-kho-chua-phan-bon-thuoc-bvtv-va-bien-bao",
-                            "Tiêu chuẩn thiết kế kho chứa phân bón, thuốc BVTV và biển báo trang trại",
-                            "Các yêu cầu kỹ thuật về kho vật tư có khóa, kệ kê cách mặt đất, gờ chống tràn, cát cứu hỏa và hệ thống sơ đồ - biển báo tại nông trại.",
-                            "Kho thuốc BVTV phải tách biệt với khu sinh hoạt và khu sơ chế nông sản, có khóa an toàn, thông gió tốt. Thuốc dạng lỏng xếp kệ dưới, thuốc dạng bột xếp kệ trên; trong kho có xô cát khô, xẻng, vôi bột xử lý tràn đổ và toàn trang trại có biển cảnh báo khu vực mới phun thuốc.",
+                            "Design Standards for Chemical Storages and Farm Warning Signage",
+                            "Structural specifications for locked agrochemical storage, pallet elevation, containment curbing, dry sand spill kits, and warning signage.",
+                            "Crop protection chemical warehouses must be physically isolated from living quarters and packing areas, equipped with secure locks, ventilation louvers, and dry sand spill containment kits. Liquid agrochemicals must be stored on bottom shelves, dry powders on upper tiers, with high-visibility warning signage installed across treated blocks.",
                             "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=800&q=80",
-                            "training-certification", "kho vật tư, biển báo, đánh giá thực địa", 740, 35
+                            "training-certification", "chemical storage, warning signage, facility standards", 740, 35
                     ),
                     new SeedArticle(
                             "kinh-nghiem-duy-tri-chung-nhan-vietgap-qua-cac-ky-giam-sat",
-                            "Kinh nghiệm duy trì chứng nhận VietGAP qua các kỳ giám sát hàng năm",
-                            "Những lỗi thường gặp khiến trang trại bị đình chỉ hoặc thu hồi giấy chứng nhận VietGAP và bí quyết duy trì thói quen ghi chép liên tục.",
-                            "Giấy chứng nhận VietGAP có hiệu lực tối đa 3 năm nhưng Tổ chức chứng nhận sẽ thực hiện đánh giá giám sát định kỳ 12 tháng/lần. Duy trì nhật ký số hằng ngày trên MyCropDiary giúp trang trại luôn trong tâm thế sẵn sàng cho mọi kỳ thanh tra.",
+                            "Best Practices for Sustaining VietGAP Certification Through Surveillance Audits",
+                            "Common non-conformances that trigger certification suspension, and strategies for maintaining persistent daily digital logging habits.",
+                            "While VietGAP certificates carry a maximum validity of 3 years, accredited certification bodies conduct periodic surveillance audits every 12 months. Maintaining daily digital logging on MyCropDiary ensures the farm is continuously prepared for unannounced inspections and scheduled surveillance visits.",
                             "https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80",
-                            "training-certification", "duy trì chứng nhận, giám sát định kỳ, kinh nghiệm", 685, 36
+                            "training-certification", "certification maintenance, surveillance audits, best practices", 685, 36
                     )
             );
 
-            int inserted = 0;
+            int savedCount = 0;
             for (SeedArticle seed : seeds) {
-                if (!knowledgeArticleRepository.existsBySlug(seed.slug())) {
-                    KnowledgeArticle article = new KnowledgeArticle();
-                    article.setTitle(seed.title());
+                KnowledgeArticle article = knowledgeArticleRepository.findBySlug(seed.slug()).orElse(null);
+                if (article == null) {
+                    article = new KnowledgeArticle();
                     article.setSlug(seed.slug());
-                    article.setSummary(seed.summary());
-                    article.setBody(seed.body());
-                    article.setCoverImageUrl(seed.coverImageUrl());
-                    article.setCategory(seed.category());
-                    article.setTags(seed.tags());
-                    article.setViewCount(seed.viewCount());
                     article.setArticleStatus("published");
                     article.setPublishedAt(Instant.now().minus(seed.daysAgo(), ChronoUnit.DAYS));
-                    knowledgeArticleRepository.save(article);
-                    inserted++;
                 }
+                article.setTitle(seed.title());
+                article.setSummary(seed.summary());
+                article.setBody(seed.body());
+                article.setCoverImageUrl(seed.coverImageUrl());
+                article.setCategory(seed.category());
+                article.setTags(seed.tags());
+                article.setViewCount(seed.viewCount());
+                knowledgeArticleRepository.save(article);
+                savedCount++;
             }
-            if (inserted > 0) {
-                log.info("Đã khởi tạo bổ sung {} bài viết Kiến thức VietGAP vào cơ sở dữ liệu.", inserted);
+            if (savedCount > 0) {
+                log.info("Successfully synchronized {} VietGAP Knowledge Articles in English into the database.", savedCount);
             }
         } catch (Exception ex) {
-            log.warn("Bỏ qua khởi tạo dữ liệu mẫu KnowledgeArticle: {}", ex.getMessage());
+            log.warn("Skipped KnowledgeArticle seed initialization: {}", ex.getMessage());
         }
     }
 }
