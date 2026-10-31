@@ -82,6 +82,27 @@ public class HarvestRecordController {
     /**
      * Xem chi tiết một bản ghi thu hoạch.
      */
+
+    /**
+     * Tìm kiếm và lọc lịch sử thu hoạch toàn trang trại (Search Harvest Records & Filter Harvest Records).
+     */
+    @Operation(summary = "Tìm kiếm và lọc lịch sử thu hoạch theo trang trại", description = "Tìm kiếm theo từ khóa và lọc theo mùa vụ, lô đất, chất lượng hoặc khoảng thời gian trên toàn trang trại.")
+    @GetMapping("/farms/{farmId}")
+    public ApiResp<PageResp<HarvestRecordResp>> getFarmHarvestRecords(
+            @PathVariable Integer farmId,
+            @RequestParam(required = false) Integer cropSeasonId,
+            @RequestParam(required = false) Integer blockId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String qualityGrade,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+            @PageableDefault(size = 20) Pageable pageable) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        PageResp<HarvestRecordResp> response = harvestRecordService.searchFarmHarvestRecords(
+                currentUserId, farmId, cropSeasonId, blockId, keyword, qualityGrade, fromDate, toDate, pageable);
+        return ApiResp.ok("Lấy danh sách thu hoạch trang trại thành công.", response);
+    }
+
     @Operation(summary = "Xem chi tiết bản ghi thu hoạch", description = "Lấy thông tin chi tiết bản ghi thu hoạch theo ID.")
     @GetMapping("/{harvestRecordId}")
     public ApiResp<HarvestRecordResp> getHarvestRecordById(@PathVariable("harvestRecordId") Integer harvestRecordId) {

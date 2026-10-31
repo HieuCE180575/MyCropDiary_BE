@@ -245,6 +245,60 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
         return PageResp.map(page, this::mapToResponse);
     }
 
+
+    @Override
+    public PageResp<HarvestRecordResp> searchFarmHarvestRecords(
+            Integer userId,
+            Integer farmId,
+            Integer cropSeasonId,
+            Integer blockId,
+            String keyword,
+            String qualityGrade,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable) {
+
+        farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active")
+                .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập thông tin trang trại này."));
+
+        Specification<HarvestRecord> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("farm").get("id"), farmId));
+
+            if (cropSeasonId != null) {
+                predicates.add(cb.equal(root.get("cropSeason").get("id"), cropSeasonId));
+            }
+
+            if (blockId != null) {
+                predicates.add(cb.equal(root.get("block").get("id"), blockId));
+            }
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String pattern = "%" + keyword.trim().toLowerCase() + "%";
+                Predicate notesMatch = cb.like(cb.lower(root.get("notes")), pattern);
+                Predicate qualityMatch = cb.like(cb.lower(root.get("qualityGrade")), pattern);
+                predicates.add(cb.or(notesMatch, qualityMatch));
+            }
+
+            if (qualityGrade != null && !qualityGrade.trim().isEmpty()) {
+                predicates.add(cb.equal(cb.lower(root.get("qualityGrade")), qualityGrade.trim().toLowerCase()));
+            }
+
+            if (fromDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("harvestDate"), fromDate.toLocalDate()));
+            }
+
+            if (toDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("harvestDate"), toDate.toLocalDate()));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<HarvestRecord> page = harvestRecordRepository.findAll(spec, pageable);
+        return PageResp.map(page, this::mapToResponse);
+    }
+
     @Override
     public HarvestRecordResp getHarvestRecordById(Integer userId, Integer harvestRecordId) {
         HarvestRecord record = harvestRecordRepository.findById(harvestRecordId)

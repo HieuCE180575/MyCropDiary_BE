@@ -41,6 +41,20 @@ public interface HarvestRecordService {
             Pageable pageable);
 
     /**
+     * Tìm kiếm và lọc danh sách bản ghi thu hoạch trên toàn trang trại (hỗ trợ lọc theo mùa vụ, lô đất, chất lượng, từ khóa, khoảng ngày).
+     */
+    PageResp<HarvestRecordResp> searchFarmHarvestRecords(
+            Integer userId,
+            Integer farmId,
+            Integer cropSeasonId,
+            Integer blockId,
+            String keyword,
+            String qualityGrade,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable);
+
+    /**
      * Xem chi tiết một bản ghi thu hoạch theo ID.
      */
     HarvestRecordResp getHarvestRecordById(Integer userId, Integer harvestRecordId);
