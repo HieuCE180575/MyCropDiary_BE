@@ -147,9 +147,9 @@ public class KnowledgeArticleDataInitializer implements CommandLineRunner {
                     // 4. Fertilizers & Pesticides (fertilizer-pesticide)
                     new SeedArticle(
                             "nguyen-tac-4-dung-khi-su-dung-thuoc-bao-ve-thuc-vat",
-                            "The "4 Rights" Principle in Responsible Agrochemical Usage",
+                            "The \"4 Rights\" Principle in Responsible Agrochemical Usage",
                             "Right product, right dosage, right timing, and right method to effectively control pests, prevent resistance, and guarantee food hygiene.",
-                            "The "4 Rights" principle serves as the foundational cornerstone for crop protection under VietGAP:\n1. Right Product: Utilize only registered products officially permitted for agriculture; prioritize botanical and biological controls.\n2. Right Dosage: Formulate exact dilution concentrations in strict accordance with manufacturer packaging labels.\n3. Right Timing: Apply sprays when pest larvae are in early instars or when fungal lesions first appear.\n4. Right Method: Spray uniformly across the abaxial (underside) surfaces of leaves where insects conceal themselves, avoiding drift against wind vectors.",
+                            "The \"4 Rights\" principle serves as the foundational cornerstone for crop protection under VietGAP:\n1. Right Product: Utilize only registered products officially permitted for agriculture; prioritize botanical and biological controls.\n2. Right Dosage: Formulate exact dilution concentrations in strict accordance with manufacturer packaging labels.\n3. Right Timing: Apply sprays when pest larvae are in early instars or when fungal lesions first appear.\n4. Right Method: Spray uniformly across the abaxial (underside) surfaces of leaves where insects conceal themselves, avoiding drift against wind vectors.",
                             "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=800&q=80",
                             "fertilizer-pesticide", "crop protection, 4 rights, chemical safety", 1120, 21
                     ),

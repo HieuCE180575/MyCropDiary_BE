@@ -18,6 +18,9 @@ import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.service.BlockService;
+import com.mycropdiary.api.entity.cultivation.CropSeasonBlock;
+import com.mycropdiary.api.exception.BadRequestException;
+import com.mycropdiary.api.repository.cultivation.CropSeasonBlockRepository;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +43,7 @@ public class BlockServiceImpl implements BlockService {
     private final BlockConditionObservationRepository conditionObservationRepository;
     private final FarmMemberRepository farmMemberRepository;
     private final FarmAccessGuard accessGuard;
+    private final CropSeasonBlockRepository cropSeasonBlockRepository;
 
     public BlockServiceImpl(BlockRepository blockRepository,
                             ZoneRepository zoneRepository,
@@ -47,6 +51,17 @@ public class BlockServiceImpl implements BlockService {
                             BlockConditionObservationRepository conditionObservationRepository,
                             FarmMemberRepository farmMemberRepository,
                             FarmAccessGuard accessGuard) {
+        this(blockRepository, zoneRepository, assignmentRepository, conditionObservationRepository, farmMemberRepository, accessGuard, null);
+    }
+
+    public BlockServiceImpl(BlockRepository blockRepository,
+                            ZoneRepository zoneRepository,
+                            StaffZoneAssignmentRepository assignmentRepository,
+                            BlockConditionObservationRepository conditionObservationRepository,
+                            FarmMemberRepository farmMemberRepository,
+                            FarmAccessGuard accessGuard,
+                            CropSeasonBlockRepository cropSeasonBlockRepository) {
+        this.cropSeasonBlockRepository = cropSeasonBlockRepository;
         this.blockRepository = blockRepository;
         this.zoneRepository = zoneRepository;
         this.assignmentRepository = assignmentRepository;
@@ -160,8 +175,24 @@ public class BlockServiceImpl implements BlockService {
 
     @Override
     public void deleteBlock(Integer currentUserId, Integer blockId) {
-        // Business Rule: Kiểm tra quyền truy cập thửa đất
+        // Business Rule: Delete Eligible Block - Kiểm tra quyền và điều kiện hợp lệ của lô đất
         Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
+
+        // 1. Kiểm tra phân bổ mùa vụ: Không được xóa lô đang trong mùa vụ hoạt động / canh tác
+        List<CropSeasonBlock> seasonBlocks = cropSeasonBlockRepository != null ? cropSeasonBlockRepository.findByIdBlockId(blockId) : List.of();
+        for (CropSeasonBlock csb : seasonBlocks) {
+            String status = csb.getCropSeason() != null ? csb.getCropSeason().getSeasonStatus() : null;
+            if (status != null && (status.equalsIgnoreCase("active") || status.equalsIgnoreCase("in_progress") || status.equalsIgnoreCase("planned"))) {
+                throw new BadRequestException("Lô đất '" + block.getBlockName() + "' không đủ điều kiện xóa vì đang được phân bổ trong mùa vụ '" + csb.getCropSeason().getSeasonName() + "' (trạng thái: " + status + "). Vui lòng gỡ lô đất hoặc hoàn thành mùa vụ trước.");
+            }
+        }
+
+        // 2. Dọn sạch các liên kết mùa vụ đã kết thúc / hủy của lô đất này
+        for (CropSeasonBlock csb : seasonBlocks) {
+            cropSeasonBlockRepository.delete(csb);
+        }
+
+        // 3. Tiến hành xóa lô đất hợp lệ
         blockRepository.delete(block);
     }
 

@@ -7,6 +7,7 @@ import com.mycropdiary.api.dto.block.RecordBlockConditionReq;
 import com.mycropdiary.api.dto.block.UpdateBlockReq;
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.service.BlockService;
+import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

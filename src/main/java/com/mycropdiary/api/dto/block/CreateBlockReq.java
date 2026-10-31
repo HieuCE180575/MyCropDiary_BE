@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 /**
- * DTO yêu cầu tạo mới lô / thửa đất (Block).
+ * DTO yêu cầu tạo mới lô / thửa đất (Create Block).
  */
 public record CreateBlockReq(
         @NotBlank(message = "Tên lô đất không được để trống")
@@ -27,14 +27,19 @@ public record CreateBlockReq(
         String status,
         BigDecimal latitude,
         BigDecimal longitude,
-        String boundaryGeoJson
+        String boundaryGeoJson,
+        Integer zoneId
 ) {
+    public CreateBlockReq(String blockName, String description, BigDecimal areaValue, String areaUnit, String soilType, String imageUrl, String status, BigDecimal latitude, BigDecimal longitude, String boundaryGeoJson) {
+        this(blockName, description, areaValue, areaUnit, soilType, imageUrl, status, latitude, longitude, boundaryGeoJson, (Integer) null);
+    }
+
     public CreateBlockReq(String plotCode, String plotName, BigDecimal areaM2, String areaUnit, String soilType, String description, String imageUrl, BigDecimal latitude, BigDecimal longitude, String boundaryGeoJson, String status) {
-        this(plotCode != null && !plotCode.isBlank() ? plotCode : plotName, description, areaM2, areaUnit, soilType, imageUrl, status, latitude, longitude, boundaryGeoJson);
+        this(plotCode != null && !plotCode.isBlank() ? plotCode : plotName, description, areaM2, areaUnit, soilType, imageUrl, status, latitude, longitude, boundaryGeoJson, (Integer) null);
     }
 
     public CreateBlockReq(String blockName, BigDecimal areaValue, String description) {
-        this(blockName, description, areaValue, "m2", null, null, "active", null, null, null);
+        this(blockName, description, areaValue, "m2", (String) null, (String) null, "active", (BigDecimal) null, (BigDecimal) null, (String) null, (Integer) null);
     }
 
     public String plotName() { return blockName; }

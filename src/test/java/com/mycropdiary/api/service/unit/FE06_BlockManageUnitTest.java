@@ -18,6 +18,7 @@ import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
+import com.mycropdiary.api.repository.cultivation.CropSeasonBlockRepository;
 import com.mycropdiary.api.service.impl.BlockServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
