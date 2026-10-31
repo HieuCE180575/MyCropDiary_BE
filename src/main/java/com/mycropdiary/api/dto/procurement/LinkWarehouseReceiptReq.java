@@ -16,3 +16,4 @@ public record LinkWarehouseReceiptReq(
         String notes
 ) {
 }
+

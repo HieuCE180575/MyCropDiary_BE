@@ -74,3 +74,4 @@ public class InputPurchaseItem {
 
     public void setLineTotal(BigDecimal lineTotal) { this.lineTotal = lineTotal; }
 }
+

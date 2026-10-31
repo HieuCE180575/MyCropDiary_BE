@@ -247,3 +247,4 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
         return InputPurchaseResp.fromEntity(updated, items);
     }
 }
+

@@ -31,3 +31,4 @@ public record UpdateInputPurchaseReq(
         List<PurchaseItemReq> items
 ) {
 }
+

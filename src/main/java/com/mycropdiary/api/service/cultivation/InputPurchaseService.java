@@ -45,3 +45,4 @@ public interface InputPurchaseService {
      */
     InputPurchaseResp linkWarehouseReceipt(Integer currentUserId, Integer purchaseId, LinkWarehouseReceiptReq request);
 }
+

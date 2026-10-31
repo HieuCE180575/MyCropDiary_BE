@@ -33,3 +33,4 @@ public record CreateInputPurchaseReq(
         List<PurchaseItemReq> items
 ) {
 }
+

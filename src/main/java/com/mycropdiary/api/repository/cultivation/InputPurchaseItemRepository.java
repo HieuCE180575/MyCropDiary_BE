@@ -20,3 +20,4 @@ public interface InputPurchaseItemRepository extends JpaRepository<InputPurchase
 
     boolean existsByMaterialId(Integer materialId);
 }
+

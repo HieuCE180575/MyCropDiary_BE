@@ -25,3 +25,4 @@ public interface SupplierRepository extends JpaRepository<Supplier, Integer> {
 
     boolean existsByFarmIdAndSupplierNameIgnoreCaseAndIdNot(Integer farmId, String supplierName, Integer id);
 }
+

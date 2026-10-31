@@ -32,3 +32,4 @@ public interface SupplierService {
      */
     void deleteSupplier(Integer currentUserId, Integer supplierId);
 }
+

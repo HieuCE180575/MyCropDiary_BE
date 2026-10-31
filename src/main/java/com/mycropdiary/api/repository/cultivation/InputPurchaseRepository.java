@@ -45,3 +45,4 @@ public interface InputPurchaseRepository extends JpaRepository<InputPurchase, In
 
     long countBySupplierId(Integer supplierId);
 }
+

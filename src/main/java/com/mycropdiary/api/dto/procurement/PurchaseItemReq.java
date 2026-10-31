@@ -26,3 +26,4 @@ public record PurchaseItemReq(
         Integer warehouseId
 ) {
 }
+
