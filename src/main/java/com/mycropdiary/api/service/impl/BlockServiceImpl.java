@@ -22,6 +22,7 @@ import com.mycropdiary.api.entity.cultivation.CropSeasonBlock;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.repository.cultivation.CropSeasonBlockRepository;
 import com.mycropdiary.api.util.FarmAccessGuard;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +55,7 @@ public class BlockServiceImpl implements BlockService {
         this(blockRepository, zoneRepository, assignmentRepository, conditionObservationRepository, farmMemberRepository, accessGuard, null);
     }
 
+    @Autowired
     public BlockServiceImpl(BlockRepository blockRepository,
                             ZoneRepository zoneRepository,
                             StaffZoneAssignmentRepository assignmentRepository,
