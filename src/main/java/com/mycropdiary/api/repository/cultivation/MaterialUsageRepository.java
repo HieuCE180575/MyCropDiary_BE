@@ -18,4 +18,5 @@ public interface MaterialUsageRepository extends JpaRepository<MaterialUsage, In
     List<MaterialUsage> findByFarmingActivityId(Integer farmingActivityId);
     Page<MaterialUsage> findByFarmingActivityId(Integer farmingActivityId, Pageable pageable);
     Optional<MaterialUsage> findByIdAndFarmingActivityId(Integer id, Integer farmingActivityId);
+    boolean existsByMaterialId(Integer materialId);
 }
