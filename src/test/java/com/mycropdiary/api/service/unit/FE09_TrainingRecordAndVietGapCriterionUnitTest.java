@@ -300,3 +300,4 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
         verify(accessGuard).requireFarmOwner(10, 1);
     }
 }
+

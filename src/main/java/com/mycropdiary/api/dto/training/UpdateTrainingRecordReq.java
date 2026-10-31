@@ -21,3 +21,4 @@ public record UpdateTrainingRecordReq(
         List<TrainingAttendeeReq> attendees
 ) {
 }
+

@@ -93,3 +93,4 @@ public class AssessmentCriterion {
         isActive = active;
     }
 }
+

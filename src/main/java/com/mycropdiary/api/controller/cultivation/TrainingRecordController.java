@@ -84,3 +84,4 @@ public class TrainingRecordController {
         return ApiResp.ok("Đã xóa hồ sơ đào tạo.", null);
     }
 }
+

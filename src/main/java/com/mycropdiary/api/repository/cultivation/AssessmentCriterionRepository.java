@@ -14,3 +14,4 @@ public interface AssessmentCriterionRepository extends JpaRepository<AssessmentC
     Optional<AssessmentCriterion> findByFarmIdAndCriterionName(Integer farmId, String criterionName);
     boolean existsByFarmIdAndCriterionName(Integer farmId, String criterionName);
 }
+

@@ -52,3 +52,4 @@ public class TrainingAttendeeId implements Serializable {
         return Objects.hash(trainingRecordId, farmWorkerId);
     }
 }
+

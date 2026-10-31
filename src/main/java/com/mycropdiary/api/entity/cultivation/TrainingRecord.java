@@ -131,3 +131,4 @@ public class TrainingRecord {
         attendee.setTrainingRecord(null);
     }
 }
+

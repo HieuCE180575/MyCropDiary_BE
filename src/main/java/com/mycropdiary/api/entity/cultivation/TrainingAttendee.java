@@ -90,3 +90,4 @@ public class TrainingAttendee {
         this.notes = notes;
     }
 }
+

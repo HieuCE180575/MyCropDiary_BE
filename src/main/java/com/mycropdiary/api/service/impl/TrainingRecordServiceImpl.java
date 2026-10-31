@@ -240,3 +240,4 @@ public class TrainingRecordServiceImpl implements TrainingRecordService {
         );
     }
 }
+

@@ -38,3 +38,4 @@ public interface VietGapCriterionService {
      */
     void deleteCriterion(Integer currentUserId, Integer criterionId);
 }
+

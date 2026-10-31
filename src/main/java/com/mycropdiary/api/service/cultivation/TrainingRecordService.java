@@ -35,3 +35,4 @@ public interface TrainingRecordService {
      */
     void deleteTrainingRecord(Integer currentUserId, Integer trainingRecordId);
 }
+

@@ -25,3 +25,4 @@ public record CreateVietGapCriterionReq(
         this(criterionName, description, maxScore, evaluationMethod, "TCVN 11892-1:2017", true);
     }
 }
+

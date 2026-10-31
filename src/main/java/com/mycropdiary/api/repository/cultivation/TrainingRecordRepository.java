@@ -14,3 +14,4 @@ public interface TrainingRecordRepository extends JpaRepository<TrainingRecord, 
     List<TrainingRecord> findByFarmIdOrderByTrainingDateDesc(Integer farmId);
     Page<TrainingRecord> findByFarmId(Integer farmId, Pageable pageable);
 }
+

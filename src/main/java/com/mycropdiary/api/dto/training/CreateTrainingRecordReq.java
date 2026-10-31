@@ -25,3 +25,4 @@ public record CreateTrainingRecordReq(
         List<TrainingAttendeeReq> attendees
 ) {
 }
+

@@ -251,3 +251,4 @@ public class VietGapCriterionServiceImpl implements VietGapCriterionService {
     private record StandardCriterionDef(String title, String desc, String method) {
     }
 }
+

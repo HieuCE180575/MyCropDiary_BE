@@ -13,3 +13,4 @@ public record TrainingAttendeeReq(
         String notes
 ) {
 }
+

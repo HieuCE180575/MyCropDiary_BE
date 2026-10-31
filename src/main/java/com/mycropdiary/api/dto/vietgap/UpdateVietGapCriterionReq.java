@@ -18,3 +18,4 @@ public record UpdateVietGapCriterionReq(
         Boolean isActive
 ) {
 }
+

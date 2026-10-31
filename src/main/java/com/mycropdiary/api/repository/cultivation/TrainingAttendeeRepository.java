@@ -12,3 +12,4 @@ public interface TrainingAttendeeRepository extends JpaRepository<TrainingAttend
     List<TrainingAttendee> findByIdTrainingRecordId(Integer trainingRecordId);
     void deleteByIdTrainingRecordId(Integer trainingRecordId);
 }
+
