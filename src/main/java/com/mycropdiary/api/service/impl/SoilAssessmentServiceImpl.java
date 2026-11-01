@@ -2,6 +2,7 @@ package com.mycropdiary.api.service.impl;
 
 import com.mycropdiary.api.dto.soil.CreateSoilAssessmentReq;
 import com.mycropdiary.api.dto.soil.SoilAssessmentResp;
+import com.mycropdiary.api.dto.soil.UpdateSoilAssessmentReq;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.SoilAssessment;
@@ -89,9 +90,46 @@ public class SoilAssessmentServiceImpl implements SoilAssessmentService {
     }
 
     @Override
+    public SoilAssessmentResp updateSoilAssessment(Integer currentUserId, Integer assessmentId, UpdateSoilAssessmentReq request) {
+        SoilAssessment entity = soilRepository.findById(assessmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kết quả đánh giá thổ nhưỡng ID: " + assessmentId));
+        accessGuard.requireBlockAccess(currentUserId, entity.getBlock().getId());
+
+        if (request.soilPh() != null && (request.soilPh().compareTo(BigDecimal.ZERO) < 0 || request.soilPh().compareTo(BigDecimal.valueOf(14.0)) > 0)) {
+            throw new BadRequestException("Độ pH đất phải nằm trong khoảng từ 0.0 đến 14.0.");
+        }
+        if (request.moisturePercent() != null && (request.moisturePercent().compareTo(BigDecimal.ZERO) < 0 || request.moisturePercent().compareTo(BigDecimal.valueOf(100.0)) > 0)) {
+            throw new BadRequestException("Độ ẩm đất phải nằm trong khoảng từ 0% đến 100%.");
+        }
+
+        if (request.soilPh() != null) {
+            entity.setSoilPh(request.soilPh());
+        }
+        if (request.moisturePercent() != null) {
+            entity.setMoisturePercent(request.moisturePercent());
+        }
+        if (request.nutrientData() != null) {
+            entity.setNutrientData(request.nutrientData().isBlank() ? "{}" : request.nutrientData());
+        }
+        if (request.notes() != null) {
+            entity.setNotes(request.notes().trim());
+        }
+        if (request.imageUrl() != null) {
+            entity.setImageUrl(request.imageUrl());
+        }
+        if (request.assessedAt() != null) {
+            entity.setAssessedAt(request.assessedAt());
+        }
+
+        SoilAssessment updated = soilRepository.save(entity);
+        return SoilAssessmentResp.fromEntity(updated);
+    }
+
+    @Override
     public void deleteSoilAssessment(Integer currentUserId, Integer assessmentId) {
         SoilAssessment entity = soilRepository.findById(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kết quả đánh giá thổ nhưỡng ID: " + assessmentId));
+        // Business Rule: Delete Eligible Soil Assessment - Chỉ Farm Owner hoặc System Admin được quyền xóa để bảo toàn dữ liệu nhật ký VietGAP
         accessGuard.requireFarmOwner(currentUserId, entity.getBlock().getZone().getFarm().getId());
         soilRepository.delete(entity);
     }

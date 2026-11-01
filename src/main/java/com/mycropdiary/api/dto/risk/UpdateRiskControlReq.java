@@ -16,7 +16,12 @@ public record UpdateRiskControlReq(
         String description,
 
         @Schema(description = "Ảnh kiểm tra hiện trường sau can thiệp")
-        String imageUrl
-) {
-}
+        String imageUrl,
 
+        @Schema(description = "Loại rủi ro phát hiện (tùy chọn)", example = "Trôi dạt hóa chất lân cận")
+        String riskType
+) {
+    public UpdateRiskControlReq(String mitigationPlan, String riskLevel, String description, String imageUrl) {
+        this(mitigationPlan, riskLevel, description, imageUrl, null);
+    }
+}

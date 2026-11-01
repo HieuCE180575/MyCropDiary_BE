@@ -108,6 +108,10 @@ public class ZoneRiskServiceImpl implements ZoneRiskService {
             entity.setRiskLevel(updatedLevel);
         }
 
+        if (request.riskType() != null && !request.riskType().isBlank()) {
+            entity.setRiskType(request.riskType().trim());
+        }
+
         if (request.description() != null) {
             entity.setDescription(request.description().trim());
         }

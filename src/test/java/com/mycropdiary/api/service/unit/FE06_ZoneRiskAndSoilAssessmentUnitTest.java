@@ -5,6 +5,7 @@ import com.mycropdiary.api.dto.risk.UpdateRiskControlReq;
 import com.mycropdiary.api.dto.risk.ZoneRiskResp;
 import com.mycropdiary.api.dto.soil.CreateSoilAssessmentReq;
 import com.mycropdiary.api.dto.soil.SoilAssessmentResp;
+import com.mycropdiary.api.dto.soil.UpdateSoilAssessmentReq;
 import com.mycropdiary.api.entity.*;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.repository.FarmMemberRepository;
@@ -178,5 +179,62 @@ public class FE06_ZoneRiskAndSoilAssessmentUnitTest {
         );
 
         assertThrows(BadRequestException.class, () -> soilService.createSoilAssessment(5, 20, req));
+    }
+
+    @Test
+    @DisplayName("Update Soil Assessment: Should update pH and moisture successfully")
+    void updateSoilAssessment_validInputs_shouldSucceed() {
+        SoilAssessment existing = new SoilAssessment(
+                block, assessorMember, new BigDecimal("6.00"), new BigDecimal("60.00"),
+                "{\"nitrogen\":\"medium\"}", "Initial test", null, Instant.now()
+        );
+        existing.setId(201);
+        when(soilRepository.findById(201)).thenReturn(Optional.of(existing));
+        when(accessGuard.requireBlockAccess(5, 20)).thenReturn(block);
+        when(soilRepository.save(any(SoilAssessment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateSoilAssessmentReq req = new UpdateSoilAssessmentReq(
+                new BigDecimal("6.80"), new BigDecimal("65.00"),
+                "{\"nitrogen\":\"optimal\"}", "Soil improved after organic compost", null, null
+        );
+
+        SoilAssessmentResp updated = soilService.updateSoilAssessment(5, 201, req);
+        assertNotNull(updated);
+        assertEquals(new BigDecimal("6.80"), updated.soilPh());
+        assertEquals(new BigDecimal("65.00"), updated.moisturePercent());
+        assertEquals("Soil improved after organic compost", updated.notes());
+    }
+
+    @Test
+    @DisplayName("Update Soil Assessment: Should reject negative moisture percent")
+    void updateSoilAssessment_invalidMoisture_shouldThrowBadRequest() {
+        SoilAssessment existing = new SoilAssessment(
+                block, assessorMember, new BigDecimal("6.00"), new BigDecimal("60.00"),
+                "{}", "Initial", null, Instant.now()
+        );
+        existing.setId(201);
+        when(soilRepository.findById(201)).thenReturn(Optional.of(existing));
+        when(accessGuard.requireBlockAccess(5, 20)).thenReturn(block);
+
+        UpdateSoilAssessmentReq req = new UpdateSoilAssessmentReq(
+                new BigDecimal("6.80"), new BigDecimal("-5.00"),
+                null, null, null, null
+        );
+
+        assertThrows(BadRequestException.class, () -> soilService.updateSoilAssessment(5, 201, req));
+    }
+
+    @Test
+    @DisplayName("Delete Eligible Soil Assessment: Should delete when user is Farm Owner")
+    void deleteSoilAssessment_asOwner_shouldSucceed() {
+        SoilAssessment existing = new SoilAssessment(
+                block, assessorMember, new BigDecimal("6.00"), new BigDecimal("60.00"),
+                "{}", "Initial", null, Instant.now()
+        );
+        existing.setId(201);
+        when(soilRepository.findById(201)).thenReturn(Optional.of(existing));
+
+        assertDoesNotThrow(() -> soilService.deleteSoilAssessment(5, 201));
+        verify(soilRepository).delete(existing);
     }
 }

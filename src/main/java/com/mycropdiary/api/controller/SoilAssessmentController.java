@@ -3,6 +3,7 @@ package com.mycropdiary.api.controller;
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.dto.soil.CreateSoilAssessmentReq;
 import com.mycropdiary.api.dto.soil.SoilAssessmentResp;
+import com.mycropdiary.api.dto.soil.UpdateSoilAssessmentReq;
 import com.mycropdiary.api.service.SoilAssessmentService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,7 +53,7 @@ public class SoilAssessmentController {
         return ApiResp.ok("Lịch sử đánh giá thổ nhưỡng toàn trang trại", history);
     }
 
-    @Operation(summary = "Xem chi tiết đánh giá thổ nhưỡng (Soil Assessment Details)")
+    @Operation(summary = "Xem chi tiết đánh giá thổ nhưỡng (View Soil Assessment Details)")
     @GetMapping("/soil-assessments/{assessmentId}")
     public ApiResp<SoilAssessmentResp> getSoilAssessmentDetails(@PathVariable Integer assessmentId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
@@ -60,12 +61,22 @@ public class SoilAssessmentController {
         return ApiResp.ok("Chi tiết đánh giá thổ nhưỡng", response);
     }
 
-    @Operation(summary = "Xóa phiếu đánh giá thổ nhưỡng")
+    @Operation(summary = "Cập nhật phiếu đánh giá thổ nhưỡng (Update Soil Assessment)")
+    @PutMapping("/soil-assessments/{assessmentId}")
+    public ApiResp<SoilAssessmentResp> updateSoilAssessment(
+            @PathVariable Integer assessmentId,
+            @Valid @RequestBody UpdateSoilAssessmentReq request) {
+        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
+        SoilAssessmentResp response = soilService.updateSoilAssessment(currentUserId, assessmentId, request);
+        return ApiResp.ok("Cập nhật đánh giá thổ nhưỡng thành công", response);
+    }
+
+    @Operation(summary = "Xóa phiếu đánh giá thổ nhưỡng đủ điều kiện (Delete Eligible Soil Assessment)")
     @DeleteMapping("/soil-assessments/{assessmentId}")
     public ApiResp<Void> deleteSoilAssessment(@PathVariable Integer assessmentId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
         soilService.deleteSoilAssessment(currentUserId, assessmentId);
-        return ApiResp.ok("Đã xóa phiếu đánh giá thổ nhưỡng", null);
+        return ApiResp.ok("Đã xóa phiếu đánh giá thổ nhưỡng thành công", null);
     }
 }
 
