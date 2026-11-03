@@ -220,10 +220,13 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
             predicates.add(cb.equal(root.get("cropSeason").get("id"), cropSeasonId));
 
             if (keyword != null && !keyword.trim().isEmpty()) {
+                String cleanKw = keyword.trim().replace("LOT-", "").replace("GAP-VN-", "").replace("GAP-", "");
                 String pattern = "%" + keyword.trim().toLowerCase() + "%";
+                String cleanPattern = "%" + cleanKw.toLowerCase() + "%";
                 Predicate notesMatch = cb.like(cb.lower(root.get("notes")), pattern);
                 Predicate qualityMatch = cb.like(cb.lower(root.get("qualityGrade")), pattern);
-                predicates.add(cb.or(notesMatch, qualityMatch));
+                Predicate idMatch = cb.like(root.get("id").as(String.class), cleanPattern);
+                predicates.add(cb.or(notesMatch, qualityMatch, idMatch));
             }
 
             if (qualityGrade != null && !qualityGrade.trim().isEmpty()) {
@@ -274,10 +277,13 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
             }
 
             if (keyword != null && !keyword.trim().isEmpty()) {
+                String cleanKw = keyword.trim().replace("LOT-", "").replace("GAP-VN-", "").replace("GAP-", "");
                 String pattern = "%" + keyword.trim().toLowerCase() + "%";
+                String cleanPattern = "%" + cleanKw.toLowerCase() + "%";
                 Predicate notesMatch = cb.like(cb.lower(root.get("notes")), pattern);
                 Predicate qualityMatch = cb.like(cb.lower(root.get("qualityGrade")), pattern);
-                predicates.add(cb.or(notesMatch, qualityMatch));
+                Predicate idMatch = cb.like(root.get("id").as(String.class), cleanPattern);
+                predicates.add(cb.or(notesMatch, qualityMatch, idMatch));
             }
 
             if (qualityGrade != null && !qualityGrade.trim().isEmpty()) {

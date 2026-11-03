@@ -133,6 +133,8 @@ public class HarvestRecord {
     public String getStorageLocation() { return null; }
     public void setStorageLocation(String loc) { }
 
-    public String getTraceabilityCode() { return null; }
+    public String getTraceabilityCode() {
+        return id != null ? String.format("GAP-VN-%06d", id) : null;
+    }
     public void setTraceabilityCode(String code) { }
 }
