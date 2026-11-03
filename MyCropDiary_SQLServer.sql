@@ -627,6 +627,17 @@ CREATE TABLE [AIFeedbackReply] (
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
+CREATE TABLE [Notification] (
+    notification_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES [User](user_id) ON DELETE CASCADE,
+    title NVARCHAR(250) NOT NULL,
+    message NVARCHAR(MAX) NOT NULL,
+    notification_type NVARCHAR(50) NOT NULL DEFAULT 'SYSTEM',
+    is_read BIT NOT NULL DEFAULT 0,
+    action_url NVARCHAR(500),
+    created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
 -- ============================================================================
 -- INDEXES
 -- ============================================================================
@@ -643,6 +654,7 @@ CREATE INDEX idx_inventory_transactions_inventory_date ON [InventoryTransaction]
 CREATE INDEX idx_checklist_runs_status ON [ChecklistRun](run_status, scheduled_at);
 CREATE INDEX idx_ai_conversations_user_recent ON [AIConversation](user_id, updated_at DESC);
 CREATE INDEX idx_ai_messages_conversation_recent ON [AIMessage](ai_conversation_id, created_at);
+CREATE INDEX idx_notifications_user_recent ON [Notification](user_id, is_read, created_at DESC);
 CREATE INDEX idx_articles_status_published ON [KnowledgeArticle](article_status, published_at DESC);
 GO
 
@@ -1222,6 +1234,16 @@ INSERT INTO [AIFeedbackReply] (ai_feedback_reply_id, ai_feedback_id, user_id, re
 VALUES
 (1, 1, 1, N'The MyCropDiary agronomy team is glad to have assisted you. Wishing your farm an abundant and high-yielding harvest!');
 SET IDENTITY_INSERT [AIFeedbackReply] OFF;
+GO
+
+-- 48. NOTIFICATIONS (IDs: 1 to 3)
+SET IDENTITY_INSERT [Notification] ON;
+INSERT INTO [Notification] (notification_id, user_id, title, message, notification_type, is_read, action_url, created_at)
+VALUES
+(1, 2, N'VietGAP Seasonal Checklist Due', N'Reminder: Internal self-inspection checklist for Cantaloupe Season 2026 is due within 48 hours.', 'CHECKLIST', 0, '/checklists', SYSUTCDATETIME()),
+(2, 2, N'Soil Assessment Analysis Updated', N'Sample results for Block A1 (Zone A) recorded: pH 6.2, moisture 68%, fully compliant with TCVN 11892-1:2017.', 'SYSTEM', 0, '/environment', SYSUTCDATETIME()),
+(3, 4, N'New Task Assigned: Irrigation Routine', N'You have been assigned to supervise automated drip irrigation calibration on Greenhouse Block A1.', 'TASK', 1, '/tasks', SYSUTCDATETIME());
+SET IDENTITY_INSERT [Notification] OFF;
 GO
 
 SELECT N'MyCropDiary database schema and seed data created successfully.' AS Result;
