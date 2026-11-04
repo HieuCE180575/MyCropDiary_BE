@@ -21,4 +21,6 @@ public interface CropSeasonRepository extends JpaRepository<CropSeason, Integer>
     boolean existsByFarmIdAndSeasonNameIgnoreCase(Integer farmId, String seasonName);
 
     boolean existsByFarmIdAndSeasonNameIgnoreCaseAndIdNot(Integer farmId, String seasonName, Integer id);
+
+    long countBySeasonStatusIgnoreCase(String seasonStatus);
 }

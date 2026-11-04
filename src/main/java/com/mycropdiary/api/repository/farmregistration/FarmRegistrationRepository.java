@@ -37,4 +37,6 @@ public interface FarmRegistrationRepository extends JpaRepository<FarmRegistrati
 
     @Query("SELECT r FROM FarmRegistration r WHERE r.id = :id AND r.user.id = :userId")
     Optional<FarmRegistration> findByIdAndApplicantUserId(@Param("id") Integer id, @Param("userId") Integer userId);
+
+    long countByRegistrationStatusIgnoreCase(String registrationStatus);
 }
