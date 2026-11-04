@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -14,6 +15,8 @@ import java.util.Optional;
  */
 @Repository
 public interface HarvestRecordRepository extends JpaRepository<HarvestRecord, Integer>, JpaSpecificationExecutor<HarvestRecord> {
+    List<HarvestRecord> findByFarmId(Integer farmId);
+    List<HarvestRecord> findByCropSeasonId(Integer cropSeasonId);
     Page<HarvestRecord> findByCropSeasonId(Integer cropSeasonId, Pageable pageable);
     Optional<HarvestRecord> findByIdAndCropSeasonId(Integer id, Integer cropSeasonId);
     boolean existsByCropSeasonId(Integer cropSeasonId);
