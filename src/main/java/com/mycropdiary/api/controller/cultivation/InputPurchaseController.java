@@ -8,6 +8,7 @@ import com.mycropdiary.api.dto.procurement.UpdateInputPurchaseReq;
 import com.mycropdiary.api.service.cultivation.InputPurchaseService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,7 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
-@Tag(name = "UC-36: Input Purchases & Procurement", description = "Quản lý mua sắm vật tư nông nghiệp & Nhập kho (Input Purchases)")
+@Tag(name = "10. Mua sắm vật tư & Nhập kho (Input Purchases)", description = "Quản lý mua sắm vật tư nông nghiệp & Nhập kho")
+@SecurityRequirement(name = "BearerAuthentication")
 @RestController
 @RequestMapping("/api/v1")
 public class InputPurchaseController {

@@ -7,6 +7,7 @@ import com.mycropdiary.api.dto.procurement.UpdateSupplierReq;
 import com.mycropdiary.api.service.cultivation.SupplierService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,7 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "UC-35: Supplier Management", description = "Quản lý danh bạ nhà cung cấp vật tư & giống nông nghiệp (Supplier)")
+@Tag(name = "08. Quản lý nhà cung cấp (Suppliers)", description = "Quản lý danh bạ nhà cung cấp vật tư & giống nông nghiệp")
+@SecurityRequirement(name = "BearerAuthentication")
 @RestController
 @RequestMapping("/api/v1")
 public class SupplierController {
