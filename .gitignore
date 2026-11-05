@@ -4,6 +4,8 @@ target/
 *.iml
 *.log
 .env
+.env.local
+.env.*
 docs/
 .agent
 bin/

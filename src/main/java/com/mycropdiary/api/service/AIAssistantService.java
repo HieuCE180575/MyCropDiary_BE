@@ -16,6 +16,10 @@ public interface AIAssistantService {
 
     AIFeedbackResp reportAIMessage(Integer userId, Integer messageId, ReportAIMessageReq req);
 
+    AIFeedbackResp updateFeedback(Integer userId, Integer feedbackId, ReportAIMessageReq req);
+
+    void deleteConversation(Integer userId, Integer conversationId);
+
     List<AIFeedbackResp> getMyFeedbackHistory(Integer userId);
 }
 

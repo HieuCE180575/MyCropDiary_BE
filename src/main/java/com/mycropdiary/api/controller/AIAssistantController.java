@@ -88,5 +88,23 @@ public class AIAssistantController {
         List<AIFeedbackResp> list = aiService.getMyFeedbackHistory(currentUserId);
         return ApiResp.ok("Lấy lịch sử phản hồi thành công.", list);
     }
+
+    @Operation(summary = "Cập nhật phản hồi báo cáo AI (UC-13: Update Feedback)", description = "Chỉnh sửa số sao đánh giá và nội dung lý do phản hồi đã gửi.")
+    @PutMapping("/feedback/{feedbackId}")
+    public ApiResp<AIFeedbackResp> updateFeedback(
+            @PathVariable Integer feedbackId,
+            @Valid @RequestBody ReportAIMessageReq req) {
+        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
+        AIFeedbackResp resp = aiService.updateFeedback(currentUserId, feedbackId, req);
+        return ApiResp.ok("Cập nhật phản hồi thành công.", resp);
+    }
+
+    @Operation(summary = "Xóa cuộc hội thoại AI (UC-12: Delete Conversation)", description = "Xóa phiên hội thoại và toàn bộ tin nhắn liên quan.")
+    @DeleteMapping("/conversations/{conversationId}")
+    public ApiResp<Void> deleteConversation(@PathVariable Integer conversationId) {
+        Integer currentUserId = securityUtils.getRequiredCurrentUserId();
+        aiService.deleteConversation(currentUserId, conversationId);
+        return ApiResp.ok("Xóa cuộc hội thoại thành công.", null);
+    }
 }
 

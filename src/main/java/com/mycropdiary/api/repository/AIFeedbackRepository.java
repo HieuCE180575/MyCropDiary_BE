@@ -15,6 +15,8 @@ public interface AIFeedbackRepository extends JpaRepository<AIFeedback, Integer>
 
     Optional<AIFeedback> findByMessageIdAndUserId(Integer messageId, Integer userId);
 
+    List<AIFeedback> findByMessageIdIn(java.util.Collection<Integer> messageIds);
+
     List<AIFeedback> findAllByOrderByCreatedAtDesc();
 
     long countByRepliesIsEmpty();
