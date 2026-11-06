@@ -35,7 +35,7 @@ public class OpenAIService {
             @Value("${openai.model:gpt-4o-mini}") String model,
             @Value("${openai.base-url:https://api.openai.com/v1}") String baseUrl,
             @Value("${openai.timeout-seconds:25}") int timeoutSeconds,
-            ObjectMapper objectMapper) {
+            @org.springframework.beans.factory.annotation.Autowired(required = false) ObjectMapper objectMapper) {
         this.apiKey = apiKey != null ? apiKey.trim() : "";
         this.model = model != null && !model.isBlank() ? model.trim() : "gpt-4o-mini";
         this.baseUrl = baseUrl != null && !baseUrl.isBlank() ? baseUrl.trim().replaceAll("/+$", "") : "https://api.openai.com/v1";
@@ -43,7 +43,7 @@ public class OpenAIService {
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper().findAndRegisterModules();
     }
 
     /**

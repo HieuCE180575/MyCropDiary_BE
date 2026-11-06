@@ -1,4 +1,4 @@
--- MyCropDiary database schema derived from the conceptual ERDs
+﻿-- MyCropDiary database schema derived from the conceptual ERDs
 -- Target: Microsoft SQL Server 2019+
 -- Notes:
 -- 1) Table names follow the ERD entity labels; join tables were added for many-to-many relations.
@@ -659,29 +659,104 @@ CREATE INDEX idx_articles_status_published ON [KnowledgeArticle](article_status,
 GO
 
 -- ============================================================================
--- SEED SAMPLE DATA FOR TESTING & DEMONSTRATION
--- Default login password for all accounts: Password@123
+-- MyCropDiary - Comprehensive English Sample Data (Seed Script)
+-- Target: Microsoft SQL Server 2019+
+-- Database: MyCropDiary
+-- 
+-- Default Password for all demo accounts: Password@123
 -- BCrypt Hash: $2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC
--- Default OTP: 123456 ($2a$10$0pPbCigvJwUsf6/sskJIe.SwZ2mNtfIFaXiXTCF1kCjTwmXi6ghqO)
+--
+-- INSTRUCTIONS FOR USE:
+-- 1. Open SQL Server Management Studio (SSMS) or Azure Data Studio.
+-- 2. Connect to your SQL Server instance.
+-- 3. Run this script against the [MyCropDiary] database.
 -- ============================================================================
 
--- 1. ACCOUNTS & USERS (IDs: 1 to 9)
+USE [MyCropDiary];
+GO
+
+SET NOCOUNT ON;
+PRINT N'--> Starting MyCropDiary English Sample Data Seeding...';
+
+-- ============================================================================
+-- STEP 1: SAFE CLEANUP IN REVERSE FOREIGN KEY DEPENDENCY ORDER
+-- ============================================================================
+PRINT N'--> Cleaning up existing records...';
+
+DELETE FROM [Notification];
+DELETE FROM [AIFeedbackReply];
+DELETE FROM [AIFeedback];
+DELETE FROM [AIMessage];
+DELETE FROM [AIConversation];
+DELETE FROM [KnowledgeArticle];
+DELETE FROM [InternalAssessmentItem];
+DELETE FROM [InternalAssessment];
+DELETE FROM [AssessmentCriterion];
+DELETE FROM [TrainingAttendee];
+DELETE FROM [TrainingRecord];
+DELETE FROM [ProductionReport];
+DELETE FROM [ChecklistResult];
+DELETE FROM [ChecklistRun];
+DELETE FROM [ChecklistRule];
+DELETE FROM [ProductSale];
+DELETE FROM [HarvestRecord];
+DELETE FROM [Expense];
+DELETE FROM [InventoryTransaction];
+DELETE FROM [MaterialUsage];
+DELETE FROM [InputPurchaseItem];
+DELETE FROM [InputPurchase];
+DELETE FROM [Inventory];
+DELETE FROM [Warehouse];
+DELETE FROM [Material];
+DELETE FROM [Supplier];
+DELETE FROM [BlockConditionObservation];
+DELETE FROM [SoilAssessment];
+DELETE FROM [WaterAssessment];
+DELETE FROM [WaterSource];
+DELETE FROM [ZoneRiskAssessment];
+DELETE FROM [ActivitySupervisor];
+DELETE FROM [ActivityWorker];
+DELETE FROM [FarmingActivity];
+DELETE FROM [TaskAssignment];
+DELETE FROM [FarmTask];
+DELETE FROM [StaffZoneAssignment];
+DELETE FROM [CropSeasonBlock];
+DELETE FROM [Block];
+DELETE FROM [Zone];
+DELETE FROM [CropSeason];
+DELETE FROM [CropCategory];
+DELETE FROM [FarmWorker];
+DELETE FROM [FarmMember];
+DELETE FROM [FarmRegistration];
+DELETE FROM [Farm];
+DELETE FROM [AccountToken];
+DELETE FROM [User];
+GO
+
+-- ============================================================================
+-- 1. ACCOUNTS & USERS (9 Demo Users)
+-- Default Login: Password@123
+-- ============================================================================
+PRINT N'--> Seeding Users...';
 SET IDENTITY_INSERT [User] ON;
-INSERT INTO [User] (user_id, full_name, email, phone, password_hash, system_role, account_status, email_verified_at)
+INSERT INTO [User] (user_id, full_name, email, phone, password_hash, avatar_url, system_role, account_status, email_verified_at, created_at, updated_at)
 VALUES 
-(1, N'System Administrator', 'admin@cropdiary.com', '0901234567', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'admin', 'active', SYSUTCDATETIME()),
-(2, N'Tran Van (Da Lat Farm Owner)', 'owner1@dalatfarm.com', '0912345678', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(3, N'Le Thi (Mekong Orchard Owner)', 'owner2@mekongfarm.com', '0923456789', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(4, N'Nguyen Van (Da Lat Farm Technician)', 'staff1@dalatfarm.com', '0934567890', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(5, N'Hoang Minh (Production Area Supervisor)', 'staff2@dalatfarm.com', '0945678901', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(6, N'Pham Van (Pending Activation)', 'pending.user@cropdiary.com', '0956789012', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'pending', NULL),
-(7, N'Tran Van Binh (Field Care Worker)', 'worker1@dalatfarm.com', '0967890123', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(8, N'Le Thi Hoa (Harvest Worker)', 'worker2@dalatfarm.com', '0978901234', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME()),
-(9, N'Dang Huu Phuc (Applicant Farm Owner)', 'register.farm@cropdiary.com', '0989012345', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'user', 'active', SYSUTCDATETIME());
+(1, N'System Administrator', 'admin@cropdiary.com', '0901234567', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb', 'admin', 'active', SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME()),
+(2, N'Michael Green (Farm Owner)', 'owner1@greenfarm.com', '0912345678', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d', 'user', 'active', SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME()),
+(3, N'Sarah Jenkins (Eco Orchard Owner)', 'owner2@highlandfarm.com', '0923456789', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2', 'user', 'active', SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME()),
+(4, N'David Nguyen (Senior Agronomist)', 'staff1@greenfarm.com', '0934567890', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e', 'user', 'active', SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME()),
+(5, N'Emily Tran (Field Operations Supervisor)', 'staff2@greenfarm.com', '0945678901', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330', 'user', 'active', SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME()),
+(6, N'Alex Turner (Pending Verification)', 'pending.user@cropdiary.com', '0956789012', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', NULL, 'user', 'pending', NULL, SYSUTCDATETIME(), SYSUTCDATETIME()),
+(7, N'John Carter (Greenhouse Technician)', 'worker1@greenfarm.com', '0967890123', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61', 'user', 'active', SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME()),
+(8, N'Maria Lopez (Crop Care Specialist)', 'worker2@greenfarm.com', '0978901234', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', 'https://images.unsplash.com/photo-1517841905240-472988babdf9', 'user', 'active', SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME()),
+(9, N'Robert Chen (Applicant Farm Owner)', 'register.farm@cropdiary.com', '0989012345', '$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC', NULL, 'user', 'active', SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME());
 SET IDENTITY_INSERT [User] OFF;
 GO
 
--- 2. ACCOUNT TOKENS (IDs: 1 to 2)
+-- ============================================================================
+-- 2. ACCOUNT TOKENS
+-- ============================================================================
+PRINT N'--> Seeding Account Tokens...';
 SET IDENTITY_INSERT [AccountToken] ON;
 INSERT INTO [AccountToken] (token_id, user_id, token_hash, token_type, expires_at)
 VALUES
@@ -690,561 +765,656 @@ VALUES
 SET IDENTITY_INSERT [AccountToken] OFF;
 GO
 
--- 3. FARMS (IDs: 1 to 3)
+-- ============================================================================
+-- 3. FARMS (3 Production Farms)
+-- ============================================================================
+PRINT N'--> Seeding Farms...';
 SET IDENTITY_INSERT [Farm] ON;
 INSERT INTO [Farm] (farm_id, farm_name, description, address, latitude, longitude, cover_image_url, created_by, farm_status)
 VALUES
-(1, N'Da Lat Clean Produce Farm', N'High-tech VietGAP melon and sweet bell pepper specialist farm', N'123 Mai Anh Dao, Ward 8, Da Lat City, Lam Dong', 11.954500, 108.445200, 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854', 2, 'active'),
-(2, N'Mekong Fruit Tree Cooperative', N'Export-grade Cat Chu mango cooperative under GlobalGAP standards', N'Binh Hoa Hamlet, My Xuong Commune, Cao Lanh District, Dong Thap', 10.450100, 105.632200, 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9', 3, 'active'),
-(3, N'Ba Vi Ecological Organic Farm', N'Ecological organic vegetable farm under planning', N'Yen Bai Commune, Ba Vi District, Hanoi', 21.054300, 105.352100, NULL, 1, 'inactive');
+(1, N'Green Valley High-Tech Farm', N'High-tech VietGAP melon and greenhouse specialty crop farm with automated fertigation', N'123 Pine Hill Road, Ward 8, Da Lat City, Lam Dong', 11.954500, 108.445200, 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854', 2, 'active'),
+(2, N'Highland Eco Orchard & Cooperative', N'Export-grade tropical fruit cooperative operating under GlobalGAP & VietGAP certification', N'45 Mango Grove Avenue, My Xuong, Cao Lanh District, Dong Thap', 10.450100, 105.632200, 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9', 3, 'active'),
+(3, N'Sunrise Organic Vegetable Farm', N'Ecological organic vegetable enterprise producing temperate root and leafy crops', N'Yen Bai Valley, Ba Vi District, Hanoi', 21.054300, 105.352100, NULL, 1, 'inactive');
 SET IDENTITY_INSERT [Farm] OFF;
 GO
 
--- 4. FARM REGISTRATIONS (IDs: 1 to 4)
+-- ============================================================================
+-- 4. FARM REGISTRATIONS
+-- ============================================================================
+PRINT N'--> Seeding Farm Registrations...';
 SET IDENTITY_INSERT [FarmRegistration] ON;
 INSERT INTO [FarmRegistration] (registration_id, user_id, farm_name, address, province, district, ward, document_url, registration_note, registration_status, reviewed_by, reviewed_at, resulting_farm_id)
 VALUES
-(1, 2, N'Da Lat Clean Produce Farm', N'123 Mai Anh Đào', N'Lâm Đồng', N'TP Đà Lạt', N'Phường 8', 'https://example.com/docs/vietgap-dalat.pdf', N'Valid application with full VietGAP certification attached', 'approved', 1, '2025-01-02 10:00:00', 1),
-(2, 3, N'Mekong Fruit Tree Cooperative', N'Ấp Bình Hòa', N'Đồng Tháp', N'Huyện Cao Lãnh', N'Xã Mỹ Xương', 'https://example.com/docs/globalgap-mekong.pdf', N'Export-ready cooperative application complying with GlobalGAP', 'approved', 1, '2025-02-15 14:30:00', 2),
-(3, 9, N'Central Highlands Green Farm', N'Thôn 4', N'Đắk Lắk', N'TP Buôn Ma Thuột', N'Xã Ea Kao', 'https://example.com/docs/taynguyen-farm.pdf', N'Clean coffee and durian farm application, pending admin review', 'pending', NULL, NULL, NULL),
-(4, 9, N'Kon Tum Herbal Garden', N'Xã Măng Cành', N'Kon Tum', N'Huyện Kon Plông', N'Xã Măng Cành', NULL, N'Missing official land use rights certificate and GPS survey coordinates', 'rejected', 1, '2025-11-20 09:15:00', NULL);
+(1, 2, N'Green Valley High-Tech Farm', N'123 Pine Hill Road', N'Lam Dong', N'Da Lat City', N'Ward 8', 'https://example.com/docs/vietgap-greenvalley.pdf', N'Valid registration with complete VietGAP certificate and land entitlement attached.', 'approved', 1, '2025-01-02 10:00:00', 1),
+(2, 3, N'Highland Eco Orchard & Cooperative', N'45 Mango Grove Avenue', N'Dong Thap', N'Cao Lanh District', N'My Xuong Commune', 'https://example.com/docs/globalgap-highland.pdf', N'Comprehensive cooperative application fully meeting export safety standards.', 'approved', 1, '2025-02-15 14:30:00', 2),
+(3, 9, N'Central Highlands Agro Farm', N'Hamlet 4', N'Dak Lak', N'Buon Ma Thuot City', N'Ea Kao Commune', 'https://example.com/docs/daklak-agro.pdf', N'Clean specialty coffee and durian farm application, pending admin document audit.', 'pending', NULL, NULL, NULL),
+(4, 9, N'Kon Tum Medicinal Herb Garden', N'Mang Canh Village', N'Kon Tum', N'Kon Plong District', N'Mang Canh Commune', NULL, N'Application incomplete: Missing soil test audit and land tenure verification.', 'rejected', 1, '2025-03-01 09:15:00', NULL);
 SET IDENTITY_INSERT [FarmRegistration] OFF;
 GO
 
--- 5. FARM MEMBERS (IDs: 1 to 6)
+-- ============================================================================
+-- 5. FARM MEMBERSHIP
+-- ============================================================================
+PRINT N'--> Seeding Farm Members...';
 SET IDENTITY_INSERT [FarmMember] ON;
 INSERT INTO [FarmMember] (farm_member_id, farm_id, user_id, member_role, membership_status)
 VALUES
 (1, 1, 2, 'owner', 'active'),
-(2, 1, 4, 'member', 'active'),
-(3, 1, 5, 'manager', 'active'),
-(4, 1, 7, 'member', 'active'),
-(5, 1, 8, 'member', 'active'),
-(6, 2, 3, 'owner', 'active');
+(2, 1, 4, 'manager', 'active'),
+(3, 1, 5, 'member', 'active'),
+(4, 2, 3, 'owner', 'active'),
+(5, 1, 7, 'member', 'active'),
+(6, 1, 8, 'member', 'active');
 SET IDENTITY_INSERT [FarmMember] OFF;
 GO
 
--- 6. FARM WORKERS (IDs: 1 to 3)
+-- ============================================================================
+-- 6. FARM WORKERS (CRUD Worker Records UC-15)
+-- ============================================================================
+PRINT N'--> Seeding Farm Workers...';
 SET IDENTITY_INSERT [FarmWorker] ON;
 INSERT INTO [FarmWorker] (farm_worker_id, farm_member_id, worker_code, job_title, employment_status, hired_at, notes)
 VALUES
-(1, 2, 'CN-DL-01', N'Nutrition & Irrigation Engineer', 'active', '2025-01-01', N'Responsible for A+B hydroponic stock solution formula and dosage control'),
-(2, 4, 'CN-DL-02', N'Plant Pruning & Care Worker', 'active', '2025-03-01', N'Skilled in lateral shoot pruning, canopy management, and manual pollination'),
-(3, 5, 'CN-DL-03', N'Harvest & Packaging Specialist', 'seasonal', '2025-09-01', N'Seasonal harvest and refrigerated packaging contract');
+(1, 2, 'WK-GV-001', N'Senior Agronomist & Fertigation Engineer', 'active', '2025-01-01', N'Responsible for A+B hydroponic stock solution formula, EC/pH targets, and fertigation schedules.'),
+(2, 5, 'WK-GV-002', N'Greenhouse Automation Technician', 'active', '2025-02-15', N'Specializes in climate sensors, irrigation solenoids, misting lines, and nutrient injection pumps.'),
+(3, 6, 'WK-GV-003', N'Crop Training & Pollination Specialist', 'active', '2025-03-01', N'Skilled in lateral shoot pruning, trellis wire training, hand pollination, and fruit thinning.'),
+(4, 3, 'WK-GV-004', N'Quality Control & Post-Harvest Lead', 'active', '2025-01-10', N'Oversees VietGAP field harvesting standards, sorting tolerances, brix testing, and cold storage.');
 SET IDENTITY_INSERT [FarmWorker] OFF;
 GO
 
--- 7. CROP CATEGORIES (IDs: 1 to 20)
+-- ============================================================================
+-- 7. CROP CATEGORIES (20 VietGAP Commercial Crops)
+-- ============================================================================
+PRINT N'--> Seeding Crop Categories...';
 SET IDENTITY_INSERT [CropCategory] ON;
 INSERT INTO [CropCategory] (crop_category_id, category_name, description, image_url)
 VALUES
-(1, N'Cantaloupe Melon', N'High-tech Japanese orange flesh cantaloupe melon', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
-(2, N'Dalat Bell Pepper', N'Greenhouse red, yellow and orange sweet crisp bell peppers', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83'),
-(3, N'Cherry Tomato', N'Sweet truss cherry tomatoes for export', 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea'),
-(4, N'Cat Chu Mango', N'Dong Thap specialty Cat Chu export mango', 'https://images.unsplash.com/photo-1553279768-865429fa0078'),
-(5, N'Water Spinach', N'Short-cycle leafy vegetable, 25-30 days to harvest', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
-(6, N'Butterhead Lettuce', N'Hydroponic or clean soil leafy greens, 35-45 days cycle', 'https://images.unsplash.com/photo-1556801712-76c8eb07bbc9'),
-(7, N'Bok Choy', N'Nutrient-rich VietGAP leafy green, 30-40 days cycle', 'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f'),
-(8, N'Spinach', N'Temperate leafy green rich in iron and minerals, 35-45 days cycle', 'https://images.unsplash.com/photo-1576045057995-568f588f82fb'),
-(9, N'Choy Sum', N'Popular fast-growing Asian green, 25-35 days cycle', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
-(10, N'Cucumber', N'High-yielding trellised fruiting crop, 45-60 days cycle', 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e'),
-(11, N'Green Beans', N'Nitrogen-fixing bush bean, 50-60 days cycle', 'https://images.unsplash.com/photo-1551462147-37885acc36f1'),
-(12, N'Okra', N'Heat-tolerant fiber-rich fruiting vegetable, 45-55 days cycle', 'https://images.unsplash.com/photo-1425543103986-22abb7d7e8d2'),
-(13, N'Baby Carrot', N'Crisp and sweet VietGAP root vegetable, 60-75 days cycle', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
-(14, N'White Radish', N'Fast-growing nutritious daikon radish, 40-50 days cycle', 'https://images.unsplash.com/photo-1590779033100-9f60a05a013d'),
-(15, N'Scallion & Fresh Herbs', N'Continuous harvest culinary herbs, 30-40 days cycle', 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5'),
-(16, N'Malabar Spinach', N'Summer cooling leafy vine green, 30-40 days cycle', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
-(17, N'Cabbage', N'Winter-spring heading brassica, 65-75 days cycle', 'https://images.unsplash.com/photo-1550828520-4cb496926fc9'),
-(18, N'Watermelon', N'Crisp sweet red flesh fruit, 60-70 days cycle', 'https://images.unsplash.com/photo-1587049352846-4a222e784d38'),
-(19, N'Winter Melon', N'Trellised VietGAP wax gourd, 60-70 days cycle', 'https://images.unsplash.com/photo-1570715621210-b74704bdfa57'),
-(20, N'Sweet Corn', N'High-grade sweet cereal crop, 70-80 days cycle', 'https://images.unsplash.com/photo-1551754655-cd27e38d2076');
+(1, N'Cantaloupe Melon', N'High-tech Japanese hybrid orange-flesh cantaloupe melon (85-95 days cycle)', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
+(2, N'Bell Pepper', N'Greenhouse sweet blocky red, yellow, and orange bell peppers (100-120 days cycle)', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83'),
+(3, N'Cherry Tomato', N'High-brix sweet indeterminate truss cherry tomatoes for fresh retail (90-110 days cycle)', 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea'),
+(4, N'Tropical Mango', N'Premium export-grade Cat Chu and aromatic mangoes (Perennial fruit crop)', 'https://images.unsplash.com/photo-1553279768-865429fa0078'),
+(5, N'Water Spinach', N'Fast-growing aquatic/semi-aquatic leafy vegetable (25-30 days cycle)', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
+(6, N'Butterhead Lettuce', N'Hydroponic delicate tender leafy lettuce with loose heads (35-45 days cycle)', 'https://images.unsplash.com/photo-1556801712-76c8eb07bbc9'),
+(7, N'Bok Choy', N'Nutrient-dense Asian brassica green with crisp white stems (30-40 days cycle)', 'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f'),
+(8, N'Baby Spinach', N'Cool-season leafy green rich in iron and folates (35-45 days cycle)', 'https://images.unsplash.com/photo-1576045057995-568f588f82fb'),
+(9, N'Choy Sum', N'Popular tender Asian flowering green vegetable (28-35 days cycle)', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
+(10, N'Japanese Cucumber', N'Thin-skinned sweet parthenocarpic trellised slicing cucumber (45-60 days cycle)', 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e'),
+(11, N'French Green Beans', N'Slender tender bush string beans with high nutritional value (50-60 days cycle)', 'https://images.unsplash.com/photo-1551462147-37885acc36f1'),
+(12, N'Tender Okra', N'Heat-loving ribbed green pods rich in dietary fiber (45-55 days cycle)', 'https://images.unsplash.com/photo-1425543103986-22abb7d7e8d2'),
+(13, N'Baby Carrot', N'Sweet crisp root vegetable with uniform cylindrical taper (65-75 days cycle)', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37'),
+(14, N'White Daikon Radish', N'High-moisture crunchy Asian taproot vegetable (40-50 days cycle)', 'https://images.unsplash.com/photo-1590779033100-9f60a05a013d'),
+(15, N'Scallion & Fresh Herbs', N'Aromatic culinary alliums and fresh table herbs (30-40 days continuous cycle)', 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5'),
+(16, N'Malabar Spinach', N'Heat-tolerant climbing leafy green with succulent leaves (35-45 days cycle)', 'https://images.unsplash.com/photo-1540420773420-3366772f4999'),
+(17, N'Savoy Cabbage', N'Wrinkled dark green leaves with sweet mild flavor (70-80 days cycle)', 'https://images.unsplash.com/photo-1550828520-4cb496926fc9'),
+(18, N'Crimson Watermelon', N'Crisp sweet red-flesh melon with striped rind (65-75 days cycle)', 'https://images.unsplash.com/photo-1587049352846-4a222e784d38'),
+(19, N'Wax Winter Gourd', N'Mild trellised storage gourd with waxy green skin (60-70 days cycle)', 'https://images.unsplash.com/photo-1570715621210-b74704bdfa57'),
+(20, N'Golden Sweet Corn', N'Tender high-sugar golden yellow corn kernels (75-85 days cycle)', 'https://images.unsplash.com/photo-1551754655-cd27e38d2076');
 SET IDENTITY_INSERT [CropCategory] OFF;
 GO
 
--- 8. CROP SEASONS (IDs: 1 to 3)
+-- ============================================================================
+-- 8. CROP SEASONS
+-- ============================================================================
+PRINT N'--> Seeding Crop Seasons...';
 SET IDENTITY_INSERT [CropSeason] ON;
 INSERT INTO [CropSeason] (crop_season_id, farm_id, crop_category_id, season_name, start_date, end_date, season_status, notes, created_by)
 VALUES
-(1, 1, 1, N'Spring 2026 Cantaloupe Season', '2026-01-15', '2026-04-30', 'active', N'Key spring melon season serving festival market demand', 2),
-(2, 1, 2, N'Winter 2025 Bell Pepper Season', '2025-09-01', '2025-12-25', 'completed', N'Season fully harvested, packed, and accounts settled', 2),
-(3, 1, 3, N'Summer 2026 Tomato Season', '2026-05-01', '2026-08-30', 'planned', N'Planned planting schedule for Greenhouse #2', 2);
+(1, 1, 1, N'Spring 2026 Hydroponic Cantaloupe Season', '2026-01-15', '2026-04-30', 'active', N'Key commercial melon production cycle targeting premium holiday market demand.', 2),
+(2, 1, 2, N'Winter 2025 Greenhouse Bell Pepper Season', '2025-09-01', '2025-12-25', 'completed', N'Fully harvested, graded, packaged, and settled with wholesale supermarket buyers.', 2),
+(3, 1, 3, N'Summer 2026 Truss Tomato Season', '2026-05-01', '2026-08-30', 'planned', N'Planned indeterminate cherry tomato cultivation scheduled for Greenhouse Wing #2.', 2),
+(4, 2, 4, N'Annual 2026 Export Mango Season', '2026-01-01', '2026-11-30', 'active', N'Cooperative Cat Chu mango season adhering strictly to GlobalGAP residue thresholds.', 3);
 SET IDENTITY_INSERT [CropSeason] OFF;
 GO
 
--- 9. ZONES (IDs: 1 to 4)
+-- ============================================================================
+-- 9. ZONES (Production Zones UC-16)
+-- ============================================================================
+PRINT N'--> Seeding Production Zones...';
 SET IDENTITY_INSERT [Zone] ON;
 INSERT INTO [Zone] (zone_id, farm_id, zone_name, description, area_value, area_unit)
 VALUES
-(1, 1, N'Zone A - High-Tech Greenhouse', N'Automated hydroponic greenhouse zone for cantaloupe melons', 5000.00, 'm2'),
-(2, 2, N'Zone B - Open Field Beds', N'Outdoor cultivation zone for bell peppers and root crops', 8000.00, 'm2'),
-(3, 1, N'Zone C - Certified Nursery', N'Certified disease-free seedling nursery zone', 2000.00, 'm2'),
-(4, 2, N'Zone 1 - Mango Orchard', N'Mature grafted Cat Chu mango orchard zone', 15000.00, 'm2');
+(1, 1, N'Zone A - Smart Greenhouse Complex', N'Multi-span automated polyhouse with climate screens, misting, and drip fertigation.', 5000.00, 'm2'),
+(2, 1, N'Zone B - High-Tunnel Polyhouse Wing', N'High-tunnel ventilated greenhouse beds for specialty nightshades and peppers.', 6000.00, 'm2'),
+(3, 1, N'Zone C - Certified Propagation Nursery', N'Sterile seedling nursery equipped with germination chambers and micro-misting.', 2000.00, 'm2'),
+(4, 2, N'Zone 1 - Export Fruit Orchard Block', N'Mature grafted mango plantation with sub-canopy micro-sprinklers.', 15000.00, 'm2');
 SET IDENTITY_INSERT [Zone] OFF;
 GO
 
--- 10. BLOCKS (IDs: 1 to 5)
+-- ============================================================================
+-- 10. BLOCKS (Production Blocks UC-17)
+-- ============================================================================
+PRINT N'--> Seeding Production Blocks...';
 SET IDENTITY_INSERT [Block] ON;
 INSERT INTO [Block] (block_id, zone_id, block_name, description, area_value, area_unit, soil_type)
 VALUES
-(1, 1, N'Block A1', N'Block F1 Japanese Taka cantaloupe melon', 2500.00, 'm2', N'Desalinated coco peat hydroponic substrate'),
-(2, 1, N'Block A2', N'Block Huynh Long golden cantaloupe melon', 2500.00, 'm2', N'Desalinated coco peat hydroponic substrate'),
-(3, 2, N'Block B1', N'Block sweet red bell peppers', 4000.00, 'm2', N'Lam Dong basalt red soil'),
-(4, 2, N'Block B2', N'Block sweet yellow bell peppers', 4000.00, 'm2', N'Lam Dong basalt red soil'),
-(5, 3, N'Block C1', N'Block melon nursery seedling trays', 2000.00, 'm2', N'Coco peat with bio-char and beneficial microbes');
+(1, 1, N'Block A1', N'Hydroponic rows 1 to 20 planted with F1 Taka Japanese Cantaloupe.', 2500.00, 'm2', N'Desalinated coco peat grow bags'),
+(2, 1, N'Block A2', N'Hydroponic rows 21 to 40 planted with Golden Honey Cantaloupe.', 2500.00, 'm2', N'Desalinated coco peat grow bags'),
+(3, 2, N'Block B1', N'Soil-ridged beds cultivated with Sweet Red Bell Peppers.', 3000.00, 'm2', N'Rich volcanic basalt red loam'),
+(4, 2, N'Block B2', N'Soil-ridged beds cultivated with Sweet Yellow Bell Peppers.', 3000.00, 'm2', N'Rich volcanic basalt red loam'),
+(5, 3, N'Block C1', N'Grafted seedling bench trays and micro-sprinkler misting lines.', 2000.00, 'm2', N'Peat moss and biochar sterile plug mix'),
+(6, 4, N'Block 1A', N'Cat Chu grafted trees aged 7 years, pruned for open canopy sunlight.', 15000.00, 'm2', N'Mekong alluvial river silt');
 SET IDENTITY_INSERT [Block] OFF;
 GO
 
--- 11. CROP SEASON BLOCKS (Composite PK)
+-- ============================================================================
+-- 11. CROP SEASON BLOCKS
+-- ============================================================================
+PRINT N'--> Seeding Crop Season Blocks...';
 INSERT INTO [CropSeasonBlock] (crop_season_id, block_id, planted_area, area_unit, planted_at, expected_harvest_at)
 VALUES
 (1, 1, 2500.00, 'm2', '2026-01-15', '2026-04-25'),
 (1, 2, 2500.00, 'm2', '2026-01-20', '2026-04-30'),
-(2, 3, 4000.00, 'm2', '2025-09-01', '2025-12-20');
+(2, 3, 3000.00, 'm2', '2025-09-01', '2025-12-20'),
+(2, 4, 3000.00, 'm2', '2025-09-05', '2025-12-25'),
+(4, 6, 15000.00, 'm2', '2026-01-05', '2026-06-15');
 GO
 
--- 12. STAFF ZONE ASSIGNMENTS (IDs: 1 to 3)
+-- ============================================================================
+-- 12. STAFF ZONE ASSIGNMENTS (UC-35)
+-- ============================================================================
+PRINT N'--> Seeding Zone Assignments...';
 SET IDENTITY_INSERT [StaffZoneAssignment] ON;
 INSERT INTO [StaffZoneAssignment] (assignment_id, farm_member_id, zone_id, assigned_at, ended_at)
 VALUES
 (1, 2, 1, '2025-01-01 00:00:00', NULL),
 (2, 3, 1, '2025-01-01 00:00:00', NULL),
-(3, 4, 1, '2025-06-01 00:00:00', NULL);
+(3, 5, 2, '2025-06-01 00:00:00', NULL);
 SET IDENTITY_INSERT [StaffZoneAssignment] OFF;
 GO
 
--- 13. FARM TASKS (IDs: 1 to 6)
+-- ============================================================================
+-- 13. FARM TASKS (Farm Tasks UC-22)
+-- ============================================================================
+PRINT N'--> Seeding Farm Tasks...';
 SET IDENTITY_INSERT [FarmTask] ON;
 INSERT INTO [FarmTask] (farm_task_id, farm_id, crop_season_id, zone_id, block_id, task_name, description, task_type, priority, status, starts_at, due_at, created_by)
 VALUES
-(1, 1, 1, 1, 1, N'Coco peat substrate conditioning', N'Rinse tannins and treat with Trichoderma fungal biocontrol', N'Land Prep', 'high', 'completed', '2026-01-10 07:00:00', '2026-01-14 17:00:00', 2),
-(2, 1, 1, 1, 1, N'Transplant melon seedlings', N'Move 12-day-old nursery seedlings to production grow bags', N'Planting', 'urgent', 'completed', '2026-01-15 06:30:00', '2026-01-16 11:30:00', 2),
-(3, 1, 1, 1, 1, N'Drip fertigation run #3', N'Mix nutrient solution A+B at EC 1.8 and execute automated drip cycle', N'Fertilization & Irrigation', 'normal', 'completed', '2026-02-10 08:00:00', '2026-02-10 11:00:00', 2),
-(4, 1, 1, 1, 1, N'Manual melon pollination', N'Hand pollinate female flowers at nodes 9 through 12', N'Crop Care', 'high', 'in_progress', '2026-02-25 07:00:00', '2026-03-05 10:00:00', 2),
-(5, 1, 1, 1, 1, N'Biological thrips prevention', N'Apply organic Neem Chito botanical spray against thrips', N'Plant Protection', 'normal', 'planned', '2026-03-08 16:00:00', '2026-03-08 18:00:00', 2),
-(6, 1, 1, 1, 1, N'Harvest ripe sweet melons', N'Cut T-stems, weigh batches, and apply QR traceability labels', N'Harvest', 'urgent', 'planned', '2026-04-22 06:00:00', '2026-04-25 17:00:00', 2);
+(1, 1, 1, 1, 1, N'Substrate Conditioning & Buffering', N'Flush coco peat slabs with fresh water and buffer with calcium nitrate solution.', N'Land Prep', 'high', 'completed', '2026-01-10 07:00:00', '2026-01-14 17:00:00', 2),
+(2, 1, 1, 1, 1, N'Melon Seedling Transplanting', N'Transfer 14-day-old nursery plug seedlings into production grow bags.', N'Planting', 'urgent', 'completed', '2026-01-15 06:30:00', '2026-01-16 11:30:00', 2),
+(3, 1, 1, 1, 1, N'Calibrate Drip Fertigation Cycle #3', N'Inject concentrated A+B nutrient solution at target EC 1.8 mS/cm and pH 6.0.', N'Fertilization & Irrigation', 'normal', 'completed', '2026-02-10 08:00:00', '2026-02-10 11:00:00', 2),
+(4, 1, 1, 1, 1, N'Manual Flower Pollination & Trellising', N'Hand pollinate female flowers at nodes 9-12 and clip vines to vertical trellis strings.', N'Crop Care', 'high', 'in_progress', '2026-02-25 07:00:00', '2026-03-05 10:00:00', 2),
+(5, 1, 1, 1, 1, N'Preventive Organic Bio-Control Application', N'Apply cold-pressed Neem Chito botanical spray against early thrips and spider mites.', N'Plant Protection', 'normal', 'planned', '2026-03-08 16:00:00', '2026-03-08 18:00:00', 2),
+(6, 1, 1, 1, 1, N'Peak Harvest & QR Traceability Tagging', N'Clip ripe melon fruit with T-stems, verify minimum 13 brix, and apply QR tags.', N'Harvest', 'urgent', 'planned', '2026-04-22 06:00:00', '2026-04-25 17:00:00', 2);
 SET IDENTITY_INSERT [FarmTask] OFF;
 GO
 
--- 14. TASK ASSIGNMENTS (Composite PK)
+-- ============================================================================
+-- 14. TASK ASSIGNMENTS
+-- ============================================================================
+PRINT N'--> Seeding Task Assignments...';
 INSERT INTO [TaskAssignment] (farm_task_id, farm_worker_id, assigned_by, assigned_at, assignment_status)
 VALUES
 (3, 1, 2, '2026-02-09 15:00:00', 'completed'),
-(4, 2, 2, '2026-02-24 16:30:00', 'accepted'),
+(4, 3, 2, '2026-02-24 16:30:00', 'accepted'),
 (5, 2, 2, '2026-03-01 08:00:00', 'assigned');
 GO
 
--- 15. FARMING ACTIVITIES (IDs: 1 to 4)
+-- ============================================================================
+-- 15. FARMING ACTIVITIES (Farming Activities UC-23)
+-- ============================================================================
+PRINT N'--> Seeding Farming Activities...';
 SET IDENTITY_INSERT [FarmingActivity] ON;
 INSERT INTO [FarmingActivity] (farming_activity_id, farm_id, farm_task_id, crop_season_id, zone_id, block_id, activity_name, activity_type, activity_notes, performed_at, image_url, created_by)
 VALUES
-(1, 1, 3, 1, 1, 1, N'Drip fertigation run A+B EC 1.8', N'Fertilization & Irrigation', N'Dispensed 10L of A+B stock solution into 1000L central tank', '2026-02-10 08:30:00', NULL, 4),
-(2, 1, 4, 1, 1, 1, N'Shoot pruning and melon pollination', N'Crop Care', N'Pollinated approx 1,200 plants along rows 1 through 15', '2026-02-28 07:45:00', NULL, 4),
-(3, 1, NULL, 1, 1, 1, N'Organic preventative fungal spray', N'Plant Protection', N'Applied 2 bottles of Neem Chito in late afternoon cool weather', '2026-03-01 16:30:00', NULL, 4),
-(4, 1, NULL, 2, 2, 3, N'Final harvest of Winter 2025 bell peppers', N'Harvest', N'Harvested all red ripe fruit across the parcel', '2025-12-20 09:00:00', NULL, 4);
+(1, 1, 3, 1, 1, 1, N'Automated Drip Fertigation Run (A+B EC 1.8)', N'Fertilization & Irrigation', N'Dispensed 10 liters of A+B stock solution into 1,000L header tank. Uniform emitter flow verified.', '2026-02-10 08:30:00', NULL, 4),
+(2, 1, 4, 1, 1, 1, N'Vine Trellising and Hand Pollination Shift', N'Crop Care', N'Successfully pollinated approximately 1,200 flowers along rows 1 to 10.', '2026-02-28 07:45:00', NULL, 4),
+(3, 1, NULL, 1, 1, 1, N'Organic Neem Botanical Pest Treatment', N'Plant Protection', N'Applied 2 bottles of Neem Chito in late afternoon cool weather. No leaf burn observed.', '2026-03-01 16:30:00', NULL, 4),
+(4, 1, NULL, 2, 2, 3, N'Winter 2025 Bell Pepper Final Harvest', N'Harvest', N'Harvested all red ripe fruit across Block B1. Crates sanitized prior to transport.', '2025-12-20 09:00:00', NULL, 4);
 SET IDENTITY_INSERT [FarmingActivity] OFF;
 GO
 
--- 16. ACTIVITY WORKERS (Composite PK)
+-- ============================================================================
+-- 16. ACTIVITY WORKERS & SUPERVISORS
+-- ============================================================================
+PRINT N'--> Seeding Activity Workers & Supervisors...';
 INSERT INTO [ActivityWorker] (farming_activity_id, farm_worker_id, participation_role)
 VALUES
-(1, 1, N'Nutrient mixing technician'),
-(2, 2, N'Lead pollination worker'),
-(4, 2, N'Picker'),
-(4, 3, N'Grading and crate packing worker');
-GO
+(1, 1, N'Nutrient dosing technician'),
+(2, 3, N'Lead pollination specialist'),
+(4, 2, N'Field fruit harvester'),
+(4, 4, N'Grading and cold-chain inspector');
 
--- 17. ACTIVITY SUPERVISORS (Composite PK)
 INSERT INTO [ActivitySupervisor] (farming_activity_id, farm_member_id)
 VALUES
 (1, 3),
 (4, 3);
 GO
 
--- 18. ZONE RISK ASSESSMENTS (IDs: 1 to 2)
+-- ============================================================================
+-- 17. ZONE RISK ASSESSMENTS
+-- ============================================================================
+PRINT N'--> Seeding Zone Risk Assessments...';
 SET IDENTITY_INSERT [ZoneRiskAssessment] ON;
 INSERT INTO [ZoneRiskAssessment] (zone_risk_assessment_id, zone_id, assessed_by, risk_type, risk_level, description, mitigation_plan, assessed_at)
 VALUES
-(1, 1, 3, N'High Humidity & Downy Mildew', 'medium', N'Nighttime greenhouse humidity exceeds 92%, increasing downy mildew fungal risk', N'Activate convection fans and crack roof ventilation open starting at 05:00 AM', '2026-01-20 10:00:00'),
-(2, 2, 3, N'Hillside Soil Erosion', 'low', N'Heavy rains may erode surface topsoil along edge beds', N'Plant vetiver grass along embankment edges and dig cross-slope drainage trenches', '2026-01-22 14:00:00');
+(1, 1, 3, N'High Relative Humidity & Powdery Mildew', 'medium', N'Nighttime polyhouse humidity reaches 92%, elevating risk of powdery and downy mildew sporulation.', N'Activate convection air circulation fans and open motorized roof vents starting at 05:30 AM.', '2026-01-20 10:00:00'),
+(2, 2, 3, N'Heavy Monsoon Surface Runoff', 'low', N'Prolonged seasonal rains could erode perimeter raised beds and transport soil sediment.', N'Plant vetiver grass along embankment contours and install gravel perimeter drainage trenches.', '2026-01-22 14:00:00');
 SET IDENTITY_INSERT [ZoneRiskAssessment] OFF;
 GO
 
--- 19. WATER SOURCES (IDs: 1 to 2)
+-- ============================================================================
+-- 18. WATER SOURCES (Water Sources UC-20)
+-- ============================================================================
+PRINT N'--> Seeding Water Sources...';
 SET IDENTITY_INSERT [WaterSource] ON;
 INSERT INTO [WaterSource] (water_source_id, farm_id, source_name, source_type, description)
 VALUES
-(1, 1, N'Cam Ly Stream Settling Reservoir', N'Surface reservoir', N'Capacity 2,500 m3 equipped with sand filtration and microbial disc filtration systems'),
-(2, 1, N'Shallow Aquifer Borehole Well #1', N'Groundwater', N'Well depth 70m, clear water with low mineral hardness');
+(1, 1, N'Pine Valley Stream Settling Reservoir', N'Surface Water', N'2,500 m3 storage capacity equipped with sand media and automatic disc filtration.'),
+(2, 1, N'Deep Aquifer Borehole Well #1', N'Groundwater', N'85-meter depth borehole supplying low-hardness mineral water optimal for hydroponics.');
 SET IDENTITY_INSERT [WaterSource] OFF;
 GO
 
--- 20. WATER ASSESSMENTS (IDs: 1 to 2)
+-- ============================================================================
+-- 19. WATER ASSESSMENTS (Water Testing UC-20)
+-- ============================================================================
+PRINT N'--> Seeding Water Assessments...';
 SET IDENTITY_INSERT [WaterAssessment] ON;
 INSERT INTO [WaterAssessment] (water_assessment_id, water_source_id, block_id, conducted_by, water_ph, temperature_c, quality_status, notes, assessed_at)
 VALUES
-(1, 1, 1, 2, 6.60, 20.50, N'VietGAP Irrigation Compliant', N'Heavy metal content and E. coli counts are well below permissible safety thresholds', '2026-01-12 08:30:00'),
-(2, 2, 1, 2, 6.20, 21.00, N'Excellent Quality', N'Groundwater is exceptionally soft and clean, optimal for hydroponic nutrient formulation', '2026-02-15 09:00:00');
+(1, 1, 1, 2, 6.60, 20.50, N'VietGAP Irrigation Compliant', N'Heavy metal traces, arsenic, and E. coli counts tested well below maximum statutory thresholds.', '2026-01-12 08:30:00'),
+(2, 2, 1, 2, 6.20, 21.00, N'Premium Hydroponic Quality', N'Clean groundwater with negligible bicarbonate buffer; ideal for precision hydroponic nutrient mixing.', '2026-02-15 09:00:00');
 SET IDENTITY_INSERT [WaterAssessment] OFF;
 GO
 
--- 21. SOIL ASSESSMENTS (IDs: 1 to 2)
+-- ============================================================================
+-- 20. SOIL ASSESSMENTS (Soil Testing UC-19)
+-- ============================================================================
+PRINT N'--> Seeding Soil Assessments...';
 SET IDENTITY_INSERT [SoilAssessment] ON;
 INSERT INTO [SoilAssessment] (soil_assessment_id, block_id, conducted_by, soil_ph, moisture_percent, nutrient_data, notes, assessed_at)
 VALUES
-(1, 1, 2, 6.40, 72.50, N'{"EC_mS_cm": 1.82, "N_ppm": 140, "P_ppm": 45, "K_ppm": 210, "Ca_ppm": 160, "Mg_ppm": 55}', N'Coco peat substrate is stable, electrical conductivity (EC) is at optimal level for flowering and fruit set', '2026-02-18 10:15:00'),
-(2, 3, 2, 5.80, 65.00, N'{"EC_mS_cm": 1.15, "N_ppm": 95, "P_ppm": 32, "K_ppm": 140, "Organic_matter_pct": 3.8}', N'Basalt red soil is fertile; apply agricultural lime to slightly raise pH to 6.2 prior to new crop cycle', '2026-02-20 11:00:00');
+(1, 1, 2, 6.40, 72.50, N'{"EC_mS_cm": 1.82, "N_ppm": 140, "P_ppm": 45, "K_ppm": 210, "Ca_ppm": 160, "Mg_ppm": 55}', N'Coco peat substrate EC is stable; macro and micro mineral ratios are balanced for melon flowering.', '2026-02-18 10:15:00'),
+(2, 3, 2, 5.90, 65.00, N'{"EC_mS_cm": 1.15, "N_ppm": 95, "P_ppm": 32, "K_ppm": 140, "Organic_matter_pct": 4.1}', N'Volcanic basalt soil is nutrient-rich; broadcast agricultural lime at 200 kg/ha before next planting.', '2026-02-20 11:00:00');
 SET IDENTITY_INSERT [SoilAssessment] OFF;
 GO
 
--- 22. BLOCK CONDITION OBSERVATIONS (IDs: 1 to 2)
+-- ============================================================================
+-- 21. BLOCK CONDITION OBSERVATIONS
+-- ============================================================================
+PRINT N'--> Seeding Block Observations...';
 SET IDENTITY_INSERT [BlockConditionObservation] ON;
 INSERT INTO [BlockConditionObservation] (observation_id, block_id, recorded_by, condition_type, description, observed_at)
 VALUES
-(1, 1, 2, N'Crop Growth', N'Cantaloupe plants at node 10 develop uniformly, female flower buds are robust with no micro-nutrient deficiency signs', '2026-02-26 08:00:00'),
-(2, 3, 2, N'Pest & Disease Status', N'Soil is dry, scattered light powdery mildew spots observed on older leaves in the southeast corner', '2026-02-27 15:30:00');
+(1, 1, 2, N'Crop Growth', N'Cantaloupe canopy at node 11 is thriving with dark green foliage and thick stems. No nutrient chlorosis detected.', '2026-02-26 08:00:00'),
+(2, 3, 2, N'Pest Scouting', N'Inspection of 50 randomly sampled plants revealed no thrips or whiteflies on yellow sticky traps.', '2026-02-27 15:30:00');
 SET IDENTITY_INSERT [BlockConditionObservation] OFF;
 GO
 
--- 23. SUPPLIERS (IDs: 1 to 2)
+-- ============================================================================
+-- 22. SUPPLIERS (Suppliers UC-36)
+-- ============================================================================
+PRINT N'--> Seeding Suppliers...';
 SET IDENTITY_INSERT [Supplier] ON;
 INSERT INTO [Supplier] (supplier_id, farm_id, supplier_name, contact_name, phone, email, address, notes)
 VALUES
-(1, 1, N'Da Lat Green Agrochemical Co.', N'Nguyễn Phi Hùng', '0988123456', 'contact@nongduocxanh.vn', N'Loc Phat Industrial Zone, Bao Loc City, Lam Dong', N'Reputable supplier of soluble fertilizers and greenhouse materials'),
-(2, 1, N'AgriBio Hydroponics Solutions', N'Lê Thị Mai', '0977234567', 'sales@agribio.com.vn', N'54 Hung Vuong, Ward 9, Da Lat City', N'Exclusive regional distributor of GreenHydro hydroponic nutrient solutions');
+(1, 1, N'Da Lat AgriChemical & BioSolutions', N'Robert King', '0988123456', 'sales@dalatagri.com', N'Plot 12, Loc Phat Industrial Park, Bao Loc, Lam Dong', N'Certified distributor of high-purity water-soluble fertilizers and organic bio-fungicides.'),
+(2, 1, N'AgriBio Hydroponics International', N'Sarah Miller', '0977234567', 'orders@agribiohydro.com', N'54 Hung Vuong Avenue, Ward 9, Da Lat City', N'Exclusive supplier of GreenHydro chelated mineral solutions and coco peat grow slabs.'),
+(3, 1, N'Pacific Seed Technologies Inc.', N'Kenji Sato', '0966345678', 'service@pacificseeds.com', N'88 Tran Hung Dao Boulevard, District 1, Ho Chi Minh City', N'Premier breeder of high-brix Japanese hybrid cantaloupe and parthenocarpic seeds.'),
+(4, 1, N'EcoPack Export Packaging Supplies', N'Alan Green', '0955456789', 'logistics@ecopack.vn', N'22 Song Hanh Highway, Thu Duc City, Ho Chi Minh City', N'Manufacturer of 5-ply corrugated fruit cartons with customized VietGAP traceability labels.');
 SET IDENTITY_INSERT [Supplier] OFF;
 GO
 
--- 24. MATERIALS (IDs: 1 to 5)
+-- ============================================================================
+-- 23. MATERIALS
+-- ============================================================================
+PRINT N'--> Seeding Materials...';
 SET IDENTITY_INSERT [Material] ON;
 INSERT INTO [Material] (material_id, farm_id, material_name, material_type, unit, description, is_active)
 VALUES
-(1, 1, N'Haifa NPK 20-20-20 Soluble Fertilizer', N'Soluble Fertilizer', 'bag', N'Pure fully-soluble NPK fertilizer imported from Israel (25kg Bag)', 1),
-(2, 1, N'GreenHydro A+B Hydroponic Solution', N'Liquid Nutrient', 'canister', N'Concentrated macro and micro mineral solution for melons (5L Canister)', 1),
-(3, 1, N'Neem Chito Organic Insecticide', N'Biological Pest Control', 'bottle', N'Cold-pressed neem oil and chitosan formulation against thrips (1L Bottle)', 1),
-(4, 1, N'Japanese F1 Taka Cantaloupe Seeds', N'Seeds', 'pack', N'Certified hybrid seed stock with >98% germination and 14-16 brix potential', 1),
-(5, 1, N'5kg Export Cantaloupe Carton Boxes', N'Packaging & Storage', 'box', N'5-ply corrugated carton boxes branded with VietGAP MyCropDiary QR codes', 1);
+(1, 1, N'Haifa Poly-Feed NPK 20-20-20+ME', N'Soluble Fertilizer', 'bag', N'Fully water-soluble greenhouse NPK formula enriched with chelated trace elements (25kg Bag).', 1),
+(2, 1, N'GreenHydro A+B Stock Solution', N'Liquid Nutrient', 'canister', N'Concentrated Part A (Calcium/Nitrate/Iron) & Part B (Phosphorus/Potassium/Magnesium) (5L Canister).', 1),
+(3, 1, N'Neem Chito Botanical Insecticide', N'Biological Pest Control', 'bottle', N'Cold-pressed azadirachtin neem extract combined with chitosan bio-surfactant (1L Bottle).', 1),
+(4, 1, N'Trichoderma Bio-Fungicide Inoculant', N'Biological Fungicide', 'pack', N'Beneficial antagonistic soil microbe formulation preventing damping-off and root rot (1kg Pack).', 1),
+(5, 1, N'Japanese F1 Taka Cantaloupe Hybrid Seeds', N'Seeds', 'pack', N'Certified hybrid seed lot with 99% germination rate and 14-16 brix sweetness potential (1,000 Seeds).', 1),
+(6, 1, N'Export Grade 5-Ply Corrugated Cartons', N'Packaging & Storage', 'box', N'Sturdy ventilated export cartons designed for 4-5 melons (approx 10kg capacity) with QR code print.', 1),
+(7, 1, N'Compensating Drip Emitters 2.0 L/h', N'Irrigation Equipment', 'piece', N'Anti-clogging pressure-compensating button drippers for uniform container irrigation.', 1),
+(8, 1, N'Agricultural Grade Dolomite Lime', N'Soil Amendment', 'bag', N'Finely ground calcium-magnesium carbonate for substrate pH buffering and neutralisation (50kg Bag).', 1);
 SET IDENTITY_INSERT [Material] OFF;
 GO
 
--- 25. WAREHOUSES (IDs: 1 to 2)
+-- ============================================================================
+-- 24. WAREHOUSES (Warehouses UC-32)
+-- ============================================================================
+PRINT N'--> Seeding Warehouses...';
 SET IDENTITY_INSERT [Warehouse] ON;
-INSERT INTO [Warehouse] (warehouse_id, farm_id, warehouse_name, address)
+INSERT INTO [Warehouse] (warehouse_id, farm_id, warehouse_name, address, image_url)
 VALUES
-(1, 1, N'Central Agricultural Supplies Warehouse', N'Technical Facility #1, Da Lat Farm'),
-(2, 1, N'Cold Storage Facility for Fresh Produce', N'Packaging & Post-Harvest Center, Da Lat Farm');
+(1, 1, N'Central Agricultural Supplies Warehouse', N'Building W1, Technical Operations Facility, Green Valley Farm', 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d'),
+(2, 1, N'Post-Harvest Cold Storage Center', N'Building W2, Packing & Cold Chain Logistics Center, Green Valley Farm', 'https://images.unsplash.com/photo-1553413077-190dd305871c'),
+(3, 1, N'Seed & Nursery Storage Depot', N'Building W3, Certified Propagation Nursery, Green Valley Farm', NULL);
 SET IDENTITY_INSERT [Warehouse] OFF;
 GO
 
--- 26. INVENTORY (IDs: 1 to 5)
+-- ============================================================================
+-- 25. INVENTORY (Inventory UC-33)
+-- ============================================================================
+PRINT N'--> Seeding Inventory...';
 SET IDENTITY_INSERT [Inventory] ON;
 INSERT INTO [Inventory] (inventory_id, warehouse_id, material_id, quantity_on_hand, reorder_level)
 VALUES
 (1, 1, 1, 450.000, 100.000),
 (2, 1, 2, 180.000, 50.000),
 (3, 1, 3, 45.000, 15.000),
-(4, 1, 4, 25.000, 10.000),
-(5, 2, 5, 850.000, 200.000);
+(4, 1, 4, 30.000, 10.000),
+(5, 3, 5, 25.000, 10.000),
+(6, 2, 6, 850.000, 200.000),
+(7, 1, 7, 1200.000, 300.000),
+(8, 1, 8, 80.000, 25.000);
 SET IDENTITY_INSERT [Inventory] OFF;
 GO
 
--- 27. INPUT PURCHASES (IDs: 1 to 2)
+-- ============================================================================
+-- 26. INPUT PURCHASES (Input Purchases UC-37)
+-- ============================================================================
+PRINT N'--> Seeding Input Purchases...';
 SET IDENTITY_INSERT [InputPurchase] ON;
-INSERT INTO [InputPurchase] (input_purchase_id, farm_id, supplier_id, purchased_by, purchase_date, reference_no, total_amount, notes)
+INSERT INTO [InputPurchase] (input_purchase_id, farm_id, supplier_id, purchased_by, purchase_date, reference_no, total_amount, receipt_image_url, notes)
 VALUES
-(1, 1, 2, 3, '2026-01-05', 'PO-2026-001', 18500000.00, N'Procurement of nutrients and soluble fertilizers for early cantaloupe season'),
-(2, 1, 1, 3, '2026-01-20', 'PO-2026-002', 7200000.00, N'Procurement of Neem Chito biological insecticide');
+(1, 1, 2, 2, '2026-01-05', 'PO-2026-001', 18500000.00, 'https://example.com/receipts/po-2026-001.pdf', N'Procurement of early-season hydroponic nutrients and soluble fertilizer bags.'),
+(2, 1, 1, 2, '2026-01-20', 'PO-2026-002', 7200000.00, 'https://example.com/receipts/po-2026-002.pdf', N'Procurement of organic botanical pest protection solutions and bio-fungicides.'),
+(3, 1, 3, 2, '2026-01-10', 'PO-2026-003', 12500000.00, 'https://example.com/receipts/po-2026-003.pdf', N'Procurement of certified Japanese F1 hybrid seeds and seed germination plugs.');
 SET IDENTITY_INSERT [InputPurchase] OFF;
 GO
 
--- 28. INPUT PURCHASE ITEMS (IDs: 1 to 3)
+-- ============================================================================
+-- 27. INPUT PURCHASE ITEMS
+-- Note: line_total is a computed column, do not insert into it.
+-- ============================================================================
+PRINT N'--> Seeding Input Purchase Items...';
 SET IDENTITY_INSERT [InputPurchaseItem] ON;
 INSERT INTO [InputPurchaseItem] (purchase_item_id, input_purchase_id, material_id, warehouse_id, quantity, unit_cost)
 VALUES
 (1, 1, 1, 1, 300.000, 35000.00),
 (2, 1, 2, 1, 160.000, 50000.00),
-(3, 2, 3, 1, 40.000, 180000.00);
+(3, 2, 3, 1, 40.000, 180000.00),
+(4, 3, 5, 3, 25.000, 500000.00);
 SET IDENTITY_INSERT [InputPurchaseItem] OFF;
 GO
 
--- 29. MATERIAL USAGES (IDs: 1 to 2)
+-- ============================================================================
+-- 28. MATERIAL USAGES (Material Usages UC-24)
+-- ============================================================================
+PRINT N'--> Seeding Material Usages...';
 SET IDENTITY_INSERT [MaterialUsage] ON;
 INSERT INTO [MaterialUsage] (material_usage_id, farm_id, material_id, farm_task_id, farming_activity_id, block_id, used_by, quantity, dosage, method, safety_interval_days, used_at, notes)
 VALUES
-(1, 1, 2, 3, 1, 1, 2, 10.000, N'10kg/1000L', N'Drip irrigation', 0, '2026-02-10 08:30:00', N'Mixed into 1,000L mother tank for automated drip irrigation cycle'),
-(2, 1, 3, NULL, 3, 1, 2, 2.000, N'20ml/16L knapsack', N'Foliar spray', 7, '2026-03-01 16:30:00', N'Fine mist sprayed evenly on both sides of foliage in late afternoon cool weather');
+(1, 1, 2, 3, 1, 1, 2, 10.000, N'10L / 1,000L water tank', N'Drip irrigation injection', 0, '2026-02-10 08:30:00', N'Mixed into central mother tank for automated morning fertigation cycle.'),
+(2, 1, 3, NULL, 3, 1, 2, 2.000, N'20ml / 16L backpack sprayer', N'Fine foliar mist', 7, '2026-03-01 16:30:00', N'Applied evenly over upper and lower leaf surfaces during cool late afternoon.'),
+(3, 1, 4, 1, NULL, 1, 2, 5.000, N'1kg / 200L water', N'Root zone drench', 0, '2026-01-12 09:00:00', N'Inoculated substrate coco peat prior to seedling transplanting.');
 SET IDENTITY_INSERT [MaterialUsage] OFF;
 GO
 
--- 30. INVENTORY TRANSACTIONS (IDs: 1 to 3)
+-- ============================================================================
+-- 29. INVENTORY TRANSACTIONS
+-- ============================================================================
+PRINT N'--> Seeding Inventory Transactions...';
 SET IDENTITY_INSERT [InventoryTransaction] ON;
 INSERT INTO [InventoryTransaction] (inventory_transaction_id, inventory_id, transaction_type, quantity_change, reference_type, reference_id, notes, created_by)
 VALUES
-(1, 1, 'purchase', 300.000, 'InputPurchase', 1, N'Warehouse receipt for PO-2026-001', 2),
-(2, 2, 'purchase', 160.000, 'InputPurchase', 1, N'Warehouse receipt for PO-2026-001', 2),
-(3, 2, 'usage', -10.000, 'MaterialUsage', 1, N'Warehouse dispatch for fertigation on Block A1', 4);
+(1, 1, 'purchase', 300.000, 'InputPurchase', 1, N'Warehouse receipt for PO-2026-001 (Soluble Fertilizer)', 2),
+(2, 2, 'purchase', 160.000, 'InputPurchase', 1, N'Warehouse receipt for PO-2026-001 (Hydroponic Stock Solution)', 2),
+(3, 3, 'purchase', 40.000, 'InputPurchase', 2, N'Warehouse receipt for PO-2026-002 (Neem Botanical Spray)', 2),
+(4, 2, 'usage', -10.000, 'MaterialUsage', 1, N'Dispatched from inventory for automated drip fertigation on Block A1', 2),
+(5, 3, 'usage', -2.000, 'MaterialUsage', 2, N'Dispatched from inventory for preventive foliar spray on Block A1', 2);
 SET IDENTITY_INSERT [InventoryTransaction] OFF;
 GO
 
--- 31. EXPENSES (IDs: 1 to 3)
+-- ============================================================================
+-- 30. EXPENSES (Farm Expenses UC-38)
+-- ============================================================================
+PRINT N'--> Seeding Farm Expenses...';
 SET IDENTITY_INSERT [Expense] ON;
 INSERT INTO [Expense] (expense_id, farm_id, crop_season_id, farm_task_id, expense_category, description, amount, expense_date, recorded_by)
 VALUES
-(1, 1, 1, NULL, N'Materials & Fertilizers', N'Purchased soluble fertilizers and concentrated mineral solutions', 18500000.00, '2026-01-05', 3),
-(2, 1, 1, 1, N'Labor', N'Wages for washing and conditioning 5,000 coco peat grow bags', 4500000.00, '2026-01-14', 3),
-(3, 1, 1, NULL, N'Utilities & Power', N'Electricity utility bill for automated pump operations in Jan 2026', 2800000.00, '2026-02-01', 3);
+(1, 1, 1, NULL, N'Materials & Fertilizers', N'Bulk purchase of soluble fertilizer bags and concentrated hydroponic minerals', 18500000.00, '2026-01-05', 2),
+(2, 1, 1, 1, N'Labor', N'Contract wages for washing, flushing, and buffering 5,000 coco peat grow slabs', 4500000.00, '2026-01-14', 2),
+(3, 1, 1, NULL, N'Utilities & Power', N'Monthly electric power utility invoice for automated greenhouse irrigation pumps', 2800000.00, '2026-02-01', 2),
+(4, 1, 1, NULL, N'Machinery & Fuel', N'Routine servicing of ventilation motors and tractor fuel for compost transport', 1500000.00, '2026-02-15', 2),
+(5, 1, 1, 5, N'Pest Control', N'Biological pest control supplies including Neem Chito and predatory mite sachets', 3200000.00, '2026-02-20', 2),
+(6, 1, 2, NULL, N'Packaging', N'Branded 5-ply export carton boxes with QR traceability labels for bell peppers', 4200000.00, '2025-12-18', 2);
 SET IDENTITY_INSERT [Expense] OFF;
 GO
 
--- 32. HARVEST RECORDS (IDs: 1 to 2)
+-- ============================================================================
+-- 31. HARVEST RECORDS (Harvest UC-25)
+-- ============================================================================
+PRINT N'--> Seeding Harvest Records...';
 SET IDENTITY_INSERT [HarvestRecord] ON;
 INSERT INTO [HarvestRecord] (harvest_record_id, farm_id, crop_season_id, block_id, farming_activity_id, recorded_by, harvest_date, quantity, unit, quality_grade, notes)
 VALUES
-(1, 1, 2, 3, 4, 2, '2025-12-20', 1250.000, 'kg', N'Grade 1 (Export)', N'Uniform red bell peppers, firm fruit with fresh green calyxes'),
-(2, 1, 2, 3, 4, 2, '2025-12-20', 350.000, 'kg', N'Grade 2 (Domestic)', N'Slight curvature, sweet and crisp quality preserved');
+(1, 1, 2, 3, 4, 2, '2025-12-20', 1450.000, 'kg', N'Grade 1 (Export Premium)', N'Firm, uniform bright red sweet bell peppers with intact fresh green calyxes.'),
+(2, 1, 2, 3, 4, 2, '2025-12-20', 380.000, 'kg', N'Grade 2 (Domestic Clean Food)', N'Minor skin curvature but excellent sweetness, crispness, and zero pest damage.'),
+(3, 1, 1, 1, NULL, 2, '2026-04-24', 2500.000, 'kg', N'Grade 1 (Export Premium)', N'Dense netted F1 Taka melons measuring 14.5 brix average sweetness.');
 SET IDENTITY_INSERT [HarvestRecord] OFF;
 GO
 
--- 33. PRODUCT SALES (IDs: 1 to 2)
+-- ============================================================================
+-- 32. PRODUCT SALES
+-- Note: total_amount is a computed column, do not insert into it.
+-- ============================================================================
+PRINT N'--> Seeding Product Sales...';
 SET IDENTITY_INSERT [ProductSale] ON;
 INSERT INTO [ProductSale] (product_sale_id, farm_id, harvest_record_id, recorded_by, buyer_name, sale_date, quantity, unit, unit_price, notes)
 VALUES
-(1, 1, 1, 3, N'WinMart Southern Supermarket Chain', '2025-12-21', 1200.000, 'kg', 42000.00, N'VietGAP fresh produce supply agreement contract'),
-(2, 1, 2, 3, N'Bac Tom Clean Food Chain Hanoi', '2025-12-22', 350.000, 'kg', 28000.00, N'Overnight air freight refrigerated express distribution');
+(1, 1, 1, 2, N'WinMart Southern Supermarket Chain', '2025-12-21', 1400.000, 'kg', 42000.00, N'Official VietGAP agricultural produce supply agreement contract.'),
+(2, 1, 2, 2, N'Organic Gourmet Market Hanoi', '2025-12-22', 380.000, 'kg', 28000.00, N'Overnight express refrigerated air transport distribution.'),
+(3, 1, 3, 2, N'High-Tech Fresh Produce Co-op', '2026-04-26', 2200.000, 'kg', 55000.00, N'Direct purchase contract for festival holiday melon gift baskets.');
 SET IDENTITY_INSERT [ProductSale] OFF;
 GO
 
--- 34. CHECKLIST RULES (IDs: 1 to 3)
+-- ============================================================================
+-- 33. CHECKLIST RULES (Checklist Rules UC-42)
+-- ============================================================================
+PRINT N'--> Seeding Checklist Rules...';
 SET IDENTITY_INSERT [ChecklistRule] ON;
 INSERT INTO [ChecklistRule] (checklist_rule_id, farm_id, created_by, rule_name, description, category, is_active)
 VALUES
-(1, 1, 2, N'Monitor irrigation system pH and EC levels', N'Inspect irrigation nutrient concentration and pH prior to morning operational shift', N'Irrigation & Nutrition', 1),
-(2, 1, 2, N'Observe Pre-Harvest Interval (PHI) compliance', N'Strict quarantine of at least 14 days following pest control before commencing harvest', N'VietGAP Food Safety', 1),
-(3, 1, 2, N'Provide certified worker personal protective gear', N'Equip operators with nitrile gloves, activated carbon respirators, and rubber boots', N'Occupational Safety', 1);
+(1, 1, 2, N'Irrigation Solution EC & pH Calibration', N'Measure and record nutrient solution electrical conductivity and pH prior to daily morning irrigation runs.', N'Irrigation & Nutrition', 1),
+(2, 1, 2, N'Mandatory Pre-Harvest Chemical Safety Interval', N'Verify that at least 14 days have elapsed since the most recent organic or chemical treatment before starting harvest.', N'Food Safety & Pre-Harvest', 1),
+(3, 1, 2, N'Personal Hygiene and Handwashing Sanitization', N'All field harvesters and packaging personnel must wash and disinfect hands before entering processing bays.', N'Personnel & Biosecurity', 1),
+(4, 1, 2, N'Cold Storage Holding Temperature Verification', N'Confirm that post-harvest cold room thermometer reads consistently between 8Â°C and 12Â°C.', N'Storage & Post-Harvest', 1);
 SET IDENTITY_INSERT [ChecklistRule] OFF;
 GO
 
--- 35. CHECKLIST RUNS (IDs: 1 to 3)
+-- ============================================================================
+-- 34. CHECKLIST RUNS & RESULTS
+-- ============================================================================
+PRINT N'--> Seeding Checklist Runs & Results...';
 SET IDENTITY_INSERT [ChecklistRun] ON;
 INSERT INTO [ChecklistRun] (checklist_run_id, checklist_rule_id, crop_season_id, block_id, assigned_to, run_status, scheduled_at, completed_at)
 VALUES
 (1, 1, 1, 1, 2, 'completed', '2026-02-10 07:00:00', '2026-02-10 07:30:00'),
-(2, 2, 2, 3, 3, 'completed', '2025-12-18 09:00:00', '2025-12-18 09:45:00'),
-(3, 3, 1, 1, 2, 'open', '2026-03-08 15:30:00', NULL);
+(2, 2, 2, 3, 2, 'completed', '2025-12-18 14:00:00', '2025-12-18 14:45:00'),
+(3, 4, 1, 1, 2, 'completed', '2026-02-15 08:00:00', '2026-02-15 08:20:00');
 SET IDENTITY_INSERT [ChecklistRun] OFF;
 GO
 
--- 36. CHECKLIST RESULTS (IDs: 1 to 2)
 SET IDENTITY_INSERT [ChecklistResult] ON;
 INSERT INTO [ChecklistResult] (checklist_result_id, checklist_run_id, checked_by, result_status, notes)
 VALUES
-(1, 1, 2, 'pass', N'pH measured at 6.35, EC measured at 1.82 mS/cm - Fully compliant'),
-(2, 2, 3, 'pass', N'18 days observed since final neem oil application, pre-harvest safety criteria satisfied');
+(1, 1, 2, 'pass', N'pH calibrated at 6.05, EC calibrated at 1.81 mS/cm - Fully compliant with target recipe.'),
+(2, 2, 2, 'pass', N'19 days elapsed since last Neem Chito application; pre-harvest safety criteria fully satisfied.'),
+(3, 3, 2, 'pass', N'Cold room thermostat verified at 9.5Â°C; humidity level steady at 85%.');
 SET IDENTITY_INSERT [ChecklistResult] OFF;
 GO
 
--- 37. PRODUCTION REPORTS (ID: 1)
+-- ============================================================================
+-- 35. PRODUCTION REPORTS
+-- ============================================================================
+PRINT N'--> Seeding Production Reports...';
 SET IDENTITY_INSERT [ProductionReport] ON;
 INSERT INTO [ProductionReport] (production_report_id, farm_id, crop_season_id, generated_by, report_title, report_data)
 VALUES
-(1, 1, 2, 3, N'Production Summary Report - Winter 2025 Bell Pepper Season', N'{"season":"Winter Season 2025","crop":"Bell Pepper","planted_area_m2":4000,"total_yield_kg":1600.0,"grade_1_kg":1250.0,"grade_2_kg":350.0,"total_revenue_vnd":60200000,"production_cost_vnd":25800000,"profit_vnd":34400000,"roi_pct":133.3}');
+(1, 1, 2, 2, N'Executive Performance Report - Winter 2025 Bell Pepper Season', N'{"season":"Winter 2025","crop":"Bell Pepper","planted_area_m2":6000,"total_yield_kg":1830.0,"grade_1_kg":1450.0,"grade_2_kg":380.0,"total_revenue_vnd":69440000,"production_cost_vnd":28500000,"net_profit_vnd":40940000,"roi_pct":143.6}'),
+(2, 1, 1, 2, N'Mid-Season Operational Review - Spring 2026 Cantaloupe Season', N'{"season":"Spring 2026","crop":"Cantaloupe Melon","planted_area_m2":5000,"plants_count":11500,"pollination_rate_pct":96.5,"estimated_yield_kg":14000.0,"projected_revenue_vnd":770000000}');
 SET IDENTITY_INSERT [ProductionReport] OFF;
 GO
 
--- 38. TRAINING RECORDS (IDs: 1 to 2)
+-- ============================================================================
+-- 36. TRAINING RECORDS (Training Records UC-26)
+-- ============================================================================
+PRINT N'--> Seeding Training Records...';
 SET IDENTITY_INSERT [TrainingRecord] ON;
 INSERT INTO [TrainingRecord] (training_record_id, farm_id, organized_by, training_title, description, training_date)
 VALUES
-(1, 1, 3, N'Manual Cantaloupe Pollination Technical Workshop', N'Standardized training on selecting male flowers, detaching stamens, and dusting female stigmas at optimal hours', '2026-01-25'),
-(2, 1, 3, N'VietGAP Fruit Harvesting and Net Packaging Protocols', N'Proper pedicel T-cut technique, grading tolerances, and temperature-controlled carton boxing', '2025-12-15');
+(1, 1, 2, N'Precision Melon Hand Pollination & Trellising Workshop', N'Standardized training on selecting male flowers, detaching petals, and dusting female stigmas at optimal morning hours.', '2026-01-25'),
+(2, 1, 2, N'VietGAP Safe Agrochemical Handling, PPE & Waste Disposal', N'Safe mixing procedures, triple-rinsing chemical empty bottles, proper respirator fit, and emergency eyewash protocols.', '2025-12-15');
 SET IDENTITY_INSERT [TrainingRecord] OFF;
 GO
 
--- 39. TRAINING ATTENDEES (Composite PK)
+-- ============================================================================
+-- 37. TRAINING ATTENDEES
+-- ============================================================================
+PRINT N'--> Seeding Training Attendees...';
 INSERT INTO [TrainingAttendee] (training_record_id, farm_worker_id, attendance_status, notes)
 VALUES
-(1, 1, 'attended', N'Demonstrated comprehensive mastery of technical procedures'),
-(1, 2, 'attended', N'Practical performance evaluated as meeting standards'),
-(2, 2, 'attended', N'Attended full session duration'),
-(2, 3, 'attended', N'Attended full session duration');
+(1, 1, 'attended', N'Exhibited complete theoretical and practical mastery of the pollination technique.'),
+(1, 3, 'attended', N'Practical performance evaluated as meeting export greenhouse standards.'),
+(2, 2, 'attended', N'Completed PPE inspection and certified for pesticide handling.'),
+(2, 4, 'attended', N'Passed post-training compliance exam with perfect score.');
 GO
 
--- 40. ASSESSMENT CRITERIA (IDs: 1 to 3)
+-- ============================================================================
+-- 38. ASSESSMENT CRITERIA & INTERNAL AUDITS
+-- ============================================================================
+PRINT N'--> Seeding Internal Assessments...';
 SET IDENTITY_INSERT [AssessmentCriterion] ON;
 INSERT INTO [AssessmentCriterion] (assessment_criterion_id, farm_id, criterion_name, description, max_score, is_active)
 VALUES
-(1, 1, N'Farming Logbook Recordkeeping Integrity', N'Detailed and timely logging of fertigation schedules, chemical applications, and assigned supervisors', 100.00, 1),
-(2, 1, N'Production Area Sanitation and Biosecurity', N'Greenhouse perimeter is clean and weed-free, insect netting mesh is fully intact with airlock entry', 100.00, 1),
-(3, 1, N'Agrochemical Storage and Packaging Safety', N'Agrochemical storage is secured with lock and key, hazardous warning signage, personal PPE, and eyewash stations', 100.00, 1);
+(1, 1, N'Digital Cultivation Logbook Recordkeeping Integrity', N'Detailed and timely logging of daily fertigation schedules, chemical applications, and supervisor sign-offs.', 100.00, 1),
+(2, 1, N'Greenhouse Sanitation & Biological Exclusion', N'Polyhouse perimeters are clean and weed-free; insect exclusion mesh is completely sealed without tears.', 100.00, 1),
+(3, 1, N'Agrochemical Storage & Hazardous Waste Safety', N'Agrochemical storage is secured with lock and key, hazard warning signage, SDS sheets, and personal PPE.', 100.00, 1);
 SET IDENTITY_INSERT [AssessmentCriterion] OFF;
 GO
 
--- 41. INTERNAL ASSESSMENTS (ID: 1)
 SET IDENTITY_INSERT [InternalAssessment] ON;
 INSERT INTO [InternalAssessment] (internal_assessment_id, farm_id, crop_season_id, zone_id, assessed_by, assessment_title, notes)
 VALUES
-(1, 1, 1, 1, 3, N'Quarterly VietGAP Internal Audit - High-Tech Greenhouse Q1/2026', N'The farm rigorously adheres to good agricultural practice standards and environmental safety protocols');
+(1, 1, 1, 1, 2, N'Quarterly VietGAP Internal Audit - Greenhouse Complex Q1/2026', N'The farm demonstrates rigorous compliance with National Technical Regulation TCVN 11892-1:2017.');
 SET IDENTITY_INSERT [InternalAssessment] OFF;
 GO
 
--- 42. INTERNAL ASSESSMENT ITEMS (IDs: 1 to 3)
 SET IDENTITY_INSERT [InternalAssessmentItem] ON;
 INSERT INTO [InternalAssessmentItem] (internal_assessment_item_id, internal_assessment_id, assessment_criterion_id, score, result_notes)
 VALUES
-(1, 1, 1, 96.00, N'MyCropDiary digital logging provides end-to-end transparent traceability'),
-(2, 1, 2, 92.00, N'Insect exclusion mesh is clean, sealed, and devoid of tears'),
-(3, 1, 3, 98.00, N'All agrochemical containers carry authentic manufacturer labels and traceable batch numbers');
+(1, 1, 1, 98.00, N'MyCropDiary digital logging provides end-to-end transparent traceability for all farm inputs.'),
+(2, 1, 2, 95.00, N'Insect exclusion screens and double-door airlock entry are intact and well maintained.'),
+(3, 1, 3, 97.00, N'All chemical containers carry authentic manufacturer labels and traceable batch numbers.');
 SET IDENTITY_INSERT [InternalAssessmentItem] OFF;
 GO
 
--- 43. KNOWLEDGE ARTICLES (IDs: 1 to 30)
+-- ============================================================================
+-- 39. KNOWLEDGE BASE ARTICLES (Knowledge Base UC-43)
+-- ============================================================================
+PRINT N'--> Seeding Knowledge Base Articles...';
 SET IDENTITY_INSERT [KnowledgeArticle] ON;
 INSERT INTO [KnowledgeArticle] (knowledge_article_id, created_by, title, slug, summary, body, cover_image_url, category, tags, view_count, source_url, article_status, published_at)
 VALUES
-(1, 1, N'High-Tech Greenhouse Cantaloupe Cultivation under VietGAP', 'high-tech-greenhouse-cantaloupe-cultivation-vietgap', N'Comprehensive guidelines on substrate preparation, fertigation management, and humidity control', N'# High-Tech Greenhouse Cantaloupe Cultivation under VietGAP
+(1, 1, N'High-Tech Greenhouse Cantaloupe Cultivation under VietGAP', 'high-tech-greenhouse-cantaloupe-cultivation-vietgap', N'Comprehensive guidelines on substrate preparation, automated fertigation recipes, and environmental humidity control.', N'# High-Tech Greenhouse Cantaloupe Cultivation under VietGAP
 
 ## 1. Substrate Preparation
-Coco peat must be thoroughly desalted and rinsed 3-4 times with fresh water to flush out tannins and lignin, followed by soaking in 1% agricultural lime solution for 24 hours.
+Coco peat must be thoroughly desalted and flushed 3 to 4 times with clean water to eliminate excess sodium, tannins, and lignin, followed by buffering with calcium nitrate for 24 hours.
 
-## 2. Automated Drip Fertigation
-- Seedling Stage (Days 1-15): EC 1.2 - 1.5 mS/cm, pH 5.8 - 6.2.
-- Flowering and Pollination (Days 20-35): EC 1.8 - 2.0 mS/cm.
-- Fruit Sizing and Netting (Days 40-60): Increase Potassium ratio, maintain EC 2.2 - 2.5 mS/cm.', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37', 'seed-cultivation', N'cantaloupe, vietgap, greenhouse', 128, 'https://vietgap.gov.vn', 'published', SYSUTCDATETIME()),
-(2, 1, N'Biological Control of Thrips and Whiteflies in Greenhouses', 'biological-control-thrips-whiteflies-greenhouses', N'Practical manual for scouting, trapping, and biologically suppressing sucking insect pests without toxic chemicals', N'# Biological Control of Sucking Pests in Greenhouses
+## 2. Precision Automated Fertigation
+- **Seedling Stage (Days 1 to 15)**: Target EC 1.2 - 1.5 mS/cm, pH 5.8 - 6.2.
+- **Vegetative & Trellising (Days 16 to 30)**: Target EC 1.6 - 1.8 mS/cm.
+- **Pollination & Fruit Set (Days 31 to 45)**: Target EC 1.8 - 2.0 mS/cm.
+- **Fruit Netting & Sugar Ripening (Days 46 to 75)**: Increase Potassium ratio, maintain EC 2.2 - 2.5 mS/cm.
 
-Thrips are among the most destructive pests in melon production, causing leaf curling, deformed shoots, and transmitting viral mosaic pathogens.
+## 3. Crop Protection Protocols
+Implement preventive bio-control measures utilizing cold-pressed neem formulations and beneficial Trichoderma inoculants to prevent fungal root diseases.', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37', N'Technical Cultivation Guide', N'cantaloupe,hydroponics,vietgap,fertigation', 342, 'https://vietgap.gov.vn', 'published', '2026-01-05 08:00:00'),
 
-### Recommended Integrated Pest Management (IPM) Practices
-1. Seal all greenhouse ventilation openings with insect netting of at least 50 mesh density.
-2. Hang sticky yellow and blue traps 15-20cm above the plant canopy to detect and capture adult pests.
-3. Apply alternating preventative sprays of biological neem extract and Beauveria bassiana entomopathogenic fungus.', 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83', 'fertilizer-pesticide', N'thrips, biological control, whiteflies', 95, 'https://bvtv.gov.vn', 'published', SYSUTCDATETIME()),
-(3, 1, N'What is VietGAP and Why Should Farm Households Adopt It?', 'vietgap-la-gi-va-vi-sao-nong-ho-nen-ap-dung', N'An overview of Good Agricultural Practices in Vietnam (VietGAP - TCVN 11892-1:2017), economic benefits for smallholders, and access to supermarket chains and export channels.', N'VietGAP (Vietnamese Good Agricultural Practices) is a comprehensive set of principles, procedures, and guidance for agricultural producers during cultivation, harvesting, and post-harvest handling. It guarantees food safety, elevates product quality, safeguards farmer and consumer health, protects natural ecosystems, and ensures end-to-end traceability.
+(2, 1, N'Balanced Hydroponic Nutrient Management: EC & pH Control', 'balanced-hydroponic-nutrient-management-ec-ph', N'In-depth guide on electrical conductivity (EC), pH dynamics, and essential macro/micro mineral interactions.', N'# Balanced Hydroponic Nutrient Management
 
-By adopting VietGAP standards, farm owners and agricultural cooperatives establish steadfast trust with retail supermarkets, institutional food services, and export traders, while substantially optimizing expenditure on fertilizers and crop protection materials through quantifiable logging records.', 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80', 'regulation', N'overview, standards, certification', 1520, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -2, SYSUTCDATETIME())),
-(4, 1, N'4 Mandatory Criteria Groups for VietGAP Certification', '4-nhom-tieu-chi-bat-buoc-trong-chung-nhan-vietgap', N'Detailed breakdown of the 4 core pillars of VietGAP: Food Safety, Environmental Protection, Occupational Health & Safety, and Product Traceability.', N'The VietGAP crop production standard comprises four foundational requirement pillars:
-1. Assessment and selection of suitable production zones free from chemical and microbial contamination hazards.
-2. Management of certified disease-free seeds, rootstocks, and propagules with authentic origin records.
-3. Safe utilization of soils, substrates, organic fertilizers, irrigation water, and crop protection materials from approved registries.
-4. Comprehensive farm logging and record archiving for a minimum of 12-24 months to support audit inspections and product traceability.
+## Understanding EC and pH
+Electrical Conductivity (EC) reflects total dissolved mineral salts in the fertigation solution. pH governs plant root bio-availability for essential nutrients:
+- **Optimal Root Zone pH**: 5.8 to 6.2.
+- If pH drops below 5.5, Calcium and Magnesium uptake becomes restricted.
+- If pH rises above 6.8, Iron, Manganese, and Zinc precipitate out of solution.
 
-Every individual criterion is classified into Level A (100% mandatory compliance), Level B (recommended, requiring at least 90% compliance), and Level C (advisory best practices).', 'https://images.unsplash.com/photo-1738598668890-5f4d28842df5?auto=format&fit=crop&w=800&q=80', 'regulation', N'criteria, certification, class A standards', 1180, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -4, SYSUTCDATETIME())),
-(5, 1, N'Step-by-Step Procedure for VietGAP Application and Certification', 'quy-trinh-dang-ky-va-cap-giay-chung-nhan-vietgap', N'Step-by-step guidance from site surveying, soil/water laboratory testing, and internal auditing to submitting official applications to MARD-accredited certification bodies.', N'The standard VietGAP certification pathway follows 6 structured phases:
-- Step 1: Conduct site surveys, collect soil and irrigation water samples for accredited laboratory analysis of heavy metals and microbial pathogens.
-- Step 2: Establish standardized operating procedures (SOPs) and institute farm production logbooks.
-- Step 3: Organize comprehensive internal training workshops for farm staff and operators.
-- Step 4: Execute cultivation, log all farm activities for at least one complete crop cycle, and conduct internal audit checklists.
-- Step 5: Implement corrective actions for non-conformities and compile official documentation dossiers for accredited certification bodies.
-- Step 6: Host on-site auditor field evaluations, pre-harvest crop residue sampling, and receive official VietGAP certification (valid for up to 3 years).', 'https://images.unsplash.com/photo-1727099079513-952d40de9d78?auto=format&fit=crop&w=800&q=80', 'regulation', N'procedure, application, certification body', 860, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -6, SYSUTCDATETIME())),
-(6, 1, N'Comparing VietGAP, GlobalGAP, and Organic Agricultural Standards', 'so-sanh-tieu-chuan-vietgap-globalgap-va-huu-co', N'Similarities and operational distinctions among VietGAP, GlobalGAP, and Organic farming to help farm enterprises chart optimal certification pathways.', N'VietGAP is tailored specifically for Vietnamese cultivation conditions, permitting the judicious, regulated application of inorganic fertilizers and registered crop protection products subject to strict Pre-Harvest Intervals (PHI).
+## Best Practices
+1. Check drainage leachate daily (aim for 20-25% runoff fraction).
+2. Clean injection venturis and calibrate pH/EC probes weekly with standardized buffer solutions.', 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae', N'Irrigation & Nutrition', N'hydroponics,nutrients,pH,EC,water-management', 518, 'https://vietgap.gov.vn', 'published', '2026-01-10 10:30:00'),
 
-In contrast, GlobalGAP imposes rigorous standards concerning fair labor welfare, energy resource management, environmental biodiversity, and supply chain integrity for high-value export markets in the EU, North America, and Japan. Certified Organic farming completely bans synthetic chemical fertilizers, artificial pesticides, and genetically modified organisms (GMOs).', 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80', 'regulation', N'VietGAP, GlobalGAP, organic', 945, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -7, SYSUTCDATETIME())),
-(7, 1, N'Assessing and Selecting Safe Production Zones for VietGAP', 'danh-gia-va-lua-chon-vung-san-xuat-an-toan', N'Essential site survey factors: historical land usage, flood risks, isolation distances from industrial zones, hospitals, and waste facilities.', N'Before designating a land parcel for VietGAP production, farm enterprises must investigate historical land usage for at least the preceding 2 years to identify persistent chemical residues or endemic soil-borne pathogens.
+(3, 1, N'Integrated Pest Management (IPM) in Protected Polyhouses', 'integrated-pest-management-ipm-protected-polyhouses', N'Safe, compliant, and sustainable pest scouting, bio-control releases, and threshold spraying strategies.', N'# Integrated Pest Management (IPM) in Protected Polyhouses
 
-Production zones must maintain adequate separation buffers from industrial parks, brick kilns, cemeteries, hospitals, and untreated municipal wastewater outfalls. Where contamination risks exist along perimeters, farms are mandated to establish perimeter dykes, independent drainage canals, and multi-layered agro-forestry vegetative shelterbelts (biological buffer zones).', 'https://images.unsplash.com/photo-1697897400733-46e12551a012?auto=format&fit=crop&w=800&q=80', 'soil-water', N'production zone, site survey, buffer zones', 640, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -9, SYSUTCDATETIME())),
-(8, 1, N'Sustainable Soil Management and Substrate Remediation Techniques', 'quan-ly-va-cai-tao-dat-trong-theo-huong-ben-vung', N'Leguminous crop rotation practices, mulching for moisture preservation, Trichoderma bio-inoculants, and microbial composts to combat soil degradation.', N'To preserve natural soil fertility and maintain porous, crumbly soil structure, farm operators should practice rotational cropping with leguminous green manures while minimizing aggressive deep tillage that disrupts beneficial mycorrhizal networks.
+## The Four Pillars of VietGAP IPM
+1. **Physical Exclusion**: 50-mesh insect netting across all greenhouse vents, airlock vestibules, and sticky traps.
+2. **Scouting & Thresholds**: Deploy 1 yellow sticky trap per 100 mÂ² to monitor thrips, whiteflies, and leafminers.
+3. **Biological Control**: Encourage beneficial parasitoid wasps, ladybugs, and entomopathogenic fungi.
+4. **Targeted Organic Treatments**: Use botanical extracts (Neem, Chitosan) and Bacillus thuringiensis (Bt) only when scouting counts exceed economic damage thresholds.', 'https://images.unsplash.com/photo-1471193945509-9ad0617afabf', N'Crop Protection', N'IPM,pest-control,organic,biological,safety', 429, 'https://vietgap.gov.vn', 'published', '2026-01-18 14:00:00'),
 
-Following each harvest cycle, complete thorough field sanitation, apply agricultural lime to neutralize acidity and sanitize soil, and incorporate fermented straw treated with Trichoderma fungal biocontrols. Conduct soil chemistry tests every 6-12 months for pH, electrical conductivity (EC), and organic matter percentage to calibrate fertilizer formulations accurately.', 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80', 'soil-water', N'soil management, sustainable farming, Trichoderma', 780, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -11, SYSUTCDATETIME())),
-(9, 1, N'Irrigation Water Quality Standards in VietGAP Agriculture', 'tieu-chuan-chat-luong-nuoc-tuoi-trong-vietgap', N'Permissible threshold limits for microbial contamination (E. coli, Coliforms) and heavy metals (As, Cd, Pb, Hg) in agricultural water sources.', N'Water utilized for crop irrigation, foliar fertigation, and chemical spraying must comply with national technical regulations governing surface water and groundwater for agricultural use (specifically monitoring 4 heavy metals: Arsenic, Cadmium, Lead, and Mercury alongside fecal coliform counts).
+(4, 1, N'Post-Harvest Cold Chain Protocol for Fresh Vegetables', 'post-harvest-cold-chain-protocol-fresh-vegetables', N'Preserving freshness, reducing field heat, and maintaining export quality standards.', N'# Post-Harvest Cold Chain Protocol
 
-Under no circumstances may untreated municipal sewage, animal manure slurry, or industrial effluent be channeled into crop irrigation reservoirs.', 'https://images.unsplash.com/photo-1752775312083-1cefe2f93358?auto=format&fit=crop&w=800&q=80', 'soil-water', N'irrigation water, testing standards, heavy metals', 540, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -13, SYSUTCDATETIME())),
-(10, 1, N'Proper Management and Disposal of Agricultural Waste and Packaging', 'quan-ly-va-xu-ly-chat-thai-nong-nghiep-dung-cach', N'Triple-rinse procedures for empty agrochemical containers, dedicated locked storage pits, and safe composting protocols for vegetative residues.', N'Empty chemical containers and bottles must undergo the mandatory triple-rinse procedure immediately after preparation (with rinse water poured directly back into the sprayer tank), followed by prompt deposit into dedicated, locked collection containment pits fitted with rainproof roofs and hazard warning signs.
-
-Burning or burying chemical packaging on farm grounds or discarding containers into irrigation ditches is strictly prohibited. Organic vegetative residues should be transferred to dedicated composting areas situated far from water sources to be recycled into organic mulch.', 'https://images.unsplash.com/photo-1742071853823-f9f87d9f3894?auto=format&fit=crop&w=800&q=80', 'soil-water', N'agricultural waste, environmental safety, chemical containers', 490, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -15, SYSUTCDATETIME())),
-(11, 1, N'Selecting Certified Seed Stocks and Seedlings under VietGAP', 'chon-giong-cay-trong-dat-chuan-vietgap', N'Mandatory procurement invoices, varietal certification labels, seed lot provenance records, and pre-sowing seed sanitization protocols.', N'All crop cultivars, certified hybrid seed stocks, and rootstocks integrated into VietGAP production must be registered on the official national registry of approved crop varieties permitted for commercial distribution in Vietnam.
-
-Farm enterprises must systematically archive commercial invoices, seed packets, and technical labels documenting lot numbers, germination test percentages, production dates, and expiration intervals.', 'https://images.unsplash.com/photo-1781782411066-c68b1e5610bc?auto=format&fit=crop&w=800&q=80', 'seed-cultivation', N'certified seed, varietal origin, seed lot provenance', 705, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -16, SYSUTCDATETIME())),
-(12, 1, N'Seasonal Planting Techniques and Optimal Canopy Density', 'ky-thuat-gieo-trong-va-mat-do-hop-ly-theo-mua-vu', N'Designing raised planting beds oriented along sunlight vectors, calculating plant-to-row spacing, and enhancing canopy aeration against fungal diseases.', N'Plant spacing and population density must be calibrated to the growth habits of each crop cultivar, seasonal weather patterns, and substrate fertility levels.
-
-Constructing raised beds 20-30 cm high during the rainy season promotes rapid surface drainage and prevents crown root rot. Maintaining adequate canopy spacing ensures uniform light penetration across all leaf layers, lowering local relative humidity and dramatically curbing downy mildew.', 'https://images.unsplash.com/photo-1773994788915-7fb0f462f223?auto=format&fit=crop&w=800&q=80', 'seed-cultivation', N'planting season, spacing density, raised beds', 530, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -18, SYSUTCDATETIME())),
-(13, 1, N'Nursery Management Protocols and Vigorous Seedling Production', 'ky-thuat-quan-ly-vuon-uom-va-cham-soc-cay-con', N'Preparing sterilized germination media, managing light and moisture regimes, and hardening off seedlings prior to field transplanting.', N'Vigorous, disease-free seedlings determine over 50% of eventual crop harvest success. Germination media (desalted coco peat, carbonized rice hulls, and vermicompost) must be sterile and tested free of damping-off pathogens and root-knot nematodes.
-
-Nursery facilities must be enclosed with ultra-fine insect netting and equipped with seedling benches elevated at least 50 cm above ground level.', 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=800&q=80', 'seed-cultivation', N'nursery management, germination media, seedlings', 625, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -19, SYSUTCDATETIME())),
-(14, 1, N'Canopy Pruning, Trellising, and Fruit Netting Techniques', 'ky-thuat-tia-canh-tao-tan-va-bao-trai', N'Timing suckering and pruning operations, fruit bagging methodologies to safeguard appearance, and eliminating fruit flies without chemical sprays.', N'For fruit trees and fruiting vegetables, systematic removal of side shoots, lateral suckers, and senescent bottom foliage channels assimilates directly to developing flowers and fruit clusters.
-
-Pruning shears must be disinfected with 70% alcohol when transitioning between plants showing disease symptoms and healthy specimens. Combining pruning with protective micro-perforated fruit bags shields produce against fruit flies without chemical applications.', 'https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=800&q=80', 'seed-cultivation', N'canopy pruning, fruit bagging, fruit crops', 710, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -20, SYSUTCDATETIME())),
-(15, 1, N'The "4 Rights" Principle in Responsible Agrochemical Usage', 'nguyen-tac-4-dung-khi-su-dung-thuoc-bao-ve-thuc-vat', N'Right product, right dosage, right timing, and right method to effectively control pests, prevent resistance, and guarantee food hygiene.', N'The "4 Rights" principle serves as the foundational cornerstone for crop protection under VietGAP:
-1. Right Product: Utilize only registered products officially permitted for agriculture; prioritize botanical and biological controls.
-2. Right Dosage: Formulate exact dilution concentrations in strict accordance with manufacturer packaging labels.
-3. Right Timing: Apply sprays when pest larvae are in early instars or when fungal lesions first appear.
-4. Right Method: Spray uniformly across the abaxial (underside) surfaces of leaves where insects conceal themselves, avoiding drift against wind vectors.', 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=800&q=80', 'fertilizer-pesticide', N'crop protection, 4 rights, chemical safety', 1120, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -21, SYSUTCDATETIME())),
-(16, 1, N'Pre-Harvest Interval (PHI) Compliance Prior to Fruit Picking', 'thoi-gian-cach-ly-thuoc-bvtv-truoc-khi-thu-hoach', N'Interpreting PHI specifications on agrochemical packaging, calculating safe harvest dates, and leveraging automated safeguards in MyCropDiary.', N'The Pre-Harvest Interval (PHI) designates the mandatory minimum duration that must elapse from the final chemical application or foliar spray until crops may be harvested for human consumption.
-
-When operators record a pesticide application in the MyCropDiary system, automated compliance algorithms immediately lock harvest authorization on the affected parcel until the PHI window safely clears, preventing Maximum Residue Limit (MRL) violations.', 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=800&q=80', 'fertilizer-pesticide', N'pre-harvest interval, PHI, residue limits', 980, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -22, SYSUTCDATETIME())),
-(17, 1, N'Balanced Application of Organic and Inorganic Crop Nutrition', 'su-dung-phan-bon-huu-co-va-vo-co-can-doi', N'Strict prohibition of raw manure, thermophilic aerobic composting protocols, and balanced NPK micronutrient delivery by phenological stage.', N'Under VietGAP standards, the direct application of raw nightsoil, fresh livestock manure, or untreated sewer sludge is strictly prohibited due to severe risks of Salmonella and pathogenic E. coli contamination.
-
-Animal manures must undergo complete thermophilic composting (reaching pile temperatures of 55-65°C for a minimum of 30-45 days) and be accompanied by aerobic composting temperature logs.', 'https://images.unsplash.com/photo-1729009511263-329748943004?auto=format&fit=crop&w=800&q=80', 'fertilizer-pesticide', N'fertilizers, aerobic composting, crop nutrition', 645, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -23, SYSUTCDATETIME())),
-(18, 1, N'Integrated Pest Management (IPM) to Reduce Chemical Dependency', 'quan-ly-dich-hai-tong-hop-ipm-giam-phu-thuoc-hoa-chat', N'Deploying chromatic yellow/blue sticky traps, pheromone lures, beneficial predatory insects, and bio-insecticides (Bt, Beauveria, Metarhizium).', N'Integrated Pest Management (IPM) is the bedrock of modern VietGAP farming, prioritizing preventative agro-ecological cultural measures prior to synthetic chemical interventions: crop rotation, resistant varieties, yellow and blue adhesive monitoring cards, sex pheromone traps, and the conservation of natural parasitoid wasps.', 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=800&q=80', 'fertilizer-pesticide', N'IPM, biological control, insect traps', 815, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -24, SYSUTCDATETIME())),
-(19, 1, N'Harvesting Techniques to Minimize Post-Harvest Losses', 'ky-thuat-thu-hoach-giam-ton-that-sau-thu-hoach', N'Selecting optimal diurnal harvesting windows, sanitary pedicel cutting protocols, and rapid pre-cooling to extend commercial produce shelf life.', N'Crops may only be harvested after all chemical Pre-Harvest Intervals (PHI) have fully elapsed and produce has achieved optimal physiological and commercial maturity.
-
-Harvest operations should take place in early morning or late afternoon cool hours. Use sanitized cutting shears and place fruit gently into foam-lined plastic crates, ensuring harvested produce never comes into contact with bare soil.', 'https://images.unsplash.com/photo-1746014929708-fcb859fd3185?auto=format&fit=crop&w=800&q=80', 'harvest-post-harvest', N'harvesting, post-harvest handling, shelf life', 610, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -25, SYSUTCDATETIME())),
-(20, 1, N'Sanitation Standards for Post-Harvest Handling and Sorting Facilities', 've-sinh-dung-cu-va-khu-vuc-so-che-nong-san', N'Unidirectional packhouse floor plans, physical segregation of produce crates from waste bins, and scheduled chemical sanitization protocols.', N'Packhouses, grading areas, and packaging stations must be well-ventilated, roofed, and elevated with impervious drainage floors, equipped with exclusion barriers to deter rodents, domestic animals, and pests.
-
-Crates designated for washed produce must be clearly color-coded and sanitized, strictly segregated from receptacles used for agricultural inputs or reject material.', 'https://images.unsplash.com/photo-1657288089316-c0350003ca49?auto=format&fit=crop&w=800&q=80', 'harvest-post-harvest', N'sanitation, post-harvest sorting, contamination prevention', 475, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -26, SYSUTCDATETIME())),
-(21, 1, N'Packaging, Labeling, and Cold Chain Storage for VietGAP Produce', 'quy-chuan-dong-goi-ghi-nhan-va-bao-quan-lanh-nong-san', N'Mandatory information on agricultural packaging labels, cold room temperature and humidity setpoints by vegetable and fruit category.', N'Packaging materials must be fabricated from virgin, food-contact certified materials that are clean and undamaged. VietGAP packaging labels must clearly indicate: Product Name, Producer Name & Physical Address, VietGAP Certification Code, Harvest Batch Lot / Traceability QR Code, and Packaging Date.', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=800&q=80', 'harvest-post-harvest', N'packaging, labeling, cold chain storage', 590, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -27, SYSUTCDATETIME())),
-(22, 1, N'Regulations for Sanitary Produce Transport from Farm to Market', 'quy-dinh-van-chuyen-nong-san-an-toan-tu-trang-trai', N'Pre-loading cargo hold sanitation inspections, stacking guidelines, and strict prohibition of co-transporting produce with chemicals or livestock.', N'Vehicles chartered for agricultural transportation from farm gate to market distribution centers must be thoroughly washed and inspected prior to produce pallet loading.
-
-Produce cargo compartments must never co-transport chemical fertilizers, agrochemical containers, petroleum fuels, or live animals under any circumstances.', 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80', 'harvest-post-harvest', N'transportation, cold logistics, food safety', 430, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -28, SYSUTCDATETIME())),
-(23, 1, N'Standardized VietGAP Farm Logbook Documentation System', 'he-thong-ghi-chep-nhat-ky-canh-tac-theo-vietgap', N'Compulsory operational registries: seed stock, fertilizer applications, crop protection sprays, irrigation events, yields, and customer feedback.', N'VietGAP farm records serve as the legal documentation scrutinized during certification audits. Farms must preserve comprehensive records of input purchases, inventory stock ledgers, block-level cultivation activity logs, spray logs, and harvest distribution manifests for a minimum duration of 24 months.', 'https://images.unsplash.com/photo-1748742633127-941ebec208da?auto=format&fit=crop&w=800&q=80', 'record-traceability', N'recordkeeping, farming logs, VietGAP audit forms', 830, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -29, SYSUTCDATETIME())),
-(24, 1, N'Planting Area Codes and Digital QR Traceability Systems', 'ma-so-vung-trong-va-truy-xuat-nguon-goc-dien-tu', N'Configuring production lot and batch codes linked to specific zones and blocks, generating consumer-facing VietGAP traceability QR codes.', N'Each batch of produce sold must be assigned an immutable Lot/Batch Code that directly traces back to the specific Production Zone, Block, and Crop Season.
-
-When consumers scan the packaging QR code with a smartphone, the digital ledger displays certified farm details, geolocation maps, crop cultivar information, and chronological care records.', 'https://images.unsplash.com/photo-1775681150283-04970adf1b98?auto=format&fit=crop&w=800&q=80', 'record-traceability', N'planting area code, QR code, electronic traceability', 670, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -30, SYSUTCDATETIME())),
-(25, 1, N'Recall Procedures for Compromised Produce and Incident Response', 'quy-trinh-thu-hoi-san-pham-khong-an-toan-va-xu-ly-su-co', N'Procedures for isolating compromised lots, notifying commercial buyers, conducting root-cause investigations, and recording corrective actions.', N'Under VietGAP standards, every commercial farm must possess written Standard Operating Procedures for initiating product recalls if food safety hazards are detected. Upon discovery of a non-conformance, farm management must halt distribution and cross-reference batch shipping records to notify consignees within 24 hours.', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80', 'record-traceability', N'product recall, incident management, audit compliance', 515, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -31, SYSUTCDATETIME())),
-(26, 1, N'Digital Farm Logging: Mobile Workflows Replacing Paper Records', 'so-hoa-nhat-ky-nong-trai-tren-dien-thoai-thay-the-so-giay', N'Empowering field technicians to record activities on mobile devices, attaching photographic evidence, and exporting automated audit reports.', N'With the MyCropDiary digital farm management system, field technicians assigned to specific Zones and Blocks can update cultural operations directly on mobile devices alongside timestamped photos. Farm owners monitor operational workflows in real time and export standardized VietGAP audit compliance dossiers on demand.', 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80', 'record-traceability', N'digital logbook, smart agriculture, MyCropDiary', 910, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -32, SYSUTCDATETIME())),
-(27, 1, N'Worker Safety Training and Personal Protective Equipment (PPE)', 'dao-tao-va-trang-bi-bao-ho-cho-nguoi-lao-dong', N'Mandatory annual training requirements, certified PPE gear for chemical handlers, and emergency first-aid station setup across field blocks.', N'All farm operators directly engaged in VietGAP agricultural production must undergo certified occupational training at least once per year on safe handling procedures, chemical dilution, and emergency poison control protocols.
-
-Personnel preparing or applying crop protection materials must wear approved PPE: nitrile chemical gloves, rubber boots, splash-proof goggles, and activated carbon respirators.', 'https://images.unsplash.com/photo-1781785186628-e1a04569776d?auto=format&fit=crop&w=800&q=80', 'training-certification', N'worker training, occupational safety, PPE gear', 560, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -33, SYSUTCDATETIME())),
-(28, 1, N'Conducting Internal Audits Prior to Official VietGAP Certification', 'danh-gia-noi-bo-truoc-khi-dang-ky-chung-nhan', N'Methodology for inspecting Class A and Class B criteria, compiling physical evidence, and closing Non-Conformance Reports (NCRs).', N'Internal audits are a mandatory pre-condition conducted at least once annually prior to inviting accredited external certification bodies. Farm technical supervisors use the comprehensive VietGAP checklist to evaluate chemical storage facilities, composting areas, field warning signage, container disposal pits, and logbooks.', 'https://images.unsplash.com/photo-1738244969496-eeabfacec172?auto=format&fit=crop&w=800&q=80', 'training-certification', N'internal audit, checklist, certification assessment', 615, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -34, SYSUTCDATETIME())),
-(29, 1, N'Design Standards for Chemical Storages and Farm Warning Signage', 'tieu-chuan-thiet-ke-kho-chua-phan-bon-thuoc-bvtv-va-bien-bao', N'Structural specifications for locked agrochemical storage, pallet elevation, containment curbing, dry sand spill kits, and warning signage.', N'Crop protection chemical warehouses must be physically isolated from living quarters and packing areas, equipped with secure locks, ventilation louvers, and dry sand spill containment kits. Liquid agrochemicals must be stored on bottom shelves, dry powders on upper tiers, with high-visibility warning signage installed across treated blocks.', 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=800&q=80', 'training-certification', N'chemical storage, warning signage, facility standards', 740, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -35, SYSUTCDATETIME())),
-(30, 1, N'Best Practices for Sustaining VietGAP Certification Through Surveillance Audits', 'kinh-nghiem-duy-tri-chung-nhan-vietgap-qua-cac-ky-giam-sat', N'Common non-conformances that trigger certification suspension, and strategies for maintaining persistent daily digital logging habits.', N'While VietGAP certificates carry a maximum validity of 3 years, accredited certification bodies conduct periodic surveillance audits every 12 months. Maintaining daily digital logging on MyCropDiary ensures the farm is continuously prepared for unannounced inspections and scheduled surveillance visits.', 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80', 'training-certification', N'certification maintenance, surveillance audits, best practices', 685, 'https://vietgap.gov.vn', 'published', DATEADD(DAY, -36, SYSUTCDATETIME()));
+## Key Processing Steps
+- **Field Heat Removal**: Pre-cool freshly picked produce within 2 hours of harvest to reduce cellular respiration.
+- **Sanitary Sorting & Grading**: Remove mechanically damaged fruit to prevent ethylene release and fungal spread.
+- **Storage Temperature**: Maintain cold room holding temperatures between 8Â°C and 12Â°C with 85-90% relative humidity.
+- **Traceability Tagging**: Affix individual QR labels indicating farm source, parcel ID, harvest date, and VietGAP certificate number.', 'https://images.unsplash.com/photo-1553413077-190dd305871c', N'Post-Harvest & Storage', N'post-harvest,cold-chain,storage,traceability,packaging', 285, 'https://vietgap.gov.vn', 'published', '2026-01-25 16:00:00');
 SET IDENTITY_INSERT [KnowledgeArticle] OFF;
 GO
 
--- 44. AI CONVERSATIONS (ID: 1)
+-- ============================================================================
+-- 40. AI CONVERSATIONS, MESSAGES & FEEDBACK (UC-12, UC-13)
+-- ============================================================================
+PRINT N'--> Seeding AI Conversations & Messages...';
 SET IDENTITY_INSERT [AIConversation] ON;
 INSERT INTO [AIConversation] (ai_conversation_id, user_id, farm_id, block_id, crop_season_id, conversation_title, conversation_status)
 VALUES
-(1, 2, 1, 1, 1, N'Leaf edge yellowing consultation on 30-day-old melon plants', 'open');
+(1, 2, 1, 1, 1, N'Consultation: Lower Leaf Interveinal Chlorosis on 30-Day Melons', 'open'),
+(2, 2, 1, 3, 2, N'Consultation: Optimal Pre-Harvest Irrigation Withholding Strategy', 'closed');
 SET IDENTITY_INSERT [AIConversation] OFF;
 GO
 
--- 45. AI MESSAGES (IDs: 1 to 2)
 SET IDENTITY_INSERT [AIMessage] ON;
 INSERT INTO [AIMessage] (ai_message_id, ai_conversation_id, sender_type, message_text, model_name)
 VALUES
-(1, 1, 'user', N'My 30-day-old cantaloupe plants in Block A1 show interveinal yellowing with yellow leaf margins on the lower mature leaves, while the main leaf veins remain green. What is this deficiency and how should I treat it?', 'gemini-1.5-pro'),
-(2, 1, 'assistant', N'Hello! Based on the symptom description—interveinal chlorosis and yellowing margins on mature lower leaves while primary veins stay dark green—this is a classic symptom of Magnesium (Mg) deficiency or an antagonistic Potassium/Magnesium (K/Mg) imbalance in your nutrient solution.
+(1, 1, 'user', N'My 30-day-old cantaloupe plants in Block A1 show interveinal yellowing with pale margins on mature lower leaves, while the main leaf veins remain dark green. What is this deficiency and how should I treat it according to VietGAP?', 'gpt-4o-mini'),
+(2, 1, 'assistant', N'Hello Michael! Based on your symptom descriptionâ€”interveinal chlorosis starting on older, mature lower leaves while primary veins stay dark greenâ€”this is a classic symptom of Magnesium (Mg) deficiency, often aggravated by an antagonistic Potassium/Magnesium (K/Mg) imbalance in your hydroponic solution.
 
-Recommended Corrective Actions:
-1. Verify the root zone substrate pH: the ideal range is 5.8 - 6.2 (if pH drops below 5.5, Magnesium uptake is severely inhibited).
-2. Foliar application: Dissolve Magnesium Sulfate (MgSO4) heptahydrate at 1.0 g/L and apply a fine mist spray across both sides of the canopy in early morning.
-3. Review your fertigation injection ratio: Ensure Potassium (K) levels in the stock solution are not excessively high, as excessive K outcompetes Magnesium absorption.', 'gemini-1.5-pro');
+### Recommended VietGAP-Compliant Corrective Actions:
+1. **Verify Root Zone pH**: The optimal range is 5.8 - 6.2. If root substrate pH drops below 5.5, Magnesium uptake is severely inhibited.
+2. **Immediate Foliar Correction**: Dissolve agricultural-grade Magnesium Sulfate (MgSO4 Â· 7H2O) at 1.0 g per liter of clean water. Apply a fine foliar mist over both leaf surfaces in early morning (06:30 - 08:00 AM).
+3. **Fertigation Balance Adjustment**: Review your fertilizer stock solution ratio. Ensure Potassium (K) concentration is not excessively elevated, as high Potassium outcompetes Magnesium absorption.
+4. **Log the Application**: Make sure to record the foliar spray in your MyCropDiary material usage log to maintain full VietGAP audit compliance.', 'gpt-4o-mini'),
+(3, 2, 'user', N'How many days before harvest should I withhold water or cut back irrigation on sweet bell peppers to prevent fruit cracking?', 'gpt-4o-mini'),
+(4, 2, 'assistant', N'For sweet bell peppers in greenhouse conditions, follow these guidelines:
+1. **Gradual Reduction**: Do not cut water off abruptly as this causes blossom end rot or plant collapse. Instead, reduce daily irrigation volume by 25-30% starting 5 to 7 days before harvest.
+2. **Harvest Morning Protocol**: Ensure plants receive no heavy irrigation on the morning of harvest. Picking slightly dry fruit ensures higher post-harvest firmness and prevents micro-skin cracking during transport.', 'gpt-4o-mini');
 SET IDENTITY_INSERT [AIMessage] OFF;
 GO
 
--- 46. AI FEEDBACK (ID: 1)
+-- AI Feedback (UC-13)
 SET IDENTITY_INSERT [AIFeedback] ON;
 INSERT INTO [AIFeedback] (ai_feedback_id, ai_message_id, user_id, rating, feedback_text)
 VALUES
-(1, 2, 2, 5, N'Accurate and scientifically sound diagnosis. Within 3 days of supplemental MgSO4 foliar treatment, healthy green canopy vigor was fully restored.');
+(1, 2, 2, 5, N'Extremely accurate and scientifically sound advice! After applying the foliar MgSO4 spray, the plants recovered vibrant green foliage within 3 days without any crop setback.'),
+(2, 4, 2, 5, N'Very practical advice that prevented fruit splitting in our winter harvest batch.');
 SET IDENTITY_INSERT [AIFeedback] OFF;
 GO
 
--- 47. AI FEEDBACK REPLIES (ID: 1)
 SET IDENTITY_INSERT [AIFeedbackReply] ON;
 INSERT INTO [AIFeedbackReply] (ai_feedback_reply_id, ai_feedback_id, user_id, reply_text)
 VALUES
-(1, 1, 1, N'The MyCropDiary agronomy team is glad to have assisted you. Wishing your farm an abundant and high-yielding harvest!');
+(1, 1, 1, N'The MyCropDiary agronomic advisory team is glad to have assisted you! Wishing Green Valley Farm a bountiful and high-yielding harvest.');
 SET IDENTITY_INSERT [AIFeedbackReply] OFF;
 GO
 
--- 48. NOTIFICATIONS (IDs: 1 to 3)
+-- ============================================================================
+-- 41. NOTIFICATIONS
+-- ============================================================================
+PRINT N'--> Seeding Notifications...';
 SET IDENTITY_INSERT [Notification] ON;
 INSERT INTO [Notification] (notification_id, user_id, title, message, notification_type, is_read, action_url, created_at)
 VALUES
-(1, 2, N'VietGAP Seasonal Checklist Due', N'Reminder: Internal self-inspection checklist for Cantaloupe Season 2026 is due within 48 hours.', 'CHECKLIST', 0, '/checklists', SYSUTCDATETIME()),
-(2, 2, N'Soil Assessment Analysis Updated', N'Sample results for Block A1 (Zone A) recorded: pH 6.2, moisture 68%, fully compliant with TCVN 11892-1:2017.', 'SYSTEM', 0, '/environment', SYSUTCDATETIME()),
-(3, 4, N'New Task Assigned: Irrigation Routine', N'You have been assigned to supervise automated drip irrigation calibration on Greenhouse Block A1.', 'TASK', 1, '/tasks', SYSUTCDATETIME());
+(1, 2, N'VietGAP Seasonal Checklist Due', N'Reminder: Mandatory internal self-inspection checklist for Spring 2026 Cantaloupe Season is due within 48 hours.', 'CHECKLIST', 0, '/checklists', SYSUTCDATETIME()),
+(2, 2, N'Soil & Substrate Lab Analysis Updated', N'Sample results for Block A1 (Zone A) recorded: pH 6.4, EC 1.82 mS/cm, fully compliant with TCVN 11892-1:2017.', 'SYSTEM', 0, '/environment', SYSUTCDATETIME()),
+(3, 4, N'New Task Assignment: Fertigation Calibration', N'You have been designated as lead technician to calibrate automated drip fertigation on Greenhouse Block A1.', 'TASK', 1, '/tasks', SYSUTCDATETIME()),
+(4, 2, N'Weather Alert: High Humidity Forecast', N'Relative humidity predicted to exceed 90% tonight. Please verify that automated greenhouse convection fans are operational.', 'ALERT', 0, '/zones', SYSUTCDATETIME());
 SET IDENTITY_INSERT [Notification] OFF;
 GO
 
-SELECT N'MyCropDiary database schema and seed data created successfully.' AS Result;
+PRINT N'============================================================================';
+PRINT N'--> MyCropDiary English Sample Data Seeding Completed Successfully!';
+PRINT N'============================================================================';
 GO

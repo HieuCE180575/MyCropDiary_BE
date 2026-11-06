@@ -2,6 +2,9 @@ package com.mycropdiary.api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,6 +15,12 @@ public class MyCropDiaryApplication {
     public static void main(String[] args) {
         loadDotenvFiles();
         SpringApplication.run(MyCropDiaryApplication.class, args);
+    }
+
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper().findAndRegisterModules();
     }
 
     private static void loadDotenvFiles() {
