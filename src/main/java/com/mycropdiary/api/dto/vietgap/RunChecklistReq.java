@@ -1,14 +1,12 @@
 package com.mycropdiary.api.dto.vietgap;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.List;
 
 @Schema(description = "Yêu cầu thực thi kiểm tra danh mục bằng chứng VietGAP (Run VietGAP Evidence Checklist)")
 public record RunChecklistReq(
-        @Schema(description = "ID quy tắc kiểm tra (ChecklistRule ID)", example = "1")
-        @NotNull(message = "checklistRuleId không được để trống")
+        @Schema(description = "ID quy tắc kiểm tra (ChecklistRule ID). Để trống nếu chạy toàn bộ 33 tiêu chí VietGAP", example = "1")
         Integer checklistRuleId,
 
         @Schema(description = "ID mùa vụ áp dụng kiểm tra", example = "1")

@@ -17,13 +17,16 @@ public class ChecklistRule {
     @Column(name = "checklist_rule_id", updatable = false, nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "farm_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "farm_id")
     private Farm farm;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
+
+    @Column(name = "rule_code", length = 30)
+    private String ruleCode;
 
     @Column(name = "rule_name", nullable = false, length = 160)
     private String ruleName;
@@ -33,6 +36,12 @@ public class ChecklistRule {
 
     @Column(name = "category", length = 80)
     private String category;
+
+    @Column(name = "rule_level", length = 20)
+    private String ruleLevel = "MUST";
+
+    @Column(name = "target_crop_type", length = 50)
+    private String targetCropType = "ALL";
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -48,19 +57,33 @@ public class ChecklistRule {
         if (this.isActive == null) {
             this.isActive = true;
         }
+        if (this.ruleLevel == null || this.ruleLevel.isBlank()) {
+            this.ruleLevel = "MUST";
+        }
+        if (this.targetCropType == null || this.targetCropType.isBlank()) {
+            this.targetCropType = "ALL";
+        }
     }
 
     public ChecklistRule() {
     }
 
-    public ChecklistRule(Farm farm, User createdBy, String ruleName, String description, String category, Boolean isActive) {
+    public ChecklistRule(Farm farm, User createdBy, String ruleCode, String ruleName, String description,
+                         String category, String ruleLevel, String targetCropType, Boolean isActive) {
         this.farm = farm;
         this.createdBy = createdBy;
+        this.ruleCode = ruleCode;
         this.ruleName = ruleName;
         this.description = description;
         this.category = category;
+        this.ruleLevel = ruleLevel != null ? ruleLevel : "MUST";
+        this.targetCropType = targetCropType != null ? targetCropType : "ALL";
         this.isActive = isActive != null ? isActive : true;
         this.createdAt = Instant.now();
+    }
+
+    public ChecklistRule(Farm farm, User createdBy, String ruleName, String description, String category, Boolean isActive) {
+        this(farm, createdBy, null, ruleName, description, category, "MUST", "ALL", isActive);
     }
 
     public Integer getId() {
@@ -87,6 +110,14 @@ public class ChecklistRule {
         this.createdBy = createdBy;
     }
 
+    public String getRuleCode() {
+        return ruleCode;
+    }
+
+    public void setRuleCode(String ruleCode) {
+        this.ruleCode = ruleCode;
+    }
+
     public String getRuleName() {
         return ruleName;
     }
@@ -109,6 +140,22 @@ public class ChecklistRule {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getRuleLevel() {
+        return ruleLevel;
+    }
+
+    public void setRuleLevel(String ruleLevel) {
+        this.ruleLevel = ruleLevel;
+    }
+
+    public String getTargetCropType() {
+        return targetCropType;
+    }
+
+    public void setTargetCropType(String targetCropType) {
+        this.targetCropType = targetCropType;
     }
 
     public Boolean getIsActive() {

@@ -469,23 +469,32 @@ CREATE TABLE [ProductSale] (
 -- ============================================================================
 CREATE TABLE [ChecklistRule] (
     checklist_rule_id INT IDENTITY(1,1) PRIMARY KEY,
-    farm_id INT NOT NULL REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
+    farm_id INT REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
     created_by INT REFERENCES [User](user_id) ON DELETE NO ACTION,
+    rule_code NVARCHAR(30),
     rule_name NVARCHAR(160) NOT NULL,
     description NVARCHAR(MAX),
     category NVARCHAR(80),
+    rule_level NVARCHAR(20) DEFAULT 'MUST',
+    target_crop_type NVARCHAR(50) DEFAULT 'ALL',
     is_active BIT NOT NULL DEFAULT 1,
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
 CREATE TABLE [ChecklistRun] (
     checklist_run_id INT IDENTITY(1,1) PRIMARY KEY,
-    checklist_rule_id INT NOT NULL REFERENCES [ChecklistRule](checklist_rule_id) ON DELETE NO ACTION,
+    checklist_rule_id INT REFERENCES [ChecklistRule](checklist_rule_id) ON DELETE NO ACTION,
+    farm_id INT REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
     crop_season_id INT REFERENCES [CropSeason](crop_season_id) ON DELETE NO ACTION,
     block_id INT REFERENCES [Block](block_id) ON DELETE NO ACTION,
     assigned_to INT REFERENCES [FarmMember](farm_member_id) ON DELETE NO ACTION,
     run_status NVARCHAR(20) NOT NULL DEFAULT 'open'
         CHECK (run_status IN ('open','in_progress','completed','cancelled')),
+    total_items INT,
+    passed_items INT,
+    failed_items INT,
+    na_items INT,
+    compliance_percent FLOAT,
     scheduled_at DATETIME2(0),
     completed_at DATETIME2(0),
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
@@ -494,11 +503,19 @@ CREATE TABLE [ChecklistRun] (
 CREATE TABLE [ChecklistResult] (
     checklist_result_id INT IDENTITY(1,1) PRIMARY KEY,
     checklist_run_id INT NOT NULL REFERENCES [ChecklistRun](checklist_run_id) ON DELETE NO ACTION,
+    checklist_rule_id INT REFERENCES [ChecklistRule](checklist_rule_id) ON DELETE NO ACTION,
     checked_by INT REFERENCES [FarmMember](farm_member_id) ON DELETE NO ACTION,
-    result_status NVARCHAR(20) NOT NULL
-        CHECK (result_status IN ('pass','fail','not_applicable')),
+    rule_code NVARCHAR(30),
+    rule_name NVARCHAR(200),
+    category NVARCHAR(80),
+    rule_level NVARCHAR(20),
+    result_status NVARCHAR(20) NOT NULL DEFAULT 'pending'
+        CHECK (result_status IN ('pass','fail','not_applicable','pending')),
     notes NVARCHAR(MAX),
     evidence_image_url NVARCHAR(MAX),
+    evidence_reference_type NVARCHAR(50),
+    evidence_reference_id INT,
+    is_auto_evaluated BIT NOT NULL DEFAULT 0,
     checked_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 

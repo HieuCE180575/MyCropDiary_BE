@@ -13,13 +13,13 @@ import java.util.Optional;
 public interface ChecklistRunRepository extends JpaRepository<ChecklistRun, Integer> {
 
     @Query("SELECT r FROM ChecklistRun r " +
-            "JOIN FETCH r.checklistRule rule " +
-            "JOIN FETCH rule.farm f " +
+            "LEFT JOIN FETCH r.checklistRule rule " +
+            "LEFT JOIN FETCH r.farm f " +
             "LEFT JOIN FETCH r.cropSeason cs " +
             "LEFT JOIN FETCH r.block b " +
             "LEFT JOIN FETCH r.assignedTo m " +
             "LEFT JOIN FETCH m.user u " +
-            "WHERE f.id = :farmId " +
+            "WHERE (f.id = :farmId OR (rule.farm IS NOT NULL AND rule.farm.id = :farmId) OR (cs.farm IS NOT NULL AND cs.farm.id = :farmId)) " +
             "AND (:cropSeasonId IS NULL OR cs.id = :cropSeasonId) " +
             "AND (:runStatus IS NULL OR LOWER(r.runStatus) = LOWER(:runStatus)) " +
             "ORDER BY r.createdAt DESC")
@@ -30,8 +30,8 @@ public interface ChecklistRunRepository extends JpaRepository<ChecklistRun, Inte
     );
 
     @Query("SELECT r FROM ChecklistRun r " +
-            "JOIN FETCH r.checklistRule rule " +
-            "JOIN FETCH rule.farm f " +
+            "LEFT JOIN FETCH r.checklistRule rule " +
+            "LEFT JOIN FETCH r.farm f " +
             "LEFT JOIN FETCH r.cropSeason cs " +
             "LEFT JOIN FETCH r.block b " +
             "LEFT JOIN FETCH r.assignedTo m " +

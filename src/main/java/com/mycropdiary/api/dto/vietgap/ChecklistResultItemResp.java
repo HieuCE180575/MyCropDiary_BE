@@ -8,11 +8,19 @@ import java.time.Instant;
 public record ChecklistResultItemResp(
         Integer resultId,
         Integer runId,
+        Integer checklistRuleId,
+        String ruleCode,
+        String ruleName,
+        String category,
+        String ruleLevel,
         Integer checkedByMemberId,
         String checkedByName,
-        String resultStatus, // 'pass', 'fail', 'not_applicable'
+        String resultStatus, // 'pass', 'fail', 'not_applicable', 'pending'
         String notes,
         String evidenceImageUrl,
+        String evidenceReferenceType,
+        Integer evidenceReferenceId,
+        Boolean isAutoEvaluated,
         Boolean isMissingEvidence,
         Instant checkedAt
 ) {
@@ -22,18 +30,37 @@ public record ChecklistResultItemResp(
         String memberName = entity.getCheckedBy() != null && entity.getCheckedBy().getUser() != null
                 ? entity.getCheckedBy().getUser().getFullName() : null;
 
+        Integer ruleId = entity.getChecklistRule() != null ? entity.getChecklistRule().getId() : null;
+        String code = entity.getRuleCode() != null ? entity.getRuleCode() :
+                (entity.getChecklistRule() != null ? entity.getChecklistRule().getRuleCode() : null);
+        String name = entity.getRuleName() != null ? entity.getRuleName() :
+                (entity.getChecklistRule() != null ? entity.getChecklistRule().getRuleName() : null);
+        String cat = entity.getCategory() != null ? entity.getCategory() :
+                (entity.getChecklistRule() != null ? entity.getChecklistRule().getCategory() : null);
+        String level = entity.getRuleLevel() != null ? entity.getRuleLevel() :
+                (entity.getChecklistRule() != null ? entity.getChecklistRule().getRuleLevel() : "MUST");
+
         boolean missingEvidence = "fail".equalsIgnoreCase(entity.getResultStatus())
-                || entity.getEvidenceImageUrl() == null
-                || entity.getEvidenceImageUrl().isBlank();
+                || (("pass".equalsIgnoreCase(entity.getResultStatus()) || "MUST".equalsIgnoreCase(level))
+                    && (entity.getEvidenceImageUrl() == null || entity.getEvidenceImageUrl().isBlank())
+                    && entity.getEvidenceReferenceId() == null);
 
         return new ChecklistResultItemResp(
                 entity.getId(),
-                entity.getChecklistRun().getId(),
+                entity.getChecklistRun() != null ? entity.getChecklistRun().getId() : null,
+                ruleId,
+                code,
+                name,
+                cat,
+                level,
                 memberId,
                 memberName,
                 entity.getResultStatus(),
                 entity.getNotes(),
                 entity.getEvidenceImageUrl(),
+                entity.getEvidenceReferenceType(),
+                entity.getEvidenceReferenceId(),
+                entity.getIsAutoEvaluated(),
                 missingEvidence,
                 entity.getCheckedAt()
         );

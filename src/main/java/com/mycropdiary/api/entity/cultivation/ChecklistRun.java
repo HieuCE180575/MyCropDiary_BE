@@ -1,6 +1,7 @@
 package com.mycropdiary.api.entity.cultivation;
 
 import com.mycropdiary.api.entity.Block;
+import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -19,9 +20,13 @@ public class ChecklistRun {
     @Column(name = "checklist_run_id", updatable = false, nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "checklist_rule_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "checklist_rule_id")
     private ChecklistRule checklistRule;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "farm_id")
+    private Farm farm;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "crop_season_id")
@@ -37,6 +42,21 @@ public class ChecklistRun {
 
     @Column(name = "run_status", nullable = false, length = 20)
     private String runStatus = "open"; // 'open','in_progress','completed','cancelled'
+
+    @Column(name = "total_items")
+    private Integer totalItems;
+
+    @Column(name = "passed_items")
+    private Integer passedItems;
+
+    @Column(name = "failed_items")
+    private Integer failedItems;
+
+    @Column(name = "na_items")
+    private Integer naItems;
+
+    @Column(name = "compliance_percent")
+    private Double compliancePercent;
 
     @Column(name = "scheduled_at")
     private Instant scheduledAt;
@@ -81,6 +101,54 @@ public class ChecklistRun {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Farm getFarm() {
+        return farm;
+    }
+
+    public void setFarm(Farm farm) {
+        this.farm = farm;
+    }
+
+    public Integer getTotalItems() {
+        return totalItems;
+    }
+
+    public void setTotalItems(Integer totalItems) {
+        this.totalItems = totalItems;
+    }
+
+    public Integer getPassedItems() {
+        return passedItems;
+    }
+
+    public void setPassedItems(Integer passedItems) {
+        this.passedItems = passedItems;
+    }
+
+    public Integer getFailedItems() {
+        return failedItems;
+    }
+
+    public void setFailedItems(Integer failedItems) {
+        this.failedItems = failedItems;
+    }
+
+    public Integer getNaItems() {
+        return naItems;
+    }
+
+    public void setNaItems(Integer naItems) {
+        this.naItems = naItems;
+    }
+
+    public Double getCompliancePercent() {
+        return compliancePercent;
+    }
+
+    public void setCompliancePercent(Double compliancePercent) {
+        this.compliancePercent = compliancePercent;
     }
 
     public ChecklistRule getChecklistRule() {

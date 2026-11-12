@@ -25,6 +25,8 @@ public record ChecklistRunResp(
         Integer totalItems,
         Integer passedItems,
         Integer failedItems,
+        Integer naItems,
+        Double compliancePercent,
         Integer missingEvidenceCount,
         List<ChecklistResultItemResp> results
 ) {
@@ -32,10 +34,13 @@ public record ChecklistRunResp(
         if (entity == null) return null;
 
         Integer ruleId = entity.getChecklistRule() != null ? entity.getChecklistRule().getId() : null;
-        String ruleName = entity.getChecklistRule() != null ? entity.getChecklistRule().getRuleName() : null;
-        String category = entity.getChecklistRule() != null ? entity.getChecklistRule().getCategory() : null;
-        Integer farmId = entity.getChecklistRule() != null && entity.getChecklistRule().getFarm() != null
-                ? entity.getChecklistRule().getFarm().getId() : null;
+        String ruleName = entity.getChecklistRule() != null ? entity.getChecklistRule().getRuleName() : "Đợt tự đánh giá VietGAP toàn diện (33 tiêu chí)";
+        String category = entity.getChecklistRule() != null ? entity.getChecklistRule().getCategory() : "VIETGAP_FULL_AUDIT";
+        Integer farmId = entity.getFarm() != null ? entity.getFarm().getId() :
+                (entity.getChecklistRule() != null && entity.getChecklistRule().getFarm() != null
+                ? entity.getChecklistRule().getFarm().getId() :
+                (entity.getCropSeason() != null && entity.getCropSeason().getFarm() != null
+                ? entity.getCropSeason().getFarm().getId() : null));
 
         Integer seasonId = entity.getCropSeason() != null ? entity.getCropSeason().getId() : null;
         String seasonName = entity.getCropSeason() != null ? entity.getCropSeason().getSeasonName() : null;
@@ -47,16 +52,23 @@ public record ChecklistRunResp(
         String memberName = entity.getAssignedTo() != null && entity.getAssignedTo().getUser() != null
                 ? entity.getAssignedTo().getUser().getFullName() : null;
 
-        int total = itemResps != null ? itemResps.size() : 0;
+        int total = itemResps != null ? itemResps.size() : (entity.getTotalItems() != null ? entity.getTotalItems() : 0);
         int passed = 0;
         int failed = 0;
+        int na = 0;
         int missingEvidence = 0;
         if (itemResps != null) {
             for (ChecklistResultItemResp item : itemResps) {
                 if ("pass".equalsIgnoreCase(item.resultStatus())) passed++;
                 else if ("fail".equalsIgnoreCase(item.resultStatus())) failed++;
+                else if ("not_applicable".equalsIgnoreCase(item.resultStatus())) na++;
                 if (Boolean.TRUE.equals(item.isMissingEvidence())) missingEvidence++;
             }
+        }
+
+        Double pct = entity.getCompliancePercent();
+        if (pct == null && (total - na) > 0) {
+            pct = Math.round(((double) passed / (total - na) * 100.0) * 10.0) / 10.0;
         }
 
         return new ChecklistRunResp(
@@ -78,6 +90,8 @@ public record ChecklistRunResp(
                 total,
                 passed,
                 failed,
+                na,
+                pct,
                 missingEvidence,
                 itemResps != null ? itemResps : List.of()
         );
