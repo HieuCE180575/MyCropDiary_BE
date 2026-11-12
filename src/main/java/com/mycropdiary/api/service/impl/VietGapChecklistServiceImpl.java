@@ -48,8 +48,6 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
     private final FarmingActivityRepository farmingActivityRepository;
     private final HarvestRecordRepository harvestRecordRepository;
     private final TrainingRecordRepository trainingRecordRepository;
-    private final WarehouseRepository warehouseRepository;
-    private final MaterialUsageRepository materialUsageRepository;
     private final VietGapPdfExportService pdfExportService;
     private final FarmAccessGuard accessGuard;
 
@@ -66,8 +64,6 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
                                        FarmingActivityRepository farmingActivityRepository,
                                        HarvestRecordRepository harvestRecordRepository,
                                        TrainingRecordRepository trainingRecordRepository,
-                                       WarehouseRepository warehouseRepository,
-                                       MaterialUsageRepository materialUsageRepository,
                                        VietGapPdfExportService pdfExportService,
                                        FarmAccessGuard accessGuard) {
         this.checklistRuleRepository = checklistRuleRepository;
@@ -82,8 +78,6 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
         this.farmingActivityRepository = farmingActivityRepository;
         this.harvestRecordRepository = harvestRecordRepository;
         this.trainingRecordRepository = trainingRecordRepository;
-        this.warehouseRepository = warehouseRepository;
-        this.materialUsageRepository = materialUsageRepository;
         this.pdfExportService = pdfExportService;
         this.accessGuard = accessGuard;
     }
@@ -462,7 +456,7 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
 
         switch (code) {
             case "VG-NL-01" -> {
-                // Kiểm tra Đất & Nước trong 12 tháng và có phiếu xét nghiệm Lab
+                // Kiểm tra Đất & Nước trong 12 tháng
                 List<SoilAssessment> soils = block != null
                         ? soilAssessmentRepository.findByBlockIdOrderByAssessedAtDesc(block.getId())
                         : soilAssessmentRepository.findByFarmIdOrderByAssessedAtDesc(farmId);
@@ -473,24 +467,17 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
 
                 if (soilValid && waterValid) {
                     SoilAssessment s = soils.get(0);
-                    WaterAssessment w = waters.get(0);
-                    boolean hasLabReport = (s.getLabTestReportUrl() != null && !s.getLabTestReportUrl().isBlank())
-                            || (w.getLabTestReportUrl() != null && !w.getLabTestReportUrl().isBlank())
-                            || (s.getImageUrl() != null && !s.getImageUrl().isBlank())
-                            || (w.getImageUrl() != null && !w.getImageUrl().isBlank());
-
                     result.setResultStatus("pass");
                     result.setIsAutoEvaluated(true);
-                    result.setNotes(String.format("Đất đo ngày %s (pH: %.2f); Nước tưới đạt chuẩn QCVN theo phiếu phân tích.%s",
+                    result.setNotes(String.format("Đất đo ngày %s (pH: %.2f); Nước tưới đạt chuẩn vi sinh QCVN theo phiếu phân tích.",
                             s.getAssessedAt().atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate(),
-                            s.getSoilPh() != null ? s.getSoilPh().doubleValue() : 6.0,
-                            hasLabReport ? " Đã đính kèm phiếu kết quả thử nghiệm đạt chuẩn." : ""));
+                            s.getSoilPh() != null ? s.getSoilPh().doubleValue() : 6.0));
                     result.setEvidenceReferenceType("SOIL_ASSESSMENT");
                     result.setEvidenceReferenceId(s.getId());
                 } else if (!soilValid && !waterValid) {
                     result.setResultStatus("fail");
                     result.setIsAutoEvaluated(true);
-                    result.setNotes("CẢNH BÁO: Chưa có kết quả kiểm nghiệm Đất và Nước tưới hợp lệ trong thời hạn quy định.");
+                    result.setNotes("CẢNH BÁO: Chưa có kết quả kiểm nghiệm Đất và Nước tưới trong vòng 12 tháng gần nhất.");
                 } else if (!soilValid) {
                     result.setResultStatus("fail");
                     result.setIsAutoEvaluated(true);
@@ -499,180 +486,6 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
                     result.setResultStatus("fail");
                     result.setIsAutoEvaluated(true);
                     result.setNotes("CẢNH BÁO: Thiếu kết quả phân tích mẫu Nước tưới trong vòng 12 tháng.");
-                }
-            }
-
-            case "VG-NL-03" -> {
-                // Kiểm tra nguồn gốc giống cây trồng (Lot number / chứng từ)
-                if (season != null && materialUsageRepository != null) {
-                    List<MaterialUsage> seedUsages = materialUsageRepository.findByFarmingActivityCropSeasonId(season.getId())
-                            .stream()
-                            .filter(u -> u.getMaterial() != null && (
-                                    "seed".equalsIgnoreCase(u.getMaterial().getMaterialType()) ||
-                                    "giống".equalsIgnoreCase(u.getMaterial().getMaterialType()) ||
-                                    "giong".equalsIgnoreCase(u.getMaterial().getMaterialType()) ||
-                                    (u.getMaterial().getMaterialName() != null && u.getMaterial().getMaterialName().toLowerCase().contains("giống"))
-                            ))
-                            .toList();
-
-                    if (!seedUsages.isEmpty()) {
-                        Material seedMat = seedUsages.get(0).getMaterial();
-                        result.setResultStatus("pass");
-                        result.setIsAutoEvaluated(true);
-                        result.setNotes(String.format("Giống cây trồng '%s' có nguồn gốc xuất xứ rõ ràng%s.",
-                                seedMat.getMaterialName(),
-                                seedMat.getLotNumber() != null ? " (Số lô: " + seedMat.getLotNumber() + ")" : ""));
-                        result.setEvidenceReferenceType("MATERIAL");
-                        result.setEvidenceReferenceId(seedMat.getId());
-                    } else if (season.getCropCategory() != null) {
-                        result.setResultStatus("pass");
-                        result.setIsAutoEvaluated(true);
-                        result.setNotes(String.format("Mùa vụ gieo trồng chủng loại: %s (Hồ sơ cây giống đã được xác thực).", season.getCropCategory().getCategoryName()));
-                    }
-                }
-            }
-
-            case "VG-CS-01" -> {
-                // Kho/bể chứa phân bón, thuốc BVTV riêng biệt
-                if (warehouseRepository != null) {
-                    List<Warehouse> warehouses = warehouseRepository.findByFarmIdOrderByWarehouseNameAsc(farmId);
-                    if (warehouses != null && !warehouses.isEmpty()) {
-                        boolean hasSpecialized = warehouses.stream().anyMatch(w ->
-                                "kho_thuoc_bvtv".equalsIgnoreCase(w.getWarehouseType()) ||
-                                "kho_phan_bon".equalsIgnoreCase(w.getWarehouseType()) ||
-                                (w.getWarehouseName() != null && (
-                                        w.getWarehouseName().toLowerCase().contains("thuốc") ||
-                                        w.getWarehouseName().toLowerCase().contains("phân") ||
-                                        w.getWarehouseName().toLowerCase().contains("bvtv")
-                                ))
-                        );
-
-                        result.setResultStatus("pass");
-                        result.setIsAutoEvaluated(true);
-                        if (hasSpecialized || warehouses.size() >= 2) {
-                            result.setNotes(String.format("ĐẠT CHUẨN: Trang trại có %d kho lưu trữ, có phân loại riêng biệt kho phân bón và thuốc BVTV.", warehouses.size()));
-                        } else {
-                            result.setNotes(String.format("Trang trại có %d kho lưu trữ vật tư. Cần chú ý ngăn cách biển báo phân bón và thuốc BVTV.", warehouses.size()));
-                        }
-                        result.setEvidenceReferenceType("WAREHOUSE");
-                        result.setEvidenceReferenceId(warehouses.get(0).getId());
-                    }
-                }
-            }
-
-            case "VG-CS-04" -> {
-                // Sơ đồ vùng sản xuất được cập nhật
-                Farm farm = farmRepository.findById(farmId).orElse(null);
-                if (farm != null && farm.getFarmMapUrl() != null && !farm.getFarmMapUrl().isBlank()) {
-                    result.setResultStatus("pass");
-                    result.setIsAutoEvaluated(true);
-                    result.setNotes("ĐẠT CHUẨN: Đã có sơ đồ mặt bằng tổng thể phân định rõ các lô đất canh tác, nhà sơ chế, kho bãi và nguồn nước.");
-                    result.setEvidenceReferenceType("FARM");
-                    result.setEvidenceReferenceId(farm.getId());
-                } else if (farm != null && farm.getBoundaryCoordinates() != null && !farm.getBoundaryCoordinates().isBlank()) {
-                    result.setResultStatus("pass");
-                    result.setIsAutoEvaluated(true);
-                    result.setNotes("ĐẠT CHUẨN: Trang trại đã số hóa tọa độ ranh giới và phân vùng sản xuất trên bản đồ số.");
-                    result.setEvidenceReferenceType("FARM");
-                    result.setEvidenceReferenceId(farm.getId());
-                }
-            }
-
-            case "VG-PB-01" -> {
-                // Chỉ sử dụng phân bón được phép, có nhãn mác rõ ràng
-                if (season != null && materialUsageRepository != null) {
-                    List<MaterialUsage> fertUsages = materialUsageRepository.findByFarmingActivityCropSeasonId(season.getId())
-                            .stream()
-                            .filter(u -> u.getMaterial() != null && (
-                                    "fertilizer".equalsIgnoreCase(u.getMaterial().getMaterialType()) ||
-                                    "phan_bon".equalsIgnoreCase(u.getMaterial().getMaterialType()) ||
-                                    (u.getMaterial().getMaterialName() != null && u.getMaterial().getMaterialName().toLowerCase().contains("phân"))
-                            ))
-                            .toList();
-
-                    if (!fertUsages.isEmpty()) {
-                        result.setResultStatus("pass");
-                        result.setIsAutoEvaluated(true);
-                        result.setNotes(String.format("ĐẠT CHUẨN: Ghi nhận %d lượt sử dụng phân bón, toàn bộ vật tư đều nằm trong danh mục phân bón lưu hành hợp pháp.", fertUsages.size()));
-                        result.setEvidenceReferenceType("MATERIAL_USAGE");
-                        result.setEvidenceReferenceId(fertUsages.get(0).getId());
-                    }
-                }
-            }
-
-            case "VG-PB-03" -> {
-                // Có kế hoạch và hồ sơ sử dụng phân bón
-                if (season != null && materialUsageRepository != null) {
-                    long fertCount = materialUsageRepository.findByFarmingActivityCropSeasonId(season.getId())
-                            .stream()
-                            .filter(u -> u.getMaterial() != null && (
-                                    "fertilizer".equalsIgnoreCase(u.getMaterial().getMaterialType()) ||
-                                    "phan_bon".equalsIgnoreCase(u.getMaterial().getMaterialType()) ||
-                                    (u.getMaterial().getMaterialName() != null && u.getMaterial().getMaterialName().toLowerCase().contains("phân"))
-                            ))
-                            .count();
-
-                    if (fertCount >= 2) {
-                        result.setResultStatus("pass");
-                        result.setIsAutoEvaluated(true);
-                        result.setNotes(String.format("Đã ghi chép nhật ký châm phân/bón phân chi tiết (%d đợt) theo đúng quy trình dinh dưỡng cây trồng.", fertCount));
-                    }
-                }
-            }
-
-            case "VG-TV-01" -> {
-                // Thuốc BVTV được mua đúng nguồn, trong danh mục
-                if (season != null && materialUsageRepository != null) {
-                    List<MaterialUsage> pestUsages = materialUsageRepository.findByFarmingActivityCropSeasonId(season.getId())
-                            .stream()
-                            .filter(u -> u.getMaterial() != null && (
-                                    "pesticide".equalsIgnoreCase(u.getMaterial().getMaterialType()) ||
-                                    "thuoc_bvtv".equalsIgnoreCase(u.getMaterial().getMaterialType()) ||
-                                    (u.getMaterial().getMaterialName() != null && (
-                                            u.getMaterial().getMaterialName().toLowerCase().contains("thuốc") ||
-                                            u.getMaterial().getMaterialName().toLowerCase().contains("bvtv")
-                                    ))
-                            ))
-                            .toList();
-
-                    result.setResultStatus("pass");
-                    result.setIsAutoEvaluated(true);
-                    if (pestUsages.isEmpty()) {
-                        result.setNotes("Mùa vụ canh tác an toàn sinh học, không sử dụng thuốc BVTV hóa học độc hại.");
-                    } else {
-                        result.setNotes(String.format("Ghi nhận %d lượt sử dụng thuốc BVTV sinh học/hóa học trong danh mục được phép lưu hành tại Việt Nam.", pestUsages.size()));
-                        result.setEvidenceReferenceType("MATERIAL_USAGE");
-                        result.setEvidenceReferenceId(pestUsages.get(0).getId());
-                    }
-                }
-            }
-
-            case "VG-TV-02" -> {
-                // Có sổ ghi chép chi tiết về loại thuốc, ngày phun, người phun
-                if (season != null) {
-                    List<FarmingActivity> sprayActivities = farmingActivityRepository.findAll((root, query, cb) ->
-                            cb.and(
-                                    cb.equal(root.get("cropSeason").get("id"), season.getId()),
-                                    cb.or(
-                                            cb.like(cb.lower(root.get("activityType")), "%thuốc%"),
-                                            cb.like(cb.lower(root.get("activityType")), "%pesticide%"),
-                                            cb.like(cb.lower(root.get("activityType")), "%phun%")
-                                    )
-                            )
-                    );
-
-                    if (sprayActivities.isEmpty()) {
-                        result.setResultStatus("pass");
-                        result.setIsAutoEvaluated(true);
-                        result.setNotes("Vụ mùa không phát sinh đợt phun thuốc BVTV hóa học.");
-                    } else {
-                        result.setResultStatus("pass");
-                        result.setIsAutoEvaluated(true);
-                        result.setNotes(String.format("Nhật ký phun thuốc (%d đợt) ghi chép chi tiết ngày giờ, tên thuốc, liều lượng và danh tính người thực hiện.",
-                                sprayActivities.size()));
-                        result.setEvidenceReferenceType("FARMING_ACTIVITY");
-                        result.setEvidenceReferenceId(sprayActivities.get(0).getId());
-                    }
                 }
             }
 
@@ -728,32 +541,6 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
                 }
             }
 
-            case "VG-HS-01" -> {
-                // Kiểm tra người quản lý có chứng chỉ VietGAP/ATTP
-                List<TrainingRecord> trainings = trainingRecordRepository.findByFarmIdOrderByTrainingDateDesc(farmId);
-                if (trainings != null && !trainings.isEmpty()) {
-                    TrainingRecord tr = trainings.get(0);
-                    result.setResultStatus("pass");
-                    result.setIsAutoEvaluated(true);
-                    result.setNotes(String.format("Đã có hồ sơ tập huấn VietGAP / ATTP còn hiệu lực: '%s' (Ngày: %s).",
-                            tr.getTrainingTitle(), tr.getTrainingDate()));
-                    result.setEvidenceReferenceType("TRAINING_RECORD");
-                    result.setEvidenceReferenceId(tr.getId());
-                }
-            }
-
-            case "VG-HS-02" -> {
-                // Công nhân được tập huấn phù hợp
-                List<TrainingRecord> trainings = trainingRecordRepository.findByFarmIdOrderByTrainingDateDesc(farmId);
-                if (trainings != null && !trainings.isEmpty()) {
-                    result.setResultStatus("pass");
-                    result.setIsAutoEvaluated(true);
-                    result.setNotes(String.format("Công nhân trực tiếp canh tác đã tham gia tập huấn kỹ thuật VietGAP và an toàn lao động (%d đợt đào tạo).", trainings.size()));
-                    result.setEvidenceReferenceType("TRAINING_RECORD");
-                    result.setEvidenceReferenceId(trainings.get(0).getId());
-                }
-            }
-
             case "VG-HS-05" -> {
                 // Kiểm tra ghi chép nhật ký đầy đủ
                 if (season != null) {
@@ -762,32 +549,6 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
                         result.setResultStatus("pass");
                         result.setIsAutoEvaluated(true);
                         result.setNotes(String.format("Đã ghi nhận %d hoạt động canh tác điện tử liên tục trong mùa vụ.", count));
-                    }
-                }
-            }
-
-            case "VG-HS-06" -> {
-                // Hồ sơ lưu trữ tối thiểu 24 tháng (TCVN 11892-1:2026)
-                result.setResultStatus("pass");
-                result.setIsAutoEvaluated(true);
-                result.setNotes("Hệ thống điện toán đám mây MyCropDiary lưu trữ dữ liệu nhật ký, vật tư, thu hoạch và kiểm nghiệm vĩnh viễn (đáp ứng yêu cầu tối thiểu 24 tháng theo VietGAP 2026).");
-            }
-
-            case "VG-TX-01" -> {
-                // Phân biệt rõ sản phẩm VietGAP và không VietGAP
-                if (season != null) {
-                    List<HarvestRecord> harvests = harvestRecordRepository.findByCropSeasonId(season.getId());
-                    if (!harvests.isEmpty()) {
-                        boolean hasTraceability = harvests.stream().anyMatch(h ->
-                                (h.getTraceabilityCode() != null && !h.getTraceabilityCode().isBlank()) ||
-                                (h.getHarvestLotCode() != null && !h.getHarvestLotCode().isBlank())
-                        );
-                        result.setResultStatus("pass");
-                        result.setIsAutoEvaluated(true);
-                        result.setNotes(String.format("Đã thiết lập mã định danh truy xuất nguồn gốc cho sản phẩm thu hoạch (%s).",
-                                hasTraceability ? "Có mã QR nhận diện VietGAP" : "Có mã lô sản xuất"));
-                        result.setEvidenceReferenceType("HARVEST_RECORD");
-                        result.setEvidenceReferenceId(harvests.get(0).getId());
                     }
                 }
             }
@@ -806,26 +567,17 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
                 }
             }
 
-            case "VG-TX-03" -> {
-                // Xử lý sản phẩm không đạt chất lượng / Cân bằng khối lượng (Mass Balance 2026)
-                if (season != null) {
-                    List<HarvestRecord> harvests = harvestRecordRepository.findByCropSeasonId(season.getId());
-                    if (!harvests.isEmpty()) {
-                        BigDecimal totalHarvested = harvests.stream()
-                                .map(h -> h.getQuantity() != null ? h.getQuantity() : BigDecimal.ZERO)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-                        BigDecimal totalDiscarded = harvests.stream()
-                                .map(h -> h.getDiscardedQuantity() != null ? h.getDiscardedQuantity() : BigDecimal.ZERO)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-                        String unit = harvests.get(0).getUnit() != null ? harvests.get(0).getUnit() : "kg";
-
-                        result.setResultStatus("pass");
-                        result.setIsAutoEvaluated(true);
-                        result.setNotes(String.format("CÂN BẰNG KHỐI LƯỢNG (Mass Balance): Tổng thu hoạch đạt chuẩn %.2f %s, sản lượng loại bỏ/tiêu hủy %.2f %s được ghi nhận minh bạch.",
-                                totalHarvested, unit, totalDiscarded, unit));
-                        result.setEvidenceReferenceType("HARVEST_RECORD");
-                        result.setEvidenceReferenceId(harvests.get(0).getId());
-                    }
+            case "VG-HS-01" -> {
+                // Kiểm tra người quản lý có chứng chỉ VietGAP/ATTP
+                List<TrainingRecord> trainings = trainingRecordRepository.findByFarmIdOrderByTrainingDateDesc(farmId);
+                if (trainings != null && !trainings.isEmpty()) {
+                    TrainingRecord tr = trainings.get(0);
+                    result.setResultStatus("pass");
+                    result.setIsAutoEvaluated(true);
+                    result.setNotes(String.format("Đã có hồ sơ tập huấn VietGAP / ATTP còn hiệu lực: '%s' (Ngày: %s).",
+                            tr.getTrainingTitle(), tr.getTrainingDate()));
+                    result.setEvidenceReferenceType("TRAINING_RECORD");
+                    result.setEvidenceReferenceId(tr.getId());
                 }
             }
         }
