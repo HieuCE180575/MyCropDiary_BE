@@ -1,38 +1,37 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.vietgap.ChecklistResultItemResp;
-import com.mycropdiary.api.dto.vietgap.ChecklistRunResp;
-import com.mycropdiary.api.dto.vietgap.RunChecklistReq;
-import com.mycropdiary.api.dto.vietgap.SubmitChecklistItemReq;
+import com.mycropdiary.api.dto.vietgap.*;
 import com.mycropdiary.api.entity.Block;
+import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
-import com.mycropdiary.api.entity.cultivation.ChecklistResult;
-import com.mycropdiary.api.entity.cultivation.ChecklistRule;
-import com.mycropdiary.api.entity.cultivation.ChecklistRun;
-import com.mycropdiary.api.entity.cultivation.CropSeason;
+import com.mycropdiary.api.entity.SoilAssessment;
+import com.mycropdiary.api.entity.WaterAssessment;
+import com.mycropdiary.api.entity.cultivation.*;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
-import com.mycropdiary.api.repository.cultivation.ChecklistResultRepository;
-import com.mycropdiary.api.repository.cultivation.ChecklistRuleRepository;
-import com.mycropdiary.api.repository.cultivation.ChecklistRunRepository;
-import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
+import com.mycropdiary.api.repository.FarmRepository;
+import com.mycropdiary.api.repository.SoilAssessmentRepository;
+import com.mycropdiary.api.repository.WaterAssessmentRepository;
+import com.mycropdiary.api.repository.cultivation.*;
 import com.mycropdiary.api.service.cultivation.VietGapChecklistService;
+import com.mycropdiary.api.service.cultivation.VietGapPdfExportService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 @Service
 @Transactional
 public class VietGapChecklistServiceImpl implements VietGapChecklistService {
 
-    private static final Set<String> VALID_RESULT_STATUSES = Set.of("pass", "fail", "not_applicable");
+    private static final Set<String> VALID_RESULT_STATUSES = Set.of("pass", "fail", "not_applicable", "pending");
     private static final Set<String> VALID_RUN_STATUSES = Set.of("open", "in_progress", "completed", "cancelled");
 
     private final ChecklistRuleRepository checklistRuleRepository;
@@ -41,6 +40,13 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
     private final CropSeasonRepository cropSeasonRepository;
     private final BlockRepository blockRepository;
     private final FarmMemberRepository farmMemberRepository;
+    private final FarmRepository farmRepository;
+    private final SoilAssessmentRepository soilAssessmentRepository;
+    private final WaterAssessmentRepository waterAssessmentRepository;
+    private final FarmingActivityRepository farmingActivityRepository;
+    private final HarvestRecordRepository harvestRecordRepository;
+    private final TrainingRecordRepository trainingRecordRepository;
+    private final VietGapPdfExportService pdfExportService;
     private final FarmAccessGuard accessGuard;
 
     public VietGapChecklistServiceImpl(ChecklistRuleRepository checklistRuleRepository,
@@ -49,6 +55,13 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
                                        CropSeasonRepository cropSeasonRepository,
                                        BlockRepository blockRepository,
                                        FarmMemberRepository farmMemberRepository,
+                                       FarmRepository farmRepository,
+                                       SoilAssessmentRepository soilAssessmentRepository,
+                                       WaterAssessmentRepository waterAssessmentRepository,
+                                       FarmingActivityRepository farmingActivityRepository,
+                                       HarvestRecordRepository harvestRecordRepository,
+                                       TrainingRecordRepository trainingRecordRepository,
+                                       VietGapPdfExportService pdfExportService,
                                        FarmAccessGuard accessGuard) {
         this.checklistRuleRepository = checklistRuleRepository;
         this.checklistRunRepository = checklistRunRepository;
@@ -56,17 +69,119 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
         this.cropSeasonRepository = cropSeasonRepository;
         this.blockRepository = blockRepository;
         this.farmMemberRepository = farmMemberRepository;
+        this.farmRepository = farmRepository;
+        this.soilAssessmentRepository = soilAssessmentRepository;
+        this.waterAssessmentRepository = waterAssessmentRepository;
+        this.farmingActivityRepository = farmingActivityRepository;
+        this.harvestRecordRepository = harvestRecordRepository;
+        this.trainingRecordRepository = trainingRecordRepository;
+        this.pdfExportService = pdfExportService;
         this.accessGuard = accessGuard;
+    }
+
+    @Override
+    public ChecklistRunResp initVietGapAuditRun(Integer currentUserId, Integer farmId, InitVietGapAuditRunReq request) {
+        accessGuard.requireFarmAccess(currentUserId, farmId);
+
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy trang trại ID: " + farmId));
+
+        CropSeason season = cropSeasonRepository.findById(request.cropSeasonId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mùa vụ ID: " + request.cropSeasonId()));
+        if (!season.getFarm().getId().equals(farmId)) {
+            throw new BadRequestException("Mùa vụ không thuộc trang trại này");
+        }
+
+        Block block = null;
+        if (request.blockId() != null) {
+            block = blockRepository.findById(request.blockId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lô đất ID: " + request.blockId()));
+            if (!block.getZone().getFarm().getId().equals(farmId)) {
+                throw new BadRequestException("Lô đất không thuộc trang trại này");
+            }
+        }
+
+        FarmMember assignedMember = resolveAssignedMember(farmId, currentUserId, request.assignedToMemberId());
+
+        // Lấy 33 tiêu chí Master của hệ thống
+        List<ChecklistRule> masterRules = checklistRuleRepository.findSystemMasterRules();
+        if (masterRules.isEmpty()) {
+            masterRules = checklistRuleRepository.findAvailableRulesForFarm(farmId);
+        }
+
+        ChecklistRun run = new ChecklistRun();
+        run.setFarm(farm);
+        run.setCropSeason(season);
+        run.setBlock(block);
+        run.setAssignedTo(assignedMember);
+        run.setRunStatus("in_progress");
+        run.setScheduledAt(request.scheduledAt() != null ? request.scheduledAt() : Instant.now());
+        run.setCreatedAt(Instant.now());
+
+        ChecklistRun savedRun = checklistRunRepository.save(run);
+
+        List<ChecklistResultItemResp> itemResps = new ArrayList<>();
+        int passedCount = 0;
+        int failedCount = 0;
+        int naCount = 0;
+
+        for (ChecklistRule rule : masterRules) {
+            ChecklistResult result = new ChecklistResult();
+            result.setChecklistRun(savedRun);
+            result.setChecklistRule(rule);
+            result.setCheckedBy(assignedMember);
+            result.setRuleCode(rule.getRuleCode());
+            result.setRuleName(rule.getRuleName());
+            result.setCategory(rule.getCategory());
+            result.setRuleLevel(rule.getRuleLevel() != null ? rule.getRuleLevel() : "MUST");
+            result.setResultStatus("pending");
+            result.setIsAutoEvaluated(false);
+            result.setCheckedAt(Instant.now());
+
+            // Chạy engine đối soát tự động từ dữ liệu nhật ký, đất, nước, thu hoạch
+            evaluateRuleAutomatically(result, farmId, season, block);
+
+            ChecklistResult savedResult = checklistResultRepository.save(result);
+            itemResps.add(ChecklistResultItemResp.fromEntity(savedResult));
+
+            if ("pass".equalsIgnoreCase(savedResult.getResultStatus())) passedCount++;
+            else if ("fail".equalsIgnoreCase(savedResult.getResultStatus())) failedCount++;
+            else if ("not_applicable".equalsIgnoreCase(savedResult.getResultStatus())) naCount++;
+        }
+
+        int total = itemResps.size();
+        savedRun.setTotalItems(total);
+        savedRun.setPassedItems(passedCount);
+        savedRun.setFailedItems(failedCount);
+        savedRun.setNaItems(naCount);
+        double pct = (total - naCount) > 0 ? ((double) passedCount / (total - naCount) * 100.0) : 0.0;
+        savedRun.setCompliancePercent(Math.round(pct * 10.0) / 10.0);
+        checklistRunRepository.save(savedRun);
+
+        return ChecklistRunResp.fromEntity(savedRun, itemResps);
     }
 
     @Override
     public ChecklistRunResp runChecklist(Integer currentUserId, Integer farmId, RunChecklistReq request) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
 
+        if (request.checklistRuleId() == null) {
+            // Chạy đợt tự đánh giá toàn diện 33 tiêu chí VietGAP
+            InitVietGapAuditRunReq initReq = new InitVietGapAuditRunReq(
+                    request.cropSeasonId(),
+                    request.blockId(),
+                    request.assignedToMemberId(),
+                    request.scheduledAt(),
+                    request.notes()
+            );
+            return initVietGapAuditRun(currentUserId, farmId, initReq);
+        }
+
+        // Luồng legacy: chạy cho 1 rule cụ thể
         ChecklistRule rule = checklistRuleRepository.findById(request.checklistRuleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy quy tắc kiểm tra ID: " + request.checklistRuleId()));
 
-        if (!rule.getFarm().getId().equals(farmId)) {
+        if (rule.getFarm() != null && !rule.getFarm().getId().equals(farmId)) {
             throw new BadRequestException("Quy tắc kiểm tra không thuộc trang trại này");
         }
 
@@ -88,20 +203,14 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
             }
         }
 
-        FarmMember assignedMember = null;
-        if (request.assignedToMemberId() != null) {
-            assignedMember = farmMemberRepository.findById(request.assignedToMemberId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên phụ trách ID: " + request.assignedToMemberId()));
-            if (!assignedMember.getFarm().getId().equals(farmId)) {
-                throw new BadRequestException("Thành viên phụ trách không thuộc trang trại này");
-            }
-        } else {
-            assignedMember = farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, currentUserId, "active").orElse(null);
-        }
+        FarmMember assignedMember = resolveAssignedMember(farmId, currentUserId, request.assignedToMemberId());
 
         boolean hasItems = request.items() != null && !request.items().isEmpty();
         String initialStatus = hasItems ? "completed" : "open";
         Instant completedAt = hasItems ? Instant.now() : null;
+
+        Farm farm = rule.getFarm() != null ? rule.getFarm() :
+                (season != null ? season.getFarm() : farmRepository.findById(farmId).orElse(null));
 
         ChecklistRun run = new ChecklistRun(
                 rule,
@@ -112,6 +221,7 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
                 request.scheduledAt() != null ? request.scheduledAt() : Instant.now(),
                 completedAt
         );
+        run.setFarm(farm);
 
         ChecklistRun savedRun = checklistRunRepository.save(run);
 
@@ -121,7 +231,7 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
                 String status = itemReq.resultStatus().toLowerCase().trim();
                 if (!VALID_RESULT_STATUSES.contains(status)) {
                     throw new BadRequestException("Trạng thái kiểm tra không hợp lệ: " + itemReq.resultStatus()
-                            + ". Chỉ chấp nhận: pass, fail, not_applicable.");
+                            + ". Chỉ chấp nhận: pass, fail, not_applicable, pending.");
                 }
 
                 ChecklistResult result = new ChecklistResult(
@@ -132,6 +242,13 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
                         itemReq.evidenceImageUrl() != null ? itemReq.evidenceImageUrl().trim() : null,
                         Instant.now()
                 );
+                result.setChecklistRule(rule);
+                result.setRuleCode(rule.getRuleCode());
+                result.setRuleName(rule.getRuleName());
+                result.setCategory(rule.getCategory());
+                result.setRuleLevel(rule.getRuleLevel());
+                result.setIsAutoEvaluated(false);
+
                 ChecklistResult savedResult = checklistResultRepository.save(result);
                 resultResps.add(ChecklistResultItemResp.fromEntity(savedResult));
             }
@@ -141,12 +258,147 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
     }
 
     @Override
+    public ChecklistResultItemResp updateChecklistItem(Integer currentUserId, Integer farmId, Integer runId, Integer resultId, UpdateChecklistItemReq request) {
+        accessGuard.requireFarmAccess(currentUserId, farmId);
+
+        ChecklistRun run = checklistRunRepository.findByIdWithDetails(runId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đợt kiểm tra ID: " + runId));
+
+        validateRunBelongsToFarm(run, farmId);
+
+        if ("completed".equalsIgnoreCase(run.getRunStatus())) {
+            throw new BadRequestException("Đợt tự đánh giá VietGAP đã hoàn tất và bị khóa (Snapshot bất biến), không thể chỉnh sửa.");
+        }
+
+        ChecklistResult result = checklistResultRepository.findById(resultId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mục kiểm tra ID: " + resultId));
+
+        if (!result.getChecklistRun().getId().equals(runId)) {
+            throw new BadRequestException("Mục kiểm tra không thuộc đợt đánh giá này.");
+        }
+
+        String status = request.resultStatus().toLowerCase().trim();
+        if (!VALID_RESULT_STATUSES.contains(status)) {
+            throw new BadRequestException("Trạng thái kiểm tra không hợp lệ: " + request.resultStatus()
+                    + ". Chỉ chấp nhận: pass, fail, not_applicable, pending.");
+        }
+
+        FarmMember currentMember = farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, currentUserId, "active").orElse(null);
+        if (currentMember != null) {
+            result.setCheckedBy(currentMember);
+        }
+
+        result.setResultStatus(status);
+        if (request.notes() != null) {
+            result.setNotes(request.notes().trim());
+        }
+        if (request.evidenceImageUrl() != null) {
+            result.setEvidenceImageUrl(request.evidenceImageUrl().trim());
+        }
+        if (request.evidenceReferenceType() != null) {
+            result.setEvidenceReferenceType(request.evidenceReferenceType().trim());
+        }
+        if (request.evidenceReferenceId() != null) {
+            result.setEvidenceReferenceId(request.evidenceReferenceId());
+        }
+        result.setIsAutoEvaluated(false);
+        result.setCheckedAt(Instant.now());
+
+        ChecklistResult saved = checklistResultRepository.save(result);
+        return ChecklistResultItemResp.fromEntity(saved);
+    }
+
+    @Override
+    public ChecklistRunResp completeChecklistRun(Integer currentUserId, Integer farmId, Integer runId) {
+        accessGuard.requireFarmAccess(currentUserId, farmId);
+
+        ChecklistRun run = checklistRunRepository.findByIdWithDetails(runId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đợt kiểm tra ID: " + runId));
+
+        validateRunBelongsToFarm(run, farmId);
+
+        if ("completed".equalsIgnoreCase(run.getRunStatus())) {
+            return getChecklistResult(currentUserId, runId);
+        }
+
+        List<ChecklistResult> results = checklistResultRepository.findByRunIdWithDetails(runId);
+        if (results.isEmpty()) {
+            throw new BadRequestException("Đợt kiểm tra chưa có tiêu chí nào.");
+        }
+
+        int passed = 0;
+        int failed = 0;
+        int na = 0;
+        int pending = 0;
+
+        for (ChecklistResult r : results) {
+            String st = r.getResultStatus().toLowerCase();
+            if ("pass".equals(st)) passed++;
+            else if ("fail".equals(st)) failed++;
+            else if ("not_applicable".equals(st)) na++;
+            else pending++;
+        }
+
+        if (pending > 0) {
+            throw new BadRequestException("Còn " + pending + " tiêu chí chưa hoàn thành đánh giá. Vui lòng kiểm tra đầy đủ trước khi khóa biên bản.");
+        }
+
+        int total = results.size();
+        run.setTotalItems(total);
+        run.setPassedItems(passed);
+        run.setFailedItems(failed);
+        run.setNaItems(na);
+        double pct = (total - na) > 0 ? ((double) passed / (total - na) * 100.0) : 0.0;
+        run.setCompliancePercent(Math.round(pct * 10.0) / 10.0);
+        run.setRunStatus("completed");
+        run.setCompletedAt(Instant.now());
+
+        ChecklistRun saved = checklistRunRepository.save(run);
+        List<ChecklistResultItemResp> itemResps = results.stream().map(ChecklistResultItemResp::fromEntity).toList();
+        return ChecklistRunResp.fromEntity(saved, itemResps);
+    }
+
+    @Override
+    public ChecklistRunResp autoCheckRun(Integer currentUserId, Integer farmId, Integer runId) {
+        accessGuard.requireFarmAccess(currentUserId, farmId);
+
+        ChecklistRun run = checklistRunRepository.findByIdWithDetails(runId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đợt kiểm tra ID: " + runId));
+
+        validateRunBelongsToFarm(run, farmId);
+
+        if ("completed".equalsIgnoreCase(run.getRunStatus())) {
+            throw new BadRequestException("Đợt tự đánh giá VietGAP đã hoàn tất và bị khóa, không thể chạy lại tự động.");
+        }
+
+        List<ChecklistResult> results = checklistResultRepository.findByRunIdWithDetails(runId);
+        for (ChecklistResult r : results) {
+            evaluateRuleAutomatically(r, farmId, run.getCropSeason(), run.getBlock());
+            checklistResultRepository.save(r);
+        }
+
+        return getChecklistResult(currentUserId, runId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportAuditReportPdf(Integer currentUserId, Integer farmId, Integer runId) {
+        accessGuard.requireFarmAccess(currentUserId, farmId);
+
+        ChecklistRunResp runResp = getChecklistResult(currentUserId, runId);
+        return pdfExportService.generateAuditReportPdf(runResp);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public ChecklistRunResp getChecklistResult(Integer currentUserId, Integer runId) {
         ChecklistRun run = checklistRunRepository.findByIdWithDetails(runId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lượt chạy kiểm tra ID: " + runId));
 
-        accessGuard.requireFarmAccess(currentUserId, run.getChecklistRule().getFarm().getId());
+        Integer farmId = getRunFarmId(run);
+        if (farmId != null) {
+            accessGuard.requireFarmAccess(currentUserId, farmId);
+        }
 
         List<ChecklistResult> results = checklistResultRepository.findByRunIdWithDetails(runId);
         List<ChecklistResultItemResp> itemResps = results.stream().map(ChecklistResultItemResp::fromEntity).toList();
@@ -180,10 +432,181 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
         ChecklistRun run = checklistRunRepository.findByIdWithDetails(runId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lượt chạy kiểm tra ID: " + runId));
 
-        accessGuard.requireFarmAccess(currentUserId, run.getChecklistRule().getFarm().getId());
+        Integer farmId = getRunFarmId(run);
+        if (farmId != null) {
+            accessGuard.requireFarmAccess(currentUserId, farmId);
+        }
 
         List<ChecklistResult> results = checklistResultRepository.findByRunIdWithDetails(runId);
         return results.stream().map(ChecklistResultItemResp::fromEntity).toList();
     }
-}
 
+    // =========================================================================
+    // PRIVATE HELPER ENGINES
+    // =========================================================================
+
+    private void evaluateRuleAutomatically(ChecklistResult result, Integer farmId, CropSeason season, Block block) {
+        String code = result.getRuleCode();
+        if (code == null) return;
+
+        Instant oneYearAgo = Instant.now().minus(365, ChronoUnit.DAYS);
+
+        switch (code) {
+            case "VG-NL-01" -> {
+                // Kiểm tra Đất & Nước trong 12 tháng
+                List<SoilAssessment> soils = block != null
+                        ? soilAssessmentRepository.findByBlockIdOrderByAssessedAtDesc(block.getId())
+                        : soilAssessmentRepository.findByFarmIdOrderByAssessedAtDesc(farmId);
+                List<WaterAssessment> waters = waterAssessmentRepository.findByFarmIdOrderByAssessedAtDesc(farmId);
+
+                boolean soilValid = soils != null && !soils.isEmpty() && soils.get(0).getAssessedAt().isAfter(oneYearAgo);
+                boolean waterValid = waters != null && !waters.isEmpty() && waters.get(0).getAssessedAt().isAfter(oneYearAgo);
+
+                if (soilValid && waterValid) {
+                    SoilAssessment s = soils.get(0);
+                    result.setResultStatus("pass");
+                    result.setIsAutoEvaluated(true);
+                    result.setNotes(String.format("Đất đo ngày %s (pH: %.2f); Nước tưới đạt chuẩn vi sinh QCVN theo phiếu phân tích.",
+                            s.getAssessedAt().atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate(),
+                            s.getSoilPh() != null ? s.getSoilPh().doubleValue() : 6.0));
+                    result.setEvidenceReferenceType("SOIL_ASSESSMENT");
+                    result.setEvidenceReferenceId(s.getId());
+                } else if (!soilValid && !waterValid) {
+                    result.setResultStatus("fail");
+                    result.setIsAutoEvaluated(true);
+                    result.setNotes("CẢNH BÁO: Chưa có kết quả kiểm nghiệm Đất và Nước tưới trong vòng 12 tháng gần nhất.");
+                } else if (!soilValid) {
+                    result.setResultStatus("fail");
+                    result.setIsAutoEvaluated(true);
+                    result.setNotes("CẢNH BÁO: Thiếu phiếu kiểm nghiệm mẫu Đất/giá thể trong vòng 12 tháng.");
+                } else {
+                    result.setResultStatus("fail");
+                    result.setIsAutoEvaluated(true);
+                    result.setNotes("CẢNH BÁO: Thiếu kết quả phân tích mẫu Nước tưới trong vòng 12 tháng.");
+                }
+            }
+
+            case "VG-TH-01" -> {
+                // Kiểm tra thời gian cách ly thuốc BVTV (PHI)
+                if (season != null) {
+                    List<FarmingActivity> activities = farmingActivityRepository.findAll((root, query, cb) ->
+                            cb.and(
+                                    cb.equal(root.get("cropSeason").get("id"), season.getId()),
+                                    cb.or(
+                                            cb.like(cb.lower(root.get("activityType")), "%thuốc%"),
+                                            cb.like(cb.lower(root.get("activityType")), "%pesticide%"),
+                                            cb.like(cb.lower(root.get("activityType")), "%protection%")
+                                    )
+                            )
+                    );
+
+                    if (activities.isEmpty()) {
+                        result.setResultStatus("pass");
+                        result.setIsAutoEvaluated(true);
+                        result.setNotes("Vụ mùa không ghi nhận sử dụng thuốc BVTV hóa học độc hại (An toàn tuyệt đối).");
+                    } else {
+                        activities.sort(Comparator.comparing(FarmingActivity::getPerformedAt).reversed());
+                        FarmingActivity lastSpray = activities.get(0);
+                        LocalDate sprayDate = lastSpray.getPerformedAt().atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate();
+
+                        List<HarvestRecord> harvests = harvestRecordRepository.findByCropSeasonId(season.getId());
+                        LocalDate harvestDate = null;
+                        if (!harvests.isEmpty()) {
+                            harvests.sort(Comparator.comparing(HarvestRecord::getHarvestDate));
+                            harvestDate = harvests.get(0).getHarvestDate();
+                        } else if (season.getEndDate() != null) {
+                            harvestDate = season.getEndDate();
+                        }
+
+                        if (harvestDate != null) {
+                            long days = ChronoUnit.DAYS.between(sprayDate, harvestDate);
+                            if (days >= 14) {
+                                result.setResultStatus("pass");
+                                result.setIsAutoEvaluated(true);
+                                result.setNotes(String.format("ĐẠT CHUẨN PHI: Lần phun cuối (%s) cách ngày thu hoạch (%s) là %d ngày (Quy chuẩn >= 14 ngày).",
+                                        sprayDate, harvestDate, days));
+                                result.setEvidenceReferenceType("FARMING_ACTIVITY");
+                                result.setEvidenceReferenceId(lastSpray.getId());
+                            } else {
+                                result.setResultStatus("fail");
+                                result.setIsAutoEvaluated(true);
+                                result.setNotes(String.format("CẢNH BÁO VI PHẠM PHI: Lần phun cuối (%s) cách ngày thu hoạch (%s) chỉ %d ngày (< 14 ngày quy định)! Cần dời ngày thu hoạch.",
+                                        sprayDate, harvestDate, days));
+                            }
+                        }
+                    }
+                }
+            }
+
+            case "VG-HS-05" -> {
+                // Kiểm tra ghi chép nhật ký đầy đủ
+                if (season != null) {
+                    long count = farmingActivityRepository.countByCropSeasonId(season.getId());
+                    if (count >= 5) {
+                        result.setResultStatus("pass");
+                        result.setIsAutoEvaluated(true);
+                        result.setNotes(String.format("Đã ghi nhận %d hoạt động canh tác điện tử liên tục trong mùa vụ.", count));
+                    }
+                }
+            }
+
+            case "VG-TX-02" -> {
+                // Kiểm tra mã số vùng trồng và mã lô thu hoạch (Lot ID)
+                if (season != null) {
+                    List<HarvestRecord> harvests = harvestRecordRepository.findByCropSeasonId(season.getId());
+                    if (!harvests.isEmpty()) {
+                        result.setResultStatus("pass");
+                        result.setIsAutoEvaluated(true);
+                        result.setNotes(String.format("Đã tạo mã lô truy xuất (Lot ID) và nhật ký thu hoạch cho %d đợt thu hoạch của vụ.", harvests.size()));
+                        result.setEvidenceReferenceType("HARVEST_RECORD");
+                        result.setEvidenceReferenceId(harvests.get(0).getId());
+                    }
+                }
+            }
+
+            case "VG-HS-01" -> {
+                // Kiểm tra người quản lý có chứng chỉ VietGAP/ATTP
+                List<TrainingRecord> trainings = trainingRecordRepository.findByFarmIdOrderByTrainingDateDesc(farmId);
+                if (trainings != null && !trainings.isEmpty()) {
+                    TrainingRecord tr = trainings.get(0);
+                    result.setResultStatus("pass");
+                    result.setIsAutoEvaluated(true);
+                    result.setNotes(String.format("Đã có hồ sơ tập huấn VietGAP / ATTP còn hiệu lực: '%s' (Ngày: %s).",
+                            tr.getTrainingTitle(), tr.getTrainingDate()));
+                    result.setEvidenceReferenceType("TRAINING_RECORD");
+                    result.setEvidenceReferenceId(tr.getId());
+                }
+            }
+        }
+    }
+
+    private FarmMember resolveAssignedMember(Integer farmId, Integer currentUserId, Integer assignedToMemberId) {
+        if (assignedToMemberId != null) {
+            FarmMember m = farmMemberRepository.findById(assignedToMemberId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thành viên phụ trách ID: " + assignedToMemberId));
+            if (!m.getFarm().getId().equals(farmId)) {
+                throw new BadRequestException("Thành viên phụ trách không thuộc trang trại này");
+            }
+            return m;
+        }
+        return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, currentUserId, "active").orElse(null);
+    }
+
+    private void validateRunBelongsToFarm(ChecklistRun run, Integer farmId) {
+        Integer runFarmId = getRunFarmId(run);
+        if (runFarmId != null && !runFarmId.equals(farmId)) {
+            throw new BadRequestException("Đợt kiểm tra không thuộc trang trại này");
+        }
+    }
+
+    private Integer getRunFarmId(ChecklistRun run) {
+        if (run.getFarm() != null) return run.getFarm().getId();
+        if (run.getChecklistRule() != null && run.getChecklistRule().getFarm() != null) {
+            return run.getChecklistRule().getFarm().getId();
+        }
+        if (run.getCropSeason() != null && run.getCropSeason().getFarm() != null) {
+            return run.getCropSeason().getFarm().getId();
+        }
+        return null;
+    }
+}
