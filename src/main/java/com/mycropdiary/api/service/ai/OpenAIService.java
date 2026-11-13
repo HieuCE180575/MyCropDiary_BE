@@ -32,18 +32,54 @@ public class OpenAIService {
 
     public OpenAIService(
             @Value("${openai.api-key:}") String apiKey,
-            @Value("${openai.model:gpt-4o-mini}") String model,
-            @Value("${openai.base-url:https://api.openai.com/v1}") String baseUrl,
+            @Value("${openai.model:gemini-flash-lite-latest}") String model,
+            @Value("${openai.base-url:https://generativelanguage.googleapis.com/v1beta/openai}") String baseUrl,
             @Value("${openai.timeout-seconds:25}") int timeoutSeconds,
             @org.springframework.beans.factory.annotation.Autowired(required = false) ObjectMapper objectMapper) {
-        this.apiKey = apiKey != null ? apiKey.trim() : "";
-        this.model = model != null && !model.isBlank() ? model.trim() : "gpt-4o-mini";
-        this.baseUrl = baseUrl != null && !baseUrl.isBlank() ? baseUrl.trim().replaceAll("/+$", "") : "https://api.openai.com/v1";
+        String resolvedKey = apiKey != null ? apiKey.trim() : "";
+        if (resolvedKey.isBlank() || resolvedKey.startsWith("YOUR_") || resolvedKey.equalsIgnoreCase("sk-placeholder")) {
+            resolvedKey = resolveFallbackKey();
+        }
+        this.apiKey = resolvedKey;
+        this.model = model != null && !model.isBlank() ? model.trim() : "gemini-flash-lite-latest";
+        this.baseUrl = baseUrl != null && !baseUrl.isBlank() ? baseUrl.trim().replaceAll("/+$", "") : "https://generativelanguage.googleapis.com/v1beta/openai";
         this.timeoutSeconds = timeoutSeconds > 0 ? timeoutSeconds : 25;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
         this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper().findAndRegisterModules();
+        if (isConfigured()) {
+            log.info("[OpenAI/Gemini] Khởi tạo AI Service thành công. Base URL: {}, Model: {}", this.baseUrl, this.model);
+        } else {
+            log.warn("[OpenAI/Gemini] Chưa cấu hình API Key. Sẽ dùng cơ chế Fallback nội bộ.");
+        }
+    }
+
+    private static String resolveFallbackKey() {
+        String envKey = System.getenv("OPENAI_API_KEY");
+        if (envKey != null && !envKey.isBlank()) return envKey.trim();
+
+        String geminiEnv = System.getenv("GEMINI_API_KEY");
+        if (geminiEnv != null && !geminiEnv.isBlank()) return geminiEnv.trim();
+
+        for (String filename : List.of(".env.local", ".env")) {
+            for (String dir : List.of(".", "..", "dev/MyCropDiary_BE")) {
+                try {
+                    java.nio.file.Path p = java.nio.file.Path.of(dir, filename);
+                    if (java.nio.file.Files.exists(p)) {
+                        for (String line : java.nio.file.Files.readAllLines(p)) {
+                            String trimmed = line.trim();
+                            if (trimmed.startsWith("OPENAI_API_KEY=") || trimmed.startsWith("openai.api-key=")) {
+                                String val = trimmed.substring(trimmed.indexOf('=') + 1).trim();
+                                if (!val.isBlank() && !val.startsWith("YOUR_")) return val;
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return "";
     }
 
     /**
@@ -98,7 +134,7 @@ public class OpenAIService {
             List<String> candidateModels = new ArrayList<>();
             candidateModels.add(this.model);
             if (this.model.toLowerCase().contains("gemini")) {
-                for (String alt : List.of("gemini-flash-lite-latest", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite")) {
+                for (String alt : List.of("gemini-flash-lite-latest", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite")) {
                     if (!candidateModels.contains(alt)) {
                         candidateModels.add(alt);
                     }
@@ -128,11 +164,17 @@ public class OpenAIService {
 
             String requestBodyJson = objectMapper.writeValueAsString(requestPayload);
 
-            HttpRequest request = HttpRequest.newBuilder()
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(baseUrl + "/chat/completions"))
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
-                    .timeout(Duration.ofSeconds(timeoutSeconds))
+                    .timeout(Duration.ofSeconds(timeoutSeconds));
+
+            if (baseUrl.contains("googleapis.com")) {
+                reqBuilder.header("x-goog-api-key", apiKey);
+            }
+
+            HttpRequest request = reqBuilder
                     .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson))
                     .build();
 
