@@ -71,7 +71,7 @@ public class OpenAIService {
             String userQuestion) {
 
         if (!isConfigured()) {
-            log.warn("[OpenAI] API key chưa được cấu hình. Chuyển sang cơ chế Fallback nội bộ.");
+            log.warn("[OpenAI/Gemini] API key chưa được cấu hình. Chuyển sang cơ chế Fallback nội bộ.");
             return Optional.empty();
         }
 
@@ -94,8 +94,34 @@ public class OpenAIService {
             // 3. Câu hỏi hiện tại của người dùng
             messages.add(Map.of("role", "user", "content", userQuestion.trim()));
 
+            // Chuẩn bị danh sách model ưu tiên (Model chính và fallback model nếu có)
+            List<String> candidateModels = new ArrayList<>();
+            candidateModels.add(this.model);
+            if (this.model.toLowerCase().contains("gemini")) {
+                for (String alt : List.of("gemini-flash-lite-latest", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite")) {
+                    if (!candidateModels.contains(alt)) {
+                        candidateModels.add(alt);
+                    }
+                }
+            }
+
+            for (String candidateModel : candidateModels) {
+                Optional<String> answer = executeRequest(candidateModel, messages);
+                if (answer.isPresent()) {
+                    return answer;
+                }
+            }
+        } catch (Exception e) {
+            log.error("[OpenAI/Gemini] Ngoại lệ khi kết nối AI API: {}", e.getMessage(), e);
+        }
+
+        return Optional.empty();
+    }
+
+    private Optional<String> executeRequest(String targetModel, List<Map<String, String>> messages) {
+        try {
             Map<String, Object> requestPayload = new LinkedHashMap<>();
-            requestPayload.put("model", model);
+            requestPayload.put("model", targetModel);
             requestPayload.put("messages", messages);
             requestPayload.put("temperature", 0.4);
             requestPayload.put("max_tokens", 1200);
@@ -110,7 +136,7 @@ public class OpenAIService {
                     .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson))
                     .build();
 
-            log.info("[OpenAI] Đang gọi {} với model {} (số lượng messages: {})...", baseUrl, model, messages.size());
+            log.info("[OpenAI/Gemini] Đang gọi {} với model {} (số lượng messages: {})...", baseUrl, targetModel, messages.size());
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
@@ -119,17 +145,16 @@ public class OpenAIService {
                 if (choices.isArray() && !choices.isEmpty()) {
                     String answer = choices.get(0).path("message").path("content").asText();
                     if (answer != null && !answer.isBlank()) {
-                        log.info("[OpenAI] Nhận phản hồi thành công (độ dài: {} ký tự).", answer.length());
+                        log.info("[OpenAI/Gemini] Model {} phản hồi thành công (độ dài: {} ký tự).", targetModel, answer.length());
                         return Optional.of(answer.trim());
                     }
                 }
             } else {
-                log.error("[OpenAI] Lỗi từ OpenAI API (Status {}): {}", response.statusCode(), response.body());
+                log.warn("[OpenAI/Gemini] Lỗi từ API với model {} (Status {}): {}", targetModel, response.statusCode(), response.body());
             }
-        } catch (Exception e) {
-            log.error("[OpenAI] Ngoại lệ khi kết nối OpenAI API: {}", e.getMessage(), e);
+        } catch (Exception ex) {
+            log.warn("[OpenAI/Gemini] Thất bại khi gọi model {}: {}", targetModel, ex.getMessage());
         }
-
         return Optional.empty();
     }
 }
