@@ -23,7 +23,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.mycropdiary.api.service.NotificationService;
 
+import java.util.logging.Logger;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -40,14 +42,17 @@ public class FarmServiceImpl implements FarmService {
     private final StaffZoneAssignmentRepository staffZoneAssignmentRepository;
     private final FarmMapper farmMapper;
     private final FarmAccessGuard farmAccessGuard;
+    private final NotificationService notificationService;
 
-    public FarmServiceImpl(FarmRepository farmRepository,
-                           FarmMemberRepository farmMemberRepository,
-                           UserRepository userRepository,
-                           ZoneRepository zoneRepository,
-                           StaffZoneAssignmentRepository staffZoneAssignmentRepository,
-                           FarmMapper farmMapper,
-                           FarmAccessGuard farmAccessGuard) {
+    public FarmServiceImpl(
+            FarmRepository farmRepository,
+            FarmMemberRepository farmMemberRepository,
+            UserRepository userRepository,
+            ZoneRepository zoneRepository,
+            StaffZoneAssignmentRepository staffZoneAssignmentRepository,
+            FarmMapper farmMapper,
+            FarmAccessGuard farmAccessGuard,
+            NotificationService notificationService) {
         this.farmRepository = farmRepository;
         this.farmMemberRepository = farmMemberRepository;
         this.userRepository = userRepository;
@@ -55,6 +60,7 @@ public class FarmServiceImpl implements FarmService {
         this.staffZoneAssignmentRepository = staffZoneAssignmentRepository;
         this.farmMapper = farmMapper;
         this.farmAccessGuard = farmAccessGuard;
+        this.notificationService = notificationService;
     }
 
     private void validateCoordinates(BigDecimal latitude, BigDecimal longitude) {
@@ -112,7 +118,8 @@ public class FarmServiceImpl implements FarmService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResp<FarmSummaryResp> searchFarms(Integer currentUserId, String keyword, String status, String province, Pageable pageable) {
+    public PageResp<FarmSummaryResp> searchFarms(Integer currentUserId, String keyword, String status, String province,
+            Pageable pageable) {
         return searchFarms(currentUserId, keyword, province, status, null, null, pageable);
     }
 
@@ -125,16 +132,15 @@ public class FarmServiceImpl implements FarmService {
             String status,
             BigDecimal minArea,
             BigDecimal maxArea,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         Pageable sortedPageable = pageable;
         if (pageable.getSort().isUnsorted()) {
-            sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("farmName").ascending());
+            sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                    Sort.by("farmName").ascending());
         }
 
         Page<Farm> farmPage = farmRepository.searchAccessibleFarms(
-                currentUserId, keyword, province, status, minArea, maxArea, sortedPageable
-        );
+                currentUserId, keyword, province, status, minArea, maxArea, sortedPageable);
 
         List<FarmSummaryResp> content = farmPage.getContent().stream()
                 .map(farm -> {
@@ -149,8 +155,7 @@ public class FarmServiceImpl implements FarmService {
                 farmPage.getSize(),
                 farmPage.getTotalElements(),
                 farmPage.getTotalPages(),
-                farmPage.isLast()
-        );
+                farmPage.isLast());
     }
 
     @Override
@@ -242,6 +247,13 @@ public class FarmServiceImpl implements FarmService {
         FarmMember savedMember = farmMemberRepository.save(newMember);
         savedMember.setJobTitle(newMember.getJobTitle());
 
+        notificationService.createNotification(
+                targetUser.getId(),
+                "Added to a farm",
+                "You have been added to the farm: " + farm.getFarmName(),
+                "FARM_MEMBER_ADDED",
+                "/farms/" + farmId);
+
         return farmMapper.toMemberResponse(savedMember);
     }
 
@@ -275,10 +287,19 @@ public class FarmServiceImpl implements FarmService {
 
         member.setMembershipStatus("left");
         farmMemberRepository.save(member);
+
+        notificationService.createNotification(
+                member.getUser().getId(),
+                "Removed from farm",
+                "You are no longer a member of the farm: "
+                        + member.getFarm().getFarmName(),
+                "FARM_MEMBER_REMOVED",
+                "/dashboard");
     }
 
     @Override
-    public StaffZoneAssignmentResp assignStaffToZone(Integer currentUserId, Integer farmId, Integer memberId, AssignStaffZoneReq request) {
+    public StaffZoneAssignmentResp assignStaffToZone(Integer currentUserId, Integer farmId, Integer memberId,
+            AssignStaffZoneReq request) {
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
 
         FarmMember staffMember = farmMemberRepository.findById(memberId)
@@ -295,7 +316,8 @@ public class FarmServiceImpl implements FarmService {
             throw new IllegalArgumentException("Zone does not belong to this farm");
         }
 
-        boolean alreadyAssigned = staffZoneAssignmentRepository.existsByFarmMemberIdAndZoneIdAndEndedAtIsNull(memberId, request.zoneId());
+        boolean alreadyAssigned = staffZoneAssignmentRepository.existsByFarmMemberIdAndZoneIdAndEndedAtIsNull(memberId,
+                request.zoneId());
         if (alreadyAssigned) {
             throw new IllegalArgumentException("Staff member is already assigned to this zone");
         }
@@ -349,7 +371,8 @@ public class FarmServiceImpl implements FarmService {
                     .toList();
         }
 
-        List<StaffZoneAssignment> assignments = staffZoneAssignmentRepository.findByFarmMemberIdAndEndedAtIsNull(member.getId());
+        List<StaffZoneAssignment> assignments = staffZoneAssignmentRepository
+                .findByFarmMemberIdAndEndedAtIsNull(member.getId());
         return assignments.stream()
                 .map(StaffZoneAssignment::getZone)
                 .map(farmMapper::toZoneResponse)

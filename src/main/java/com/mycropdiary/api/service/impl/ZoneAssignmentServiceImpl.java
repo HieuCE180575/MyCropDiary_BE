@@ -17,7 +17,9 @@ import com.mycropdiary.api.service.ZoneAssignmentService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.mycropdiary.api.service.NotificationService;
 
+import java.util.logging.Logger;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,46 +32,55 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
     private final ZoneRepository zoneRepository;
     private final BlockRepository blockRepository;
     private final FarmAccessGuard accessGuard;
+    private final NotificationService notificationService;
+    private static final Logger log = Logger.getLogger(ZoneAssignmentServiceImpl.class.getName());
 
     public ZoneAssignmentServiceImpl(StaffZoneAssignmentRepository assignmentRepository,
-                                    FarmMemberRepository farmMemberRepository,
-                                    ZoneRepository zoneRepository,
-                                    BlockRepository blockRepository,
-                                    FarmAccessGuard accessGuard) {
+            FarmMemberRepository farmMemberRepository,
+            ZoneRepository zoneRepository,
+            BlockRepository blockRepository,
+            FarmAccessGuard accessGuard,
+            NotificationService notificationService) {
         this.assignmentRepository = assignmentRepository;
         this.farmMemberRepository = farmMemberRepository;
         this.zoneRepository = zoneRepository;
         this.blockRepository = blockRepository;
         this.accessGuard = accessGuard;
+        this.notificationService = notificationService;
     }
 
     @Override
     public AssignmentResp assignStaffToZone(Integer currentUserId, Integer farmId, CreateAssignmentReq request) {
+        System.out.println(">>> assignStaffToZone REACHED");
         // Business Rule: Chỉ OWNER của farm mới có quyền phân công khu vực
         FarmMember ownerMember = accessGuard.requireFarmOwner(currentUserId, farmId);
 
         // Kiểm tra nhân viên cần phân công
         FarmMember staffMember = farmMemberRepository.findById(request.farmMemberId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên trang trại ID: " + request.farmMemberId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy nhân viên trang trại ID: " + request.farmMemberId()));
 
         if (!staffMember.getFarm().getId().equals(farmId)) {
             throw new BusinessRuleException("Nhân viên không thuộc trang trại này");
         }
 
         if (!staffMember.isActive()) {
-            throw new BusinessRuleException("Nhân viên đang ở trạng thái " + staffMember.getMembershipStatus() + ", không thể phân công khu vực");
+            throw new BusinessRuleException("Nhân viên đang ở trạng thái " + staffMember.getMembershipStatus()
+                    + ", không thể phân công khu vực");
         }
 
         // Kiểm tra khu vực sản xuất
         Integer targetZoneId = request.zoneId() != null ? request.zoneId() : request.productionAreaId();
         Zone zone = zoneRepository.findById(targetZoneId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khu vực sản xuất ID: " + targetZoneId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Không tìm thấy khu vực sản xuất ID: " + targetZoneId));
 
         if (!zone.getFarm().getId().equals(farmId)) {
             throw new BusinessRuleException("Khu vực sản xuất không thuộc trang trại này");
         }
 
-        // Business Rule: Kiểm tra xem nhân viên đã được phân công active vào khu vực này chưa
+        // Business Rule: Kiểm tra xem nhân viên đã được phân công active vào khu vực
+        // này chưa
         boolean alreadyAssigned = assignmentRepository.existsByFarmMemberIdAndZoneIdAndEndedAtIsNull(
                 staffMember.getId(), zone.getId());
         if (alreadyAssigned) {
@@ -87,6 +98,22 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
         assignment.setEndedAt(request.endedAt());
 
         StaffZoneAssignment saved = assignmentRepository.save(assignment);
+
+        log.info("STEP 1: Assignment saved. Assignment ID: " + saved.getId());
+
+        Integer recipientId = staffMember.getUser().getId();
+
+        log.info("STEP 2: Preparing notification for user ID: " + recipientId);
+
+        notificationService.createNotification(
+                recipientId,
+                "Zone assignment",
+                "You have been assigned to the zone: " + zone.getZoneName(),
+                "ZONE_ASSIGNED",
+                "/farms/" + farmId + "/my-assigned-zone");
+
+        log.info("STEP 3: Notification creation method completed.");
+
         return toAssignmentResponse(saved, ownerMember);
     }
 
@@ -96,7 +123,8 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
         accessGuard.requireFarmOwner(currentUserId, farmId);
 
         StaffZoneAssignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bản ghi phân công ID: " + assignmentId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Không tìm thấy bản ghi phân công ID: " + assignmentId));
 
         if (!assignment.getZone().getFarm().getId().equals(farmId)) {
             throw new BusinessRuleException("Phân công không thuộc trang trại này");
@@ -130,8 +158,7 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
                         "active",
                         null,
                         null,
-                        count
-                );
+                        count);
             }).collect(Collectors.toList());
         }
 
@@ -153,8 +180,7 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
                     "active",
                     a.getId(),
                     a.getAssignedAt(),
-                    count
-            );
+                    count);
         }).collect(Collectors.toList());
     }
 
@@ -184,7 +210,6 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
                 assigner != null && assigner.getUser() != null ? assigner.getUser().getFullName() : null,
                 a.getAssignedAt(),
                 a.getEndedAt(),
-                a.isActive()
-        );
+                a.isActive());
     }
 }
