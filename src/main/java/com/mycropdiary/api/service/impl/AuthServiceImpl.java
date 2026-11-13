@@ -297,7 +297,11 @@ public class AuthServiceImpl implements AuthService {
             String[] parts = request.idToken().split("\\.");
             if (parts.length >= 2) {
                 try {
-                    byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
+                    String payload = parts[1];
+                    int mod = payload.length() % 4;
+                    if (mod == 2) payload += "==";
+                    else if (mod == 3) payload += "=";
+                    byte[] decoded = Base64.getUrlDecoder().decode(payload);
                     ObjectMapper mapper = new ObjectMapper();
                     JsonNode claims = mapper.readTree(decoded);
                     if (claims.hasNonNull("email")) {
@@ -311,6 +315,33 @@ public class AuthServiceImpl implements AuthService {
                     }
                 } catch (Exception e) {
                     log.warn("Không thể giải mã Google ID token payload: {}", e.getMessage());
+                }
+            }
+
+            if ((email == null || email.isBlank())) {
+                try {
+                    java.net.http.HttpRequest verifyReq = java.net.http.HttpRequest.newBuilder()
+                            .uri(java.net.URI.create("https://oauth2.googleapis.com/tokeninfo?id_token=" + request.idToken().trim()))
+                            .timeout(java.time.Duration.ofSeconds(10))
+                            .GET()
+                            .build();
+                    java.net.http.HttpResponse<String> verifyResp = java.net.http.HttpClient.newHttpClient()
+                            .send(verifyReq, java.net.http.HttpResponse.BodyHandlers.ofString());
+                    if (verifyResp.statusCode() == 200) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        JsonNode root = mapper.readTree(verifyResp.body());
+                        if (root.hasNonNull("email")) {
+                            email = root.get("email").asText();
+                        }
+                        if (root.hasNonNull("name") && (fullName == null || fullName.isBlank())) {
+                            fullName = root.get("name").asText();
+                        }
+                        if (root.hasNonNull("picture") && (avatarUrl == null || avatarUrl.isBlank())) {
+                            avatarUrl = root.get("picture").asText();
+                        }
+                    }
+                } catch (Exception ex) {
+                    log.warn("Google tokeninfo verify fallback thất bại: {}", ex.getMessage());
                 }
             }
         }
