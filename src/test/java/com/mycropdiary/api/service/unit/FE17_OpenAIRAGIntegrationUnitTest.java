@@ -149,4 +149,32 @@ class FE17_OpenAIRAGIntegrationUnitTest {
         assertThat(resp.messageText()).contains("QCVN 39:2011/BTNMT");
         assertThat(resp.sources()).anyMatch(s -> s.contains("QCVN 39:2011/BTNMT"));
     }
+
+    // =========================================================================
+    // Java 21 Jackson ObjectMapper & OpenAI Config Robustness Tests (Commit 0496118)
+    // =========================================================================
+
+    @Test
+    @DisplayName("FE17_OAI_UTC04 [Normal]: Jackson ObjectMapper đăng ký JavaTimeModule tuần tự hóa Instant và LocalDate chuẩn (Commit 0496118)")
+    void testObjectMapper_javaTimeModule_serializesDatesCorrectly() throws Exception {
+        com.mycropdiary.api.MyCropDiaryApplication app = new com.mycropdiary.api.MyCropDiaryApplication();
+        ObjectMapper mapper = app.objectMapper();
+        assertThat(mapper).isNotNull();
+
+        java.time.Instant nowInstant = java.time.Instant.parse("2026-11-06T07:19:42Z");
+        String jsonInstant = mapper.writeValueAsString(nowInstant);
+        assertThat(jsonInstant).isNotBlank();
+
+        java.time.LocalDate nowLocalDate = java.time.LocalDate.of(2026, 11, 6);
+        String jsonLocalDate = mapper.writeValueAsString(nowLocalDate);
+        assertThat(jsonLocalDate).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("FE17_OAI_UTC05 [Boundary]: OpenAIService khởi tạo với ObjectMapper null -> Tự động dùng fallback không gây NPE (Commit 0496118)")
+    void testOpenAIService_withNullObjectMapper_shouldUseFallbackInstance() {
+        OpenAIService service = new OpenAIService("sk-test-key", "gpt-4o-mini", "https://api.openai.com/v1///", 25, null);
+        assertThat(service.isConfigured()).isTrue();
+        assertThat(service.getModel()).isEqualTo("gpt-4o-mini");
+    }
 }
