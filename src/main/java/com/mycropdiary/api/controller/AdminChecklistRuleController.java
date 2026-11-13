@@ -1,9 +1,7 @@
 package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.cultivation.ChecklistRule;
-import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.ChecklistRuleRepository;

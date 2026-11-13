@@ -470,7 +470,7 @@ public class AdminFarmDirectoryController {
                         saved,
                         farmMemberRepository.findByFarmId(fId),
                         zoneRepository.findByFarmId(fId),
-                        blockRepository.findByFarmId(fId)
+                        blockRepository.findByZoneFarmId(fId)
                 )
         ));
     }
@@ -506,7 +506,7 @@ public class AdminFarmDirectoryController {
                         saved,
                         fId != null ? farmMemberRepository.findByFarmId(fId) : Collections.emptyList(),
                         fId != null ? zoneRepository.findByFarmId(fId) : Collections.emptyList(),
-                        fId != null ? blockRepository.findByFarmId(fId) : Collections.emptyList()
+                        fId != null ? blockRepository.findByZoneFarmId(fId) : Collections.emptyList()
                 )
         ));
     }
