@@ -204,7 +204,8 @@ public class AIAssistantServiceImpl implements AIAssistantService {
 
         if (openAIAnswerOpt.isPresent()) {
             aiAnswer = openAIAnswerOpt.get();
-            modelUsed = openAIService.getModel() + " (OpenAI RAG)";
+            String rawModel = openAIService.getModel();
+            modelUsed = rawModel + (rawModel.toLowerCase().contains("gemini") ? " (Gemini AI RAG)" : " (OpenAI RAG)");
 
             // Ghi nhận nguồn tài liệu đã trích xuất
             sources.add("TCVN 11892-1:2017 (Quy chuẩn VietGAP Trồng trọt)");
