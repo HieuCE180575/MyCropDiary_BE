@@ -134,7 +134,7 @@ public class OpenAIService {
             List<String> candidateModels = new ArrayList<>();
             candidateModels.add(this.model);
             if (this.model.toLowerCase().contains("gemini")) {
-                for (String alt : List.of("gemini-flash-lite-latest", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite")) {
+                for (String alt : List.of("gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest")) {
                     if (!candidateModels.contains(alt)) {
                         candidateModels.add(alt);
                     }
@@ -160,15 +160,16 @@ public class OpenAIService {
             requestPayload.put("model", targetModel);
             requestPayload.put("messages", messages);
             requestPayload.put("temperature", 0.4);
-            requestPayload.put("max_tokens", 1200);
+            requestPayload.put("max_tokens", 1500);
 
             String requestBodyJson = objectMapper.writeValueAsString(requestPayload);
 
+            int perModelTimeout = Math.min(timeoutSeconds, 12);
             HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(baseUrl + "/chat/completions"))
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
-                    .timeout(Duration.ofSeconds(timeoutSeconds));
+                    .timeout(Duration.ofSeconds(perModelTimeout));
 
             if (baseUrl.contains("googleapis.com")) {
                 reqBuilder.header("x-goog-api-key", apiKey);
