@@ -43,8 +43,8 @@ public record FarmRegistrationCreateReq(
         @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
         String description,
 
-        @Size(max = 1000, message = "Đường dẫn tài liệu không được vượt quá 1000 ký tự")
-        @Pattern(regexp = "^(https?://.*)?$", message = "Đường dẫn tài liệu phải là định dạng URL hợp lệ (bắt đầu bằng http:// hoặc https://)")
+        @Size(max = 50000, message = "Đường dẫn tài liệu không được vượt quá 50000 ký tự")
+        @Pattern(regexp = "^$|^(https?://.*)|\\[.*", message = "Đường dẫn tài liệu phải là định dạng URL hợp lệ (bắt đầu bằng http:// hoặc https://) hoặc danh sách tài liệu hợp lệ")
         String documentUrl,
 
         @DecimalMin(value = "-90.0", message = "Vĩ độ phải nằm trong khoảng -90 đến 90")

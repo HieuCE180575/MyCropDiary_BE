@@ -52,6 +52,8 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             params.put("resource_type", "auto");
             params.put("use_filename", true);
             params.put("unique_filename", true);
+            params.put("access_mode", "public");
+            params.put("type", "upload");
 
             Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
 
