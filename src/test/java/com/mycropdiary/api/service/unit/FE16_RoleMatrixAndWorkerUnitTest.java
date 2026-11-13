@@ -244,4 +244,49 @@ public class FE16_RoleMatrixAndWorkerUnitTest {
         assertEquals(5, updatedFeedback.rating());
         assertEquals("Đã hiểu rõ hơn sau khi hỏi lại", updatedFeedback.feedbackText());
     }
+
+    // =========================================================================
+    // UC-15 & UC-33 Enhanced: Negative & Boundary Test Cases (Commit 851f4a5)
+    // =========================================================================
+
+    @Test
+    @DisplayName("UC15-4 [Abnormal]: Thêm công nhân trùng mã workerCode trong cùng trang trại -> Báo lỗi BadRequestException")
+    void testCreateWorker_duplicateWorkerCode_throwsBadRequest() {
+        FarmWorkerReq req = new FarmWorkerReq(20, "CN-001", "Công nhân", "active", LocalDate.now(), null);
+        when(farmMemberRepository.findById(20)).thenReturn(Optional.of(testMember));
+        when(farmWorkerRepository.findByFarmMemberId(20)).thenReturn(Optional.empty());
+        when(farmWorkerRepository.existsByFarmMemberFarmIdAndWorkerCodeIgnoreCase(10, "CN-001")).thenReturn(true);
+
+        assertThrows(com.mycropdiary.api.exception.BadRequestException.class,
+                () -> farmWorkerService.createWorker(100, 10, req));
+    }
+
+    @Test
+    @DisplayName("UC15-5 [Abnormal]: Xem hồ sơ công nhân ID không tồn tại -> Ném ResourceNotFoundException")
+    void testGetWorkerById_notFound_throwsResourceNotFound() {
+        when(farmWorkerRepository.findByIdAndFarmMemberFarmId(999, 10)).thenReturn(Optional.empty());
+        assertThrows(com.mycropdiary.api.exception.ResourceNotFoundException.class,
+                () -> farmWorkerService.getWorkerById(100, 10, 999));
+    }
+
+    @Test
+    @DisplayName("UC33-2 [Abnormal]: Thêm vật tư đã tồn tại trong kho -> Báo lỗi BadRequestException")
+    void testCreateInventory_duplicateMaterial_throwsBadRequest() {
+        when(warehouseRepository.findById(30)).thenReturn(Optional.of(testWarehouse));
+        when(materialRepository.findByIdAndFarmId(40, 10)).thenReturn(Optional.of(testMaterial));
+        when(inventoryRepository.findByWarehouseIdAndMaterialId(30, 40)).thenReturn(Optional.of(testInventory));
+
+        CreateInventoryReq req = new CreateInventoryReq(30, 40, BigDecimal.valueOf(50), BigDecimal.valueOf(10));
+        assertThrows(com.mycropdiary.api.exception.BadRequestException.class,
+                () -> warehouseService.createInventory(100, 10, req));
+    }
+
+    @Test
+    @DisplayName("UC33-3 [Abnormal]: Thêm tồn kho với kho hàng ID không tồn tại -> Ném ResourceNotFoundException")
+    void testCreateInventory_warehouseNotFound_throwsResourceNotFound() {
+        when(warehouseRepository.findById(999)).thenReturn(Optional.empty());
+        CreateInventoryReq req = new CreateInventoryReq(999, 40, BigDecimal.valueOf(50), BigDecimal.valueOf(10));
+        assertThrows(com.mycropdiary.api.exception.ResourceNotFoundException.class,
+                () -> warehouseService.createInventory(100, 10, req));
+    }
 }

@@ -193,5 +193,41 @@ class FE07_NotificationAndAIAssistantUnitTest {
         assertEquals(1, history.size());
         assertEquals(401, history.get(0).feedbackId());
     }
-}
 
+    // =========================================================================
+    // UC-10 & UC-12 Enhanced: Boundary & Lifecycle Tests (Commit d105a05)
+    // =========================================================================
+
+    @Test
+    @DisplayName("FE07_NOTIF_UTC06 [Abnormal] - Đánh dấu đã đọc thông báo không tồn tại -> Ném ResourceNotFoundException")
+    void testMarkAsRead_notFound_throwsResourceNotFound() {
+        when(notificationRepository.findByIdAndUserId(999, 10)).thenReturn(Optional.empty());
+        assertThrows(com.mycropdiary.api.exception.ResourceNotFoundException.class,
+                () -> notificationService.markAsRead(10, 999));
+    }
+
+    @Test
+    @DisplayName("FE07_NOTIF_UTC07 [Normal] - Đánh dấu toàn bộ thông báo đã đọc thành công")
+    void testMarkAllAsRead_success() {
+        notificationService.markAllAsRead(10);
+        verify(notificationRepository, times(1)).markAllAsRead(10);
+    }
+
+    @Test
+    @DisplayName("FE07_AI_UTC08 [Normal] - Khởi tạo phiên hội thoại mới với trợ lý AI")
+    void testCreateConversation_success() {
+        when(userRepository.findById(10)).thenReturn(Optional.of(mockUser));
+        when(conversationRepository.save(any(AIConversation.class))).thenAnswer(inv -> {
+            AIConversation c = inv.getArgument(0);
+            c.setId(105);
+            return c;
+        });
+
+        CreateAIConversationReq req = new CreateAIConversationReq("Tư vấn sâu hại dưa lưới", null);
+        AIConversationResp resp = aiAssistantService.createConversation(10, req);
+
+        assertNotNull(resp);
+        assertEquals(105, resp.conversationId());
+        assertEquals("Tư vấn sâu hại dưa lưới", resp.title());
+    }
+}

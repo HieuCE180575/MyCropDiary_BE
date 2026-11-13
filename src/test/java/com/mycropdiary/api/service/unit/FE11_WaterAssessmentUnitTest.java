@@ -137,4 +137,42 @@ class FE11_WaterAssessmentUnitTest {
         WaterAssessmentResp resp = waterService.updateWaterAssessment(1, 500, req);
         assertNotNull(resp);
     }
+
+    @Test
+    @DisplayName("FE11_WTR_UTC05 [Abnormal] - Cập nhật phiếu đánh giá nước ID không tồn tại -> Ném ResourceNotFoundException (Commit c7ec0bc)")
+    void updateWaterAssessment_notFound_throwsResourceNotFound() {
+        when(waterRepository.findById(999)).thenReturn(Optional.empty());
+        UpdateWaterAssessmentReq req = new UpdateWaterAssessmentReq(
+                null, null, null, BigDecimal.valueOf(7.0), BigDecimal.valueOf(25.0),
+                "DAT_CHUAN", "Ghi chú", null, Instant.now()
+        );
+        assertThrows(com.mycropdiary.api.exception.ResourceNotFoundException.class,
+                () -> waterService.updateWaterAssessment(1, 999, req));
+    }
+
+    @Test
+    @DisplayName("FE11_WTR_UTC06 [Boundary] - Đánh giá chất lượng nước đạt ngưỡng giới hạn pH (pH = 6.5) -> Hợp lệ chuẩn VietGAP (Commit c7ec0bc)")
+    void createWaterAssessment_boundaryPhValue_valid() {
+        when(accessGuard.requireBlockAccess(1, 100)).thenReturn(testBlock);
+        when(waterSourceRepository.findByFarmIdOrderBySourceNameAsc(1)).thenReturn(List.of(testSource));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 1, "active")).thenReturn(Optional.of(testMember));
+
+        WaterAssessment boundaryAssessment = new WaterAssessment(
+                testSource, testBlock, testMember,
+                BigDecimal.valueOf(6.5), BigDecimal.valueOf(20.0),
+                "DAT_CHUAN", "Ngưỡng cận dưới pH hợp lệ", null, Instant.now()
+        );
+        boundaryAssessment.setId(501);
+        when(waterRepository.save(any(WaterAssessment.class))).thenReturn(boundaryAssessment);
+
+        CreateWaterAssessmentReq req = new CreateWaterAssessmentReq(
+                null, "Hồ chứa", "Nước mặt",
+                BigDecimal.valueOf(6.5), BigDecimal.valueOf(20.0),
+                "DAT_CHUAN", "Ngưỡng cận dưới", null, Instant.now()
+        );
+
+        WaterAssessmentResp resp = waterService.createWaterAssessment(1, 100, req);
+        assertNotNull(resp);
+        assertEquals(BigDecimal.valueOf(6.5), resp.waterPh());
+    }
 }

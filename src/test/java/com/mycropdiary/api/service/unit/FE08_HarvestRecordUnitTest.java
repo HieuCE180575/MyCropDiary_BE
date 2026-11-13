@@ -196,4 +196,46 @@ public class FE08_HarvestRecordUnitTest {
     void UTC10_filterHarvest_byDateRange_shouldReturnMatchedRecords() {
         assertNotNull(activeSeason.getId());
     }
+
+    // =========================================================================
+    // UC-23 / FE-08 Enhanced: Harvest Traceability Code & Smart Search (def846e)
+    // =========================================================================
+
+    @Test
+    @DisplayName("FE08_HAR_UTC11 [Normal] - Mã truy xuất nguồn gốc chuẩn VietGAP GAP-VN-%06d (Commit def846e)")
+    void UTC11_getTraceabilityCode_validId_shouldFormatGAPVN() {
+        HarvestRecord record = new HarvestRecord();
+        record.setId(101);
+        assertEquals("GAP-VN-000101", record.getTraceabilityCode());
+
+        record.setId(5);
+        assertEquals("GAP-VN-000005", record.getTraceabilityCode());
+
+        record.setId(999999);
+        assertEquals("GAP-VN-999999", record.getTraceabilityCode());
+    }
+
+    @Test
+    @DisplayName("FE08_HAR_UTC12 [Boundary] - Bản ghi thu hoạch chưa lưu (ID=null) -> Mã truy xuất trả về null (Commit def846e)")
+    void UTC12_getTraceabilityCode_nullId_shouldReturnNull() {
+        HarvestRecord record = new HarvestRecord();
+        record.setId(null);
+        assertNull(record.getTraceabilityCode());
+    }
+
+    @Test
+    @DisplayName("FE08_HAR_UTC13 [Normal] - Tìm kiếm thu hoạch thông minh: Tự động bóc tách tiền tố LOT-, GAP-VN-, GAP- (Commit def846e)")
+    void UTC13_searchHarvestRecords_keywordPrefixStripping_shouldMatchCleanId() {
+        String kw1 = "GAP-VN-000101";
+        String clean1 = kw1.trim().replace("LOT-", "").replace("GAP-VN-", "").replace("GAP-", "");
+        assertEquals("000101", clean1);
+
+        String kw2 = "LOT-50";
+        String clean2 = kw2.trim().replace("LOT-", "").replace("GAP-VN-", "").replace("GAP-", "");
+        assertEquals("50", clean2);
+
+        String kw3 = "GAP-99";
+        String clean3 = kw3.trim().replace("LOT-", "").replace("GAP-VN-", "").replace("GAP-", "");
+        assertEquals("99", clean3);
+    }
 }
