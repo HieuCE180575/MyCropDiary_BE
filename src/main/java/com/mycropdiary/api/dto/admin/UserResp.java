@@ -13,9 +13,30 @@ public record UserResp(
         Instant emailVerifiedAt,
         Instant lastLoginAt,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String farmsSummary,
+        String zonesSummary
 ) {
+    public UserResp(
+            Integer userId,
+            String email,
+            String fullName,
+            String phone,
+            String systemRole,
+            String accountStatus,
+            Instant emailVerifiedAt,
+            Instant lastLoginAt,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
+        this(userId, email, fullName, phone, systemRole, accountStatus, emailVerifiedAt, lastLoginAt, createdAt, updatedAt, null, null);
+    }
+
     public static UserResp fromEntity(User user) {
+        return fromEntity(user, null, null);
+    }
+
+    public static UserResp fromEntity(User user, String farmsSummary, String zonesSummary) {
         return new UserResp(
                 user.getId(),
                 user.getEmail(),
@@ -26,7 +47,9 @@ public record UserResp(
                 user.getEmailVerifiedAt(),
                 user.getLastLoginAt(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getUpdatedAt(),
+                farmsSummary,
+                zonesSummary
         );
     }
 }

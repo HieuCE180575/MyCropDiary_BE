@@ -3,6 +3,7 @@ package com.mycropdiary.api.controller;
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.entity.cultivation.ChecklistRule;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.ChecklistRuleRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -22,9 +23,16 @@ import java.util.List;
 public class AdminChecklistRuleController {
 
     private final ChecklistRuleRepository checklistRuleRepository;
+    private final FarmRepository farmRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AdminChecklistRuleController(ChecklistRuleRepository checklistRuleRepository, FarmRepository farmRepository) {
+        this.checklistRuleRepository = checklistRuleRepository;
+        this.farmRepository = farmRepository;
+    }
 
     public AdminChecklistRuleController(ChecklistRuleRepository checklistRuleRepository) {
-        this.checklistRuleRepository = checklistRuleRepository;
+        this(checklistRuleRepository, null);
     }
 
     @Operation(summary = "Xem danh sách quy tắc bảng kiểm (Admin)", description = "Lấy toàn bộ danh sách quy tắc kiểm tra đánh giá nhật ký và hồ sơ VietGAP")
@@ -47,9 +55,12 @@ public class AdminChecklistRuleController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResp<AdminChecklistRuleResp> createChecklistRule(@RequestBody AdminChecklistRuleReq req) {
         ChecklistRule rule = new ChecklistRule();
-        rule.setRuleName(req.ruleName());
+        if (farmRepository != null) {
+            farmRepository.findAll().stream().findFirst().ifPresent(rule::setFarm);
+        }
+        rule.setRuleName(req.ruleName() != null ? req.ruleName().trim() : "Quy tắc VietGAP");
         rule.setDescription(req.description());
-        rule.setCategory(req.category());
+        rule.setCategory(req.category() != null ? req.category().trim() : "ALL");
         rule.setIsActive(req.isActive() != null ? req.isActive() : true);
         ChecklistRule saved = checklistRuleRepository.save(rule);
         return ApiResp.ok("Tạo quy tắc bảng kiểm thành công", new AdminChecklistRuleResp(
@@ -62,9 +73,15 @@ public class AdminChecklistRuleController {
     public ApiResp<AdminChecklistRuleResp> updateChecklistRule(@PathVariable Integer id, @RequestBody AdminChecklistRuleReq req) {
         ChecklistRule rule = checklistRuleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy quy tắc ID: " + id));
-        rule.setRuleName(req.ruleName());
-        rule.setDescription(req.description());
-        rule.setCategory(req.category());
+        if (req.ruleName() != null && !req.ruleName().isBlank()) {
+            rule.setRuleName(req.ruleName().trim());
+        }
+        if (req.description() != null) {
+            rule.setDescription(req.description());
+        }
+        if (req.category() != null && !req.category().isBlank()) {
+            rule.setCategory(req.category().trim());
+        }
         if (req.isActive() != null) {
             rule.setIsActive(req.isActive());
         }

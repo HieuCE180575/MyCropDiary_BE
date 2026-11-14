@@ -42,7 +42,7 @@ public class FarmRegistration {
     @Column(name = "boundary_coordinates", columnDefinition = "NVARCHAR(MAX)")
     private String boundaryCoordinates;
 
-    @Column(name = "document_url", length = 1000)
+    @Column(name = "document_url", columnDefinition = "NVARCHAR(MAX)")
     private String documentUrl;
 
     @Column(name = "registration_note", columnDefinition = "NVARCHAR(MAX)")

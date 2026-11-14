@@ -5,6 +5,8 @@ import com.mycropdiary.api.dto.admin.UserResp;
 import com.mycropdiary.api.dto.common.PageResp;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Map;
+
 public interface AdminUserService {
 
     PageResp<UserResp> getUsers(String status, String search, Pageable pageable);
@@ -12,4 +14,6 @@ public interface AdminUserService {
     UserResp getUserById(Integer userId);
 
     UserResp updateUserStatus(Integer adminUserId, Integer targetUserId, UpdateUserStatusReq request);
+
+    UserResp updateUserProfile(Integer adminUserId, Integer targetUserId, Map<String, Object> request);
 }
