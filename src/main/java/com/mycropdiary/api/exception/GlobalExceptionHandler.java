@@ -95,6 +95,12 @@ public class GlobalExceptionHandler {
         return ApiResp.error(exception.getMessage());
     }
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ApiResp<Void> handleMaxUploadSizeExceeded(org.springframework.web.multipart.MaxUploadSizeExceededException exception) {
+        return ApiResp.error("Dung lượng tập tin vượt quá giới hạn tối đa cho phép (15MB).");
+    }
+
     // [AI_CHANGE] Bắt mọi exception không xác định để không lộ stack trace ra client
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
