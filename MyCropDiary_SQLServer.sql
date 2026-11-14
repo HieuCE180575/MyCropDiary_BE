@@ -364,6 +364,7 @@ CREATE TABLE [InputPurchase] (
     purchased_by INT REFERENCES [FarmMember](farm_member_id) ON DELETE NO ACTION,
     purchase_date DATE NOT NULL DEFAULT CONVERT(date, SYSUTCDATETIME()),
     reference_no NVARCHAR(80),
+    warehouse_receipt_no NVARCHAR(80),
     total_amount NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK (total_amount >= 0),
     receipt_image_url NVARCHAR(MAX),
     notes NVARCHAR(MAX),
