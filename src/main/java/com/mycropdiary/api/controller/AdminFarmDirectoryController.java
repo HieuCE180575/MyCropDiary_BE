@@ -45,6 +45,8 @@ public class AdminFarmDirectoryController {
     private final StaffZoneAssignmentRepository staffZoneAssignmentRepository;
     private final CropSeasonRepository cropSeasonRepository;
     private final CropCategoryRepository cropCategoryRepository;
+    private final Map<Integer, String> zoneStatusOverrides = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<Integer, String> blockStatusOverrides = new java.util.concurrent.ConcurrentHashMap<>();
 
     public AdminFarmDirectoryController(
             FarmRepository farmRepository,
@@ -241,6 +243,10 @@ public class AdminFarmDirectoryController {
         if (body.containsKey("description")) {
             zone.setDescription(str(body.get("description"), ""));
         }
+        if (body.containsKey("status")) {
+            String status = str(body.get("status"), "ACTIVE").trim().toUpperCase();
+            zoneStatusOverrides.put(zone.getId(), "INACTIVE".equals(status) ? "INACTIVE" : "ACTIVE");
+        }
 
         Zone saved = zoneRepository.save(zone);
         Integer farmId = saved.getFarm() != null ? saved.getFarm().getId() : null;
@@ -366,6 +372,10 @@ public class AdminFarmDirectoryController {
         }
         if (body.containsKey("description")) {
             block.setDescription(str(body.get("description"), ""));
+        }
+        if (body.containsKey("status")) {
+            String status = str(body.get("status"), "ACTIVE").trim().toUpperCase();
+            blockStatusOverrides.put(block.getId(), "INACTIVE".equals(status) ? "INACTIVE" : "ACTIVE");
         }
 
         Block saved = blockRepository.save(block);
@@ -602,7 +612,8 @@ public class AdminFarmDirectoryController {
         map.put("areaUnit", zone.getAreaUnit() != null ? zone.getAreaUnit() : "m2");
         map.put("areaDisplay", formatArea(zone.getAreaValue(), zone.getAreaUnit()));
         map.put("imageUrl", zone.getImageUrl());
-        map.put("status", farm != null && farm.getStatus() != null ? farm.getStatus().toUpperCase() : "ACTIVE");
+        String defaultZoneStatus = farm != null && farm.getStatus() != null ? farm.getStatus().toUpperCase() : "ACTIVE";
+        map.put("status", zoneStatusOverrides.getOrDefault(zone.getId(), defaultZoneStatus));
         map.put("farmId", farm != null ? farm.getId() : null);
         map.put("farmCode", farm != null && farm.getId() != null ? String.format("FARM-%03d", farm.getId()) : "—");
         map.put("farmName", farm != null ? farm.getFarmName() : "Chưa gắn trang trại");
@@ -647,7 +658,8 @@ public class AdminFarmDirectoryController {
         map.put("areaDisplay", formatArea(block.getAreaValue(), block.getAreaUnit()));
         map.put("soilType", block.getSoilType() != null && !block.getSoilType().isBlank() ? block.getSoilType() : "Chưa phân loại");
         map.put("imageUrl", block.getImageUrl());
-        map.put("status", farm != null && farm.getStatus() != null ? farm.getStatus().toUpperCase() : "ACTIVE");
+        String defaultBlockStatus = farm != null && farm.getStatus() != null ? farm.getStatus().toUpperCase() : "ACTIVE";
+        map.put("status", blockStatusOverrides.getOrDefault(block.getId(), defaultBlockStatus));
         map.put("zoneId", zone != null ? zone.getId() : null);
         map.put("zoneCode", zone != null && zone.getId() != null ? String.format("KV-%03d", zone.getId()) : "—");
         map.put("zoneName", zone != null ? zone.getZoneName() : "Chưa gắn phân khu");
