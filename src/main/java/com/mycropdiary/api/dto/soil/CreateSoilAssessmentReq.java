@@ -28,8 +28,14 @@ public record CreateSoilAssessmentReq(
         @Schema(description = "Ảnh phiếu kết quả kiểm nghiệm hoặc mẫu đất")
         String imageUrl,
 
+        @Schema(description = "URL phiếu xét nghiệm mẫu đất từ phòng Lab đạt chuẩn")
+        String labTestReportUrl,
+
         @Schema(description = "Thời điểm lấy mẫu / đánh giá (mặc định hiện tại)")
         Instant assessedAt
 ) {
+    public CreateSoilAssessmentReq(BigDecimal soilPh, BigDecimal moisturePercent, String nutrientData, String notes, String imageUrl, Instant assessedAt) {
+        this(soilPh, moisturePercent, nutrientData, notes, imageUrl, null, assessedAt);
+    }
 }
 

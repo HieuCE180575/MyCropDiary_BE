@@ -81,6 +81,7 @@ public class WaterAssessmentServiceImpl implements WaterAssessmentService {
                 request.imageUrl(),
                 request.assessedAt() != null ? request.assessedAt() : Instant.now()
         );
+        assessment.setLabTestReportUrl(request.labTestReportUrl());
 
         WaterAssessment saved = waterRepository.save(assessment);
         return WaterAssessmentResp.fromEntity(saved);
@@ -142,6 +143,9 @@ public class WaterAssessmentServiceImpl implements WaterAssessmentService {
         }
         if (request.imageUrl() != null) {
             entity.setImageUrl(request.imageUrl());
+        }
+        if (request.labTestReportUrl() != null) {
+            entity.setLabTestReportUrl(request.labTestReportUrl());
         }
         if (request.assessedAt() != null) {
             entity.setAssessedAt(request.assessedAt());

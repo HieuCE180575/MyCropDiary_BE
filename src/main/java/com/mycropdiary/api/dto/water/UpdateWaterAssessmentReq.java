@@ -35,7 +35,24 @@ public record UpdateWaterAssessmentReq(
         @Schema(description = "URL ảnh chụp phiếu kết quả xét nghiệm mẫu nước")
         String imageUrl,
 
+        @Schema(description = "URL phiếu xét nghiệm mẫu nước tưới tiêu từ phòng Lab đạt chuẩn")
+        String labTestReportUrl,
+
         @Schema(description = "Thời gian lấy mẫu và kiểm nghiệm")
         Instant assessedAt
-) {}
+) {
+    public UpdateWaterAssessmentReq(
+            Integer waterSourceId,
+            String waterSourceName,
+            String waterSourceType,
+            BigDecimal waterPh,
+            BigDecimal temperatureC,
+            String qualityStatus,
+            String notes,
+            String imageUrl,
+            Instant assessedAt
+    ) {
+        this(waterSourceId, waterSourceName, waterSourceType, waterPh, temperatureC, qualityStatus, notes, imageUrl, null, assessedAt);
+    }
+}
 

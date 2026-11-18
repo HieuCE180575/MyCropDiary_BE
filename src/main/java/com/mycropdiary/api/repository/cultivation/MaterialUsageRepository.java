@@ -16,6 +16,8 @@ import java.util.Optional;
 @Repository
 public interface MaterialUsageRepository extends JpaRepository<MaterialUsage, Integer>, JpaSpecificationExecutor<MaterialUsage> {
     List<MaterialUsage> findByFarmingActivityId(Integer farmingActivityId);
+    List<MaterialUsage> findByFarmingActivityCropSeasonId(Integer cropSeasonId);
+    List<MaterialUsage> findByFarmId(Integer farmId);
     Page<MaterialUsage> findByFarmingActivityId(Integer farmingActivityId, Pageable pageable);
     Optional<MaterialUsage> findByIdAndFarmingActivityId(Integer id, Integer farmingActivityId);
     boolean existsByMaterialId(Integer materialId);

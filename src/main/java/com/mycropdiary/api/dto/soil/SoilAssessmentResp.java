@@ -21,8 +21,28 @@ public record SoilAssessmentResp(
         String nutrientData,
         String notes,
         String imageUrl,
+        String labTestReportUrl,
         Instant assessedAt
 ) {
+    public SoilAssessmentResp(
+            Integer assessmentId,
+            Integer blockId,
+            String blockName,
+            Integer zoneId,
+            String zoneName,
+            Integer farmId,
+            Integer conductedByMemberId,
+            String conductedByName,
+            BigDecimal soilPh,
+            BigDecimal moisturePercent,
+            String nutrientData,
+            String notes,
+            String imageUrl,
+            Instant assessedAt
+    ) {
+        this(assessmentId, blockId, blockName, zoneId, zoneName, farmId, conductedByMemberId, conductedByName, soilPh, moisturePercent, nutrientData, notes, imageUrl, null, assessedAt);
+    }
+
     public static SoilAssessmentResp fromEntity(SoilAssessment entity) {
         if (entity == null) return null;
         Integer memberId = entity.getConductedBy() != null ? entity.getConductedBy().getId() : null;
@@ -43,6 +63,7 @@ public record SoilAssessmentResp(
                 entity.getNutrientData(),
                 entity.getNotes(),
                 entity.getImageUrl(),
+                entity.getLabTestReportUrl(),
                 entity.getAssessedAt()
         );
     }

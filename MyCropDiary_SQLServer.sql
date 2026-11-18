@@ -1,4 +1,4 @@
-﻿-- MyCropDiary database schema derived from the conceptual ERDs
+-- MyCropDiary database schema derived from the conceptual ERDs
 -- Target: Microsoft SQL Server 2019+
 -- Notes:
 -- 1) Table names follow the ERD entity labels; join tables were added for many-to-many relations.
@@ -65,6 +65,7 @@ CREATE TABLE [Farm] (
     longitude NUMERIC(9,6),
     boundary_coordinates NVARCHAR(MAX),
     cover_image_url NVARCHAR(MAX),
+    farm_map_url NVARCHAR(MAX),
     created_by INT REFERENCES [User](user_id) ON DELETE NO ACTION,
     farm_status NVARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (farm_status IN ('active','inactive','archived')),
@@ -283,6 +284,7 @@ CREATE TABLE [WaterAssessment] (
     quality_status NVARCHAR(30),
     notes NVARCHAR(MAX),
     image_url NVARCHAR(MAX),
+    lab_test_report_url NVARCHAR(MAX),
     assessed_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
@@ -295,6 +297,7 @@ CREATE TABLE [SoilAssessment] (
     nutrient_data NVARCHAR(MAX) NOT NULL DEFAULT N'{}',
     notes NVARCHAR(MAX),
     image_url NVARCHAR(MAX),
+    lab_test_report_url NVARCHAR(MAX),
     assessed_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
@@ -332,6 +335,8 @@ CREATE TABLE [Material] (
     unit NVARCHAR(30) NOT NULL,
     description NVARCHAR(MAX),
     image_url NVARCHAR(MAX),
+    lot_number NVARCHAR(60),
+    germination_rate NUMERIC(5,2),
     is_active BIT NOT NULL DEFAULT 1,
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     UNIQUE (farm_id, material_name)
@@ -343,6 +348,7 @@ CREATE TABLE [Warehouse] (
     warehouse_name NVARCHAR(120) NOT NULL,
     address NVARCHAR(MAX),
     image_url NVARCHAR(MAX),
+    warehouse_type NVARCHAR(50) DEFAULT N'kho_chung',
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     UNIQUE (farm_id, warehouse_name)
 );
@@ -441,6 +447,7 @@ CREATE TABLE [HarvestRecord] (
     recorded_by INT REFERENCES [FarmMember](farm_member_id) ON DELETE NO ACTION,
     harvest_date DATE NOT NULL,
     quantity NUMERIC(14,3) NOT NULL CHECK (quantity > 0),
+    discarded_quantity NUMERIC(14,3) NOT NULL DEFAULT 0 CHECK (discarded_quantity >= 0),
     unit NVARCHAR(30) NOT NULL,
     quality_grade NVARCHAR(50),
     image_url NVARCHAR(MAX),

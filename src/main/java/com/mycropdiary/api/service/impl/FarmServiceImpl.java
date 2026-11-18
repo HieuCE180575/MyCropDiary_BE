@@ -93,6 +93,7 @@ public class FarmServiceImpl implements FarmService {
         farm.setLongitude(request.longitude());
         farm.setBoundaryCoordinates(request.boundaryCoordinates());
         farm.setCoverImageUrl(request.coverImageUrl());
+        farm.setFarmMapUrl(request.farmMapUrl());
         farm.setCreatedBy(currentUser);
         farm.setFarmStatus("active");
 
@@ -198,6 +199,9 @@ public class FarmServiceImpl implements FarmService {
         }
         if (request.coverImageUrl() != null) {
             farm.setCoverImageUrl(request.coverImageUrl());
+        }
+        if (request.farmMapUrl() != null) {
+            farm.setFarmMapUrl(request.farmMapUrl());
         }
         if (request.status() != null && !request.status().isBlank()) {
             farm.setFarmStatus(request.status());

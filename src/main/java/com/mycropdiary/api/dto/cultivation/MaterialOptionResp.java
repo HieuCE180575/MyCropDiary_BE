@@ -13,8 +13,23 @@ public record MaterialOptionResp(
         String materialForm,
         String unit,
         String description,
+        String lotNumber,
+        java.math.BigDecimal germinationRate,
         Boolean isActive
 ) {
+    public MaterialOptionResp(
+            Integer id,
+            Integer farmId,
+            String materialName,
+            String materialType,
+            String materialForm,
+            String unit,
+            String description,
+            Boolean isActive
+    ) {
+        this(id, farmId, materialName, materialType, materialForm, unit, description, null, null, isActive);
+    }
+
     public MaterialOptionResp(
             Integer id,
             Integer farmId,
@@ -24,7 +39,7 @@ public record MaterialOptionResp(
             String description,
             Boolean isActive
     ) {
-        this(id, farmId, materialName, materialType, null, unit, description, isActive);
+        this(id, farmId, materialName, materialType, null, unit, description, null, null, isActive);
     }
 
     public static MaterialOptionResp fromEntity(Material material) {
@@ -36,6 +51,8 @@ public record MaterialOptionResp(
                 material.getMaterialForm(),
                 material.getUnit(),
                 material.getDescription(),
+                material.getLotNumber(),
+                material.getGerminationRate(),
                 material.getIsActive()
         );
     }

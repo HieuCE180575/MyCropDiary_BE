@@ -20,6 +20,7 @@ public record HarvestRecordResp(
         String harvestLotCode,
         LocalDateTime harvestedAt,
         BigDecimal quantity,
+        BigDecimal discardedQuantity,
         String unit,
         String qualityGrade,
         String storageLocation,
@@ -27,13 +28,46 @@ public record HarvestRecordResp(
         String notes
 ) {
     public HarvestRecordResp(
+            Integer harvestRecordId,
+            Integer cropSeasonId,
+            String seasonCode,
+            String seasonName,
+            Integer farmId,
+            String farmName,
+            Integer blockId,
+            String blockName,
+            Integer recordedByMemberId,
+            String recorderFullName,
+            String harvestLotCode,
+            LocalDateTime harvestedAt,
+            BigDecimal quantity,
+            String unit,
+            String qualityGrade,
+            String storageLocation,
+            String traceabilityCode,
+            String notes
+    ) {
+        this(harvestRecordId, cropSeasonId, seasonCode, seasonName, farmId, farmName, blockId, blockName, recordedByMemberId, recorderFullName, harvestLotCode, harvestedAt, quantity, BigDecimal.ZERO, unit, qualityGrade, storageLocation, traceabilityCode, notes);
+    }
+
+    public HarvestRecordResp(
+            Integer harvestRecordId, Integer cropSeasonId, String seasonCode, String seasonName,
+            Integer farmId, String farmName, Integer plotId, String plotCode, String plotName,
+            Integer recordedByMemberId, String recorderFullName, String harvestLotCode,
+            LocalDateTime harvestedAt, BigDecimal quantity, BigDecimal discardedQuantity, String unit, String qualityGrade,
+            String storageLocation, String traceabilityCode, String notes
+    ) {
+        this(harvestRecordId, cropSeasonId, seasonCode, seasonName, farmId, farmName, plotId, plotName != null ? plotName : plotCode, recordedByMemberId, recorderFullName, harvestLotCode, harvestedAt, quantity, discardedQuantity != null ? discardedQuantity : BigDecimal.ZERO, unit, qualityGrade, storageLocation, traceabilityCode, notes);
+    }
+
+    public HarvestRecordResp(
             Integer harvestRecordId, Integer cropSeasonId, String seasonCode, String seasonName,
             Integer farmId, String farmName, Integer plotId, String plotCode, String plotName,
             Integer recordedByMemberId, String recorderFullName, String harvestLotCode,
             LocalDateTime harvestedAt, BigDecimal quantity, String unit, String qualityGrade,
             String storageLocation, String traceabilityCode, String notes
     ) {
-        this(harvestRecordId, cropSeasonId, seasonCode, seasonName, farmId, farmName, plotId, plotName != null ? plotName : plotCode, recordedByMemberId, recorderFullName, harvestLotCode, harvestedAt, quantity, unit, qualityGrade, storageLocation, traceabilityCode, notes);
+        this(harvestRecordId, cropSeasonId, seasonCode, seasonName, farmId, farmName, plotId, plotName != null ? plotName : plotCode, recordedByMemberId, recorderFullName, harvestLotCode, harvestedAt, quantity, BigDecimal.ZERO, unit, qualityGrade, storageLocation, traceabilityCode, notes);
     }
 
     public Integer plotId() { return blockId; }

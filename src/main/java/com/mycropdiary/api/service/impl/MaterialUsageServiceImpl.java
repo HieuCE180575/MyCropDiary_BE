@@ -444,6 +444,12 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             if (request.description() != null && !request.description().trim().isEmpty()) {
                 existing.setDescription(request.description().trim());
             }
+            if (request.lotNumber() != null) {
+                existing.setLotNumber(request.lotNumber().trim());
+            }
+            if (request.germinationRate() != null) {
+                existing.setGerminationRate(request.germinationRate());
+            }
             return MaterialOptionResp.fromEntity(materialRepository.save(existing));
         }
 
@@ -465,6 +471,12 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         );
         if (request.description() != null) {
             material.setDescription(request.description().trim());
+        }
+        if (request.lotNumber() != null) {
+            material.setLotNumber(request.lotNumber().trim());
+        }
+        if (request.germinationRate() != null) {
+            material.setGerminationRate(request.germinationRate());
         }
         Material saved = materialRepository.save(material);
         return MaterialOptionResp.fromEntity(saved);

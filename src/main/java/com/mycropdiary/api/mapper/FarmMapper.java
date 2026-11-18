@@ -44,6 +44,7 @@ public class FarmMapper {
                 farm.getLongitude(),
                 farm.getBoundaryCoordinates(),
                 farm.getCoverImageUrl(),
+                farm.getFarmMapUrl(),
                 farm.getFarmStatus(),
                 farm.getCreatedAt(),
                 farm.getUpdatedAt(),

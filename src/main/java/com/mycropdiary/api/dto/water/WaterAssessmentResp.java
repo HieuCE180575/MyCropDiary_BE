@@ -24,8 +24,31 @@ public record WaterAssessmentResp(
         String qualityStatus,
         String notes,
         String imageUrl,
+        String labTestReportUrl,
         Instant assessedAt
 ) {
+    public WaterAssessmentResp(
+            Integer assessmentId,
+            Integer waterSourceId,
+            String waterSourceName,
+            String waterSourceType,
+            Integer blockId,
+            String blockName,
+            Integer zoneId,
+            String zoneName,
+            Integer farmId,
+            Integer conductedByMemberId,
+            String conductedByName,
+            BigDecimal waterPh,
+            BigDecimal temperatureC,
+            String qualityStatus,
+            String notes,
+            String imageUrl,
+            Instant assessedAt
+    ) {
+        this(assessmentId, waterSourceId, waterSourceName, waterSourceType, blockId, blockName, zoneId, zoneName, farmId, conductedByMemberId, conductedByName, waterPh, temperatureC, qualityStatus, notes, imageUrl, null, assessedAt);
+    }
+
     public static WaterAssessmentResp fromEntity(WaterAssessment entity) {
         if (entity == null) return null;
 
@@ -62,6 +85,7 @@ public record WaterAssessmentResp(
                 entity.getQualityStatus(),
                 entity.getNotes(),
                 entity.getImageUrl(),
+                entity.getLabTestReportUrl(),
                 entity.getAssessedAt()
         );
     }

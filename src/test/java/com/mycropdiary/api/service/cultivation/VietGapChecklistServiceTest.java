@@ -74,6 +74,10 @@ class VietGapChecklistServiceTest {
     @Mock
     private TrainingRecordRepository trainingRecordRepository;
     @Mock
+    private WarehouseRepository warehouseRepository;
+    @Mock
+    private MaterialUsageRepository materialUsageRepository;
+    @Mock
     private VietGapPdfExportService pdfExportService;
     @Mock
     private FarmAccessGuard accessGuard;
@@ -415,6 +419,121 @@ class VietGapChecklistServiceTest {
             assertEquals("pass", result.getResultStatus());
             assertTrue(result.getNotes().contains("Tập huấn Quy trình VietGAP rau ăn quả"));
             assertEquals("TRAINING_RECORD", result.getEvidenceReferenceType());
+        }
+
+        @Test
+        @DisplayName("VG-CS-04: Đạt khi trang trại đã cập nhật sơ đồ mặt bằng tổng thể (farmMapUrl)")
+        void testFarmMap_PassWhenFarmMapUrlPresent() {
+            ChecklistRun run = new ChecklistRun();
+            run.setId(1);
+            run.setFarm(farm);
+            run.setCropSeason(season);
+            run.setRunStatus("in_progress");
+
+            ChecklistResult result = new ChecklistResult();
+            result.setId(11);
+            result.setChecklistRun(run);
+            result.setRuleCode("VG-CS-04");
+
+            farm.setFarmMapUrl("https://storage.mycropdiary.com/maps/farm1-layout.png");
+            when(checklistRunRepository.findByIdWithDetails(1)).thenReturn(Optional.of(run));
+            when(checklistResultRepository.findByRunIdWithDetails(1)).thenReturn(List.of(result));
+            when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
+
+            checklistService.autoCheckRun(10, 1, 1);
+
+            assertEquals("pass", result.getResultStatus());
+            assertTrue(result.getNotes().contains("Đã có sơ đồ mặt bằng tổng thể"));
+            assertEquals("FARM", result.getEvidenceReferenceType());
+        }
+
+        @Test
+        @DisplayName("VG-CS-01: Đạt khi trang trại có kho chứa vật tư riêng biệt (kho_thuoc_bvtv, kho_phan_bon)")
+        void testWarehouse_PassWhenWarehousesPresent() {
+            ChecklistRun run = new ChecklistRun();
+            run.setId(1);
+            run.setFarm(farm);
+            run.setCropSeason(season);
+            run.setRunStatus("in_progress");
+
+            ChecklistResult result = new ChecklistResult();
+            result.setId(12);
+            result.setChecklistRun(run);
+            result.setRuleCode("VG-CS-01");
+
+            Warehouse w1 = new Warehouse(farm, "Kho Thuốc BVTV", "Khu cách ly A", null);
+            w1.setId(101);
+            w1.setWarehouseType("kho_thuoc_bvtv");
+
+            Warehouse w2 = new Warehouse(farm, "Kho Phân Bón", "Khu nhà kính B", null);
+            w2.setId(102);
+            w2.setWarehouseType("kho_phan_bon");
+
+            when(checklistRunRepository.findByIdWithDetails(1)).thenReturn(Optional.of(run));
+            when(checklistResultRepository.findByRunIdWithDetails(1)).thenReturn(List.of(result));
+            when(warehouseRepository.findByFarmIdOrderByWarehouseNameAsc(1)).thenReturn(List.of(w1, w2));
+
+            checklistService.autoCheckRun(10, 1, 1);
+
+            assertEquals("pass", result.getResultStatus());
+            assertTrue(result.getNotes().contains("phân loại riêng biệt kho phân bón và thuốc BVTV"));
+            assertEquals("WAREHOUSE", result.getEvidenceReferenceType());
+        }
+
+        @Test
+        @DisplayName("VG-TX-03: Đạt và tính toán chuẩn cân bằng khối lượng (Mass Balance 2026)")
+        void testMassBalance_PassWhenHarvestAndDiscardedRecorded() {
+            ChecklistRun run = new ChecklistRun();
+            run.setId(1);
+            run.setFarm(farm);
+            run.setCropSeason(season);
+            run.setRunStatus("in_progress");
+
+            ChecklistResult result = new ChecklistResult();
+            result.setId(13);
+            result.setChecklistRun(run);
+            result.setRuleCode("VG-TX-03");
+
+            HarvestRecord h1 = new HarvestRecord();
+            h1.setId(201);
+            h1.setQuantity(new BigDecimal("1250.50"));
+            h1.setDiscardedQuantity(new BigDecimal("25.50"));
+            h1.setUnit("kg");
+
+            when(checklistRunRepository.findByIdWithDetails(1)).thenReturn(Optional.of(run));
+            when(checklistResultRepository.findByRunIdWithDetails(1)).thenReturn(List.of(result));
+            when(harvestRecordRepository.findByCropSeasonId(1)).thenReturn(List.of(h1));
+
+            checklistService.autoCheckRun(10, 1, 1);
+
+            assertEquals("pass", result.getResultStatus());
+            assertTrue(result.getNotes().contains("Mass Balance"));
+            assertTrue(result.getNotes().contains("1250.50 kg"));
+            assertTrue(result.getNotes().contains("25.50 kg"));
+            assertEquals("HARVEST_RECORD", result.getEvidenceReferenceType());
+        }
+
+        @Test
+        @DisplayName("VG-HS-06: Đạt tự động kiểm tra lưu trữ hồ sơ >= 24 tháng theo VietGAP 2026")
+        void testRecordRetention_Pass24Months() {
+            ChecklistRun run = new ChecklistRun();
+            run.setId(1);
+            run.setFarm(farm);
+            run.setCropSeason(season);
+            run.setRunStatus("in_progress");
+
+            ChecklistResult result = new ChecklistResult();
+            result.setId(14);
+            result.setChecklistRun(run);
+            result.setRuleCode("VG-HS-06");
+
+            when(checklistRunRepository.findByIdWithDetails(1)).thenReturn(Optional.of(run));
+            when(checklistResultRepository.findByRunIdWithDetails(1)).thenReturn(List.of(result));
+
+            checklistService.autoCheckRun(10, 1, 1);
+
+            assertEquals("pass", result.getResultStatus());
+            assertTrue(result.getNotes().contains("24 tháng"));
         }
     }
 

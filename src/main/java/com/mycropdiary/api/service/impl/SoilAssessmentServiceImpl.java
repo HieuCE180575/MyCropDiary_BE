@@ -59,6 +59,7 @@ public class SoilAssessmentServiceImpl implements SoilAssessmentService {
                 request.imageUrl(),
                 request.assessedAt() != null ? request.assessedAt() : Instant.now()
         );
+        assessment.setLabTestReportUrl(request.labTestReportUrl());
 
         SoilAssessment saved = soilRepository.save(assessment);
         return SoilAssessmentResp.fromEntity(saved);
@@ -116,6 +117,9 @@ public class SoilAssessmentServiceImpl implements SoilAssessmentService {
         }
         if (request.imageUrl() != null) {
             entity.setImageUrl(request.imageUrl());
+        }
+        if (request.labTestReportUrl() != null) {
+            entity.setLabTestReportUrl(request.labTestReportUrl());
         }
         if (request.assessedAt() != null) {
             entity.setAssessedAt(request.assessedAt());
