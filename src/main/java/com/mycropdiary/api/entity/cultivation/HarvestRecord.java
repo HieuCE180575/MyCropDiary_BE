@@ -48,6 +48,9 @@ public class HarvestRecord {
     @Column(name = "quantity", nullable = false, precision = 14, scale = 3)
     private BigDecimal quantity;
 
+    @Column(name = "discarded_quantity", precision = 14, scale = 3)
+    private BigDecimal discardedQuantity = BigDecimal.ZERO;
+
     @Column(name = "unit", nullable = false, length = 30)
     private String unit = "kg";
 
@@ -98,6 +101,9 @@ public class HarvestRecord {
 
     public BigDecimal getQuantity() { return quantity; }
     public void setQuantity(BigDecimal quantity) { this.quantity = quantity; }
+
+    public BigDecimal getDiscardedQuantity() { return discardedQuantity; }
+    public void setDiscardedQuantity(BigDecimal discardedQuantity) { this.discardedQuantity = discardedQuantity; }
 
     public String getUnit() { return unit; }
     public void setUnit(String unit) { this.unit = unit; }

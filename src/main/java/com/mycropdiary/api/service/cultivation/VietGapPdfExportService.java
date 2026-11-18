@@ -82,19 +82,34 @@ public class VietGapPdfExportService {
 
             document.add(new Paragraph(" ", new Font(baseFont, 4)));
 
+            // ─── 1.1 QUỐC HIỆU & TIÊU NGỮ ───
+            Paragraph quocHieu = new Paragraph("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", fontSubTitle);
+            quocHieu.setAlignment(Element.ALIGN_CENTER);
+            document.add(quocHieu);
+
+            Paragraph tieuNgu = new Paragraph("Độc lập - Tự do - Hạnh phúc", fontSubTitle);
+            tieuNgu.setAlignment(Element.ALIGN_CENTER);
+            tieuNgu.setSpacingAfter(2f);
+            document.add(tieuNgu);
+
+            Paragraph decorLine = new Paragraph("-----------------***-----------------", fontLegal);
+            decorLine.setAlignment(Element.ALIGN_CENTER);
+            decorLine.setSpacingAfter(10f);
+            document.add(decorLine);
+
             // ─── 2. REPORT HEADER ───
             Paragraph titlePara = new Paragraph("BẢNG KIỂM TRA ĐÁNH GIÁ NỘI BỘ VIETGAP", fontTitle);
             titlePara.setAlignment(Element.ALIGN_CENTER);
             titlePara.setSpacingAfter(2f);
             document.add(titlePara);
 
-            Paragraph subTitlePara = new Paragraph("(Dùng để kiểm tra, đánh giá nội bộ theo mùa vụ / năm)", fontSubTitle);
+            Paragraph subTitlePara = new Paragraph("(Dùng để kiểm tra, đánh giá nội bộ theo mùa vụ canh tác rau màu / năm)", fontSubTitle);
             subTitlePara.setAlignment(Element.ALIGN_CENTER);
             subTitlePara.setSpacingAfter(4f);
             document.add(subTitlePara);
 
             Paragraph legalPara = new Paragraph(
-                    "(Ban hành kèm theo Hướng dẫn thực hiện VietGAP trồng trọt theo tiêu chuẩn Quốc gia TCVN 11892-1:2017)",
+                    "(Căn cứ Tiêu chuẩn Quốc gia TCVN 11892-1:2017 & Lộ trình cập nhật TCVN 11892-1:2026 - VietGAP Trồng trọt)",
                     fontLegal
             );
             legalPara.setAlignment(Element.ALIGN_CENTER);
@@ -250,9 +265,9 @@ public class VietGapPdfExportService {
             sumPara.add(new Chunk("Không đạt: " + failed + " tiêu chí | ", fontInfo));
             sumPara.add(new Chunk("Tỷ lệ tuân thủ đạt: " + Math.round(pct) + "%\n", fontInfoBold));
 
-            String conclusionText = pct >= 90.0 && failed == 0
-                    ? "• KẾT LUẬN: Cơ sở sản xuất ĐỦ ĐIỀU KIỆN đạt chuẩn VietGAP theo quy định tại TCVN 11892-1:2017."
-                    : "• KẾT LUẬN: Cơ sở sản xuất cần tiếp tục khắc phục các tiêu chí Chưa đạt trước kỳ thẩm định chính thức.";
+            String conclusionText = pct >= 97.0 && failed <= 1
+                    ? "• KẾT LUẬN: Cơ sở sản xuất ĐỦ ĐIỀU KIỆN ĐẠT CHUẨN VIETGAP theo quy định tại TCVN 11892-1:2017 & lộ trình TCVN 11892-1:2026 (Đạt tối thiểu 100% chỉ tiêu Mức A và >= 80% chỉ tiêu Mức B)."
+                    : "• KẾT LUẬN: Cơ sở sản xuất cần tiếp tục khắc phục các tiêu chí Chưa đạt (" + failed + " tiêu chí) trước khi nộp hồ sơ đánh giá chứng nhận chính thức.";
             sumPara.add(new Chunk(conclusionText, fontInfoBold));
 
             sumCell.addElement(sumPara);

@@ -28,6 +28,9 @@ public class Warehouse {
     @Column(name = "image_url", columnDefinition = "NVARCHAR(MAX)")
     private String imageUrl;
 
+    @Column(name = "warehouse_type", length = 50)
+    private String warehouseType = "kho_chung";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -83,6 +86,14 @@ public class Warehouse {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getWarehouseType() {
+        return warehouseType;
+    }
+
+    public void setWarehouseType(String warehouseType) {
+        this.warehouseType = warehouseType;
     }
 
     public Instant getCreatedAt() {

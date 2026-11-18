@@ -44,6 +44,9 @@ public class WaterAssessment {
     @Column(name = "image_url", columnDefinition = "NVARCHAR(MAX)")
     private String imageUrl;
 
+    @Column(name = "lab_test_report_url", columnDefinition = "NVARCHAR(MAX)")
+    private String labTestReportUrl;
+
     @Column(name = "assessed_at", nullable = false)
     private Instant assessedAt;
 
@@ -96,6 +99,9 @@ public class WaterAssessment {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getLabTestReportUrl() { return labTestReportUrl; }
+    public void setLabTestReportUrl(String labTestReportUrl) { this.labTestReportUrl = labTestReportUrl; }
 
     public Instant getAssessedAt() { return assessedAt; }
     public void setAssessedAt(Instant assessedAt) { this.assessedAt = assessedAt; }

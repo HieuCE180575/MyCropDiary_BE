@@ -41,6 +41,12 @@ public class Material {
     @Column(name = "image_url", columnDefinition = "NVARCHAR(MAX)")
     private String imageUrl;
 
+    @Column(name = "lot_number", length = 60)
+    private String lotNumber;
+
+    @Column(name = "germination_rate", precision = 5, scale = 2)
+    private java.math.BigDecimal germinationRate;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
@@ -96,6 +102,12 @@ public class Material {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getLotNumber() { return lotNumber; }
+    public void setLotNumber(String lotNumber) { this.lotNumber = lotNumber; }
+
+    public java.math.BigDecimal getGerminationRate() { return germinationRate; }
+    public void setGerminationRate(java.math.BigDecimal germinationRate) { this.germinationRate = germinationRate; }
 
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }

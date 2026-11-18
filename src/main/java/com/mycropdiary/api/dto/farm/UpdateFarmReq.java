@@ -14,17 +14,22 @@ public record UpdateFarmReq(
         BigDecimal longitude,
         String boundaryCoordinates,
         String coverImageUrl,
+        String farmMapUrl,
         String status
 ) {
+    public UpdateFarmReq(String farmName, String description, String address, BigDecimal latitude, BigDecimal longitude, String boundaryCoordinates, String coverImageUrl, String status) {
+        this(farmName, description, address, latitude, longitude, boundaryCoordinates, coverImageUrl, null, status);
+    }
+
     public UpdateFarmReq(String farmName, String description, String address, BigDecimal latitude, BigDecimal longitude, String coverImageUrl, String status) {
-        this(farmName, description, address, latitude, longitude, null, coverImageUrl, status);
+        this(farmName, description, address, latitude, longitude, null, coverImageUrl, null, status);
     }
 
     public UpdateFarmReq(String farmName, String addressLine, String province, String district, String ward, BigDecimal latitude, BigDecimal longitude, BigDecimal totalAreaM2) {
-        this(farmName, null, addressLine != null ? addressLine : (province != null ? province : ""), latitude, longitude, null, null, null);
+        this(farmName, null, addressLine != null ? addressLine : (province != null ? province : ""), latitude, longitude, null, null, null, null);
     }
 
     public UpdateFarmReq(String farmName, String addressLine, String province, String district, String ward, BigDecimal latitude, BigDecimal longitude, BigDecimal totalAreaM2, String status) {
-        this(farmName, null, addressLine != null ? addressLine : (province != null ? province : ""), latitude, longitude, null, null, status);
+        this(farmName, null, addressLine != null ? addressLine : (province != null ? province : ""), latitude, longitude, null, null, null, status);
     }
 }

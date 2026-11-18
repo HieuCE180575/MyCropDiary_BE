@@ -36,6 +36,9 @@ public class Farm extends BaseEntity {
     @Column(name = "cover_image_url", columnDefinition = "NVARCHAR(MAX)")
     private String coverImageUrl;
 
+    @Column(name = "farm_map_url", columnDefinition = "NVARCHAR(MAX)")
+    private String farmMapUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
@@ -79,6 +82,9 @@ public class Farm extends BaseEntity {
 
     public String getCoverImageUrl() { return coverImageUrl; }
     public void setCoverImageUrl(String coverImageUrl) { this.coverImageUrl = coverImageUrl; }
+
+    public String getFarmMapUrl() { return farmMapUrl; }
+    public void setFarmMapUrl(String farmMapUrl) { this.farmMapUrl = farmMapUrl; }
 
     public User getCreatedBy() { return createdBy; }
     public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }

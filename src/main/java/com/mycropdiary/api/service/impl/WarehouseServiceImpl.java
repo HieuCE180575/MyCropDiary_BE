@@ -78,6 +78,7 @@ public class WarehouseServiceImpl implements WarehouseService {
                 request.address() != null ? request.address().trim() : null,
                 request.imageUrl() != null ? request.imageUrl().trim() : null
         );
+        warehouse.setWarehouseType(request.warehouseType() != null && !request.warehouseType().isBlank() ? request.warehouseType().trim() : "kho_chung");
 
         Warehouse saved = warehouseRepository.save(warehouse);
         return toWarehouseResp(saved);
@@ -98,6 +99,9 @@ public class WarehouseServiceImpl implements WarehouseService {
         warehouse.setWarehouseName(newName);
         warehouse.setAddress(request.address() != null ? request.address().trim() : null);
         warehouse.setImageUrl(request.imageUrl() != null ? request.imageUrl().trim() : null);
+        if (request.warehouseType() != null && !request.warehouseType().isBlank()) {
+            warehouse.setWarehouseType(request.warehouseType().trim());
+        }
 
         Warehouse saved = warehouseRepository.save(warehouse);
         return toWarehouseResp(saved);
@@ -201,6 +205,7 @@ public class WarehouseServiceImpl implements WarehouseService {
                 w.getFarm().getId(),
                 w.getFarm().getFarmName(),
                 w.getWarehouseName(),
+                w.getWarehouseType() != null ? w.getWarehouseType() : "kho_chung",
                 w.getAddress(),
                 w.getImageUrl(),
                 count,

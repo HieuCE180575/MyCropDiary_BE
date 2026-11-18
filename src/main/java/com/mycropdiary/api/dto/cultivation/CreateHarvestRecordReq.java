@@ -29,6 +29,9 @@ public record CreateHarvestRecordReq(
         @DecimalMin(value = "0.0001", message = "Quantity must be greater than 0")
         BigDecimal quantity,
 
+        @DecimalMin(value = "0.0", message = "Discarded quantity cannot be negative")
+        BigDecimal discardedQuantity,
+
         @NotBlank(message = "Unit is required")
         @Size(max = 30, message = "Unit must not exceed 30 characters")
         String unit,
@@ -47,6 +50,8 @@ public record CreateHarvestRecordReq(
 ) {
     public CreateHarvestRecordReq(
             Integer cropSeasonId,
+            Integer blockId,
+            Integer farmingActivityId,
             String harvestLotCode,
             LocalDateTime harvestedAt,
             BigDecimal quantity,
@@ -56,6 +61,20 @@ public record CreateHarvestRecordReq(
             String traceabilityCode,
             String notes
     ) {
-        this(cropSeasonId, null, null, harvestLotCode, harvestedAt, quantity, unit, qualityGrade, storageLocation, traceabilityCode, notes);
+        this(cropSeasonId, blockId, farmingActivityId, harvestLotCode, harvestedAt, quantity, BigDecimal.ZERO, unit, qualityGrade, storageLocation, traceabilityCode, notes);
+    }
+
+    public CreateHarvestRecordReq(
+            Integer cropSeasonId,
+            String harvestLotCode,
+            LocalDateTime harvestedAt,
+            BigDecimal quantity,
+            String unit,
+            String qualityGrade,
+            String storageLocation,
+            String traceabilityCode,
+            String notes
+    ) {
+        this(cropSeasonId, null, null, harvestLotCode, harvestedAt, quantity, BigDecimal.ZERO, unit, qualityGrade, storageLocation, traceabilityCode, notes);
     }
 }

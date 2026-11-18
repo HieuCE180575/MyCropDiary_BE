@@ -117,6 +117,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
         record.setRecordedBy(recordedByMember);
         record.setHarvestDate(harvestDate);
         record.setQuantity(request.quantity());
+        record.setDiscardedQuantity(request.discardedQuantity() != null ? request.discardedQuantity() : BigDecimal.ZERO);
         record.setUnit(request.unit().trim());
         record.setQualityGrade(request.qualityGrade() != null ? request.qualityGrade().trim() : null);
         record.setNotes(request.notes() != null ? request.notes().trim() : null);
@@ -152,6 +153,13 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
                 throw new BadRequestException("Sản lượng thu hoạch phải lớn hơn 0.");
             }
             record.setQuantity(request.quantity());
+        }
+
+        if (request.discardedQuantity() != null) {
+            if (request.discardedQuantity().compareTo(BigDecimal.ZERO) < 0) {
+                throw new BadRequestException("Sản lượng loại bỏ không được âm.");
+            }
+            record.setDiscardedQuantity(request.discardedQuantity());
         }
 
         if (request.unit() != null && !request.unit().trim().isEmpty()) {
@@ -345,6 +353,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
                 record.getHarvestLotCode(),
                 record.getHarvestedAt(),
                 record.getQuantity(),
+                record.getDiscardedQuantity() != null ? record.getDiscardedQuantity() : BigDecimal.ZERO,
                 record.getUnit(),
                 record.getQualityGrade(),
                 record.getStorageLocation(),

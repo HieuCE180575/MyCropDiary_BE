@@ -17,6 +17,9 @@ public record UpdateHarvestRecordReq(
         @DecimalMin(value = "0.0001", message = "Sản lượng thu hoạch phải lớn hơn 0")
         BigDecimal quantity,
 
+        @DecimalMin(value = "0.0", message = "Sản lượng loại bỏ không được âm")
+        BigDecimal discardedQuantity,
+
         @Size(max = 30, message = "Đơn vị tính tối đa 30 ký tự")
         String unit,
 
@@ -30,6 +33,7 @@ public record UpdateHarvestRecordReq(
         String notes
 ) {
     public UpdateHarvestRecordReq(
+            Integer blockId,
             LocalDateTime harvestedAt,
             BigDecimal quantity,
             String unit,
@@ -37,6 +41,17 @@ public record UpdateHarvestRecordReq(
             String storageLocation,
             String notes
     ) {
-        this(null, harvestedAt, quantity, unit, qualityGrade, storageLocation, notes);
+        this(blockId, harvestedAt, quantity, null, unit, qualityGrade, storageLocation, notes);
+    }
+
+    public UpdateHarvestRecordReq(
+            LocalDateTime harvestedAt,
+            BigDecimal quantity,
+            String unit,
+            String qualityGrade,
+            String storageLocation,
+            String notes
+    ) {
+        this(null, harvestedAt, quantity, null, unit, qualityGrade, storageLocation, notes);
     }
 }

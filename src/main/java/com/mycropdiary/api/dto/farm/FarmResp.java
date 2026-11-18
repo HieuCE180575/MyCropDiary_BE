@@ -15,11 +15,29 @@ public record FarmResp(
         BigDecimal longitude,
         String boundaryCoordinates,
         String coverImageUrl,
+        String farmMapUrl,
         String status,
         Instant createdAt,
         Instant updatedAt,
         String currentUserRole
 ) {
+    public FarmResp(
+            Integer id,
+            String farmName,
+            String description,
+            String address,
+            BigDecimal latitude,
+            BigDecimal longitude,
+            String boundaryCoordinates,
+            String coverImageUrl,
+            String status,
+            Instant createdAt,
+            Instant updatedAt,
+            String currentUserRole
+    ) {
+        this(id, farmName, description, address, latitude, longitude, boundaryCoordinates, coverImageUrl, null, status, createdAt, updatedAt, currentUserRole);
+    }
+
     public FarmResp(
             Integer id,
             String farmName,
@@ -33,7 +51,7 @@ public record FarmResp(
             Instant updatedAt,
             String currentUserRole
     ) {
-        this(id, farmName, description, address, latitude, longitude, null, coverImageUrl, status, createdAt, updatedAt, currentUserRole);
+        this(id, farmName, description, address, latitude, longitude, null, coverImageUrl, null, status, createdAt, updatedAt, currentUserRole);
     }
 
     public String farmCode() { return id != null ? id.toString() : null; }
