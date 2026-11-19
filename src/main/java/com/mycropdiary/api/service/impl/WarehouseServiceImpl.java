@@ -19,7 +19,8 @@ import com.mycropdiary.api.service.cultivation.WarehouseService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.mycropdiary.api.dto.warehouse.WarehouseOverviewResp;
+import java.util.Comparator;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -34,10 +35,10 @@ public class WarehouseServiceImpl implements WarehouseService {
     private final FarmAccessGuard accessGuard;
 
     public WarehouseServiceImpl(WarehouseRepository warehouseRepository,
-                                InventoryRepository inventoryRepository,
-                                MaterialRepository materialRepository,
-                                FarmRepository farmRepository,
-                                FarmAccessGuard accessGuard) {
+            InventoryRepository inventoryRepository,
+            MaterialRepository materialRepository,
+            FarmRepository farmRepository,
+            FarmAccessGuard accessGuard) {
         this.warehouseRepository = warehouseRepository;
         this.inventoryRepository = inventoryRepository;
         this.materialRepository = materialRepository;
@@ -76,9 +77,10 @@ public class WarehouseServiceImpl implements WarehouseService {
                 farm,
                 request.warehouseName().trim(),
                 request.address() != null ? request.address().trim() : null,
-                request.imageUrl() != null ? request.imageUrl().trim() : null
-        );
-        warehouse.setWarehouseType(request.warehouseType() != null && !request.warehouseType().isBlank() ? request.warehouseType().trim() : "kho_chung");
+                request.imageUrl() != null ? request.imageUrl().trim() : null);
+        warehouse.setWarehouseType(
+                request.warehouseType() != null && !request.warehouseType().isBlank() ? request.warehouseType().trim()
+                        : "kho_chung");
 
         Warehouse saved = warehouseRepository.save(warehouse);
         return toWarehouseResp(saved);
@@ -122,7 +124,8 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<InventoryItemResp> getInventoriesByFarm(Integer userId, Integer farmId, Integer warehouseId, String keyword) {
+    public List<InventoryItemResp> getInventoriesByFarm(Integer userId, Integer farmId, Integer warehouseId,
+            String keyword) {
         accessGuard.requireFarmAccess(userId, farmId);
         List<Inventory> list;
         if (warehouseId != null) {
@@ -134,8 +137,10 @@ public class WarehouseServiceImpl implements WarehouseService {
         if (keyword != null && !keyword.trim().isEmpty()) {
             String q = keyword.trim().toLowerCase();
             list = list.stream()
-                    .filter(i -> (i.getMaterial() != null && i.getMaterial().getMaterialName().toLowerCase().contains(q))
-                            || (i.getWarehouse() != null && i.getWarehouse().getWarehouseName().toLowerCase().contains(q)))
+                    .filter(i -> (i.getMaterial() != null
+                            && i.getMaterial().getMaterialName().toLowerCase().contains(q))
+                            || (i.getWarehouse() != null
+                                    && i.getWarehouse().getWarehouseName().toLowerCase().contains(q)))
                     .toList();
         }
 
@@ -146,7 +151,8 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Transactional(readOnly = true)
     public InventoryItemResp getInventoryDetails(Integer userId, Integer inventoryId) {
         Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bản ghi tồn kho ID=" + inventoryId + " không tồn tại."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Bản ghi tồn kho ID=" + inventoryId + " không tồn tại."));
         accessGuard.requireFarmAccess(userId, inventory.getWarehouse().getFarm().getId());
         return toInventoryItemResp(inventory);
     }
@@ -154,7 +160,8 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Override
     public InventoryItemResp updateInventory(Integer userId, Integer inventoryId, UpdateInventoryReq request) {
         Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bản ghi tồn kho ID=" + inventoryId + " không tồn tại."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Bản ghi tồn kho ID=" + inventoryId + " không tồn tại."));
         accessGuard.requireFarmOwner(userId, inventory.getWarehouse().getFarm().getId());
 
         inventory.setQuantityOnHand(request.quantityOnHand());
@@ -168,24 +175,27 @@ public class WarehouseServiceImpl implements WarehouseService {
         accessGuard.requireFarmOwner(userId, farmId);
 
         Warehouse warehouse = warehouseRepository.findById(request.warehouseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Kho hàng ID=" + request.warehouseId() + " không tồn tại."));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Kho hàng ID=" + request.warehouseId() + " không tồn tại."));
         if (!warehouse.getFarm().getId().equals(farmId)) {
             throw new BadRequestException("Kho hàng không thuộc trang trại này.");
         }
 
         Material material = materialRepository.findByIdAndFarmId(request.materialId(), farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Vật tư ID=" + request.materialId() + " không tồn tại trong trang trại."));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Vật tư ID=" + request.materialId() + " không tồn tại trong trang trại."));
 
-        if (inventoryRepository.findByWarehouseIdAndMaterialId(request.warehouseId(), request.materialId()).isPresent()) {
-            throw new BadRequestException("Vật tư này đã tồn tại trong kho. Hãy cập nhật số lượng tồn thay vì thêm mới.");
+        if (inventoryRepository.findByWarehouseIdAndMaterialId(request.warehouseId(), request.materialId())
+                .isPresent()) {
+            throw new BadRequestException(
+                    "Vật tư này đã tồn tại trong kho. Hãy cập nhật số lượng tồn thay vì thêm mới.");
         }
 
         Inventory inventory = new Inventory(
                 warehouse,
                 material,
                 request.quantityOnHand(),
-                request.reorderLevel()
-        );
+                request.reorderLevel());
         Inventory saved = inventoryRepository.save(inventory);
         return toInventoryItemResp(saved);
     }
@@ -193,7 +203,8 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Override
     public void deleteInventory(Integer userId, Integer inventoryId) {
         Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bản ghi tồn kho ID=" + inventoryId + " không tồn tại."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Bản ghi tồn kho ID=" + inventoryId + " không tồn tại."));
         accessGuard.requireFarmOwner(userId, inventory.getWarehouse().getFarm().getId());
         inventoryRepository.delete(inventory);
     }
@@ -209,8 +220,7 @@ public class WarehouseServiceImpl implements WarehouseService {
                 w.getAddress(),
                 w.getImageUrl(),
                 count,
-                w.getCreatedAt()
-        );
+                w.getCreatedAt());
     }
 
     private InventoryItemResp toInventoryItemResp(Inventory i) {
@@ -227,7 +237,67 @@ public class WarehouseServiceImpl implements WarehouseService {
                 i.getQuantityOnHand(),
                 i.getReorderLevel(),
                 lowStock,
-                i.getUpdatedAt()
-        );
+                i.getUpdatedAt());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WarehouseOverviewResp getWarehouseOverview(
+            Integer currentUserId,
+            Integer warehouseId) {
+        // 1. Find the warehouse
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Kho hàng ID=" + warehouseId + " không tồn tại."));
+
+        // 2. Check whether the current user can access its farm
+        accessGuard.requireFarmAccess(
+                currentUserId,
+                warehouse.getFarm().getId());
+
+        // 3. Retrieve all inventory records in this warehouse
+        List<Inventory> inventories = inventoryRepository.findByWarehouseId(warehouseId);
+
+        int totalItemCount = inventories.size();
+        int lowStockCount = 0;
+        int outOfStockCount = 0;
+
+        // 4. Calculate inventory statistics
+        for (Inventory inventory : inventories) {
+            BigDecimal quantityOnHand = inventory.getQuantityOnHand() != null
+                    ? inventory.getQuantityOnHand()
+                    : BigDecimal.ZERO;
+
+            BigDecimal reorderLevel = inventory.getReorderLevel() != null
+                    ? inventory.getReorderLevel()
+                    : BigDecimal.ZERO;
+
+            if (quantityOnHand.compareTo(BigDecimal.ZERO) <= 0) {
+                outOfStockCount++;
+            } else if (quantityOnHand.compareTo(reorderLevel) <= 0) {
+                lowStockCount++;
+            }
+        }
+
+        // 5. Get the five most recently updated inventory records
+        List<InventoryItemResp> recentMaterials = inventories.stream()
+                .sorted(Comparator.comparing(
+                        Inventory::getUpdatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(5)
+                .map(this::toInventoryItemResp)
+                .toList();
+
+        // 6. Return the warehouse overview
+        return new WarehouseOverviewResp(
+                warehouse.getId(),
+                warehouse.getWarehouseName(),
+                warehouse.getFarm().getFarmName(),
+                warehouse.getAddress(),
+                totalItemCount,
+                lowStockCount,
+                outOfStockCount,
+                recentMaterials);
+    }
+
 }

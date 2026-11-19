@@ -5,6 +5,7 @@ import com.mycropdiary.api.dto.warehouse.CreateInventoryReq;
 import com.mycropdiary.api.dto.warehouse.CreateWarehouseReq;
 import com.mycropdiary.api.dto.warehouse.InventoryItemResp;
 import com.mycropdiary.api.dto.warehouse.UpdateInventoryReq;
+import com.mycropdiary.api.dto.warehouse.WarehouseOverviewResp;
 import com.mycropdiary.api.dto.warehouse.WarehouseResp;
 import com.mycropdiary.api.service.cultivation.WarehouseService;
 import com.mycropdiary.api.util.SecurityUtils;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -83,7 +85,8 @@ public class WarehouseController {
             @RequestParam(required = false) Integer warehouseId,
             @RequestParam(required = false) String keyword) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        List<InventoryItemResp> list = warehouseService.getInventoriesByFarm(currentUserId, farmId, warehouseId, keyword);
+        List<InventoryItemResp> list = warehouseService.getInventoriesByFarm(currentUserId, farmId, warehouseId,
+                keyword);
         return ApiResp.ok("Lấy danh sách tồn kho thành công.", list);
     }
 
@@ -123,5 +126,15 @@ public class WarehouseController {
         warehouseService.deleteInventory(currentUserId, inventoryId);
         return ApiResp.ok("Xóa bản ghi tồn kho thành công.", null);
     }
-}
 
+    @GetMapping("/warehouses/{warehouseId}/overview")
+    public ResponseEntity<ApiResp<WarehouseOverviewResp>> getWarehouseOverview(
+            @PathVariable Integer warehouseId) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        WarehouseOverviewResp response = warehouseService.getWarehouseOverview(
+                currentUserId,
+                warehouseId);
+
+        return ResponseEntity.ok(ApiResp.ok("Warehouse details", response));
+    }
+}
