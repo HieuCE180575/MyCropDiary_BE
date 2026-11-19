@@ -5,6 +5,7 @@ import com.mycropdiary.api.dto.warehouse.CreateWarehouseReq;
 import com.mycropdiary.api.dto.warehouse.InventoryItemResp;
 import com.mycropdiary.api.dto.warehouse.UpdateInventoryReq;
 import com.mycropdiary.api.dto.warehouse.WarehouseResp;
+import com.mycropdiary.api.dto.warehouse.WarehouseOverviewResp;
 
 import java.util.List;
 
@@ -20,5 +21,9 @@ public interface WarehouseService {
     InventoryItemResp createInventory(Integer userId, Integer farmId, CreateInventoryReq request);
     InventoryItemResp updateInventory(Integer userId, Integer inventoryId, UpdateInventoryReq request);
     void deleteInventory(Integer userId, Integer inventoryId);
+    WarehouseOverviewResp getWarehouseOverview(
+        Integer currentUserId,
+        Integer warehouseId
+    );
 }
 
