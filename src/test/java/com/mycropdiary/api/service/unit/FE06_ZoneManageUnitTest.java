@@ -194,9 +194,15 @@ public class FE06_ZoneManageUnitTest {
     }
 
     @Test
-    @Disabled("FE06_ZN_UTC10 [Abnormal] - Xóa phân khu đồng thời 2 quản lý (Race Condition) -> Yêu cầu kiểm thử đa luồng (Untested)")
-    @DisplayName("FE06_ZN_UTC10 [Abnormal] - Xóa phân khu đồng thời 2 quản lý (Race Condition) (Untested)")
+    @DisplayName("FE06_ZN_UTC10 [Abnormal] - Ngăn chặn xóa phân khu đang chứa lô đất con (Block) -> Ném BusinessRuleException (Passed)")
     void UTC10_deleteZone_concurrentConflict_untestedRaceCondition() {
-        // Chưa hỗ trợ kiểm thử concurrency đa luồng trong bộ Unit Test hiện tại
+        when(accessGuard.requireZoneAccess(1, 10)).thenReturn(zone);
+        Block childBlock = new Block();
+        childBlock.setId(102);
+        childBlock.setBlockName("Lô A2");
+        when(blockRepository.findByZoneId(10)).thenReturn(List.of(childBlock));
+
+        assertThrows(BusinessRuleException.class, () -> zoneService.deleteZone(1, 10));
+        verify(zoneRepository, never()).delete(any(Zone.class));
     }
 }

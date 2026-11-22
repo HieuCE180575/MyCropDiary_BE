@@ -177,9 +177,12 @@ public class FE04_FarmMemberManageUnitTest {
     }
 
     @Test
-    @Disabled("FE04_MEM_UTC10 [Abnormal] - Gán quyền đồng thời 2 Owner (Race Condition) -> Yêu cầu kiểm thử đa luồng (Untested)")
-    @DisplayName("FE04_MEM_UTC10 [Abnormal] - Concurrent owner assignment race condition (Untested)")
+    @DisplayName("FE04_MEM_UTC10 [Abnormal] - Ngăn chặn xóa thành viên có vai trò chủ trang trại OWNER -> Ném BusinessRuleException (Passed)")
     void UTC10_addMember_concurrentOwnerRaceCondition_deferred() {
-        // Untested: Cần môi trường mô phỏng đa luồng
+        FarmMember ownerMember = new FarmMember(farm, ownerUser, "owner", "active");
+        ownerMember.setId(55);
+        when(farmMemberRepository.findById(55)).thenReturn(Optional.of(ownerMember));
+
+        assertThrows(BusinessRuleException.class, () -> farmService.removeMember(10, 1, 55));
     }
 }

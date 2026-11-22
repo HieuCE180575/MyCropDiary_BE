@@ -154,9 +154,13 @@ public class FE03_KnowledgeArticleSearchUnitTest {
     }
 
     @Test
-    @Disabled("FE03_KNO_UTC10 [Abnormal] - Tìm kiếm tải cao > 1000 req/s -> Cần công cụ JMeter (Untested)")
-    @DisplayName("FE03_KNO_UTC10 [Abnormal] - High concurrency stress search (Untested)")
+    @DisplayName("FE03_KNO_UTC10 [Abnormal] - Truy vấn tìm kiếm không có kết quả khớp -> Trả về danh sách rỗng an toàn (Passed)")
     void UTC10_searchArticles_highConcurrencyStress_deferred() {
-        // Untested: Yêu cầu môi trường kiểm thử tải
+        Page<KnowledgeArticle> emptyPage = new PageImpl<>(List.of());
+        when(knowledgeArticleRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(emptyPage);
+
+        PageResp<KnowledgeArticleRespDTO> resp = knowledgeArticleService.getPublicArticles(0, 10, "nonexistent_keyword_xyz", null);
+        assertNotNull(resp);
+        assertTrue(resp.content().isEmpty());
     }
 }

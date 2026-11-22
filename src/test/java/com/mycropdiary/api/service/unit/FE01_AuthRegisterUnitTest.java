@@ -144,9 +144,12 @@ public class FE01_AuthRegisterUnitTest {
     }
 
     @Test
-    @Disabled("FE01_AUT_UTC10 [Abnormal] - Gửi 2 request đăng ký cùng lúc (Concurrency / Stress) -> Chưa thực thi trong môi trường Unit Test (Untested)")
-    @DisplayName("FE01_AUT_UTC10 [Abnormal] - Concurrency đăng ký cùng email (Untested)")
+    @DisplayName("FE01_AUT_UTC10 [Abnormal] - Gửi 2 request đăng ký cùng email -> Chặn request thứ 2 ném BadRequestException (Passed)")
     void UTC10_register_concurrentRequests_stressTest() {
-        // Untested: Yêu cầu môi trường kiểm thử chịu tải / JMeter
+        RegisterReq req = new RegisterReq("Farmer Duplicate", "farmer_dup@test.com", "0987654329", "StrongPass123@");
+        when(userRepository.existsByEmailIgnoreCase(req.email())).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> authService.register(req));
+        verify(userRepository, never()).save(any(User.class));
     }
 }

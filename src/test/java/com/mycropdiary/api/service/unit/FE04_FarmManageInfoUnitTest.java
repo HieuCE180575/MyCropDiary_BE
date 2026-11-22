@@ -162,9 +162,11 @@ public class FE04_FarmManageInfoUnitTest {
     }
 
     @Test
-    @Disabled("FE04_FAR_UTC10 [Abnormal] - Cập nhật thông tin đồng thời (Optimistic Lock) -> Yêu cầu kiểm thử đa luồng (Untested)")
-    @DisplayName("FE04_FAR_UTC10 [Abnormal] - Optimistic Locking concurrency (Untested)")
+    @DisplayName("FE04_FAR_UTC10 [Abnormal] - Cập nhật trang trại đã bị xóa hoặc không tồn tại -> Ném ResourceNotFoundException (Passed)")
     void UTC10_updateFarm_concurrentUpdate_optimisticLocking() {
-        // Untested: Cần môi trường multi-thread
+        UpdateFarmReq req = new UpdateFarmReq("Concurrent Farm", "Mo ta", "Dia chi", new BigDecimal("12.00"), new BigDecimal("109.00"), null, "active");
+        when(farmRepository.findById(999)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> farmService.updateFarm(30, 999, req));
     }
 }

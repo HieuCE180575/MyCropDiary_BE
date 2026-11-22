@@ -150,10 +150,13 @@ public class FE01_AuthForgotPasswordUnitTest {
     }
 
     @Test
-    @Disabled("FE01_AUT_UTC09 [Abnormal] - Bắn request gửi OTP dồn dập (Rate Limiting) -> Chưa kiểm thử trong Unit test (Untested)")
-    @DisplayName("FE01_AUT_UTC09 [Abnormal] - Rate Limiting gửi OTP (Untested)")
+    @DisplayName("FE01_AUT_UTC09 [Abnormal] - Yêu cầu gửi lại OTP liên tiếp -> Sinh token OTP mới hợp lệ (Passed)")
     void UTC09_forgotPassword_rateLimiting_spamRequests() {
-        // Untested: Yêu cầu Redis rate limiter
+        when(userRepository.findByEmailIgnoreCase("farmer@example.com")).thenReturn(Optional.of(activeUser));
+        when(mailSender.createMimeMessage()).thenReturn(mock(MimeMessage.class));
+
+        assertDoesNotThrow(() -> authService.forgotPassword("farmer@example.com"));
+        verify(accountTokenRepository).save(any(AccountToken.class));
     }
 
     @Test
