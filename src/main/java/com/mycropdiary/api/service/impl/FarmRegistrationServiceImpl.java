@@ -274,6 +274,15 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
                 "active");
         farmMemberRepository.save(ownerMember);
 
+        // Nâng cấp vai trò người dùng thành 'owner' nếu đang là 'user'
+        User applicant = registration.getUser();
+        if (applicant != null && "user".equalsIgnoreCase(applicant.getSystemRole())) {
+            applicant.setSystemRole("owner");
+            userRepository.save(applicant);
+            log.info("UC-39: User #{} ({}) đã được nâng cấp systemRole thành 'owner' sau khi đăng ký trang trại được duyệt.",
+                    applicant.getId(), applicant.getEmail());
+        }
+
         registration.setRegistrationStatus("approved");
         registration.setReviewedBy(adminUser);
         registration.setReviewedAt(Instant.now());
