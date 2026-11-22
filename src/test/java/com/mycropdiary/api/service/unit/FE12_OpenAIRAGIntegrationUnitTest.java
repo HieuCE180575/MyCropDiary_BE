@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OpenAI Integration & Dynamic RAG VietGAP Unit Tests")
-class FE17_OpenAIRAGIntegrationUnitTest {
+class FE12_OpenAIRAGIntegrationUnitTest {
 
     @Mock
     private AIConversationRepository conversationRepository;
@@ -155,7 +155,7 @@ class FE17_OpenAIRAGIntegrationUnitTest {
     // =========================================================================
 
     @Test
-    @DisplayName("FE17_OAI_UTC04 [Normal]: Jackson ObjectMapper đăng ký JavaTimeModule tuần tự hóa Instant và LocalDate chuẩn (Commit 0496118)")
+    @DisplayName("FE12_OAI_UTC04 [Normal]: Jackson ObjectMapper đăng ký JavaTimeModule tuần tự hóa Instant và LocalDate chuẩn (Commit 0496118)")
     void testObjectMapper_javaTimeModule_serializesDatesCorrectly() throws Exception {
         com.mycropdiary.api.MyCropDiaryApplication app = new com.mycropdiary.api.MyCropDiaryApplication();
         ObjectMapper mapper = app.objectMapper();
@@ -171,7 +171,7 @@ class FE17_OpenAIRAGIntegrationUnitTest {
     }
 
     @Test
-    @DisplayName("FE17_OAI_UTC05 [Boundary]: OpenAIService khởi tạo với ObjectMapper null -> Tự động dùng fallback không gây NPE (Commit 0496118)")
+    @DisplayName("FE12_OAI_UTC05 [Boundary]: OpenAIService khởi tạo với ObjectMapper null -> Tự động dùng fallback không gây NPE (Commit 0496118)")
     void testOpenAIService_withNullObjectMapper_shouldUseFallbackInstance() {
         OpenAIService service = new OpenAIService("sk-test-key", "gpt-4o-mini", "https://api.openai.com/v1///", 25, null);
         assertThat(service.isConfigured()).isTrue();

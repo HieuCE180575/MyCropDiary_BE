@@ -27,8 +27,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("FE11 - Water Assessment Service Unit Tests")
-class FE11_WaterAssessmentUnitTest {
+@DisplayName("FE06 - Water Assessment Service Unit Tests")
+class FE06_WaterAssessmentUnitTest {
 
     @Mock
     private WaterAssessmentRepository waterRepository;
@@ -139,7 +139,7 @@ class FE11_WaterAssessmentUnitTest {
     }
 
     @Test
-    @DisplayName("FE11_WTR_UTC05 [Abnormal] - Cập nhật phiếu đánh giá nước ID không tồn tại -> Ném ResourceNotFoundException (Commit c7ec0bc)")
+    @DisplayName("FE06_WTR_UTC05 [Abnormal] - Cập nhật phiếu đánh giá nước ID không tồn tại -> Ném ResourceNotFoundException (Commit c7ec0bc)")
     void updateWaterAssessment_notFound_throwsResourceNotFound() {
         when(waterRepository.findById(999)).thenReturn(Optional.empty());
         UpdateWaterAssessmentReq req = new UpdateWaterAssessmentReq(
@@ -151,7 +151,7 @@ class FE11_WaterAssessmentUnitTest {
     }
 
     @Test
-    @DisplayName("FE11_WTR_UTC06 [Boundary] - Đánh giá chất lượng nước đạt ngưỡng giới hạn pH (pH = 6.5) -> Hợp lệ chuẩn VietGAP (Commit c7ec0bc)")
+    @DisplayName("FE06_WTR_UTC06 [Boundary] - Đánh giá chất lượng nước đạt ngưỡng giới hạn pH (pH = 6.5) -> Hợp lệ chuẩn VietGAP (Commit c7ec0bc)")
     void createWaterAssessment_boundaryPhValue_valid() {
         when(accessGuard.requireBlockAccess(1, 100)).thenReturn(testBlock);
         when(waterSourceRepository.findByFarmIdOrderBySourceNameAsc(1)).thenReturn(List.of(testSource));
