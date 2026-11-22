@@ -77,11 +77,11 @@ public class AdminUserController {
     @Operation(summary = "Chỉnh sửa thông tin tài khoản người dùng (Admin)",
             description = "Admin chỉnh sửa họ tên, số điện thoại, vai trò hệ thống hoặc trạng thái của người dùng.")
     @PutMapping("/{userId}")
-    public ApiResp<UserResp> updateUserProfile(
+    public ApiResp<UserResp> updateUser(
             @PathVariable Integer userId,
-            @RequestBody java.util.Map<String, Object> request) {
+            @Valid @RequestBody com.mycropdiary.api.dto.admin.UpdateAdminUserReq request) {
         Integer adminUserId = securityUtils.getCurrentUserId();
-        UserResp updated = adminUserService.updateUserProfile(adminUserId, userId, request);
+        UserResp updated = adminUserService.updateUser(adminUserId, userId, request);
         return ApiResp.ok("Đã cập nhật thông tin người dùng thành công.", updated);
     }
 }

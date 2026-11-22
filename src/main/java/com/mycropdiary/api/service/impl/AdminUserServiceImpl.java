@@ -126,6 +126,37 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
+    public UserResp updateUser(Integer adminUserId, Integer targetUserId, com.mycropdiary.api.dto.admin.UpdateAdminUserReq request) {
+        User user = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với mã ID: " + targetUserId));
+
+        if (request.fullName() != null && !request.fullName().isBlank()) {
+            user.setFullName(request.fullName().trim());
+        }
+        if (request.phone() != null) {
+            String phone = request.phone().trim();
+            user.setPhone(phone.isEmpty() ? null : phone);
+        }
+        if (request.systemRole() != null && !request.systemRole().isBlank()) {
+            String role = request.systemRole().trim().toLowerCase();
+            if (adminUserId != null && adminUserId.equals(targetUserId) && !"admin".equalsIgnoreCase(role)) {
+                throw new BadRequestException("Quản trị viên không thể tự hạ quyền của chính mình.");
+            }
+            user.setSystemRole(role);
+        }
+        if (request.accountStatus() != null && !request.accountStatus().isBlank()) {
+            String status = request.accountStatus().trim().toLowerCase();
+            if (adminUserId != null && adminUserId.equals(targetUserId) && "locked".equalsIgnoreCase(status)) {
+                throw new BadRequestException("Quản trị viên không thể tự khóa tài khoản của chính mình.");
+            }
+            user.setAccountStatus(status);
+        }
+
+        User saved = userRepository.save(user);
+        return enrichSingleUser(saved);
+    }
+
+    @Override
     public UserResp updateUserProfile(Integer adminUserId, Integer targetUserId, Map<String, Object> request) {
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với mã ID: " + targetUserId));

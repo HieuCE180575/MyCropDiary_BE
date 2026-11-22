@@ -18,4 +18,6 @@ public interface AdminUserService {
     UserResp updateUserStatus(Integer adminUserId, Integer targetUserId, UpdateUserStatusReq request);
 
     UserResp updateUserProfile(Integer adminUserId, Integer targetUserId, Map<String, Object> request);
+
+    UserResp updateUser(Integer adminUserId, Integer targetUserId, com.mycropdiary.api.dto.admin.UpdateAdminUserReq request);
 }
