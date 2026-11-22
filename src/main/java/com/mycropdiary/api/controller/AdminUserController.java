@@ -63,6 +63,17 @@ public class AdminUserController {
         return ApiResp.ok(actionMessage, updated);
     }
 
+    @Operation(summary = "Tạo tài khoản người dùng mới (Admin)",
+            description = "Admin tạo tài khoản người dùng mới và tự động gửi email chứa OTP xác thực/kích hoạt tài khoản.")
+    @PostMapping
+    @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
+    public ApiResp<UserResp> createUser(
+            @Valid @RequestBody com.mycropdiary.api.dto.admin.CreateAdminUserReq request) {
+        Integer adminUserId = securityUtils.getCurrentUserId();
+        UserResp created = adminUserService.createUser(adminUserId, request);
+        return ApiResp.ok("Đã tạo tài khoản người dùng và gửi email kích hoạt thành công.", created);
+    }
+
     @Operation(summary = "Chỉnh sửa thông tin tài khoản người dùng (Admin)",
             description = "Admin chỉnh sửa họ tên, số điện thoại, vai trò hệ thống hoặc trạng thái của người dùng.")
     @PutMapping("/{userId}")

@@ -13,6 +13,8 @@ public interface AdminUserService {
 
     UserResp getUserById(Integer userId);
 
+    UserResp createUser(Integer adminUserId, com.mycropdiary.api.dto.admin.CreateAdminUserReq request);
+
     UserResp updateUserStatus(Integer adminUserId, Integer targetUserId, UpdateUserStatusReq request);
 
     UserResp updateUserProfile(Integer adminUserId, Integer targetUserId, Map<String, Object> request);
