@@ -24,8 +24,13 @@ public class AccountToken {
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
+    public static final int MAX_FAILED_ATTEMPTS = 5;
+
     @Column(name = "used_at")
     private Instant usedAt;
+
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts = 0;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -82,13 +87,23 @@ public class AccountToken {
     public void setExpiresAt(Instant expiresAt) { this.expiresAt = expiresAt; }
     public Instant getUsedAt() { return usedAt; }
     public void setUsedAt(Instant usedAt) { this.usedAt = usedAt; }
+    public int getFailedAttempts() { return failedAttempts; }
+    public void setFailedAttempts(int failedAttempts) { this.failedAttempts = failedAttempts; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     // --- Business methods ---
     public boolean isExpired() { return Instant.now().isAfter(expiresAt); }
     public boolean isUsed() { return usedAt != null; }
-    public boolean isValid() { return !isExpired() && !isUsed(); }
+    public boolean isValid() { return !isExpired() && !isUsed() && !isAttemptLimitReached(); }
+    public boolean isAttemptLimitReached() { return failedAttempts >= MAX_FAILED_ATTEMPTS; }
+    public int incrementFailedAttempts() {
+        this.failedAttempts++;
+        if (this.failedAttempts >= MAX_FAILED_ATTEMPTS) {
+            revoke();
+        }
+        return this.failedAttempts;
+    }
     public void markUsed() { this.usedAt = Instant.now(); }
     public void revoke() { this.usedAt = Instant.now(); } // marks used since revoked_at is omitted
 }

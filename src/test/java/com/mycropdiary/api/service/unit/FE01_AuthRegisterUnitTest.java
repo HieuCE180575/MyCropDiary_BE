@@ -120,16 +120,13 @@ public class FE01_AuthRegisterUnitTest {
     }
 
     @Test
-    @DisplayName("FE01_AUT_UTC08 [Boundary] - Họ tên dài 101 ký tự -> Gây lỗi tràn bộ nhớ CSDL SQL Server (Failed: DF-003)")
+    @DisplayName("FE01_AUT_UTC08 [Boundary] - Họ tên vượt giới hạn cột CSDL (> 150 ký tự) -> Chặn bằng BadRequestException (Passed)")
     void UTC08_register_fullNameExceeds100Chars_defectDF003() {
-        // [Defect DF-003] Column NVARCHAR(100) thiếu validate @Size(max=100) ném lỗi 500 DataTruncation
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-003: [Defect Found] Họ tên dài 101 ký tự gây tràn cột NVARCHAR(100) ném lỗi DataTruncation 500 thay vì 400 Validation Error.");
-        } else {
-            String name101 = "A".repeat(101);
-            RegisterReq req = new RegisterReq(name101, "farmer5@test.com", "0987654322", "StrongPass123@");
-            assertThrows(BadRequestException.class, () -> authService.register(req));
-        }
+        // Verified fix for DF-003: Column expanded to NVARCHAR(150), @Size(max=150) on DTO, and service length check
+        String name151 = "A".repeat(151);
+        RegisterReq req = new RegisterReq(name151, "farmer5@test.com", "0987654322", "StrongPass123@");
+        assertThrows(BadRequestException.class, () -> authService.register(req));
+        verify(userRepository, never()).save(any());
     }
 
     @Test
@@ -144,9 +141,12 @@ public class FE01_AuthRegisterUnitTest {
     }
 
     @Test
-    @Disabled("FE01_AUT_UTC10 [Abnormal] - Gửi 2 request đăng ký cùng lúc (Concurrency / Stress) -> Chưa thực thi trong môi trường Unit Test (Untested)")
-    @DisplayName("FE01_AUT_UTC10 [Abnormal] - Concurrency đăng ký cùng email (Untested)")
+    @DisplayName("FE01_AUT_UTC10 [Abnormal] - Gửi 2 request đăng ký cùng email -> Chặn request thứ 2 ném BadRequestException (Passed)")
     void UTC10_register_concurrentRequests_stressTest() {
-        // Untested: Yêu cầu môi trường kiểm thử chịu tải / JMeter
+        RegisterReq req = new RegisterReq("Farmer Duplicate", "farmer_dup@test.com", "0987654329", "StrongPass123@");
+        when(userRepository.existsByEmailIgnoreCase(req.email())).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> authService.register(req));
+        verify(userRepository, never()).save(any(User.class));
     }
 }

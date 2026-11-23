@@ -2,6 +2,7 @@ package com.mycropdiary.api.dto.cultivation;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 public record UpdateMaterialUsageReq(
         Integer materialId,
 
+        @PastOrPresent(message = "Thời gian sử dụng không được ở tương lai")
         LocalDateTime usedAt,
 
         @DecimalMin(value = "0.0001", message = "Số lượng sử dụng phải lớn hơn 0")
@@ -47,7 +49,8 @@ public record UpdateMaterialUsageReq(
 ) {
     public UpdateMaterialUsageReq(
             Integer materialId,
-            LocalDateTime usedAt,
+            @PastOrPresent(message = "Thời gian sử dụng không được ở tương lai")
+        LocalDateTime usedAt,
             BigDecimal quantity,
             String unit,
             String dosage,

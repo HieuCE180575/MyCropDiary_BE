@@ -1,6 +1,7 @@
 package com.mycropdiary.api.dto.farm;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -15,6 +16,7 @@ public record CreateZoneReq(
         @JsonAlias({"areaName", "name", "zoneName"})
         String zoneName,
 
+        @DecimalMin(value = "0.01", message = "Diện tích phân khu phải lớn hơn 0")
         @JsonAlias({"areaM2", "areaValue"})
         BigDecimal areaValue,
         String areaUnit,

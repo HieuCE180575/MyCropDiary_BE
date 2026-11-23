@@ -31,7 +31,7 @@ public class AdminCropCategoryController {
     @GetMapping
     public ApiResp<List<CropCategoryResp>> getCropCategories() {
         List<CropCategoryResp> list = cropCategoryRepository.findAll().stream()
-                .map(c -> new CropCategoryResp(c.getId(), c.getCategoryName(), c.getDescription(), c.getImageUrl()))
+                .map(c -> new CropCategoryResp(c.getId(), c.getCategoryName(), c.getDescription(), c.getImageUrl(), c.getStatus()))
                 .toList();
         return ApiResp.ok("Danh mục cây trồng mùa vụ", list);
     }
@@ -42,9 +42,12 @@ public class AdminCropCategoryController {
     public ApiResp<CropCategoryResp> createCropCategory(@RequestBody CropCategoryReq request) {
         CropCategory category = new CropCategory(request.categoryName(), request.description());
         category.setImageUrl(request.imageUrl());
+        if (request.status() != null && !request.status().isBlank()) {
+            category.setStatus(request.status());
+        }
         CropCategory saved = cropCategoryRepository.save(category);
         return ApiResp.ok("Tạo danh mục cây trồng thành công",
-                new CropCategoryResp(saved.getId(), saved.getCategoryName(), saved.getDescription(), saved.getImageUrl()));
+                new CropCategoryResp(saved.getId(), saved.getCategoryName(), saved.getDescription(), saved.getImageUrl(), saved.getStatus()));
     }
 
     @Operation(summary = "Cập nhật danh mục cây trồng (Admin)")
@@ -55,11 +58,31 @@ public class AdminCropCategoryController {
         category.setCategoryName(request.categoryName());
         category.setDescription(request.description());
         category.setImageUrl(request.imageUrl());
+        if (request.status() != null && !request.status().isBlank()) {
+            category.setStatus(request.status());
+        }
         CropCategory saved = cropCategoryRepository.save(category);
         return ApiResp.ok("Cập nhật danh mục cây trồng thành công",
-                new CropCategoryResp(saved.getId(), saved.getCategoryName(), saved.getDescription(), saved.getImageUrl()));
+                new CropCategoryResp(saved.getId(), saved.getCategoryName(), saved.getDescription(), saved.getImageUrl(), saved.getStatus()));
     }
 
-    public record CropCategoryReq(String categoryName, String description, String imageUrl) {}
+    @Operation(summary = "Cập nhật trạng thái danh mục cây trồng (Admin)")
+    @PatchMapping("/{id}/status")
+    public ApiResp<CropCategoryResp> updateCropCategoryStatus(@PathVariable Integer id, @RequestBody UpdateCropCategoryStatusReq request) {
+        CropCategory category = cropCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục ID: " + id));
+        category.setStatus(request != null ? request.status() : "ACTIVE");
+        CropCategory saved = cropCategoryRepository.save(category);
+        return ApiResp.ok("Cập nhật trạng thái danh mục thành công",
+                new CropCategoryResp(saved.getId(), saved.getCategoryName(), saved.getDescription(), saved.getImageUrl(), saved.getStatus()));
+    }
+
+    public record CropCategoryReq(String categoryName, String description, String imageUrl, String status) {
+        public CropCategoryReq(String categoryName, String description, String imageUrl) {
+            this(categoryName, description, imageUrl, "ACTIVE");
+        }
+    }
+
+    public record UpdateCropCategoryStatusReq(String status) {}
 }
 

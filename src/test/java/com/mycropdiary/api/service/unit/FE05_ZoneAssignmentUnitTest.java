@@ -15,6 +15,7 @@ import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
+import com.mycropdiary.api.service.NotificationService;
 import com.mycropdiary.api.service.impl.ZoneAssignmentServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +51,8 @@ public class FE05_ZoneAssignmentUnitTest {
     private BlockRepository blockRepository;
     @Mock
     private FarmAccessGuard accessGuard;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private ZoneAssignmentServiceImpl zoneAssignmentService;
@@ -187,15 +190,18 @@ public class FE05_ZoneAssignmentUnitTest {
     }
 
     @Test
-    @DisplayName("FE05_ASN_UTC09 [Boundary] - Phân công ngày bắt đầu trong quá khứ xa hơn 1 năm (Failed: DF-018)")
+    @DisplayName("FE05_ASN_UTC09 [Boundary] - Phân công ngày bắt đầu trong quá khứ xa hơn 1 năm bị từ chối bằng BusinessRuleException (Passed)")
     void UTC09_assignStaff_pastAssignedAt_defectDF018() {
-        // [Defect DF-018] Thiếu ràng buộc kiểm tra ngày phân công không được lùi quá xa trong quá khứ
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-018: [Defect Found] Hệ thống cho phép chọn ngày phân công lùi về quá khứ 10 năm trước mà không có cảnh báo.");
-        } else {
-            Instant veryPast = Instant.now().minus(3650, ChronoUnit.DAYS);
-            assertTrue(veryPast.isBefore(Instant.now()));
-        }
+        // Verified fix for DF-018: Reject assignedAt older than 1 year
+        Instant veryPast = Instant.now().minus(3650, ChronoUnit.DAYS);
+        CreateAssignmentReq req = new CreateAssignmentReq(20, 5, veryPast, null);
+        when(accessGuard.requireFarmOwner(1, 1)).thenReturn(ownerMember);
+        when(farmMemberRepository.findById(20)).thenReturn(Optional.of(staffMember));
+        when(zoneRepository.findById(5)).thenReturn(Optional.of(zone));
+        when(assignmentRepository.existsByFarmMemberIdAndZoneIdAndEndedAtIsNull(20, 5)).thenReturn(false);
+
+        assertThrows(BusinessRuleException.class, () -> zoneAssignmentService.assignStaffToZone(1, 1, req));
+        verify(assignmentRepository, never()).save(any());
     }
 
     @Test

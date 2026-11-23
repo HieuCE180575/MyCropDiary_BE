@@ -62,6 +62,9 @@ public class ZoneServiceImpl implements ZoneService {
         if (zoneRepository.existsByFarmIdAndZoneNameIgnoreCase(farmId, zoneName)) {
             throw new ResourceConflictException("Tên phân khu (Zone) '" + zoneName + "' đã tồn tại trong trang trại này");
         }
+        if (request.areaValue() != null && request.areaValue().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessRuleException("Diện tích phân khu phải lớn hơn 0.");
+        }
 
         Zone zone = new Zone(farm, zoneName, request.areaValue(), request.description());
         if (request.areaUnit() != null) {
@@ -83,6 +86,10 @@ public class ZoneServiceImpl implements ZoneService {
         String zoneName = request.zoneName().trim();
         if (zoneRepository.existsByFarmIdAndZoneNameIgnoreCaseAndIdNot(zone.getFarm().getId(), zoneName, zoneId)) {
             throw new ResourceConflictException("Tên phân khu (Zone) '" + zoneName + "' đã được sử dụng bởi phân khu khác");
+        }
+
+        if (request.areaValue() != null && request.areaValue().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessRuleException("Diện tích phân khu phải lớn hơn 0.");
         }
 
         // Business Rule: Diện tích phân khu mới không được nhỏ hơn tổng diện tích các lô đất hiện có trực thuộc

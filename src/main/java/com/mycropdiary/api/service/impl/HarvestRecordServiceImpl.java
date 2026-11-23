@@ -89,8 +89,11 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
             throw new BadRequestException("Không thể ghi nhận thu hoạch cho mùa vụ đã đóng hoặc đã hủy.");
         }
 
-        if (request.quantity() == null || request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BadRequestException("Sản lượng thu hoạch phải lớn hơn 0.");
+        if (request.quantity() == null || request.quantity().compareTo(BigDecimal.ZERO) < 0) {
+            throw new BadRequestException("Sản lượng thu hoạch không được âm.");
+        }
+        if (request.quantity().compareTo(BigDecimal.ZERO) == 0 && (request.notes() == null || request.notes().isBlank())) {
+            throw new BadRequestException("Sản lượng thu hoạch phải lớn hơn 0, hoặc phải có ghi chú giải trình khi mất trắng (0 kg).");
         }
 
         if (request.unit() == null || request.unit().trim().isEmpty()) {
@@ -149,8 +152,12 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
         }
 
         if (request.quantity() != null) {
-            if (request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new BadRequestException("Sản lượng thu hoạch phải lớn hơn 0.");
+            if (request.quantity().compareTo(BigDecimal.ZERO) < 0) {
+                throw new BadRequestException("Sản lượng thu hoạch không được âm.");
+            }
+            String effectiveNotes = request.notes() != null ? request.notes() : record.getNotes();
+            if (request.quantity().compareTo(BigDecimal.ZERO) == 0 && (effectiveNotes == null || effectiveNotes.isBlank())) {
+                throw new BadRequestException("Sản lượng thu hoạch phải lớn hơn 0, hoặc phải có ghi chú giải trình khi mất trắng (0 kg).");
             }
             record.setQuantity(request.quantity());
         }

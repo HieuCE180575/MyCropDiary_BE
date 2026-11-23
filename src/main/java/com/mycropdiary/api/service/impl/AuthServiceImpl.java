@@ -22,16 +22,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.spec.RSAPublicKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Base64;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -40,6 +47,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class AuthServiceImpl implements AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final int MAX_PASSWORD_BYTES = 72;
+    private static final int MAX_FULL_NAME_LENGTH = 150;
+    private static final String GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private final Map<String, PublicKey> googleJwkCache = new ConcurrentHashMap<>();
 
     private final UserRepository userRepository;
     private final AccountTokenRepository accountTokenRepository;
@@ -75,14 +87,22 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void register(RegisterReq request) {
-        if (userRepository.existsByEmailIgnoreCase(request.email())) {
+        String trimmedEmail = request.email().trim();
+        String normalizedEmail = trimmedEmail.toLowerCase();
+        String trimmedFullName = request.fullName() != null ? request.fullName().trim() : "";
+        if (trimmedFullName.isEmpty() || trimmedFullName.length() > MAX_FULL_NAME_LENGTH) {
+            throw new BadRequestException("Họ tên phải từ 1 đến " + MAX_FULL_NAME_LENGTH + " ký tự.");
+        }
+        String normalizedPassword = normalizeAndValidatePassword(request.password());
+
+        if (userRepository.existsByEmailIgnoreCase(trimmedEmail)) {
             throw new BadRequestException("Email đã được sử dụng. Vui lòng dùng email khác.");
         }
 
         User user = new User(
-                request.email().toLowerCase().trim(),
-                passwordEncoder.encode(request.password()),
-                request.fullName().trim(),
+                normalizedEmail,
+                passwordEncoder.encode(normalizedPassword),
+                trimmedFullName,
                 request.phoneNumber()
         );
         userRepository.save(user);
@@ -96,9 +116,9 @@ public class AuthServiceImpl implements AuthService {
 
     // ==================== UC-04: Xác thực OTP ====================
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = BadRequestException.class)
     public AuthResp verifyOtp(VerifyOtpReq request) {
-        User user = userRepository.findByEmailIgnoreCase(request.email())
+        User user = userRepository.findByEmailIgnoreCase(request.email().trim())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản với email này."));
 
         if (user.isActive()) {
@@ -110,13 +130,7 @@ public class AuthServiceImpl implements AuthService {
                         user.getId(), "email_verification")
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy mã OTP. Vui lòng yêu cầu gửi lại."));
 
-        if (otpToken.isExpired()) {
-            throw new BadRequestException("Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại.");
-        }
-
-        if (!passwordEncoder.matches(request.otp(), otpToken.getTokenHash())) {
-            throw new BadRequestException("Mã OTP không chính xác. Vui lòng kiểm tra lại.");
-        }
+        verifyOtpTokenOrThrow(otpToken, request.otp());
 
         otpToken.markUsed();
         accountTokenRepository.save(otpToken);
@@ -133,11 +147,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResp login(LoginReq request) {
+        String normalizedEmail = request.email() != null ? request.email().trim() : "";
+        String normalizedPassword = normalizeAndValidatePassword(request.password());
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+                new UsernamePasswordAuthenticationToken(normalizedEmail, normalizedPassword)
         );
 
-        User user = userRepository.findByEmailIgnoreCase(request.email())
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản."));
 
         user.setLastLoginAt(Instant.now());
@@ -247,9 +264,11 @@ public class AuthServiceImpl implements AuthService {
 
     // ==================== UC-06: Đặt lại mật khẩu ====================
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = BadRequestException.class)
     public void resetPassword(ResetPasswordReq request) {
-        User user = userRepository.findByEmailIgnoreCase(request.email())
+        String normalizedNewPassword = normalizeAndValidatePassword(request.newPassword());
+
+        User user = userRepository.findByEmailIgnoreCase(request.email().trim())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản với email này."));
 
         if (!user.isActive()) {
@@ -262,18 +281,16 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new BadRequestException(
                         "Không tìm thấy mã OTP đặt lại mật khẩu. Vui lòng yêu cầu gửi lại."));
 
-        if (resetToken.isExpired()) {
-            throw new BadRequestException("Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại.");
-        }
+        verifyOtpTokenOrThrow(resetToken, request.otp());
 
-        if (!passwordEncoder.matches(request.otp(), resetToken.getTokenHash())) {
-            throw new BadRequestException("Mã OTP không chính xác. Vui lòng kiểm tra lại.");
+        if (user.getPasswordHash() != null && passwordEncoder.matches(normalizedNewPassword, user.getPasswordHash())) {
+            throw new BadRequestException("Mật khẩu mới không được trùng với mật khẩu hiện tại.");
         }
 
         resetToken.markUsed();
         accountTokenRepository.save(resetToken);
 
-        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.setPasswordHash(passwordEncoder.encode(normalizedNewPassword));
         userRepository.save(user);
 
         revokeAllOldTokens(user.getId(), "refresh");
@@ -294,55 +311,15 @@ public class AuthServiceImpl implements AuthService {
         String avatarUrl = request.avatarUrl();
 
         if (request.idToken() != null && !request.idToken().isBlank()) {
-            String[] parts = request.idToken().split("\\.");
-            if (parts.length >= 2) {
-                try {
-                    String payload = parts[1];
-                    int mod = payload.length() % 4;
-                    if (mod == 2) payload += "==";
-                    else if (mod == 3) payload += "=";
-                    byte[] decoded = Base64.getUrlDecoder().decode(payload);
-                    ObjectMapper mapper = new ObjectMapper();
-                    JsonNode claims = mapper.readTree(decoded);
-                    if (claims.hasNonNull("email")) {
-                        email = claims.get("email").asText();
-                    }
-                    if (claims.hasNonNull("name") && (fullName == null || fullName.isBlank())) {
-                        fullName = claims.get("name").asText();
-                    }
-                    if (claims.hasNonNull("picture") && (avatarUrl == null || avatarUrl.isBlank())) {
-                        avatarUrl = claims.get("picture").asText();
-                    }
-                } catch (Exception e) {
-                    log.warn("Không thể giải mã Google ID token payload: {}", e.getMessage());
-                }
+            JsonNode verifiedClaims = verifyGoogleIdToken(request.idToken().trim());
+            if (verifiedClaims.hasNonNull("email")) {
+                email = verifiedClaims.get("email").asText();
             }
-
-            if ((email == null || email.isBlank())) {
-                try {
-                    java.net.http.HttpRequest verifyReq = java.net.http.HttpRequest.newBuilder()
-                            .uri(java.net.URI.create("https://oauth2.googleapis.com/tokeninfo?id_token=" + request.idToken().trim()))
-                            .timeout(java.time.Duration.ofSeconds(10))
-                            .GET()
-                            .build();
-                    java.net.http.HttpResponse<String> verifyResp = java.net.http.HttpClient.newHttpClient()
-                            .send(verifyReq, java.net.http.HttpResponse.BodyHandlers.ofString());
-                    if (verifyResp.statusCode() == 200) {
-                        ObjectMapper mapper = new ObjectMapper();
-                        JsonNode root = mapper.readTree(verifyResp.body());
-                        if (root.hasNonNull("email")) {
-                            email = root.get("email").asText();
-                        }
-                        if (root.hasNonNull("name") && (fullName == null || fullName.isBlank())) {
-                            fullName = root.get("name").asText();
-                        }
-                        if (root.hasNonNull("picture") && (avatarUrl == null || avatarUrl.isBlank())) {
-                            avatarUrl = root.get("picture").asText();
-                        }
-                    }
-                } catch (Exception ex) {
-                    log.warn("Google tokeninfo verify fallback thất bại: {}", ex.getMessage());
-                }
+            if (verifiedClaims.hasNonNull("name") && (fullName == null || fullName.isBlank())) {
+                fullName = verifiedClaims.get("name").asText();
+            }
+            if (verifiedClaims.hasNonNull("picture") && (avatarUrl == null || avatarUrl.isBlank())) {
+                avatarUrl = verifiedClaims.get("picture").asText();
             }
         }
 
@@ -389,6 +366,129 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // ==================== Private helpers ====================
+
+    private String normalizeAndValidatePassword(String rawPassword) {
+        if (rawPassword == null || rawPassword.trim().isEmpty()) {
+            throw new BadRequestException("Mật khẩu không được để trống.");
+        }
+        String trimmed = rawPassword.trim();
+        if (trimmed.getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
+            throw new BadRequestException("Mật khẩu không được vượt quá 72 bytes.");
+        }
+        return trimmed;
+    }
+
+    private void verifyOtpTokenOrThrow(AccountToken otpToken, String rawOtp) {
+        if (otpToken.isExpired()) {
+            throw new BadRequestException("Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại.");
+        }
+        if (otpToken.isUsed() || otpToken.isAttemptLimitReached()) {
+            throw new BadRequestException("Mã OTP đã bị khóa do nhập sai quá " + AccountToken.MAX_FAILED_ATTEMPTS + " lần. Vui lòng yêu cầu gửi lại mã mới.");
+        }
+        if (!passwordEncoder.matches(rawOtp, otpToken.getTokenHash())) {
+            int attempts = otpToken.incrementFailedAttempts();
+            accountTokenRepository.save(otpToken);
+            if (attempts >= AccountToken.MAX_FAILED_ATTEMPTS) {
+                throw new BadRequestException("Mã OTP đã bị khóa do nhập sai quá " + AccountToken.MAX_FAILED_ATTEMPTS + " lần. Vui lòng yêu cầu gửi lại mã mới.");
+            }
+            throw new BadRequestException("Mã OTP không chính xác. Vui lòng kiểm tra lại.");
+        }
+    }
+
+    protected JsonNode verifyGoogleIdToken(String idToken) {
+        String[] parts = idToken.split("\\.");
+        if (parts.length == 3) {
+            try {
+                JsonNode header = OBJECT_MAPPER.readTree(Base64.getUrlDecoder().decode(parts[0]));
+                String alg = header.hasNonNull("alg") ? header.get("alg").asText() : "";
+                String kid = header.hasNonNull("kid") ? header.get("kid").asText() : null;
+                if ("RS256".equalsIgnoreCase(alg) && kid != null && !kid.isBlank()) {
+                    PublicKey publicKey = resolveGooglePublicKey(kid);
+                    if (publicKey != null) {
+                        byte[] signedBytes = (parts[0] + "." + parts[1]).getBytes(StandardCharsets.US_ASCII);
+                        byte[] signatureBytes = Base64.getUrlDecoder().decode(parts[2]);
+                        Signature sig = Signature.getInstance("SHA256withRSA");
+                        sig.initVerify(publicKey);
+                        sig.update(signedBytes);
+                        if (!sig.verify(signatureBytes)) {
+                            throw new BadRequestException("Chữ ký Google ID Token không hợp lệ.");
+                        }
+                        JsonNode claims = OBJECT_MAPPER.readTree(Base64.getUrlDecoder().decode(parts[1]));
+                        if (claims.hasNonNull("exp")) {
+                            long exp = claims.get("exp").asLong();
+                            if (Instant.ofEpochSecond(exp).isBefore(Instant.now())) {
+                                throw new BadRequestException("Google ID Token đã hết hạn.");
+                            }
+                        }
+                        if (claims.hasNonNull("iss")) {
+                            String iss = claims.get("iss").asText();
+                            if (!"https://accounts.google.com".equals(iss) && !"accounts.google.com".equals(iss)) {
+                                throw new BadRequestException("Google ID Token issuer không hợp lệ.");
+                            }
+                        }
+                        return claims;
+                    }
+                }
+            } catch (BadRequestException e) {
+                throw e;
+            } catch (Exception e) {
+                log.warn("Xác thực chữ ký RSA Google ID Token thất bại: {}", e.getMessage());
+            }
+        }
+
+        // Fallback to Google's authoritative tokeninfo endpoint (never trust unverified Base64 claims)
+        try {
+            java.net.http.HttpRequest verifyReq = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create("https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken))
+                    .timeout(java.time.Duration.ofSeconds(10))
+                    .GET()
+                    .build();
+            java.net.http.HttpResponse<String> verifyResp = java.net.http.HttpClient.newHttpClient()
+                    .send(verifyReq, java.net.http.HttpResponse.BodyHandlers.ofString());
+            if (verifyResp.statusCode() == 200) {
+                return OBJECT_MAPPER.readTree(verifyResp.body());
+            }
+        } catch (Exception ex) {
+            log.warn("Google tokeninfo verify thất bại: {}", ex.getMessage());
+        }
+        throw new BadRequestException("Google ID Token không hợp lệ hoặc không thể xác thực chữ ký.");
+    }
+
+    protected PublicKey resolveGooglePublicKey(String kid) {
+        PublicKey cached = googleJwkCache.get(kid);
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(GOOGLE_CERTS_URL))
+                    .timeout(java.time.Duration.ofSeconds(10))
+                    .GET()
+                    .build();
+            java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                    .send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200) {
+                JsonNode keys = OBJECT_MAPPER.readTree(resp.body()).path("keys");
+                if (keys.isArray()) {
+                    KeyFactory kf = KeyFactory.getInstance("RSA");
+                    for (JsonNode k : keys) {
+                        String keyId = k.path("kid").asText(null);
+                        String nStr = k.path("n").asText(null);
+                        String eStr = k.path("e").asText(null);
+                        if (keyId != null && nStr != null && eStr != null) {
+                            BigInteger modulus = new BigInteger(1, Base64.getUrlDecoder().decode(nStr));
+                            BigInteger exponent = new BigInteger(1, Base64.getUrlDecoder().decode(eStr));
+                            PublicKey pk = kf.generatePublic(new RSAPublicKeySpec(modulus, exponent));
+                            googleJwkCache.put(keyId, pk);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Không thể tải Google JWK certs: {}", ex.getMessage());
+        }
+        return googleJwkCache.get(kid);
+    }
 
     private AuthResp issueTokens(User user) {
         String accessToken = jwtTokenProvider.generateAccessToken(

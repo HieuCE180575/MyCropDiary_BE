@@ -120,9 +120,49 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             throw new BadRequestException("Tên tập tin không hợp lệ.");
         }
 
-        String extension = getFileExtension(originalFilename);
-        if (extension.isEmpty() || !ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+        String extension = getFileExtension(originalFilename).toLowerCase();
+        if (extension.isEmpty() || !ALLOWED_EXTENSIONS.contains(extension)) {
             throw new BadRequestException("Định dạng tập tin (." + extension + ") không được hỗ trợ. Vui lòng chỉ tải lên hình ảnh (JPG, PNG, WEBP) hoặc tài liệu (PDF, DOCX).");
+        }
+
+        try {
+            validateFileMagicBytes(extension, file.getBytes());
+        } catch (IOException e) {
+            throw new BadRequestException("Không thể đọc nội dung nhị phân của tập tin.");
+        }
+    }
+
+    private void validateFileMagicBytes(String extension, byte[] bytes) {
+        if (bytes == null || bytes.length < 2) {
+            return;
+        }
+        // Block Windows PE/EXE (MZ), ELF binaries, Mach-O executables, and Shebang scripts regardless of extension
+        boolean isPeExe = bytes[0] == 'M' && bytes[1] == 'Z';
+        boolean isElf = bytes.length >= 4 && bytes[0] == 0x7F && bytes[1] == 'E' && bytes[2] == 'L' && bytes[3] == 'F';
+        boolean isShebang = bytes[0] == '#' && bytes[1] == '!';
+        boolean isMachO = bytes.length >= 4 && (
+                (bytes[0] == (byte) 0xFE && bytes[1] == (byte) 0xED && bytes[2] == (byte) 0xFA && (bytes[3] == (byte) 0xCE || bytes[3] == (byte) 0xCF)) ||
+                (bytes[0] == (byte) 0xCF && bytes[1] == (byte) 0xFA && bytes[2] == (byte) 0xED && bytes[3] == (byte) 0xFE) ||
+                (bytes[0] == (byte) 0xCA && bytes[1] == (byte) 0xFE && bytes[2] == (byte) 0xBA && bytes[3] == (byte) 0xBE)
+        );
+        if (isPeExe || isElf || isShebang || isMachO) {
+            throw new BadRequestException("Nội dung tập tin (." + extension + ") chứa mã thực thi nhị phân không hợp lệ.");
+        }
+
+        // Block HTML/script payloads disguised as images or documents
+        String head = new String(bytes, 0, Math.min(bytes.length, 64), java.nio.charset.StandardCharsets.UTF_8).trim().toLowerCase();
+        if (head.startsWith("<script") || head.startsWith("<!doctype html") || head.startsWith("<html")) {
+            throw new BadRequestException("Nội dung tập tin (." + extension + ") không hợp lệ (ngụy trang HTML/Script).");
+        }
+
+        // Block mismatched container signatures (e.g., ZIP/DOCX disguised as image/pdf, or PDF disguised as image)
+        boolean isZip = bytes.length >= 4 && bytes[0] == 'P' && bytes[1] == 'K' && bytes[2] == 0x03 && bytes[3] == 0x04;
+        boolean isPdf = bytes.length >= 4 && bytes[0] == '%' && bytes[1] == 'P' && bytes[2] == 'D' && bytes[3] == 'F';
+        if (isZip && !Set.of("docx", "xlsx").contains(extension)) {
+            throw new BadRequestException("Nội dung nhị phân ZIP không khớp với phần mở rộng ." + extension);
+        }
+        if (isPdf && !"pdf".equals(extension)) {
+            throw new BadRequestException("Nội dung nhị phân PDF không khớp với phần mở rộng ." + extension);
         }
     }
 

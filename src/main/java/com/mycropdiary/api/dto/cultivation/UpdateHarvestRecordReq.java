@@ -14,7 +14,7 @@ public record UpdateHarvestRecordReq(
 
         LocalDateTime harvestedAt,
 
-        @DecimalMin(value = "0.0001", message = "Sản lượng thu hoạch phải lớn hơn 0")
+        @DecimalMin(value = "0.0", message = "Sản lượng thu hoạch không được âm")
         BigDecimal quantity,
 
         @DecimalMin(value = "0.0", message = "Sản lượng loại bỏ không được âm")

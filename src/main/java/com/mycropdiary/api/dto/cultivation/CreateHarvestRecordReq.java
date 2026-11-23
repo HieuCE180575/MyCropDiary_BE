@@ -26,7 +26,7 @@ public record CreateHarvestRecordReq(
         LocalDateTime harvestedAt,
 
         @NotNull(message = "Quantity is required")
-        @DecimalMin(value = "0.0001", message = "Quantity must be greater than 0")
+        @DecimalMin(value = "0.0", message = "Quantity cannot be negative")
         BigDecimal quantity,
 
         @DecimalMin(value = "0.0", message = "Discarded quantity cannot be negative")

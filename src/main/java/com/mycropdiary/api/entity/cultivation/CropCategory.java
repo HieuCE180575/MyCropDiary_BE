@@ -20,6 +20,9 @@ public class CropCategory {
     @Column(name = "image_url", columnDefinition = "NVARCHAR(MAX)")
     private String imageUrl;
 
+    @Column(name = "status", nullable = false, length = 20)
+    private String status = "ACTIVE";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -48,6 +51,11 @@ public class CropCategory {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getStatus() { return status != null ? status : "ACTIVE"; }
+    public void setStatus(String status) {
+        this.status = (status != null && !status.isBlank()) ? status.trim().toUpperCase() : "ACTIVE";
+    }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

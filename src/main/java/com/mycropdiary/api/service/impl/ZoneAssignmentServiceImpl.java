@@ -21,6 +21,7 @@ import com.mycropdiary.api.service.NotificationService;
 
 import java.util.logging.Logger;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,7 +89,11 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
                     " đã và đang được phân công phụ trách khu vực " + zone.getZoneName());
         }
 
-        Instant assignedAt = request.assignedAt() != null ? request.assignedAt() : Instant.now();
+        Instant now = Instant.now();
+        Instant assignedAt = request.assignedAt() != null ? request.assignedAt() : now;
+        if (assignedAt.isBefore(now.minus(365, ChronoUnit.DAYS))) {
+            throw new BusinessRuleException("Ngày bắt đầu phân công không hợp lệ (không được lùi quá 1 năm trong quá khứ).");
+        }
         if (request.endedAt() != null && request.endedAt().isBefore(assignedAt)) {
             throw new BusinessRuleException("Ngày kết thúc phân công phải sau hoặc bằng ngày bắt đầu");
         }
@@ -105,12 +110,14 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
 
         log.info("STEP 2: Preparing notification for user ID: " + recipientId);
 
-        notificationService.createNotification(
-                recipientId,
-                "Zone assignment",
-                "You have been assigned to the zone: " + zone.getZoneName(),
-                "ZONE_ASSIGNED",
-                "/farms/" + farmId + "/my-assigned-zone");
+        if (notificationService != null) {
+            notificationService.createNotification(
+                    recipientId,
+                    "Zone assignment",
+                    "You have been assigned to the zone: " + zone.getZoneName(),
+                    "ZONE_ASSIGNED",
+                    "/farms/" + farmId + "/my-assigned-zone");
+        }
 
         log.info("STEP 3: Notification creation method completed.");
 

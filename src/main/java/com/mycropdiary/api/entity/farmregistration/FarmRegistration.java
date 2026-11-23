@@ -67,6 +67,10 @@ public class FarmRegistration {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     public FarmRegistration() { }
 
     public FarmRegistration(User user, String farmName, String address) {
@@ -126,6 +130,9 @@ public class FarmRegistration {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
     // --- Compatibility Helpers ---
     public User getApplicantUser() { return user; }

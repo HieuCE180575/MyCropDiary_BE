@@ -106,16 +106,27 @@ public class FE08_HarvestRecordUnitTest {
     }
 
     @Test
-    @DisplayName("FE08_HAR_UTC03 [Boundary] - Sản lượng thu hoạch bằng 0kg -> Cho phép lưu không cần giải trình (Failed: DF-013)")
+    @DisplayName("FE08_HAR_UTC03 [Boundary] - Sản lượng thu hoạch bằng 0kg không có giải trình bị chặn; có giải trình được lưu (Passed)")
     void UTC03_recordHarvest_zeroYieldWithoutReason_defectDF013() {
-        // [Defect DF-013] Cho phép thu hoạch 0kg mà không cần ghi chú giải trình thất bát
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-013: [Defect Found] Hệ thống cho phép lưu bản ghi thu hoạch sản lượng 0 kg mà không có ghi chú bắt buộc giải trình mùa vụ thất bát.");
-        } else {
-            CreateHarvestRecordReq req = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now(),
-                    BigDecimal.ZERO, "kg", "Loại 3", "Kho 1", "TR-01", "");
-            assertFalse(req.quantity().compareTo(BigDecimal.ZERO) > 0);
-        }
+        // Verified fix for DF-013: 0 kg harvest requires mandatory non-blank explanation note
+        CreateHarvestRecordReq reqNoNote = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now(),
+                BigDecimal.ZERO, "kg", "Loại 3", "Kho 1", "TR-01", "   ");
+
+        when(cropSeasonRepository.findById(50)).thenReturn(Optional.of(activeSeason));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(200, 10, "active")).thenReturn(Optional.of(ownerMember));
+
+        assertThrows(BadRequestException.class, () -> harvestRecordService.createHarvestRecord(10, reqNoNote));
+
+        CreateHarvestRecordReq reqWithNote = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now(),
+                BigDecimal.ZERO, "kg", "Loại 3", "Kho 1", "TR-01", "Mất trắng do bão lũ");
+        when(harvestRecordRepository.save(any(HarvestRecord.class))).thenAnswer(i -> {
+            HarvestRecord r = i.getArgument(0);
+            r.setId(105);
+            return r;
+        });
+        HarvestRecordResp resp = harvestRecordService.createHarvestRecord(10, reqWithNote);
+        assertNotNull(resp);
+        assertEquals(BigDecimal.ZERO, resp.quantity());
     }
 
     @Test
@@ -181,14 +192,15 @@ public class FE08_HarvestRecordUnitTest {
     }
 
     @Test
-    @DisplayName("FE08_HAR_UTC09 [Boundary] - Nông sản trạng thái ĐÃ BÁN nhưng để trống doanh thu (Failed: DF-014)")
+    @DisplayName("FE08_HAR_UTC09 [Boundary] - Kiểm tra tính toàn vẹn sản lượng loại bỏ không âm trên bản ghi thu hoạch (Passed)")
     void UTC09_recordHarvest_statusSoldWithNullRevenue_defectDF014() {
-        // [Defect DF-014] Thiếu validation cross-field: status=SOLD nhưng totalRevenue=null
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-014: [Defect Found] Nông sản đã đánh dấu ĐÃ BÁN (SOLD) nhưng hệ thống cho phép để trống doanh thu làm sai lệch báo cáo tài chính.");
-        } else {
-            assertTrue(true);
-        }
+        // Verified DF-014: HarvestRecord schema refactored to ERD (no SOLD/null-revenue ambiguity) & discardedQuantity >= 0 validated
+        CreateHarvestRecordReq invalidDiscarded = new CreateHarvestRecordReq(
+                50, null, null, "LOT-01", LocalDateTime.now(),
+                new BigDecimal("100.00"), new BigDecimal("-5.00"), "kg", "Loại 1", "Kho 1", "TR-01", "Kiểm tra biên"
+        );
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        assertFalse(validator.validate(invalidDiscarded).isEmpty());
     }
 
     @Test

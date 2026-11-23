@@ -217,26 +217,28 @@ public class FE06_BlockManageUnitTest {
     }
 
     @Test
-    @DisplayName("FE06_BLK_UTC09 [Boundary] - Tính toán diện tích lô đất với số thực gây sai lệch làm tròn (Failed: DF-020)")
+    @DisplayName("FE06_BLK_UTC09 [Boundary] - Tính toán sức chứa phân khu chính xác tuyệt đối với BigDecimal (Passed)")
     void UTC09_createBlock_precisionBoundaryOverflow_defectDF020() {
-        // [Defect DF-020] Sai số làm tròn khi tính tổng diện tích phân khu với diện tích lô lẻ 0.0001
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-020: [Defect Found] Kiểm tra sức chứa phân khu gặp sai số làm tròn số thực khi tổng diện tích lô con lẻ xấp xỉ ngưỡng diện tích Zone.");
-        } else {
-            BigDecimal sum = new BigDecimal("9999.999").add(new BigDecimal("0.002"));
-            assertTrue(sum.compareTo(new BigDecimal("10000.00")) > 0);
-        }
+        // Verified fix for DF-020: BigDecimal capacity arithmetic rejects 9999.9999 + 0.0002 > 10000.00 cleanly
+        CreateBlockReq overflowReq = new CreateBlockReq("Lô Lẻ Vượt Biên", new BigDecimal("0.0002"), "Chính xác số thực");
+        when(accessGuard.requireZoneAccess(1, 5)).thenReturn(zone);
+        when(blockRepository.existsByZoneIdAndBlockNameIgnoreCase(5, "Lô Lẻ Vượt Biên")).thenReturn(false);
+        when(blockRepository.sumAreaValueByZoneId(5, null)).thenReturn(new BigDecimal("9999.9999"));
+
+        assertThrows(BusinessRuleException.class, () -> blockService.createBlock(1, 5, overflowReq));
+        verify(blockRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("FE06_BLK_UTC10 [Boundary] - Ghi nhận tình trạng lô đất ở ngày tương lai (+10 ngày) (Failed: DF-021)")
+    @DisplayName("FE06_BLK_UTC10 [Boundary] - Ghi nhận tình trạng lô đất ở ngày tương lai (+10 ngày) bị chặn bởi @PastOrPresent & Service (Passed)")
     void UTC10_recordBlockCondition_futureObservedAt_defectDF021() {
-        // [Defect DF-021] RecordBlockConditionReq thiếu @PastOrPresent cho trường observedAt
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-021: [Defect Found] Cho phép ghi nhận quan sát tình trạng lô đất (Block condition) ở thời điểm tương lai do thiếu @PastOrPresent.");
-        } else {
-            Instant future = Instant.now().plus(10, ChronoUnit.DAYS);
-            assertTrue(future.isAfter(Instant.now()));
-        }
+        // Verified fix for DF-021: @PastOrPresent on RecordBlockConditionReq + service timestamp guard
+        Instant future = Instant.now().plus(10, ChronoUnit.DAYS);
+        RecordBlockConditionReq req = new RecordBlockConditionReq("Độ ẩm", "Tương lai", null, future);
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        assertFalse(validator.validate(req).isEmpty());
+
+        assertThrows(BusinessRuleException.class, () -> blockService.recordBlockCondition(1, 20, req));
+        verify(conditionObservationRepository, never()).save(any());
     }
 }

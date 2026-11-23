@@ -200,6 +200,9 @@ public class BlockServiceImpl implements BlockService {
 
     @Override
     public BlockConditionResp recordBlockCondition(Integer currentUserId, Integer blockId, RecordBlockConditionReq request) {
+        if (request.observedAt() != null && request.observedAt().isAfter(Instant.now().plusSeconds(60))) {
+            throw new BusinessRuleException("Thời điểm quan sát tình trạng lô đất không được ở tương lai.");
+        }
         Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
         Integer farmId = block.getZone().getFarm().getId();
         FarmMember recorder = farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, currentUserId, "active").orElse(null);
@@ -238,6 +241,9 @@ public class BlockServiceImpl implements BlockService {
                 throw new BusinessRuleException("Diện tích lô đất (" + newBlockArea + " " + unit + ") không được lớn hơn diện tích của phân khu (" + zone.getAreaValue() + " " + unit + ")");
             }
             BigDecimal currentTotal = blockRepository.sumAreaValueByZoneId(zone.getId(), excludeBlockId);
+            if (currentTotal == null) {
+                currentTotal = BigDecimal.ZERO;
+            }
             BigDecimal totalWithNew = currentTotal.add(newBlockArea != null ? newBlockArea : BigDecimal.ZERO);
             if (totalWithNew.compareTo(zone.getAreaValue()) > 0) {
                 throw new BusinessRuleException("Tổng diện tích các thửa đất (" + totalWithNew + " " + unit + ") vượt quá diện tích của khu vực sản xuất (" + zone.getAreaValue() + " " + unit + ")");

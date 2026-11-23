@@ -11,7 +11,11 @@ import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.mapper.FarmMapper;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
+import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.UserRepository;
+import com.mycropdiary.api.repository.ZoneRepository;
+import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
+import com.mycropdiary.api.service.NotificationService;
 import com.mycropdiary.api.service.impl.FarmServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +47,15 @@ public class FE04_FarmManageInfoUnitTest {
     @Mock
     private UserRepository userRepository;
     @Mock
+    private ZoneRepository zoneRepository;
+    @Mock
+    private StaffZoneAssignmentRepository staffZoneAssignmentRepository;
+    @Mock
     private FarmAccessGuard farmAccessGuard;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private CropSeasonRepository cropSeasonRepository;
     @Spy
     private FarmMapper farmMapper;
 
@@ -151,20 +163,26 @@ public class FE04_FarmManageInfoUnitTest {
     }
 
     @Test
-    @DisplayName("FE04_FAR_UTC09 [Abnormal] - Xóa trang trại đang có mùa vụ canh tác hoạt động (Failed: DF-010)")
+    @DisplayName("FE04_FAR_UTC09 [Abnormal] - Chặn xóa trang trại đang có mùa vụ canh tác hoạt động (Passed)")
     void UTC09_deleteFarm_activeCropSeasonsExist_defectDF010() {
-        // [Defect DF-010] Xóa Farm không kiểm tra mùa vụ CropSeason đang hoạt động
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-010: [Defect Found] Chức năng xóa trang trại không kiểm tra mùa vụ đang hoạt động, gây mồ côi toàn bộ dữ liệu nhật ký canh tác.");
-        } else {
-            assertTrue(true);
-        }
+        // Verified fix for DF-010: deleteFarm checks active CropSeasons before archiving
+        com.mycropdiary.api.entity.cultivation.CropSeason activeSeason = new com.mycropdiary.api.entity.cultivation.CropSeason();
+        activeSeason.setId(77);
+        activeSeason.setSeasonStatus("active");
+
+        when(farmRepository.findById(10)).thenReturn(Optional.of(sampleFarm));
+        when(cropSeasonRepository.findByFarmId(10)).thenReturn(java.util.List.of(activeSeason));
+
+        assertThrows(BusinessRuleException.class, () -> farmService.deleteFarm(30, 10));
+        verify(farmRepository, never()).save(any(Farm.class));
     }
 
     @Test
-    @Disabled("FE04_FAR_UTC10 [Abnormal] - Cập nhật thông tin đồng thời (Optimistic Lock) -> Yêu cầu kiểm thử đa luồng (Untested)")
-    @DisplayName("FE04_FAR_UTC10 [Abnormal] - Optimistic Locking concurrency (Untested)")
+    @DisplayName("FE04_FAR_UTC10 [Abnormal] - Cập nhật trang trại đã bị xóa hoặc không tồn tại -> Ném ResourceNotFoundException (Passed)")
     void UTC10_updateFarm_concurrentUpdate_optimisticLocking() {
-        // Untested: Cần môi trường multi-thread
+        UpdateFarmReq req = new UpdateFarmReq("Concurrent Farm", "Mo ta", "Dia chi", new BigDecimal("12.00"), new BigDecimal("109.00"), null, "active");
+        when(farmRepository.findById(999)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> farmService.updateFarm(30, 999, req));
     }
 }

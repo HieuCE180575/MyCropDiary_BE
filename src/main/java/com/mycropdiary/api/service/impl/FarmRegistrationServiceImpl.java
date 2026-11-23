@@ -81,6 +81,9 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     }
 
     private void notifyAdmins(String title, String message, String actionUrl) {
+        if (notificationService == null) {
+            return;
+        }
         List<User> admins = userRepository.findAllBySystemRoleIgnoreCaseAndAccountStatusIgnoreCase(
                 "admin", "active");
 
@@ -91,6 +94,12 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
                     message,
                     "FARM_REGISTRATION",
                     actionUrl);
+        }
+    }
+
+    private void sendUserNotification(Integer userId, String title, String message, String type, String actionUrl) {
+        if (notificationService != null) {
+            notificationService.createNotification(userId, title, message, type, actionUrl);
         }
     }
     // ==================== UC-09: User side APIs ====================
@@ -135,7 +144,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
                 "/admin/farm-registrations");
 
         // Notify applicant that registration was submitted
-        notificationService.createNotification(
+        sendUserNotification(
                 currentUserId,
                 "Đăng ký trang trại thành công",
                 "Yêu cầu đăng ký trang trại " + saved.getFarmName()
@@ -190,7 +199,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         FarmRegistration updated = farmRegistrationRepository.save(registration);
 
         // Notify applicant that registration was cancelled
-        notificationService.createNotification(
+        sendUserNotification(
                 currentUserId,
                 "Đã hủy yêu cầu đăng ký",
                 "Yêu cầu đăng ký trang trại " + updated.getFarmName()
@@ -235,6 +244,10 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         User adminUser = userRepository.findById(adminUserId)
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Không tìm thấy tài khoản admin với ID: " + adminUserId));
+
+        if (!"admin".equalsIgnoreCase(adminUser.getSystemRole())) {
+            throw new ForbiddenException("Chỉ quản trị viên mới có quyền xét duyệt đơn đăng ký.");
+        }
 
         FarmRegistration registration = farmRegistrationRepository.findById(registrationId)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -290,7 +303,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         farmRegistrationRepository.save(registration);
 
         // Notify applicant that registration was approved
-        notificationService.createNotification(
+        sendUserNotification(
                 registration.getUser().getId(),
                 "Đăng ký trang trại được phê duyệt",
                 "Chúc mừng! Trang trại " + farm.getFarmName()
@@ -312,19 +325,23 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         if (rejectionReason == null || rejectionReason.isBlank()) {
             throw new BadRequestException("Vui lòng cung cấp lý do từ chối đơn đăng ký.");
         }
+        String trimmedReason = rejectionReason.trim();
+        if (trimmedReason.length() > 1000) {
+            throw new BadRequestException("Lý do từ chối không được vượt quá 1000 ký tự.");
+        }
 
         registration.setRegistrationStatus("rejected");
         registration.setReviewedBy(adminUser);
         registration.setReviewedAt(Instant.now());
-        registration.setRejectionReason(rejectionReason.trim());
+        registration.setRejectionReason(trimmedReason);
         farmRegistrationRepository.save(registration);
 
         // Notify applicant that registration was rejected
-        notificationService.createNotification(
+        sendUserNotification(
                 registration.getUser().getId(),
                 "Đăng ký trang trại bị từ chối",
                 "Yêu cầu đăng ký trang trại " + registration.getFarmName()
-                        + " đã bị từ chối. Lý do: " + rejectionReason.trim(),
+                        + " đã bị từ chối. Lý do: " + trimmedReason,
                 "FARM_REGISTRATION",
                 "/farm-registrations/" + registration.getId());
 

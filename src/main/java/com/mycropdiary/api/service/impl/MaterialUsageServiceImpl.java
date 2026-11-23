@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -103,18 +104,23 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             throw new BadRequestException("Vật tư không thuộc trang trại của hoạt động canh tác này.");
         }
 
-        // 7. Validate Quantity > 0
+        // 7. Validate Quantity > 0 & usedAt not in future
         if (request.quantity() == null || request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Số lượng sử dụng phải lớn hơn 0.");
+        }
+        if (request.usedAt() != null && request.usedAt().isAfter(LocalDateTime.now().plusMinutes(5))) {
+            throw new BadRequestException("Thời gian sử dụng vật tư không được nằm trong tương lai.");
         }
 
         // 8. Validate Unit (must not be blank & must match Material.unit)
         if (request.unit() == null || request.unit().trim().isEmpty()) {
             throw new BadRequestException("Đơn vị tính không được để trống.");
         }
-        if (material.getUnit() != null && !isCompatibleUnit(material.getUnit(), request.unit().trim())) {
-            throw new BadRequestException("Đơn vị tính (" + request.unit().trim() + ") không khớp với đơn vị tính của vật tư (" + material.getUnit() + ").");
+        String trimmedReqUnit = request.unit().trim();
+        if (material.getUnit() != null && !isCompatibleUnit(material.getUnit(), trimmedReqUnit)) {
+            throw new BadRequestException("Đơn vị tính (" + trimmedReqUnit + ") không khớp với đơn vị tính của vật tư (" + material.getUnit() + ").");
         }
+        BigDecimal convertedQuantity = convertToMaterialUnit(request.quantity(), trimmedReqUnit, material.getUnit());
 
         // 9. Validate Pesticide Safety Interval & Applied Area / Plant Count
         if (request.safetyIntervalDays() != null && request.safetyIntervalDays() < 0) {
@@ -146,7 +152,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         usage.setMaterial(material);
         usage.setUsedBy(recordedByMember);
         usage.setUsedAt(request.usedAt());
-        usage.setQuantity(request.quantity());
+        usage.setQuantity(convertedQuantity);
         usage.setBlock(activity.getBlock());
         usage.setNotes(request.notes() != null ? request.notes().trim() : null);
         usage.setDosage(cleanText(request.dosage()));
@@ -205,25 +211,30 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             currentMaterial = newMaterial;
         }
 
-        // 4. Nếu cập nhật số lượng (quantity)
+        // 4. Nếu cập nhật số lượng (quantity) hoặc đơn vị tính (unit)
+        String effectiveUnit = (request.unit() != null && !request.unit().trim().isEmpty())
+                ? request.unit().trim()
+                : (currentMaterial != null ? currentMaterial.getUnit() : null);
+        if (request.unit() != null && !request.unit().trim().isEmpty()) {
+            if (currentMaterial != null && currentMaterial.getUnit() != null
+                    && !isCompatibleUnit(currentMaterial.getUnit(), effectiveUnit)) {
+                throw new BadRequestException("Đơn vị tính (" + effectiveUnit + ") không khớp với đơn vị tính của vật tư (" + currentMaterial.getUnit() + ").");
+            }
+            usage.setUnit(effectiveUnit);
+        }
         if (request.quantity() != null) {
             if (request.quantity().compareTo(BigDecimal.ZERO) <= 0) {
                 throw new BadRequestException("Số lượng sử dụng phải lớn hơn 0.");
             }
-            usage.setQuantity(request.quantity());
-        }
-
-        // 5. Nếu cập nhật đơn vị tính (unit)
-        if (request.unit() != null && !request.unit().trim().isEmpty()) {
-            if (currentMaterial != null && currentMaterial.getUnit() != null
-                    && !isCompatibleUnit(currentMaterial.getUnit(), request.unit().trim())) {
-                throw new BadRequestException("Đơn vị tính (" + request.unit().trim() + ") không khớp với đơn vị tính của vật tư (" + currentMaterial.getUnit() + ").");
-            }
-            usage.setUnit(request.unit().trim());
+            String targetUnit = currentMaterial != null ? currentMaterial.getUnit() : effectiveUnit;
+            usage.setQuantity(convertToMaterialUnit(request.quantity(), effectiveUnit, targetUnit));
         }
 
         // 6. Nếu cập nhật thời gian sử dụng (usedAt)
         if (request.usedAt() != null) {
+            if (request.usedAt().isAfter(LocalDateTime.now().plusMinutes(5))) {
+                throw new BadRequestException("Thời gian sử dụng vật tư không được nằm trong tương lai.");
+            }
             usage.setUsedAt(request.usedAt());
         }
 
@@ -503,6 +514,61 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
         return farmMemberRepository.findByFarmIdAndUserIdAndStatus(farm.getId(), userId, "active")
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập hoặc ghi nhật ký cho mùa vụ của trang trại này."));
+    }
+
+    private BigDecimal convertToMaterialUnit(BigDecimal quantity, String fromUnit, String toUnit) {
+        if (quantity == null || fromUnit == null || toUnit == null) {
+            return quantity;
+        }
+        String from = normalizeMetricUnit(fromUnit);
+        String to = normalizeMetricUnit(toUnit);
+        if (from.equals(to)) {
+            return quantity;
+        }
+        // Liquid metric conversions (ml <-> L)
+        if ("ml".equals(from) && "l".equals(to)) {
+            return quantity.divide(BigDecimal.valueOf(1000), 3, RoundingMode.HALF_UP);
+        }
+        if ("l".equals(from) && "ml".equals(to)) {
+            return quantity.multiply(BigDecimal.valueOf(1000)).setScale(3, RoundingMode.HALF_UP);
+        }
+        // Mass metric conversions (g <-> kg <-> ta <-> tan)
+        BigDecimal inGrams = toGrams(quantity, from);
+        if (inGrams != null) {
+            return fromGrams(inGrams, to);
+        }
+        return quantity;
+    }
+
+    private String normalizeMetricUnit(String unit) {
+        String u = unit.trim().toLowerCase();
+        if (u.equals("lít") || u.equals("lit") || u.equals("l")) return "l";
+        if (u.equals("milliliter") || u.equals("ml")) return "ml";
+        if (u.equals("kilogram") || u.equals("kg")) return "kg";
+        if (u.equals("gram") || u.equals("g")) return "g";
+        if (u.equals("tấn") || u.equals("tan")) return "tan";
+        if (u.equals("tạ") || u.equals("ta")) return "ta";
+        return u;
+    }
+
+    private BigDecimal toGrams(BigDecimal qty, String unit) {
+        return switch (unit) {
+            case "g" -> qty;
+            case "kg" -> qty.multiply(BigDecimal.valueOf(1000));
+            case "ta" -> qty.multiply(BigDecimal.valueOf(100_000));
+            case "tan" -> qty.multiply(BigDecimal.valueOf(1_000_000));
+            default -> null;
+        };
+    }
+
+    private BigDecimal fromGrams(BigDecimal grams, String targetUnit) {
+        return switch (targetUnit) {
+            case "g" -> grams.setScale(3, RoundingMode.HALF_UP);
+            case "kg" -> grams.divide(BigDecimal.valueOf(1000), 3, RoundingMode.HALF_UP);
+            case "ta" -> grams.divide(BigDecimal.valueOf(100_000), 3, RoundingMode.HALF_UP);
+            case "tan" -> grams.divide(BigDecimal.valueOf(1_000_000), 3, RoundingMode.HALF_UP);
+            default -> grams;
+        };
     }
 
     private boolean isCompatibleUnit(String materialUnit, String requestUnit) {
