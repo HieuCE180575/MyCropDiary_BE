@@ -1526,6 +1526,117 @@ VALUES
 SET IDENTITY_INSERT [CustomerComplaintLog] OFF;
 GO
 
+-- ============================================================================
+-- 43. SYSTEM & ADMIN ANALYTICS HISTORICAL DATASET (Phục vụ biểu đồ Admin Statistics)
+-- ============================================================================
+PRINT N'--> Seeding Historical Data for Admin Statistics & Growth Analytics...';
+
+DECLARE @AnchorMonth DATE = DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1);
+DECLARE @AdminUserId INT = NULL;
+SELECT TOP (1) @AdminUserId = user_id FROM dbo.[User]
+WHERE system_role = N'admin' AND account_status = N'active' ORDER BY user_id;
+
+IF @AdminUserId IS NOT NULL
+BEGIN
+    -- 43.1 Demo Users over the past 6 months
+    DECLARE @DemoHash NVARCHAR(MAX) = N'$2a$10$8jIMVzui5SoBFkUR1udxQO3Nqp09gvVoXobsoScb/zlisb4JIieDC';
+    DECLARE @Users TABLE (seq INT PRIMARY KEY, full_name NVARCHAR(150), email NVARCHAR(255), month_offset INT, account_status NVARCHAR(20), user_id INT);
+    INSERT INTO @Users (seq, full_name, email, month_offset, account_status) VALUES
+      (1, N'Nguyễn Văn An', N'stats.demo.01@cropdiary.test', -5, N'active'),
+      (2, N'Trần Thị Bình', N'stats.demo.02@cropdiary.test', -4, N'active'),
+      (3, N'Lê Quốc Huy', N'stats.demo.03@cropdiary.test', -4, N'active'),
+      (4, N'Phạm Minh Châu', N'stats.demo.04@cropdiary.test', -3, N'active'),
+      (5, N'Hoàng Văn Dũng', N'stats.demo.05@cropdiary.test', -2, N'active'),
+      (6, N'Võ Thị Hà', N'stats.demo.06@cropdiary.test', -2, N'active'),
+      (7, N'Đặng Ngọc Lan', N'stats.demo.07@cropdiary.test', -2, N'active'),
+      (8, N'Bùi Thanh Nam', N'stats.demo.08@cropdiary.test', -1, N'active'),
+      (9, N'Đỗ Minh Tâm', N'stats.demo.09@cropdiary.test', 0, N'pending');
+
+    INSERT INTO dbo.[User] (full_name, email, phone, password_hash, system_role, account_status, email_verified_at, created_at, updated_at)
+    SELECT s.full_name, s.email, N'090900000' + CONVERT(NVARCHAR(1), s.seq), @DemoHash, N'user', s.account_status,
+      CASE WHEN s.account_status = N'active' THEN DATEADD(MONTH, s.month_offset, @AnchorMonth) END,
+      DATEADD(MONTH, s.month_offset, @AnchorMonth), DATEADD(MONTH, s.month_offset, @AnchorMonth)
+    FROM @Users s WHERE NOT EXISTS (SELECT 1 FROM dbo.[User] u WHERE u.email = s.email);
+
+    UPDATE s SET user_id = u.user_id FROM @Users s JOIN dbo.[User] u ON u.email = s.email;
+
+    -- 43.2 Additional Statistical Farms & Farm Registrations
+    DECLARE @Farms TABLE (seq INT PRIMARY KEY, farm_name NVARCHAR(160), marker NVARCHAR(100), owner_seq INT, status NVARCHAR(20), month_offset INT, farm_id INT);
+    INSERT INTO @Farms (seq, farm_name, marker, owner_seq, status, month_offset) VALUES
+      (1, N'Trang trại An Phú [Thống kê]', N'STAT-DEMO-V1-FARM-01', 1, N'active', -5),
+      (2, N'Trang trại Hải Bình [Thống kê]', N'STAT-DEMO-V1-FARM-02', 2, N'active', -4),
+      (3, N'Trang trại Minh Tâm [Thống kê]', N'STAT-DEMO-V1-FARM-03', 3, N'inactive', -1);
+
+    INSERT INTO dbo.Farm (farm_name, description, address, created_by, farm_status, created_at, updated_at)
+    SELECT s.farm_name, s.marker, N'Khu sản xuất mẫu phục vụ thống kê', u.user_id, s.status,
+      DATEADD(DAY,1,DATEADD(MONTH, s.month_offset, @AnchorMonth)), DATEADD(DAY,1,DATEADD(MONTH, s.month_offset, @AnchorMonth))
+    FROM @Farms s JOIN @Users u ON u.seq = s.owner_seq
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Farm f WHERE f.description = s.marker);
+
+    UPDATE s SET farm_id = f.farm_id FROM @Farms s JOIN dbo.Farm f ON f.description = s.marker;
+
+    DECLARE @Members TABLE (farm_seq INT, user_seq INT, role NVARCHAR(30));
+    INSERT INTO @Members VALUES (1,1,N'owner'), (2,2,N'owner'), (3,3,N'owner'), (1,4,N'member'), (2,5,N'member');
+
+    INSERT INTO dbo.FarmMember (farm_id, user_id, member_role, membership_status, joined_at)
+    SELECT f.farm_id, u.user_id, m.role, N'active',
+      CASE WHEN u.month_offset > f.month_offset THEN DATEADD(MONTH,u.month_offset,@AnchorMonth) ELSE DATEADD(DAY,1,DATEADD(MONTH,f.month_offset,@AnchorMonth)) END
+    FROM @Members m JOIN @Farms f ON f.seq=m.farm_seq JOIN @Users u ON u.seq=m.user_seq
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.FarmMember x WHERE x.farm_id=f.farm_id AND x.user_id=u.user_id);
+
+    -- 43.3 Zones & Blocks for Area Scale Analytics
+    DECLARE @Zones TABLE (seq INT PRIMARY KEY,farm_seq INT,zone_name NVARCHAR(100),zone_code NVARCHAR(50),zone_id INT);
+    INSERT INTO @Zones (seq,farm_seq,zone_name,zone_code) VALUES
+      (1,1,N'Khu A [Thống kê]',N'STAT-Z-A1'), (2,1,N'Khu B [Thống kê]',N'STAT-Z-A2'),
+      (3,2,N'Khu C [Thống kê]',N'STAT-Z-B1'), (4,3,N'Khu D [Thống kê]',N'STAT-Z-C1');
+
+    INSERT INTO dbo.Zone (farm_id,zone_name,zone_code,created_at)
+    SELECT f.farm_id,z.zone_name,z.zone_code,DATEADD(DAY,2,DATEADD(MONTH,f.month_offset,@AnchorMonth))
+    FROM @Zones z JOIN @Farms f ON f.seq=z.farm_seq
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Zone x WHERE x.farm_id=f.farm_id AND x.zone_code=z.zone_code);
+
+    UPDATE z SET zone_id=x.zone_id FROM @Zones z JOIN @Farms f ON f.seq=z.farm_seq JOIN dbo.Zone x ON x.farm_id=f.farm_id AND x.zone_code=z.zone_code;
+
+    DECLARE @Blocks TABLE (seq INT PRIMARY KEY,zone_seq INT,block_name NVARCHAR(100),block_code NVARCHAR(50),area_value NUMERIC(10,2),area_unit NVARCHAR(20),block_id INT);
+    INSERT INTO @Blocks (seq,zone_seq,block_name,block_code,area_value,area_unit) VALUES
+      (1,1,N'Lô A1 [Thống kê]',N'STAT-B-01',5000.00,N'm2'),
+      (2,1,N'Lô A2 [Thống kê]',N'STAT-B-02',7000.00,N'm2'),
+      (3,2,N'Lô B1 [Thống kê]',N'STAT-B-03',6000.00,N'm2'),
+      (4,3,N'Lô C1 [Thống kê]',N'STAT-B-04',0.40,N'ha'),
+      (5,3,N'Lô C2 [Thống kê]',N'STAT-B-05',0.60,N'ha'),
+      (6,4,N'Lô D1 [Thống kê]',N'STAT-B-06',0.00,N'ha');
+
+    INSERT INTO dbo.Block (zone_id,block_name,block_code,area_value,area_unit,status,created_at)
+    SELECT z.zone_id,b.block_name,b.block_code,b.area_value,b.area_unit,N'active',DATEADD(DAY,3,DATEADD(MONTH,f.month_offset,@AnchorMonth))
+    FROM @Blocks b JOIN @Zones z ON z.seq=b.zone_seq JOIN @Farms f ON f.seq=z.farm_seq
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Block x WHERE x.zone_id=z.zone_id AND x.block_code=b.block_code);
+
+    UPDATE b SET block_id=x.block_id FROM @Blocks b JOIN @Zones z ON z.seq=b.zone_seq JOIN dbo.Block x ON x.zone_id=z.zone_id AND x.block_code=b.block_code;
+
+    -- 43.4 Monthly Expenses (Chi phí sản xuất theo tháng cho biểu đồ Analytics)
+    DECLARE @Expenses TABLE (seq INT PRIMARY KEY,farm_seq INT,category NVARCHAR(60),amount NUMERIC(14,2),month_offset INT,description NVARCHAR(MAX));
+    INSERT INTO @Expenses (seq,farm_seq,category,amount,month_offset,description) VALUES
+      (1,1,N'MATERIAL',12000000,-5,N'[STAT-EXP-01] Mua hạt giống và phân bón lót'),
+      (2,1,N'LABOR',15000000,-4,N'[STAT-EXP-02] Nhân công làm đất và gieo trồng'),
+      (3,2,N'MATERIAL',18000000,-4,N'[STAT-EXP-03] Giống dưa lưới và phân hữu cơ'),
+      (4,2,N'EQUIPMENT',13500000,-3,N'[STAT-EXP-04] Bảo dưỡng định kỳ máy bơm nước'),
+      (5,1,N'LABOR',20000000,-2,N'[STAT-EXP-05] Nhân công thu hoạch rộ vụ hè'),
+      (6,2,N'OTHER',22000000,-2,N'[STAT-EXP-06] Chi phí bao bì và vận chuyển giao hàng'),
+      (7,1,N'MATERIAL',25000000,-1,N'[STAT-EXP-07] Bổ sung phân bón lá và vi sinh'),
+      (8,2,N'LABOR',9000000,-1,N'[STAT-EXP-08] Nhân công tỉa chồi nhà màng'),
+      (9,2,N'EQUIPMENT',18500000,-1,N'[STAT-EXP-09] Thiết bị tưới nhỏ giọt tự động'),
+      (10,1,N'OTHER',5700000,-1,N'[STAT-EXP-10] Vận chuyển vật tư về kho'),
+      (11,1,N'MATERIAL',25000000,0,N'[STAT-EXP-11] Bổ sung phân bón trung vi lượng'),
+      (12,2,N'LABOR',11000000,0,N'[STAT-EXP-12] Nhân công đóng gói nông sản');
+
+    INSERT INTO dbo.Expense (farm_id,expense_category,description,amount,expense_date,recorded_by,created_at)
+    SELECT f.farm_id,e.category,e.description,e.amount,DATEADD(DAY,2,DATEADD(MONTH,e.month_offset,@AnchorMonth)),m.farm_member_id,DATEADD(DAY,2,DATEADD(MONTH,e.month_offset,@AnchorMonth))
+    FROM @Expenses e JOIN @Farms f ON f.seq=e.farm_seq JOIN @Users u ON u.seq=f.owner_seq
+      JOIN dbo.FarmMember m ON m.farm_id=f.farm_id AND m.user_id=u.user_id
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Expense x WHERE x.farm_id=f.farm_id AND x.description=e.description);
+END;
+GO
+
 PRINT N'============================================================================';
 PRINT N'--> MyCropDiary English Sample Data Seeding Completed Successfully!';
 PRINT N'============================================================================';
