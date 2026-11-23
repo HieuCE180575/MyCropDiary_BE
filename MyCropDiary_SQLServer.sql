@@ -1585,33 +1585,33 @@ BEGIN
     WHERE NOT EXISTS (SELECT 1 FROM dbo.FarmMember x WHERE x.farm_id=f.farm_id AND x.user_id=u.user_id);
 
     -- 43.3 Zones & Blocks for Area Scale Analytics
-    DECLARE @Zones TABLE (seq INT PRIMARY KEY,farm_seq INT,zone_name NVARCHAR(100),zone_code NVARCHAR(50),zone_id INT);
-    INSERT INTO @Zones (seq,farm_seq,zone_name,zone_code) VALUES
-      (1,1,N'Khu A [Thống kê]',N'STAT-Z-A1'), (2,1,N'Khu B [Thống kê]',N'STAT-Z-A2'),
-      (3,2,N'Khu C [Thống kê]',N'STAT-Z-B1'), (4,3,N'Khu D [Thống kê]',N'STAT-Z-C1');
+    DECLARE @Zones TABLE (seq INT PRIMARY KEY,farm_seq INT,zone_name NVARCHAR(100),zone_id INT);
+    INSERT INTO @Zones (seq,farm_seq,zone_name) VALUES
+      (1,1,N'Khu A [Thống kê]'), (2,1,N'Khu B [Thống kê]'),
+      (3,2,N'Khu C [Thống kê]'), (4,3,N'Khu D [Thống kê]');
 
-    INSERT INTO dbo.Zone (farm_id,zone_name,zone_code,created_at)
-    SELECT f.farm_id,z.zone_name,z.zone_code,DATEADD(DAY,2,DATEADD(MONTH,f.month_offset,@AnchorMonth))
+    INSERT INTO dbo.Zone (farm_id,zone_name,description,area_value,area_unit,created_at)
+    SELECT f.farm_id,z.zone_name,N'Khu vực phục vụ thống kê phân tích',1.2,N'ha',DATEADD(DAY,2,DATEADD(MONTH,f.month_offset,@AnchorMonth))
     FROM @Zones z JOIN @Farms f ON f.seq=z.farm_seq
-    WHERE NOT EXISTS (SELECT 1 FROM dbo.Zone x WHERE x.farm_id=f.farm_id AND x.zone_code=z.zone_code);
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Zone x WHERE x.farm_id=f.farm_id AND x.zone_name=z.zone_name);
 
-    UPDATE z SET zone_id=x.zone_id FROM @Zones z JOIN @Farms f ON f.seq=z.farm_seq JOIN dbo.Zone x ON x.farm_id=f.farm_id AND x.zone_code=z.zone_code;
+    UPDATE z SET zone_id=x.zone_id FROM @Zones z JOIN @Farms f ON f.seq=z.farm_seq JOIN dbo.Zone x ON x.farm_id=f.farm_id AND x.zone_name=z.zone_name;
 
-    DECLARE @Blocks TABLE (seq INT PRIMARY KEY,zone_seq INT,block_name NVARCHAR(100),block_code NVARCHAR(50),area_value NUMERIC(10,2),area_unit NVARCHAR(20),block_id INT);
-    INSERT INTO @Blocks (seq,zone_seq,block_name,block_code,area_value,area_unit) VALUES
-      (1,1,N'Lô A1 [Thống kê]',N'STAT-B-01',5000.00,N'm2'),
-      (2,1,N'Lô A2 [Thống kê]',N'STAT-B-02',7000.00,N'm2'),
-      (3,2,N'Lô B1 [Thống kê]',N'STAT-B-03',6000.00,N'm2'),
-      (4,3,N'Lô C1 [Thống kê]',N'STAT-B-04',0.40,N'ha'),
-      (5,3,N'Lô C2 [Thống kê]',N'STAT-B-05',0.60,N'ha'),
-      (6,4,N'Lô D1 [Thống kê]',N'STAT-B-06',0.00,N'ha');
+    DECLARE @Blocks TABLE (seq INT PRIMARY KEY,zone_seq INT,block_name NVARCHAR(100),area_value NUMERIC(10,2),area_unit NVARCHAR(20),block_id INT);
+    INSERT INTO @Blocks (seq,zone_seq,block_name,area_value,area_unit) VALUES
+      (1,1,N'Lô A1 [Thống kê]',5000.00,N'm2'),
+      (2,1,N'Lô A2 [Thống kê]',7000.00,N'm2'),
+      (3,2,N'Lô B1 [Thống kê]',6000.00,N'm2'),
+      (4,3,N'Lô C1 [Thống kê]',0.40,N'ha'),
+      (5,3,N'Lô C2 [Thống kê]',0.60,N'ha'),
+      (6,4,N'Lô D1 [Thống kê]',0.00,N'ha');
 
-    INSERT INTO dbo.Block (zone_id,block_name,block_code,area_value,area_unit,status,created_at)
-    SELECT z.zone_id,b.block_name,b.block_code,b.area_value,b.area_unit,N'active',DATEADD(DAY,3,DATEADD(MONTH,f.month_offset,@AnchorMonth))
+    INSERT INTO dbo.Block (zone_id,block_name,description,area_value,area_unit,soil_type,created_at)
+    SELECT z.zone_id,b.block_name,N'Lô đất mẫu phục vụ thống kê diện tích',b.area_value,b.area_unit,N'Đất thịt pha cát',DATEADD(DAY,3,DATEADD(MONTH,f.month_offset,@AnchorMonth))
     FROM @Blocks b JOIN @Zones z ON z.seq=b.zone_seq JOIN @Farms f ON f.seq=z.farm_seq
-    WHERE NOT EXISTS (SELECT 1 FROM dbo.Block x WHERE x.zone_id=z.zone_id AND x.block_code=b.block_code);
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Block x WHERE x.zone_id=z.zone_id AND x.block_name=b.block_name);
 
-    UPDATE b SET block_id=x.block_id FROM @Blocks b JOIN @Zones z ON z.seq=b.zone_seq JOIN dbo.Block x ON x.zone_id=z.zone_id AND x.block_code=b.block_code;
+    UPDATE b SET block_id=x.block_id FROM @Blocks b JOIN @Zones z ON z.seq=b.zone_seq JOIN dbo.Block x ON x.zone_id=z.zone_id AND x.block_name=b.block_name;
 
     -- 43.4 Monthly Expenses (Chi phí sản xuất theo tháng cho biểu đồ Analytics)
     DECLARE @Expenses TABLE (seq INT PRIMARY KEY,farm_seq INT,category NVARCHAR(60),amount NUMERIC(14,2),month_offset INT,description NVARCHAR(MAX));
