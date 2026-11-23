@@ -12,5 +12,6 @@ public record LoginReq(
         String email,
 
         @NotBlank(message = "Mật khẩu không được để trống")
+        @Size(max = 72, message = "Mật khẩu tối đa 72 ký tự")
         String password) {
 }

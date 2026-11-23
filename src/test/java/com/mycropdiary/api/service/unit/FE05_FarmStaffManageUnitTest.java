@@ -164,16 +164,15 @@ public class FE05_FarmStaffManageUnitTest {
     }
 
     @Test
-    @DisplayName("FE05_STF_UTC09 [Boundary] - Thêm nhân viên để trống cả email lẫn userId (Failed: DF-017)")
+    @DisplayName("FE05_STF_UTC09 [Boundary] - Thêm nhân viên để trống cả email lẫn userId bị chặn bởi Bean Validation & Service (Passed)")
     void UTC09_addStaff_missingEmailAndUserId_defectDF017() {
-        // [Defect DF-017] Thiếu Bean Validation ở tầng Controller cho AddStaffReq
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-017: [Defect Found] AddStaffReq cho phép gửi cả email và userId rỗng gây lọt ngoại lệ BusinessRuleException thay vì báo 400 Bad Request.");
-        } else {
-            AddStaffReq emptyReq = new AddStaffReq(null, null, "member", null);
-            assertNull(emptyReq.email());
-            assertNull(emptyReq.userId());
-        }
+        // Verified fix for DF-017: @AssertTrue cross-field validation on AddStaffReq
+        AddStaffReq emptyReq = new AddStaffReq(null, null, "member", null);
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        assertFalse(validator.validate(emptyReq).isEmpty());
+
+        when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
+        assertThrows(BusinessRuleException.class, () -> farmStaffService.addStaff(10, 1, emptyReq));
     }
 
     @Test

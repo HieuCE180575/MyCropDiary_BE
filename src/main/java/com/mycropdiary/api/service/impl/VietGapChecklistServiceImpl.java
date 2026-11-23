@@ -821,7 +821,7 @@ public class VietGapChecklistServiceImpl implements VietGapChecklistService {
 
                         result.setResultStatus("pass");
                         result.setIsAutoEvaluated(true);
-                        result.setNotes(String.format("CÂN BẰNG KHỐI LƯỢNG (Mass Balance): Tổng thu hoạch đạt chuẩn %.2f %s, sản lượng loại bỏ/tiêu hủy %.2f %s được ghi nhận minh bạch.",
+                        result.setNotes(String.format(Locale.US, "CÂN BẰNG KHỐI LƯỢNG (Mass Balance): Tổng thu hoạch đạt chuẩn %.2f %s, sản lượng loại bỏ/tiêu hủy %.2f %s được ghi nhận minh bạch.",
                                 totalHarvested, unit, totalDiscarded, unit));
                         result.setEvidenceReferenceType("HARVEST_RECORD");
                         result.setEvidenceReferenceId(harvests.get(0).getId());

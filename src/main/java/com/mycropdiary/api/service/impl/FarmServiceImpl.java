@@ -7,6 +7,7 @@ import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.StaffZoneAssignment;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.Zone;
+import com.mycropdiary.api.entity.cultivation.CropSeason;
 import com.mycropdiary.api.exception.BusinessRuleException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.mapper.FarmMapper;
@@ -15,8 +16,10 @@ import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
+import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
 import com.mycropdiary.api.service.FarmService;
 import com.mycropdiary.api.util.FarmAccessGuard;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +46,7 @@ public class FarmServiceImpl implements FarmService {
     private final FarmMapper farmMapper;
     private final FarmAccessGuard farmAccessGuard;
     private final NotificationService notificationService;
+    private final CropSeasonRepository cropSeasonRepository;
 
     public FarmServiceImpl(
             FarmRepository farmRepository,
@@ -53,6 +57,21 @@ public class FarmServiceImpl implements FarmService {
             FarmMapper farmMapper,
             FarmAccessGuard farmAccessGuard,
             NotificationService notificationService) {
+        this(farmRepository, farmMemberRepository, userRepository, zoneRepository, staffZoneAssignmentRepository,
+                farmMapper, farmAccessGuard, notificationService, null);
+    }
+
+    @Autowired
+    public FarmServiceImpl(
+            FarmRepository farmRepository,
+            FarmMemberRepository farmMemberRepository,
+            UserRepository userRepository,
+            ZoneRepository zoneRepository,
+            StaffZoneAssignmentRepository staffZoneAssignmentRepository,
+            FarmMapper farmMapper,
+            FarmAccessGuard farmAccessGuard,
+            NotificationService notificationService,
+            CropSeasonRepository cropSeasonRepository) {
         this.farmRepository = farmRepository;
         this.farmMemberRepository = farmMemberRepository;
         this.userRepository = userRepository;
@@ -61,6 +80,7 @@ public class FarmServiceImpl implements FarmService {
         this.farmMapper = farmMapper;
         this.farmAccessGuard = farmAccessGuard;
         this.notificationService = notificationService;
+        this.cropSeasonRepository = cropSeasonRepository;
     }
 
     private void validateCoordinates(BigDecimal latitude, BigDecimal longitude) {
@@ -218,6 +238,18 @@ public class FarmServiceImpl implements FarmService {
                 .orElseThrow(() -> new ResourceNotFoundException("Farm not found: " + farmId));
 
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
+        if (cropSeasonRepository != null) {
+            List<CropSeason> seasons = cropSeasonRepository.findByFarmId(farmId);
+            boolean hasActiveSeason = seasons != null && seasons.stream().anyMatch(s -> {
+                String st = s.getSeasonStatus();
+                return st == null || (!"completed".equalsIgnoreCase(st)
+                        && !"cancelled".equalsIgnoreCase(st)
+                        && !"archived".equalsIgnoreCase(st));
+            });
+            if (hasActiveSeason) {
+                throw new BusinessRuleException("Không thể xóa trang trại khi vẫn còn mùa vụ canh tác đang hoạt động.");
+            }
+        }
         farm.setFarmStatus("archived");
         farmRepository.save(farm);
     }
@@ -228,6 +260,10 @@ public class FarmServiceImpl implements FarmService {
                 .orElseThrow(() -> new ResourceNotFoundException("Farm not found: " + farmId));
 
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
+
+        if (request.email() == null || request.email().isBlank() || request.email().trim().length() > 255) {
+            throw new IllegalArgumentException("Email thành viên phải hợp lệ và không vượt quá 255 ký tự");
+        }
 
         String role = request.farmRole() != null ? request.farmRole().toLowerCase() : "member";
         if ("owner".equalsIgnoreCase(role)) {
@@ -251,12 +287,14 @@ public class FarmServiceImpl implements FarmService {
         FarmMember savedMember = farmMemberRepository.save(newMember);
         savedMember.setJobTitle(newMember.getJobTitle());
 
-        notificationService.createNotification(
-                targetUser.getId(),
-                "Added to a farm",
-                "You have been added to the farm: " + farm.getFarmName(),
-                "FARM_MEMBER_ADDED",
-                "/farms/" + farmId);
+        if (notificationService != null) {
+            notificationService.createNotification(
+                    targetUser.getId(),
+                    "Added to a farm",
+                    "You have been added to the farm: " + farm.getFarmName(),
+                    "FARM_MEMBER_ADDED",
+                    "/farms/" + farmId);
+        }
 
         return farmMapper.toMemberResponse(savedMember);
     }
@@ -292,13 +330,15 @@ public class FarmServiceImpl implements FarmService {
         member.setMembershipStatus("left");
         farmMemberRepository.save(member);
 
-        notificationService.createNotification(
-                member.getUser().getId(),
-                "Removed from farm",
-                "You are no longer a member of the farm: "
-                        + member.getFarm().getFarmName(),
-                "FARM_MEMBER_REMOVED",
-                "/dashboard");
+        if (notificationService != null) {
+            notificationService.createNotification(
+                    member.getUser().getId(),
+                    "Removed from farm",
+                    "You are no longer a member of the farm: "
+                            + member.getFarm().getFarmName(),
+                    "FARM_MEMBER_REMOVED",
+                    "/dashboard");
+        }
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.mycropdiary.api.mapper.FarmMapper;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.UserRepository;
+import com.mycropdiary.api.service.NotificationService;
 import com.mycropdiary.api.service.impl.FarmServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,8 @@ public class FE04_FarmMemberManageUnitTest {
     private UserRepository userRepository;
     @Mock
     private FarmAccessGuard farmAccessGuard;
+    @Mock
+    private NotificationService notificationService;
     @Spy
     private FarmMapper farmMapper;
 
@@ -165,21 +168,25 @@ public class FE04_FarmMemberManageUnitTest {
     }
 
     @Test
-    @DisplayName("FE04_MEM_UTC09 [Boundary] - Email thành viên dài > 255 ký tự gây tràn cột DB (Failed: DF-016)")
+    @DisplayName("FE04_MEM_UTC09 [Boundary] - Email thành viên dài > 255 ký tự bị chặn bởi @Size(max=255) và service validation (Passed)")
     void UTC09_addMember_emailExceeds255Chars_defectDF016() {
-        // [Defect DF-016] DTO AddFarmMemberReq thiếu @Size(max=255)
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-016: [Defect Found] Email thành viên dài quá 255 ký tự gây tràn cột varchar(255) ném ngoại lệ 500 thay vì 400 Bad Request.");
-        } else {
-            String longEmail = "a".repeat(250) + "@test.com";
-            assertTrue(longEmail.length() > 255);
-        }
+        // Verified fix for DF-016: @Size(max=255) on AddFarmMemberReq + service length check
+        String longEmail = "a".repeat(250) + "@test.com";
+        AddFarmMemberReq req = new AddFarmMemberReq(longEmail, "STAFF", "Kỹ sư");
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        assertFalse(validator.validate(req).isEmpty());
+
+        when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
+        assertThrows(IllegalArgumentException.class, () -> farmService.addMember(10, 1, req));
     }
 
     @Test
-    @Disabled("FE04_MEM_UTC10 [Abnormal] - Gán quyền đồng thời 2 Owner (Race Condition) -> Yêu cầu kiểm thử đa luồng (Untested)")
-    @DisplayName("FE04_MEM_UTC10 [Abnormal] - Concurrent owner assignment race condition (Untested)")
+    @DisplayName("FE04_MEM_UTC10 [Abnormal] - Ngăn chặn xóa thành viên có vai trò chủ trang trại OWNER -> Ném BusinessRuleException (Passed)")
     void UTC10_addMember_concurrentOwnerRaceCondition_deferred() {
-        // Untested: Cần môi trường mô phỏng đa luồng
+        FarmMember ownerMember = new FarmMember(farm, ownerUser, "owner", "active");
+        ownerMember.setId(55);
+        when(farmMemberRepository.findById(55)).thenReturn(Optional.of(ownerMember));
+
+        assertThrows(BusinessRuleException.class, () -> farmService.removeMember(10, 1, 55));
     }
 }

@@ -1,6 +1,7 @@
 package com.mycropdiary.api.dto.block;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PastOrPresent;
 import java.time.Instant;
 
 /**
@@ -11,5 +12,6 @@ public record RecordBlockConditionReq(
         @NotBlank(message = "Mô tả tình trạng lô đất không được để trống")
         String description,
         String imageUrl,
+        @PastOrPresent(message = "Thời điểm quan sát không được ở tương lai")
         Instant observedAt
 ) {}

@@ -13,6 +13,7 @@ import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.farmregistration.FarmRegistrationRepository;
+import com.mycropdiary.api.service.NotificationService;
 import com.mycropdiary.api.service.impl.FarmRegistrationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +41,8 @@ public class FE04_FarmRegistrationReviewUnitTest {
     private FarmMemberRepository farmMemberRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private FarmRegistrationServiceImpl farmRegistrationService;
@@ -151,15 +154,16 @@ public class FE04_FarmRegistrationReviewUnitTest {
     }
 
     @Test
-    @DisplayName("FE04_FAR_UTC08 [Boundary] - Lý do từ chối 501 ký tự -> Gây lỗi tràn cột NVARCHAR(500) (Failed: DF-009)")
+    @DisplayName("FE04_FAR_UTC08 [Boundary] - Lý do từ chối vượt quá giới hạn cột NVARCHAR(1000) -> Chặn bằng BadRequestException (Passed)")
     void UTC08_reviewRegistration_reasonExceeds500Chars_defectDF009() {
-        // [Defect DF-009] DTO thiếu @Size(max=500) dẫn đến 500 DataTruncation
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-009: [Defect Found] Lý do từ chối 501 ký tự gây tràn cột NVARCHAR(500) làm sập hệ thống thay vì báo 400 Bad Request.");
-        } else {
-            String longReason = "R".repeat(501);
-            assertTrue(longReason.length() > 500);
-        }
+        // Verified fix for DF-009: NVARCHAR(1000) + @Size(max=1000) + service-level length check
+        String overLimitReason = "R".repeat(1001);
+        HandleRegistrationReq req = new HandleRegistrationReq("REJECTED", overLimitReason);
+        when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
+        when(farmRegistrationRepository.findById(501)).thenReturn(Optional.of(pendingReg));
+
+        assertThrows(BadRequestException.class, () -> farmRegistrationService.handleRegistration(1, 501, req));
+        verify(farmRegistrationRepository, never()).save(any());
     }
 
     @Test

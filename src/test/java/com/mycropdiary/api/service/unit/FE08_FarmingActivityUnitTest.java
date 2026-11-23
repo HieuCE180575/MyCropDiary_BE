@@ -216,39 +216,61 @@ public class FE08_FarmingActivityUnitTest {
     }
 
     @Test
-    @DisplayName("FE08_ACT_UTC08 [Boundary] - Thời gian bắt đầu nhật ký nằm trong tương lai xa (+30 ngày) (Failed: DF-022)")
+    @DisplayName("FE08_ACT_UTC08 [Boundary] - Thời gian bắt đầu nhật ký nằm trong tương lai xa (+30 ngày) bị chặn an toàn (Passed)")
     void UTC08_createActivity_startedAtInFarFuture_defectDF022() {
-        // [Defect DF-022] CreateFarmingActivityReq thiếu ràng buộc @PastOrPresent cho startedAt
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-022: [Defect Found] Cho phép ghi nhật ký hoạt động có thời gian bắt đầu trong tương lai 30 ngày do thiếu @PastOrPresent.");
-        } else {
-            LocalDateTime future = LocalDateTime.now().plusDays(30);
-            assertTrue(future.isAfter(LocalDateTime.now()));
-        }
+        // Verified fix for DF-022: @PastOrPresent on startedAt + service-level future date guard
+        LocalDateTime future = LocalDateTime.now().plusDays(30);
+        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+                10, "Bón phân", "Hoạt động tương lai", future, future.plusHours(2), null, null, null, null, null
+        );
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        assertFalse(validator.validate(req).isEmpty());
+
+        when(cropSeasonRepository.findById(10)).thenReturn(Optional.of(activeSeason));
+        assertThrows(BadRequestException.class, () -> farmingActivityService.createActivity(5, req));
     }
 
     @Test
-    @DisplayName("FE08_ACT_UTC09 [Boundary] - Số giờ công nhân làm việc âm hoặc vượt quá 24h/ngày (Failed: DF-023)")
+    @DisplayName("FE08_ACT_UTC09 [Boundary] - Số giờ công nhân vượt quá 24h/ngày (36h) bị chặn bởi @DecimalMax(24.00) & Service (Passed)")
     void UTC09_createActivity_invalidWorkerHours_defectDF023() {
-        // [Defect DF-023] ActivityWorkerReq thiếu @DecimalMax("24.00") cho workHours
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-023: [Defect Found] Hệ thống cho phép nhập số giờ công lao động của công nhân là 36 giờ/ngày do thiếu @DecimalMax(24.00).");
-        } else {
-            BigDecimal hours = new BigDecimal("36.00");
-            assertTrue(hours.compareTo(new BigDecimal("24.00")) > 0);
-        }
+        // Verified fix for DF-023: @DecimalMax("24.00") on ActivityWorkerReq.workHours + service validation
+        LocalDateTime now = LocalDateTime.now();
+        ActivityWorkerReq invalidWorker = new ActivityWorkerReq(100, new BigDecimal("36.00"), "Quá giờ");
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        assertFalse(validator.validate(invalidWorker).isEmpty());
+
+        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+                10, "Bón phân", "Ca làm 36h", now.minusHours(2), now, null, null, null, null, List.of(invalidWorker)
+        );
+        when(cropSeasonRepository.findById(10)).thenReturn(Optional.of(activeSeason));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 5, "active")).thenReturn(Optional.of(supervisorMember));
+        when(farmingActivityRepository.save(any(FarmingActivity.class))).thenAnswer(i -> i.getArgument(0));
+
+        assertThrows(BadRequestException.class, () -> farmingActivityService.createActivity(5, req));
     }
 
     @Test
-    @DisplayName("FE08_ACT_UTC10 [Abnormal] - Ghi nhận công nhân thuộc trang trại khác vào hoạt động (Failed: DF-024)")
+    @DisplayName("FE08_ACT_UTC10 [Abnormal] - Ghi nhận công nhân thuộc trang trại khác ném ForbiddenException 403 (Passed)")
     void UTC10_createActivity_workerFromOtherFarm_defectDF024() {
-        // [Defect DF-024] Báo lỗi sai loại ngoại lệ khi workerId thuộc farm khác: ném 400 thay vì 403 Forbidden
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-024: [Defect Found] Thêm nhân công từ trang trại khác bị ném 400 BadRequest chung chung thay vì cảnh báo vi phạm bảo mật 403 Forbidden.");
-        } else {
-            Farm otherFarm = new Farm();
-            otherFarm.setId(2);
-            assertNotEquals(farm.getId(), otherFarm.getId());
-        }
+        // Verified fix for DF-024: Throw ForbiddenException (403) when assigning worker from another farm
+        Farm otherFarm = new Farm();
+        otherFarm.setId(2);
+        FarmMember foreignMember = new FarmMember(otherFarm, new User(), "staff", "active");
+        FarmWorker foreignWorker = new FarmWorker(foreignMember, "CN-999", "Công nhân ngoài", "active", java.time.LocalDate.now(), null);
+        foreignWorker.setId(999);
+
+        LocalDateTime now = LocalDateTime.now();
+        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+                10, "Bón phân", "Gán nhân công khác trại", now.minusHours(2), now, null, null, null, null,
+                List.of(new ActivityWorkerReq(999, new BigDecimal("4.00"), null))
+        );
+
+        when(cropSeasonRepository.findById(10)).thenReturn(Optional.of(activeSeason));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 5, "active")).thenReturn(Optional.of(supervisorMember));
+        when(farmingActivityRepository.save(any(FarmingActivity.class))).thenAnswer(i -> i.getArgument(0));
+        when(farmWorkerRepository.findByIdInAndFarmId(List.of(999), 1)).thenReturn(Collections.emptyList());
+        when(farmWorkerRepository.findById(999)).thenReturn(Optional.of(foreignWorker));
+
+        assertThrows(ForbiddenException.class, () -> farmingActivityService.createActivity(5, req));
     }
 }

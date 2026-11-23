@@ -139,26 +139,43 @@ public class FE01_AuthVerifyOtpUnitTest {
     }
 
     @Test
-    @DisplayName("FE01_AUT_UTC08 [Boundary] - OTP tại ranh giới 4 phút 59 giây -> Bị từ chối do lệch múi giờ (Failed: DF-004)")
+    @DisplayName("FE01_AUT_UTC08 [Boundary] - OTP tại ranh giới 4 phút 59 giây -> Xác thực thành công theo chuẩn UTC (Passed)")
     void UTC08_verifyOtp_atBoundary4m59s_defectDF004() {
-        // [Defect DF-004] Lệch múi giờ UTC/Local server làm OTP còn hạn 1s bị từ chối sớm
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-004: [Defect Found] Mã OTP tại ranh giới 4m59s bị từ chối sớm do xung đột múi giờ UTC và Local Server.");
-        } else {
-            AccountToken nearExpToken = AccountToken.createOtp(pendingUser, "hash123", Instant.now().plusMillis(500));
-            assertFalse(nearExpToken.isExpired());
-        }
+        // Verified fix for DF-004: AccountToken and Hibernate JDBC standardized on UTC Instant
+        AccountToken nearExpToken = AccountToken.createOtp(pendingUser, "hash123", Instant.now().plusSeconds(1));
+        VerifyOtpReq req = new VerifyOtpReq("farmer@test.com", "123456");
+
+        when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(pendingUser));
+        when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(10, "email_verification"))
+                .thenReturn(Optional.of(nearExpToken));
+        when(passwordEncoder.matches("123456", "hash123")).thenReturn(true);
+        when(jwtTokenProvider.generateAccessToken(any(), any(), any())).thenReturn("mock-access");
+        when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("mock-refresh");
+
+        AuthResp resp = authService.verifyOtp(req);
+        assertNotNull(resp);
+        assertEquals("active", pendingUser.getAccountStatus());
     }
 
     @Test
-    @DisplayName("FE01_AUT_UTC09 [Abnormal] - Thử sai OTP quá 5 lần -> Chưa có cơ chế khóa Brute-force (Failed: DF-005)")
+    @DisplayName("FE01_AUT_UTC09 [Abnormal] - Thử sai OTP quá 5 lần -> Khóa mã OTP chống Brute-force (Passed)")
     void UTC09_verifyOtp_bruteForceExceeds5Attempts_defectDF005() {
-        // [Defect DF-005] Không giới hạn số lần nhập sai OTP (Lỗ hổng dò quét mã)
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-005: [Defect Found] Thiếu bộ đếm failedAttempts và cơ chế khóa mã khi bị dò quét Brute-force quá 5 lần.");
-        } else {
-            assertTrue(true);
-        }
+        // Verified fix for DF-005: failedAttempts counter locks OTP after 5 failed attempts
+        AccountToken token = AccountToken.createOtp(pendingUser, "hash123", Instant.now().plus(5, ChronoUnit.MINUTES));
+        token.setFailedAttempts(4);
+        VerifyOtpReq wrongReq = new VerifyOtpReq("farmer@test.com", "999999");
+
+        when(userRepository.findByEmailIgnoreCase(wrongReq.email())).thenReturn(Optional.of(pendingUser));
+        when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(10, "email_verification"))
+                .thenReturn(Optional.of(token));
+        when(passwordEncoder.matches("999999", "hash123")).thenReturn(false);
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> authService.verifyOtp(wrongReq));
+        assertTrue(ex.getMessage().contains("5 lần"));
+        assertEquals(5, token.getFailedAttempts());
+        assertTrue(token.isUsed());
+        assertTrue(token.isAttemptLimitReached());
+        verify(accountTokenRepository).save(token);
     }
 
     @Test

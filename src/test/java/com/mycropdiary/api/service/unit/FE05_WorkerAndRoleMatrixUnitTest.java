@@ -50,7 +50,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Role-based Operations Unit Tests (Worker Records, Warehouse/Inventory Full CRUD, AI Conversations/Feedback)")
-public class FE16_RoleMatrixAndWorkerUnitTest {
+public class FE05_WorkerAndRoleMatrixUnitTest {
 
     @Mock
     private FarmWorkerRepository farmWorkerRepository;

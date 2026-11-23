@@ -37,6 +37,9 @@ public class Zone {
     @Column(name = "area_unit", length = 20)
     private String areaUnit = "m2";
 
+    @Column(name = "status", nullable = false, length = 20)
+    private String status = "ACTIVE";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -77,6 +80,11 @@ public class Zone {
 
     public String getAreaUnit() { return areaUnit; }
     public void setAreaUnit(String areaUnit) { this.areaUnit = areaUnit; }
+
+    public String getStatus() { return status != null ? status : "ACTIVE"; }
+    public void setStatus(String status) {
+        this.status = (status != null && !status.isBlank()) ? status.trim().toUpperCase() : "ACTIVE";
+    }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

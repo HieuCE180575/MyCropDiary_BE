@@ -43,7 +43,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Admin Management Unit Tests (Statistics, AI Feedback, Crop Categories, Checklist Rules - Commit 277356d)")
-public class FE15_AdminManagementUnitTest {
+public class FE13_AdminSystemManagementUnitTest {
 
     @Mock
     private UserRepository userRepository;
@@ -89,7 +89,7 @@ public class FE15_AdminManagementUnitTest {
 
     // --- 1. Admin Statistics Tests ---
     @Test
-    @DisplayName("FE15_ADM_UTC01 [Normal] - View System Statistics: Trả về đầy đủ số liệu tổng hợp hệ thống")
+    @DisplayName("FE13_SYS_UTC01 [Normal] - View System Statistics: Trả về đầy đủ số liệu tổng hợp hệ thống")
     void testGetSystemStatistics_success() {
         when(userRepository.count()).thenReturn(100L);
         when(userRepository.countByAccountStatusIgnoreCase("ACTIVE")).thenReturn(90L);
@@ -127,7 +127,7 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC02 [Boundary] - View System Statistics: Cơ sở dữ liệu mới khởi tạo (0 dữ liệu) -> Trả về 0 an toàn")
+    @DisplayName("FE13_SYS_UTC02 [Boundary] - View System Statistics: Cơ sở dữ liệu mới khởi tạo (0 dữ liệu) -> Trả về 0 an toàn")
     void testGetSystemStatistics_emptyDatabase_shouldReturnZeroesGracefully() {
         when(userRepository.count()).thenReturn(0L);
         when(userRepository.countByAccountStatusIgnoreCase("ACTIVE")).thenReturn(0L);
@@ -158,7 +158,7 @@ public class FE15_AdminManagementUnitTest {
 
     // --- 2. Admin AI Feedback Tests ---
     @Test
-    @DisplayName("FE15_ADM_UTC03 [Normal] - Manage AI Feedback: Xem danh sách phản hồi người dùng")
+    @DisplayName("FE13_SYS_UTC03 [Normal] - Manage AI Feedback: Xem danh sách phản hồi người dùng")
     void testGetAllFeedbacks_success() {
         User user = new User("farmer@test.com", "hash", "Farmer A", "0901234567", "USER", "ACTIVE");
         user.setId(10);
@@ -180,7 +180,7 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC04 [Normal] - Manage AI Feedback: Admin phản hồi ý kiến thành công")
+    @DisplayName("FE13_SYS_UTC04 [Normal] - Manage AI Feedback: Admin phản hồi ý kiến thành công")
     void testReplyFeedback_success() {
         User admin = new User("admin@test.com", "hash", "Admin", "0909999999", "ADMIN", "ACTIVE");
         admin.setId(1);
@@ -204,14 +204,14 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC05 [Abnormal] - Manage AI Feedback: Phản hồi ID feedback không tồn tại -> Báo lỗi ResourceNotFound")
+    @DisplayName("FE13_SYS_UTC05 [Abnormal] - Manage AI Feedback: Phản hồi ID feedback không tồn tại -> Báo lỗi ResourceNotFound")
     void testReplyFeedback_notFound_throwsResourceNotFound() {
         when(aiFeedbackRepository.findById(999)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> adminAIFeedbackService.replyFeedback(1, 999, "Tra loi"));
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC06 [Normal] - Manage AI Feedback: Cập nhật trạng thái phản hồi (RESOLVED)")
+    @DisplayName("FE13_SYS_UTC06 [Normal] - Manage AI Feedback: Cập nhật trạng thái phản hồi (RESOLVED)")
     void testUpdateStatus_success() {
         User user = new User("farmer@test.com", "hash", "Farmer A", "0901234567", "USER", "ACTIVE");
         user.setId(10);
@@ -231,7 +231,7 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC07 [Abnormal] - Manage AI Feedback: Cập nhật trạng thái ID không tồn tại -> Ném ResourceNotFoundException")
+    @DisplayName("FE13_SYS_UTC07 [Abnormal] - Manage AI Feedback: Cập nhật trạng thái ID không tồn tại -> Ném ResourceNotFoundException")
     void testUpdateStatus_notFound_throwsResourceNotFound() {
         when(aiFeedbackRepository.findById(999)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> adminAIFeedbackService.updateFeedbackStatus(1, 999, "DISMISSED"));
@@ -239,7 +239,7 @@ public class FE15_AdminManagementUnitTest {
 
     // --- 3. Admin Crop Category Tests (Commit 277356d) ---
     @Test
-    @DisplayName("FE15_ADM_UTC08 [Normal] - Admin Crop Category: Lấy danh mục cây trồng dùng chung")
+    @DisplayName("FE13_SYS_UTC08 [Normal] - Admin Crop Category: Lấy danh mục cây trồng dùng chung")
     void testGetCropCategories_success() {
         CropCategory cat = new CropCategory("Dưa lưới", "Cây ăn quả ngắn ngày VietGAP");
         cat.setId(1);
@@ -254,7 +254,7 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC09 [Normal] - Admin Crop Category: Tạo mới danh mục cây trồng thành công")
+    @DisplayName("FE13_SYS_UTC09 [Normal] - Admin Crop Category: Tạo mới danh mục cây trồng thành công")
     void testCreateCropCategory_success() {
         CropCategoryReq req = new CropCategoryReq("Cà chua Cherry", "Trồng trong nhà màng", "https://example.com/tomato.jpg");
         CropCategory saved = new CropCategory(req.categoryName(), req.description());
@@ -270,7 +270,7 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC10 [Normal] - Admin Crop Category: Cập nhật thông tin danh mục cây trồng")
+    @DisplayName("FE13_SYS_UTC10 [Normal] - Admin Crop Category: Cập nhật thông tin danh mục cây trồng")
     void testUpdateCropCategory_success() {
         CropCategory existing = new CropCategory("Dưa lưới", "Mô tả cũ");
         existing.setId(1);
@@ -286,7 +286,7 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC11 [Abnormal] - Admin Crop Category: Cập nhật ID không tồn tại -> Ném ResourceNotFoundException")
+    @DisplayName("FE13_SYS_UTC11 [Abnormal] - Admin Crop Category: Cập nhật ID không tồn tại -> Ném ResourceNotFoundException")
     void testUpdateCropCategory_notFound_throwsResourceNotFound() {
         when(cropCategoryRepository.findById(999)).thenReturn(Optional.empty());
         CropCategoryReq req = new CropCategoryReq("Test", "Test", null);
@@ -295,7 +295,7 @@ public class FE15_AdminManagementUnitTest {
 
     // --- 4. Admin Checklist Rule Tests (Commit 277356d) ---
     @Test
-    @DisplayName("FE15_ADM_UTC12 [Normal] - Admin Checklist Rule: Xem danh sách quy tắc kiểm tra đánh giá VietGAP")
+    @DisplayName("FE13_SYS_UTC12 [Normal] - Admin Checklist Rule: Xem danh sách quy tắc kiểm tra đánh giá VietGAP")
     void testGetChecklistRules_success() {
         ChecklistRule rule = new ChecklistRule();
         rule.setId(10);
@@ -313,7 +313,7 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC13 [Normal] - Admin Checklist Rule: Thêm mới quy tắc bảng kiểm thành công")
+    @DisplayName("FE13_SYS_UTC13 [Normal] - Admin Checklist Rule: Thêm mới quy tắc bảng kiểm thành công")
     void testCreateChecklistRule_success() {
         AdminChecklistRuleReq req = new AdminChecklistRuleReq(
                 "Kiểm soát dư lượng thuốc BVTV", "Không phun trước thu hoạch 14 ngày", "Hóa chất", true
@@ -334,7 +334,7 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC14 [Normal] - Admin Checklist Rule: Cập nhật quy tắc bảng kiểm thành công")
+    @DisplayName("FE13_SYS_UTC14 [Normal] - Admin Checklist Rule: Cập nhật quy tắc bảng kiểm thành công")
     void testUpdateChecklistRule_success() {
         ChecklistRule existing = new ChecklistRule();
         existing.setId(10);
@@ -354,7 +354,7 @@ public class FE15_AdminManagementUnitTest {
     }
 
     @Test
-    @DisplayName("FE15_ADM_UTC15 [Abnormal] - Admin Checklist Rule: Cập nhật quy tắc ID không tồn tại -> Ném ResourceNotFoundException")
+    @DisplayName("FE13_SYS_UTC15 [Abnormal] - Admin Checklist Rule: Cập nhật quy tắc ID không tồn tại -> Ném ResourceNotFoundException")
     void testUpdateChecklistRule_notFound_throwsResourceNotFound() {
         when(checklistRuleRepository.findById(999)).thenReturn(Optional.empty());
         AdminChecklistRuleReq req = new AdminChecklistRuleReq("Rule", "Desc", "Cat", true);

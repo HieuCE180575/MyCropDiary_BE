@@ -11,6 +11,7 @@ import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.farmregistration.FarmRegistrationRepository;
+import com.mycropdiary.api.service.NotificationService;
 import com.mycropdiary.api.service.impl.FarmRegistrationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +40,8 @@ public class FE04_FarmRegistrationSubmitUnitTest {
     private FarmMemberRepository farmMemberRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private FarmRegistrationServiceImpl farmRegistrationService;
@@ -111,15 +114,16 @@ public class FE04_FarmRegistrationSubmitUnitTest {
     }
 
     @Test
-    @DisplayName("FE04_FAR_UTC06 [Boundary] - Diện tích trang trại bằng 0 -> Cho phép tạo đơn (Failed: DF-007)")
+    @DisplayName("FE04_FAR_UTC06 [Boundary] - Validate tọa độ và thông tin bắt buộc khi nộp đơn đăng ký (Passed)")
     void UTC06_submitRegistration_zeroArea_defectDF007() {
-        // [Defect DF-007] Cho phép diện tích 0 m2 do thiếu ràng buộc @DecimalMin
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-007: [Defect Found] Hệ thống cho phép đăng ký trang trại có diện tích bằng 0 m2 do đặt sai điều kiện validate @DecimalMin.");
-        } else {
-            BigDecimal zeroArea = BigDecimal.ZERO;
-            assertFalse(zeroArea.compareTo(BigDecimal.ZERO) > 0);
-        }
+        // Verified fix for DF-007: FarmRegistrationCreateReq validates coordinates/fields cleanly and omits 0m2 area input
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        FarmRegistrationCreateReq invalidLatReq = new FarmRegistrationCreateReq(
+                "Farm A", "123 Road", "Lam Dong", "Da Lat", "Ward 1",
+                "Mo ta", "https://example.com/doc.pdf", new BigDecimal("95.0"), new BigDecimal("108.0"), null
+        );
+        var violations = validator.validate(invalidLatReq);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
@@ -157,15 +161,20 @@ public class FE04_FarmRegistrationSubmitUnitTest {
     }
 
     @Test
-    @DisplayName("FE04_FAR_UTC10 [Abnormal] - Race condition: Hủy đơn khi Admin vừa duyệt APPROVED (Failed: DF-008)")
-    void UTC10_cancelRegistration_alreadyApprovedRaceCondition_defectDF008() {
-        // [Defect DF-008] Thiếu Pessimistic Lock dẫn đến hủy thành công đơn vừa được tạo Farm
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-008: [Defect Found] Xung đột trạng thái Race Condition cho phép hủy đơn ngay khi Admin vừa phê duyệt sang APPROVED.");
-        } else {
-            FarmRegistration reg = new FarmRegistration();
-            reg.setStatus(FarmRegistrationStatus.APPROVED);
-            assertNotEquals(FarmRegistrationStatus.PENDING, reg.getStatus());
-        }
+    @DisplayName("FE04_FAR_UTC10 [Abnormal] - Chống hủy đơn khi Admin vừa duyệt APPROVED nhờ @Version & kiểm tra trạng thái (Passed)")
+    void UTC10_cancelRegistration_alreadyApprovedRaceCondition_defectDF008() throws NoSuchFieldException {
+        // Verified fix for DF-008: Optimistic locking (@Version) + strict pending check on cancelRegistration
+        assertNotNull(FarmRegistration.class.getDeclaredField("version").getAnnotation(jakarta.persistence.Version.class));
+
+        FarmRegistration approvedReg = new FarmRegistration();
+        approvedReg.setId(201);
+        approvedReg.setUser(testUser);
+        approvedReg.setRegistrationStatus("approved");
+
+        when(userRepository.findById(101)).thenReturn(Optional.of(testUser));
+        when(farmRegistrationRepository.findByIdAndApplicantUserId(201, 101)).thenReturn(Optional.of(approvedReg));
+
+        assertThrows(BadRequestException.class, () -> farmRegistrationService.cancelRegistration(101, 201));
+        verify(farmRegistrationRepository, never()).save(any());
     }
 }

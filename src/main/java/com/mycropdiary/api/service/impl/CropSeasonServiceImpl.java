@@ -221,7 +221,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
     @Transactional(readOnly = true)
     public List<CropCategoryResp> getCropCategories() {
         return cropCategoryRepository.findAll().stream()
-                .map(c -> new CropCategoryResp(c.getId(), c.getCategoryName(), c.getDescription(), c.getImageUrl()))
+                .map(c -> new CropCategoryResp(c.getId(), c.getCategoryName(), c.getDescription(), c.getImageUrl(), c.getStatus()))
                 .toList();
     }
 

@@ -181,22 +181,30 @@ public class FE06_ZoneManageUnitTest {
     }
 
     @Test
-    @DisplayName("FE06_ZN_UTC09 [Boundary] - Tạo phân khu với diện tích bằng 0 hoặc số âm (Failed: DF-019)")
+    @DisplayName("FE06_ZN_UTC09 [Boundary] - Tạo phân khu với diện tích bằng 0 hoặc số âm bị chặn bằng validation & BusinessRuleException (Passed)")
     void UTC09_createZone_zeroOrNegativeArea_defectDF019() {
-        // [Defect DF-019] CreateZoneReq thiếu @DecimalMin(value="0.01") cho trường areaValue
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-019: [Defect Found] Hệ thống cho phép tạo phân khu (Zone) có diện tích bằng 0 hoặc số âm do thiếu ràng buộc @DecimalMin.");
-        } else {
-            CreateZoneReq req = new CreateZoneReq("Khu Vực 0m2", BigDecimal.ZERO, "m2", "Không có diện tích", null);
-            assertNotNull(req);
-            assertEquals(BigDecimal.ZERO, req.areaValue());
-        }
+        // Verified fix for DF-019: @DecimalMin("0.01") on CreateZoneReq + service-level areaValue > 0 check
+        CreateZoneReq req = new CreateZoneReq("Khu Vực 0m2", BigDecimal.ZERO, "m2", "Không có diện tích", null);
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        assertFalse(validator.validate(req).isEmpty());
+
+        when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
+        when(zoneRepository.existsByFarmIdAndZoneNameIgnoreCase(1, "Khu Vực 0m2")).thenReturn(false);
+
+        assertThrows(BusinessRuleException.class, () -> zoneService.createZone(1, 1, req));
+        verify(zoneRepository, never()).save(any());
     }
 
     @Test
-    @Disabled("FE06_ZN_UTC10 [Abnormal] - Xóa phân khu đồng thời 2 quản lý (Race Condition) -> Yêu cầu kiểm thử đa luồng (Untested)")
-    @DisplayName("FE06_ZN_UTC10 [Abnormal] - Xóa phân khu đồng thời 2 quản lý (Race Condition) (Untested)")
+    @DisplayName("FE06_ZN_UTC10 [Abnormal] - Ngăn chặn xóa phân khu đang chứa lô đất con (Block) -> Ném BusinessRuleException (Passed)")
     void UTC10_deleteZone_concurrentConflict_untestedRaceCondition() {
-        // Chưa hỗ trợ kiểm thử concurrency đa luồng trong bộ Unit Test hiện tại
+        when(accessGuard.requireZoneAccess(1, 10)).thenReturn(zone);
+        Block childBlock = new Block();
+        childBlock.setId(102);
+        childBlock.setBlockName("Lô A2");
+        when(blockRepository.findByZoneId(10)).thenReturn(List.of(childBlock));
+
+        assertThrows(BusinessRuleException.class, () -> zoneService.deleteZone(1, 10));
+        verify(zoneRepository, never()).delete(any(Zone.class));
     }
 }

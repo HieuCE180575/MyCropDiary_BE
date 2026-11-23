@@ -213,26 +213,51 @@ public class FE08_MaterialUsageUnitTest {
     }
 
     @Test
-    @DisplayName("FE08_MAT_UTC08 [Abnormal] - Sai lệch đơn vị tính xuất kho ml thay vì Lít -> Gây âm kho nặng (Failed: DF-011)")
+    @DisplayName("FE08_MAT_UTC08 [Abnormal] - Tự động quy đổi đơn vị ml sang Lít (500 ml -> 0.500 L) tránh âm kho (Passed)")
     void UTC08_recordMaterialUsage_unitMismatchMlToLiters_defectDF011() {
-        // [Defect DF-011] Thiếu quy đổi đơn vị ml -> Lít làm trừ thẳng 500L
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-011: [Defect Found] Sai lệch đơn vị tính: Nhập 500 ml cho kho lưu trữ bằng Lít, hệ thống trừ thẳng 500L làm âm kho nghiêm trọng.");
-        } else {
-            assertTrue(true);
-        }
+        // Verified fix for DF-011: MaterialUsageServiceImpl converts ml -> L (500 ml => 0.500 L)
+        Material liquidMaterial = new Material();
+        liquidMaterial.setId(11);
+        liquidMaterial.setFarm(farm);
+        liquidMaterial.setMaterialType("Thuốc BVTV");
+        liquidMaterial.setMaterialName("Chế phẩm sinh học");
+        liquidMaterial.setUnit("L");
+        liquidMaterial.setIsActive(true);
+
+        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+                activityId, 11, null, LocalDateTime.now(), new BigDecimal("500"), "ml", "10ml/bình", "Phun lá", null, "Quy đổi đơn vị"
+        );
+
+        when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, staffUserId, "active")).thenReturn(Optional.of(staffMember));
+        when(materialRepository.findById(11)).thenReturn(Optional.of(liquidMaterial));
+        when(materialUsageRepository.save(any(MaterialUsage.class))).thenAnswer(i -> {
+            MaterialUsage u = i.getArgument(0);
+            u.setId(2001);
+            return u;
+        });
+
+        MaterialUsageResp resp = materialUsageService.createMaterialUsage(staffUserId, req);
+        assertNotNull(resp);
+        assertEquals(0, new BigDecimal("0.500").compareTo(resp.quantity()));
     }
 
     @Test
-    @DisplayName("FE08_MAT_UTC09 [Boundary] - Ghi nhận ngày sử dụng ở tương lai (+7 ngày) -> Cho phép lưu sai lệch (Failed: DF-012)")
+    @DisplayName("FE08_MAT_UTC09 [Boundary] - Ghi nhận ngày sử dụng ở tương lai (+7 ngày) bị chặn bởi @PastOrPresent & Service (Passed)")
     void UTC09_recordMaterialUsage_futureDate_defectDF012() {
-        // [Defect DF-012] Thiếu kiểm tra @PastOrPresent cho usageDate
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-012: [Defect Found] Thiếu ràng buộc @PastOrPresent cho phép người dùng ghi nhật ký sử dụng vật tư ở ngày trong tương lai.");
-        } else {
-            LocalDateTime future = LocalDateTime.now().plusDays(7);
-            assertTrue(future.isAfter(LocalDateTime.now()));
-        }
+        // Verified fix for DF-012: @PastOrPresent on usedAt + service-level future timestamp guard
+        LocalDateTime future = LocalDateTime.now().plusDays(7);
+        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+                activityId, materialId, null, future, new BigDecimal("5.00"), "kg", "50g/gốc", "Rải gốc", null, "Tương lai"
+        );
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+        assertFalse(validator.validate(req).isEmpty());
+
+        when(farmingActivityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, staffUserId, "active")).thenReturn(Optional.of(staffMember));
+        when(materialRepository.findById(materialId)).thenReturn(Optional.of(fertilizerMaterial));
+
+        assertThrows(BadRequestException.class, () -> materialUsageService.createMaterialUsage(staffUserId, req));
     }
 
     @Test

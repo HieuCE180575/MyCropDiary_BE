@@ -241,6 +241,12 @@ public class AdminFarmDirectoryController {
         if (body.containsKey("description")) {
             zone.setDescription(str(body.get("description"), ""));
         }
+        if (body.containsKey("status")) {
+            String nextStatus = str(body.get("status"), null);
+            if (nextStatus != null) {
+                zone.setStatus(nextStatus);
+            }
+        }
 
         Zone saved = zoneRepository.save(zone);
         Integer farmId = saved.getFarm() != null ? saved.getFarm().getId() : null;
@@ -602,7 +608,8 @@ public class AdminFarmDirectoryController {
         map.put("areaUnit", zone.getAreaUnit() != null ? zone.getAreaUnit() : "m2");
         map.put("areaDisplay", formatArea(zone.getAreaValue(), zone.getAreaUnit()));
         map.put("imageUrl", zone.getImageUrl());
-        map.put("status", farm != null && farm.getStatus() != null ? farm.getStatus().toUpperCase() : "ACTIVE");
+        map.put("status", zone.getStatus() != null ? zone.getStatus().toUpperCase()
+                : (farm != null && farm.getStatus() != null ? farm.getStatus().toUpperCase() : "ACTIVE"));
         map.put("farmId", farm != null ? farm.getId() : null);
         map.put("farmCode", farm != null && farm.getId() != null ? String.format("FARM-%03d", farm.getId()) : "—");
         map.put("farmName", farm != null ? farm.getFarmName() : "Chưa gắn trang trại");
@@ -647,7 +654,8 @@ public class AdminFarmDirectoryController {
         map.put("areaDisplay", formatArea(block.getAreaValue(), block.getAreaUnit()));
         map.put("soilType", block.getSoilType() != null && !block.getSoilType().isBlank() ? block.getSoilType() : "Chưa phân loại");
         map.put("imageUrl", block.getImageUrl());
-        map.put("status", farm != null && farm.getStatus() != null ? farm.getStatus().toUpperCase() : "ACTIVE");
+        map.put("status", zone.getStatus() != null ? zone.getStatus().toUpperCase()
+                : (farm != null && farm.getStatus() != null ? farm.getStatus().toUpperCase() : "ACTIVE"));
         map.put("zoneId", zone != null ? zone.getId() : null);
         map.put("zoneCode", zone != null && zone.getId() != null ? String.format("KV-%03d", zone.getId()) : "—");
         map.put("zoneName", zone != null ? zone.getZoneName() : "Chưa gắn phân khu");

@@ -117,17 +117,21 @@ public class FE01_AuthLoginUnitTest {
     }
 
     @Test
-    @DisplayName("FE01_AUT_UTC06 [Boundary] - Mật khẩu có khoảng trắng đầu/cuối -> Gây lỗi xác thực không mong muốn (Failed: DF-001)")
+    @DisplayName("FE01_AUT_UTC06 [Boundary] - Mật khẩu có khoảng trắng đầu/cuối -> Tự động trim đồng bộ và đăng nhập thành công (Passed)")
     void UTC06_login_whitespacePassword_defectDF001() {
-        // [Defect DF-001] Hệ thống không trim đồng bộ chuỗi mật khẩu dẫn đến sai hash BCrypt
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-001: [Defect Found] Khoảng trắng thừa trong password không được trim đồng bộ dẫn đến sai mật khẩu (Expected: trimmed/handled cleanly, Actual: 401 Bad Credentials).");
-        } else {
-            LoginReq req = new LoginReq("farmer@example.com", " Password123@ ");
-            when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(activeUser));
-            AuthResp resp = authService.login(req);
-            assertNotNull(resp);
-        }
+        // Verified fix for DF-001: AuthServiceImpl trims leading/trailing whitespace symmetrically
+        LoginReq req = new LoginReq("farmer@example.com", " Password123@ ");
+        when(userRepository.findByEmailIgnoreCase("farmer@example.com")).thenReturn(Optional.of(activeUser));
+        when(jwtTokenProvider.generateAccessToken(any(), any(), any())).thenReturn("mock-access-token");
+        when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("mock-refresh-token");
+
+        AuthResp resp = authService.login(req);
+
+        assertNotNull(resp);
+        assertEquals("mock-access-token", resp.accessToken());
+        verify(authenticationManager).authenticate(
+                argThat(auth -> "Password123@".equals(auth.getCredentials()))
+        );
     }
 
     @Test
@@ -154,16 +158,14 @@ public class FE01_AuthLoginUnitTest {
     }
 
     @Test
-    @DisplayName("FE01_AUT_UTC09 [Boundary] - Mật khẩu dài > 72 bytes -> Vượt quá giới hạn BCrypt (Failed: DF-002)")
+    @DisplayName("FE01_AUT_UTC09 [Boundary] - Mật khẩu dài > 72 bytes -> Chặn an toàn bằng BadRequestException và Bean Validation (Passed)")
     void UTC09_login_passwordExceeds72Bytes_defectDF002() {
-        // [Defect DF-002] BCrypt ném 500 do mật khẩu > 72 bytes thiếu validation ở DTO
-        if (Boolean.parseBoolean(System.getProperty("simulate.defects", "true"))) {
-            fail("DF-002: [Defect Found] Mật khẩu > 72 bytes gây lỗi tràn thuật toán BCrypt ném ngoại lệ 500 thay vì 400 Bad Request.");
-        } else {
-            String longPass = "A".repeat(75) + "1@";
-            LoginReq req = new LoginReq("farmer@example.com", longPass);
-            assertThrows(BadRequestException.class, () -> authService.login(req));
-        }
+        // Verified fix for DF-002: LoginReq @Size(max=72) + service-level 72-byte UTF-8 check
+        String longPass = "A".repeat(75) + "1@";
+        LoginReq req = new LoginReq("farmer@example.com", longPass);
+
+        assertThrows(BadRequestException.class, () -> authService.login(req));
+        verify(authenticationManager, never()).authenticate(any());
     }
 
     @Test

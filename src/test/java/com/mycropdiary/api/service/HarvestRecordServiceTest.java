@@ -295,7 +295,7 @@ class HarvestRecordServiceTest {
         record.setRecordedBy(ownerMember);
 
         UpdateHarvestRecordReq updateReq = new UpdateHarvestRecordReq(
-                LocalDateTime.now(), new BigDecimal("0.000"), "kg", "Loại A", "Kho B", "Ghi chú"
+                LocalDateTime.now(), new BigDecimal("0.000"), "kg", "Loại A", "Kho B", ""
         );
 
         when(harvestRecordRepository.findById(harvestRecordId)).thenReturn(Optional.of(record));

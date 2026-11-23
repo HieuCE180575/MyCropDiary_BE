@@ -3,6 +3,7 @@ package com.mycropdiary.api.dto.cultivation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ public record UpdateFarmingActivityReq(
         String activityName,
 
         @NotNull(message = "Started at time is required")
+        @PastOrPresent(message = "Started at time cannot be in the future")
         LocalDateTime startedAt,
 
         LocalDateTime endedAt,

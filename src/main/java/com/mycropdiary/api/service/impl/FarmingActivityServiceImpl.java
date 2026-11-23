@@ -22,6 +22,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -85,6 +86,10 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
             throw new BadRequestException("Không thể tạo nhật ký canh tác cho mùa vụ đã hoàn thành hoặc đã bị hủy.");
         }
 
+        if (request.startedAt() != null && request.startedAt().isAfter(LocalDateTime.now().plusDays(1))) {
+            throw new BadRequestException("Thời gian bắt đầu hoạt động canh tác không được vượt quá 1 ngày trong tương lai.");
+        }
+
         if (request.endedAt() != null && request.endedAt().isBefore(request.startedAt())) {
             throw new BadRequestException("Thời gian kết thúc không thể trước thời gian bắt đầu.");
         }
@@ -130,39 +135,63 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
         FarmingActivity savedActivity = farmingActivityRepository.save(activity);
 
-        List<ActivityWorkerResp> workerResponses = new ArrayList<>();
-
-        if (request.workers() != null && !request.workers().isEmpty()) {
-            List<Integer> workerIds = request.workers().stream()
-                    .map(ActivityWorkerReq::workerId)
-                    .distinct()
-                    .toList();
-
-            List<FarmWorker> farmWorkers = farmWorkerRepository.findByIdInAndFarmId(workerIds, cropSeason.getFarm().getId());
-            if (farmWorkers.size() != workerIds.size()) {
-                throw new BadRequestException("Một hoặc nhiều công nhân không tồn tại hoặc không thuộc trang trại của mùa vụ này.");
-            }
-
-            Map<Integer, FarmWorker> workerMap = farmWorkers.stream()
-                    .collect(Collectors.toMap(FarmWorker::getId, w -> w));
-
-            List<ActivityWorker> activityWorkers = new ArrayList<>();
-            for (ActivityWorkerReq workerReq : request.workers()) {
-                FarmWorker fw = workerMap.get(workerReq.workerId());
-                ActivityWorker aw = new ActivityWorker(savedActivity, fw, workerReq.workHours(), workerReq.notes());
-                activityWorkers.add(aw);
-                workerResponses.add(new ActivityWorkerResp(
-                        fw.getId(),
-                        fw.getWorkerCode(),
-                        fw.getFullName(),
-                        workerReq.workHours(),
-                        workerReq.notes()
-                ));
-            }
-            activityWorkerRepository.saveAll(activityWorkers);
-        }
+        List<ActivityWorkerResp> workerResponses = saveValidatedActivityWorkers(
+                savedActivity, cropSeason.getFarm().getId(), request.workers());
 
         return mapToResponse(savedActivity, workerResponses, supervisor);
+    }
+
+    private List<ActivityWorkerResp> saveValidatedActivityWorkers(
+            FarmingActivity savedActivity,
+            Integer farmId,
+            List<ActivityWorkerReq> workers) {
+        List<ActivityWorkerResp> workerResponses = new ArrayList<>();
+        if (workers == null || workers.isEmpty()) {
+            return workerResponses;
+        }
+        BigDecimal maxDailyHours = new BigDecimal("24.00");
+        for (ActivityWorkerReq w : workers) {
+            if (w.workHours() != null && (w.workHours().compareTo(BigDecimal.ZERO) < 0 || w.workHours().compareTo(maxDailyHours) > 0)) {
+                throw new BadRequestException("Số giờ làm việc của công nhân phải nằm trong khoảng 0 đến 24 giờ/ngày.");
+            }
+        }
+
+        List<Integer> workerIds = workers.stream()
+                .map(ActivityWorkerReq::workerId)
+                .distinct()
+                .toList();
+
+        List<FarmWorker> farmWorkers = farmWorkerRepository.findByIdInAndFarmId(workerIds, farmId);
+        if (farmWorkers.size() != workerIds.size()) {
+            for (Integer wid : workerIds) {
+                FarmWorker existing = farmWorkerRepository.findById(wid).orElse(null);
+                if (existing != null && existing.getFarmMember() != null
+                        && existing.getFarmMember().getFarm() != null
+                        && !existing.getFarmMember().getFarm().getId().equals(farmId)) {
+                    throw new ForbiddenException("Không có quyền phân công công nhân từ trang trại khác.");
+                }
+            }
+            throw new BadRequestException("Một hoặc nhiều công nhân không tồn tại hoặc không thuộc trang trại của mùa vụ này.");
+        }
+
+        Map<Integer, FarmWorker> workerMap = farmWorkers.stream()
+                .collect(Collectors.toMap(FarmWorker::getId, w -> w));
+
+        List<ActivityWorker> activityWorkers = new ArrayList<>();
+        for (ActivityWorkerReq workerReq : workers) {
+            FarmWorker fw = workerMap.get(workerReq.workerId());
+            ActivityWorker aw = new ActivityWorker(savedActivity, fw, workerReq.workHours(), workerReq.notes());
+            activityWorkers.add(aw);
+            workerResponses.add(new ActivityWorkerResp(
+                    fw.getId(),
+                    fw.getWorkerCode(),
+                    fw.getFullName(),
+                    workerReq.workHours(),
+                    workerReq.notes()
+            ));
+        }
+        activityWorkerRepository.saveAll(activityWorkers);
+        return workerResponses;
     }
 
     @Override
@@ -272,6 +301,10 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
             throw new BadRequestException("Không thể chỉnh sửa nhật ký canh tác của mùa vụ đã hoàn thành hoặc đã bị hủy.");
         }
 
+        if (request.startedAt() != null && request.startedAt().isAfter(LocalDateTime.now().plusDays(1))) {
+            throw new BadRequestException("Thời gian bắt đầu hoạt động canh tác không được vượt quá 1 ngày trong tương lai.");
+        }
+
         if (request.endedAt() != null && request.endedAt().isBefore(request.startedAt())) {
             throw new BadRequestException("Thời gian kết thúc không thể trước thời gian bắt đầu.");
         }
@@ -301,36 +334,8 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         if (request.workers() != null) {
             activityWorkerRepository.deleteByFarmingActivityId(savedActivity.getId());
             activityWorkerRepository.flush();
-
-            if (!request.workers().isEmpty()) {
-                List<Integer> workerIds = request.workers().stream()
-                        .map(ActivityWorkerReq::workerId)
-                        .distinct()
-                        .toList();
-
-                List<FarmWorker> farmWorkers = farmWorkerRepository.findByIdInAndFarmId(workerIds, cropSeason.getFarm().getId());
-                if (farmWorkers.size() != workerIds.size()) {
-                    throw new BadRequestException("Một hoặc nhiều công nhân không tồn tại hoặc không thuộc trang trại của mùa vụ này.");
-                }
-
-                Map<Integer, FarmWorker> workerMap = farmWorkers.stream()
-                        .collect(Collectors.toMap(FarmWorker::getId, w -> w));
-
-                List<ActivityWorker> activityWorkers = new ArrayList<>();
-                for (ActivityWorkerReq workerReq : request.workers()) {
-                    FarmWorker fw = workerMap.get(workerReq.workerId());
-                    ActivityWorker aw = new ActivityWorker(savedActivity, fw, workerReq.workHours(), workerReq.notes());
-                    activityWorkers.add(aw);
-                    workerResponses.add(new ActivityWorkerResp(
-                            fw.getId(),
-                            fw.getWorkerCode(),
-                            fw.getFullName(),
-                            workerReq.workHours(),
-                            workerReq.notes()
-                    ));
-                }
-                activityWorkerRepository.saveAll(activityWorkers);
-            }
+            workerResponses = saveValidatedActivityWorkers(
+                    savedActivity, cropSeason.getFarm().getId(), request.workers());
         } else {
             List<ActivityWorker> existingWorkers = activityWorkerRepository.findByFarmingActivityId(savedActivity.getId());
             for (ActivityWorker aw : existingWorkers) {

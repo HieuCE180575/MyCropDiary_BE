@@ -26,8 +26,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("FE07 - Notification and AI Assistant Service Unit Tests (UC-10, UC-12, UC-13)")
-class FE07_NotificationAndAIAssistantUnitTest {
+@DisplayName("FE12 - Notification and AI Assistant Service Unit Tests (UC-10, UC-12, UC-13)")
+class FE12_NotificationAndAIAssistantUnitTest {
 
     @Mock
     private NotificationRepository notificationRepository;
@@ -199,7 +199,7 @@ class FE07_NotificationAndAIAssistantUnitTest {
     // =========================================================================
 
     @Test
-    @DisplayName("FE07_NOTIF_UTC06 [Abnormal] - Đánh dấu đã đọc thông báo không tồn tại -> Ném ResourceNotFoundException")
+    @DisplayName("FE12_NOTIF_UTC06 [Abnormal] - Đánh dấu đã đọc thông báo không tồn tại -> Ném ResourceNotFoundException")
     void testMarkAsRead_notFound_throwsResourceNotFound() {
         when(notificationRepository.findByIdAndUserId(999, 10)).thenReturn(Optional.empty());
         assertThrows(com.mycropdiary.api.exception.ResourceNotFoundException.class,
@@ -207,14 +207,14 @@ class FE07_NotificationAndAIAssistantUnitTest {
     }
 
     @Test
-    @DisplayName("FE07_NOTIF_UTC07 [Normal] - Đánh dấu toàn bộ thông báo đã đọc thành công")
+    @DisplayName("FE12_NOTIF_UTC07 [Normal] - Đánh dấu toàn bộ thông báo đã đọc thành công")
     void testMarkAllAsRead_success() {
         notificationService.markAllAsRead(10);
         verify(notificationRepository, times(1)).markAllAsRead(10);
     }
 
     @Test
-    @DisplayName("FE07_AI_UTC08 [Normal] - Khởi tạo phiên hội thoại mới với trợ lý AI")
+    @DisplayName("FE12_AI_UTC08 [Normal] - Khởi tạo phiên hội thoại mới với trợ lý AI")
     void testCreateConversation_success() {
         when(userRepository.findById(10)).thenReturn(Optional.of(mockUser));
         when(conversationRepository.save(any(AIConversation.class))).thenAnswer(inv -> {

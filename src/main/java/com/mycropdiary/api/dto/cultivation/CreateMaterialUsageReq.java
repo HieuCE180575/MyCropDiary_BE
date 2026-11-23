@@ -4,6 +4,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -24,6 +25,7 @@ public record CreateMaterialUsageReq(
         Integer blockId,
 
         @NotNull(message = "Used at timestamp is required")
+        @PastOrPresent(message = "Used at timestamp cannot be in the future")
         LocalDateTime usedAt,
 
         @NotNull(message = "Quantity is required")

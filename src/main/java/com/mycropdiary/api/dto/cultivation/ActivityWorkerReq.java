@@ -1,5 +1,6 @@
 package com.mycropdiary.api.dto.cultivation;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -14,6 +15,7 @@ public record ActivityWorkerReq(
         Integer workerId,
 
         @PositiveOrZero(message = "Work hours must be positive or zero")
+        @DecimalMax(value = "24.00", message = "Work hours must not exceed 24 hours per day")
         BigDecimal workHours,
 
         @Size(max = 500, message = "Notes must not exceed 500 characters")

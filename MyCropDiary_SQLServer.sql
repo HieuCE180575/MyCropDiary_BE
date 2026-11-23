@@ -53,6 +53,7 @@ CREATE TABLE [AccountToken] (
         CHECK (token_type IN ('email_verification','password_reset','refresh','invite')),
     expires_at DATETIME2(0) NOT NULL,
     used_at DATETIME2(0),
+    failed_attempts INT NOT NULL DEFAULT 0,
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
@@ -126,6 +127,7 @@ CREATE TABLE [CropCategory] (
     category_name NVARCHAR(100) NOT NULL UNIQUE,
     description NVARCHAR(MAX),
     image_url NVARCHAR(MAX),
+    status NVARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
@@ -152,6 +154,7 @@ CREATE TABLE [Zone] (
     image_url NVARCHAR(MAX),
     area_value NUMERIC(12,2),
     area_unit NVARCHAR(20),
+    status NVARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     UNIQUE (farm_id, zone_name)
 );

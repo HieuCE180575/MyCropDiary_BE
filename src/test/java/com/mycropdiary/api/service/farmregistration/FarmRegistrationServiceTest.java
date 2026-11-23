@@ -69,6 +69,7 @@ class FarmRegistrationServiceTest {
         adminUser.setId(1);
         adminUser.setEmail("admin@example.com");
         adminUser.setFullName("System Admin");
+        adminUser.setSystemRole("admin");
         adminUser.setAccountStatus("active");
     }
 
