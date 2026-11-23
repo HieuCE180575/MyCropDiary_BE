@@ -495,4 +495,88 @@ public class AIAssistantServiceImpl implements AIAssistantService {
         }
         return sources;
     }
+
+    @Override
+    public VoiceActivityParseResp parseVoiceActivity(VoiceActivityParseReq req) {
+        String text = req.text() != null ? req.text().trim() : "";
+        if (text.isEmpty()) {
+            return new VoiceActivityParseResp("Other", "Hoạt động canh tác", null, "", "Trời nắng nhẹ", "");
+        }
+
+        List<String> blocks = req.availableBlocks() != null ? req.availableBlocks() : List.of();
+
+        if (openAIService != null && openAIService.isConfigured()) {
+            try {
+                String systemPrompt = "Bạn là trợ lý AI của hệ thống MyCropDiary. " +
+                        "Nhiệm vụ của bạn là bóc tách lời nói của nông dân/kỹ thuật viên thành dữ liệu JSON để tự động điền vào form hoạt động canh tác.\n" +
+                        "Các loại hoạt động hợp lệ (activityType): Fertilizing (Bón phân), Spraying (Phun thuốc), Watering (Tưới nước), Harvesting (Thu hoạch), Planting (Gieo trồng), Pruning (Cắt tỉa/làm cỏ), SoilCare (Xử lý đất), Other (Khác).\n" +
+                        "Danh sách lô đất hiện có của mùa vụ: " + String.join(", ", blocks) + ".\n" +
+                        "Hãy trả về JSON thuần túy (không kèm markdown ```json): " +
+                        "{\"activityType\": \"...\", \"activityName\": \"...\", \"matchedBlockName\": \"...\", \"description\": \"...\", \"weatherNotes\": \"...\", \"resultNotes\": \"...\"}";
+
+                Optional<String> aiAnswer = openAIService.generateAnswer(systemPrompt, List.of(), text);
+                if (aiAnswer.isPresent()) {
+                    String raw = aiAnswer.get().trim();
+                    if (raw.startsWith("```json")) raw = raw.substring(7);
+                    if (raw.startsWith("```")) raw = raw.substring(3);
+                    if (raw.endsWith("```")) raw = raw.substring(0, raw.length() - 3);
+                    raw = raw.trim();
+
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(raw);
+                    String actType = root.hasNonNull("activityType") ? root.get("activityType").asText() : "Fertilizing";
+                    String actName = root.hasNonNull("activityName") ? root.get("activityName").asText() : text;
+                    String matchedBlock = root.hasNonNull("matchedBlockName") ? root.get("matchedBlockName").asText() : null;
+                    String desc = root.hasNonNull("description") ? root.get("description").asText() : text;
+                    String weather = root.hasNonNull("weatherNotes") ? root.get("weatherNotes").asText() : "Trời nắng nhẹ";
+                    String result = root.hasNonNull("resultNotes") ? root.get("resultNotes").asText() : "";
+
+                    return new VoiceActivityParseResp(actType, actName, matchedBlock, desc, weather, result);
+                }
+            } catch (Exception e) {
+                log.warn("[AI Voice Parser] Lỗi phân tích bằng AI, fallback sang heuristic regex: {}", e.getMessage());
+            }
+        }
+
+        // Fallback Heuristic parsing
+        String lower = text.toLowerCase();
+        String actType = "Other";
+        String actName = "Hoạt động canh tác";
+
+        if (lower.contains("bón") || lower.contains("phân") || lower.contains("đạm") || lower.contains("lân") || lower.contains("kali") || lower.contains("npk")) {
+            actType = "Fertilizing";
+            actName = "Bón phân bổ sung dinh dưỡng";
+        } else if (lower.contains("phun") || lower.contains("thuốc") || lower.contains("trừ sâu") || lower.contains("nấm") || lower.contains("diệt cỏ")) {
+            actType = "Spraying";
+            actName = "Phun chế phẩm phòng trừ dịch hại";
+        } else if (lower.contains("tưới") || lower.contains("nước") || lower.contains("nhỏ giọt") || lower.contains("ẩm")) {
+            actType = "Watering";
+            actName = "Tưới nước giữ ẩm";
+        } else if (lower.contains("thu hoạch") || lower.contains("cắt củ") || lower.contains("hái quả")) {
+            actType = "Harvesting";
+            actName = "Thu hoạch nông sản";
+        } else if (lower.contains("gieo") || lower.contains("trồng") || lower.contains("cấy") || lower.contains("hạt")) {
+            actType = "Planting";
+            actName = "Gieo trồng cây giống vụ mới";
+        } else if (lower.contains("tỉa") || lower.contains("làm cỏ") || lower.contains("bấm ngọn")) {
+            actType = "Pruning";
+            actName = "Cắt tỉa nhánh và làm sạch cỏ dại";
+        }
+
+        // Tìm lô đất xuất hiện trong văn bản
+        String matchedBlock = null;
+        for (String block : blocks) {
+            if (lower.contains(block.toLowerCase())) {
+                matchedBlock = block;
+                break;
+            }
+        }
+
+        String weather = "Trời nắng nhẹ, độ ẩm 75%";
+        if (lower.contains("mưa")) weather = "Trời mưa nhỏ, đất ẩm";
+        else if (lower.contains("nắng")) weather = "Trời nắng ráo, thông thoáng";
+        else if (lower.contains("âm u") || lower.contains("mát")) weather = "Trời râm mát";
+
+        return new VoiceActivityParseResp(actType, actName, matchedBlock, text, weather, "Ghi nhận nhanh qua giọng nói");
+    }
 }

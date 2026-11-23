@@ -21,5 +21,7 @@ public interface AIAssistantService {
     void deleteConversation(Integer userId, Integer conversationId);
 
     List<AIFeedbackResp> getMyFeedbackHistory(Integer userId);
+
+    VoiceActivityParseResp parseVoiceActivity(VoiceActivityParseReq req);
 }
 

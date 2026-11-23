@@ -106,5 +106,12 @@ public class AIAssistantController {
         aiService.deleteConversation(currentUserId, conversationId);
         return ApiResp.ok("Xóa cuộc hội thoại thành công.", null);
     }
+
+    @Operation(summary = "Bóc tách hoạt động canh tác từ giọng nói / văn bản tự nhiên", description = "AI phân tích câu nói của người dùng và trả về các trường dữ liệu để tự động điền form.")
+    @PostMapping("/parse-voice-activity")
+    public ApiResp<VoiceActivityParseResp> parseVoiceActivity(@Valid @RequestBody VoiceActivityParseReq req) {
+        VoiceActivityParseResp resp = aiService.parseVoiceActivity(req);
+        return ApiResp.ok("Bóc tách thông tin giọng nói thành công.", resp);
+    }
 }
 

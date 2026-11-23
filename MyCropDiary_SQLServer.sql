@@ -664,6 +664,60 @@ CREATE TABLE [Notification] (
 );
 
 -- ============================================================================
+-- VIETGAP COMPLIANCE COMPLEMENTARY TABLES (Mục 4.8, 4.9, 4.10 TCVN 11892-1:2017)
+-- ============================================================================
+
+-- Mục 4.8: Quản lý Rác thải nguy hại & Vỏ bao bì thuốc BVTV / phân bón
+CREATE TABLE [HazardousWasteLog] (
+    waste_log_id INT IDENTITY(1,1) PRIMARY KEY,
+    farm_id INT NOT NULL REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
+    waste_type NVARCHAR(50) NOT NULL, -- 'pesticide_bottle', 'fertilizer_pack', 'medical', 'other'
+    quantity NUMERIC(10,2) NOT NULL,
+    unit NVARCHAR(20) NOT NULL, -- 'kg', 'bao', 'thung'
+    collection_date DATE NOT NULL,
+    disposal_method NVARCHAR(50) NOT NULL, -- 'transfer_contractor', 'incinerate_farm', 'store_holding'
+    contractor_name NVARCHAR(160),
+    handover_receipt_no NVARCHAR(80),
+    collector_name NVARCHAR(100) NOT NULL,
+    notes NVARCHAR(MAX),
+    created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+-- Mục 4.9: Bảo dưỡng, Vệ sinh thiết bị / Bình phun thuốc
+CREATE TABLE [EquipmentMaintenanceLog] (
+    maintenance_id INT IDENTITY(1,1) PRIMARY KEY,
+    farm_id INT NOT NULL REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
+    equipment_name NVARCHAR(160) NOT NULL,
+    equipment_code NVARCHAR(60),
+    action_type NVARCHAR(50) NOT NULL, -- 'rinse_cleaning', 'maintenance_repair', 'calibration'
+    action_date DATE NOT NULL,
+    performer_name NVARCHAR(100) NOT NULL,
+    rinse_water_handling NVARCHAR(50) NOT NULL, -- 'holding_tank', 'diluted_field', 'special_pit'
+    is_safe_for_use BIT NOT NULL DEFAULT 1,
+    notes NVARCHAR(MAX),
+    created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+-- Mục 4.10: Quản lý Khiếu nại khách hàng & Thu hồi sản phẩm
+CREATE TABLE [CustomerComplaintLog] (
+    complaint_id INT IDENTITY(1,1) PRIMARY KEY,
+    farm_id INT NOT NULL REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
+    harvest_record_id INT REFERENCES [HarvestRecord](harvest_record_id) ON DELETE NO ACTION,
+    lot_code NVARCHAR(80),
+    customer_name NVARCHAR(160) NOT NULL,
+    customer_phone NVARCHAR(30),
+    received_date DATE NOT NULL,
+    issue_type NVARCHAR(50) NOT NULL, -- 'quality_defect', 'chemical_residue_suspect', 'packaging_damage', 'other'
+    issue_description NVARCHAR(MAX) NOT NULL,
+    severity NVARCHAR(30) NOT NULL, -- 'low', 'medium', 'critical'
+    status NVARCHAR(30) NOT NULL, -- 'received', 'investigating', 'resolved', 'recalled'
+    resolution_notes NVARCHAR(MAX),
+    is_recall_required BIT NOT NULL DEFAULT 0,
+    recalled_quantity NUMERIC(12,2),
+    created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+-- ============================================================================
 -- INDEXES
 -- ============================================================================
 CREATE INDEX idx_farm_members_user ON [FarmMember](user_id);
@@ -1437,6 +1491,39 @@ VALUES
 (3, 4, N'New Task Assignment: Fertigation Calibration', N'You have been designated as lead technician to calibrate automated drip fertigation on Greenhouse Block A1.', 'TASK', 1, '/tasks', SYSUTCDATETIME()),
 (4, 2, N'Weather Alert: High Humidity Forecast', N'Relative humidity predicted to exceed 90% tonight. Please verify that automated greenhouse convection fans are operational.', 'ALERT', 0, '/zones', SYSUTCDATETIME());
 SET IDENTITY_INSERT [Notification] OFF;
+GO
+
+-- ============================================================================
+-- 42. VIETGAP COMPLEMENTARY SAMPLE DATA (Mục 4.8, 4.9, 4.10)
+-- ============================================================================
+PRINT N'--> Seeding VietGAP Complementary Logs (Hazardous Waste, Maintenance, Complaints)...';
+
+-- 42.1 Hazardous Waste Logs (Mục 4.8)
+SET IDENTITY_INSERT [HazardousWasteLog] ON;
+INSERT INTO [HazardousWasteLog] (waste_log_id, farm_id, waste_type, quantity, unit, collection_date, disposal_method, contractor_name, handover_receipt_no, collector_name, notes, created_at)
+VALUES
+(1, 1, 'pesticide_bottle', 12.5, 'kg', '2026-04-10', 'transfer_contractor', N'Công ty CP Môi trường Đô thị Cần Thơ', 'BB-CT2026/04-01', N'Nguyễn Văn Tuấn', N'Bao bì thuốc BVTV sau súc rửa 3 lần, để khô và đóng vào thùng chứa chuyên dụng chuẩn VietGAP', SYSUTCDATETIME()),
+(2, 1, 'fertilizer_pack', 35.0, 'kg', '2026-04-15', 'transfer_contractor', N'Công ty CP Môi trường Đô thị Cần Thơ', 'BB-CT2026/04-02', N'Trần Thị Mai', N'Bao bì phân bón lá và dinh dưỡng vi lượng qua sử dụng', SYSUTCDATETIME());
+SET IDENTITY_INSERT [HazardousWasteLog] OFF;
+GO
+
+-- 42.2 Equipment Maintenance & Cleaning Logs (Mục 4.9)
+SET IDENTITY_INSERT [EquipmentMaintenanceLog] ON;
+INSERT INTO [EquipmentMaintenanceLog] (maintenance_id, farm_id, equipment_name, equipment_code, action_type, action_date, performer_name, rinse_water_handling, is_safe_for_use, notes, created_at)
+VALUES
+(1, 1, N'Bình phun áp lực cao Stihl SR-420', 'BP-01', 'rinse_cleaning', '2026-04-12', N'Lê Hoàng Nam', 'holding_tank', 1, N'Súc rửa 3 lần bằng nước sạch sau đợt phun phòng ngừa nấm lá; nước rửa gom vào bể chứa chuyên dụng xử lý vi sinh', SYSUTCDATETIME()),
+(2, 1, N'Cân điện tử chuẩn VietGAP 150kg', 'CAN-02', 'calibration', '2026-04-01', N'Trần Minh Tâm', 'diluted_field', 1, N'Hiệu chuẩn sai số định kỳ đầu vụ với quả cân chuẩn, sai số dưới 0.1%', SYSUTCDATETIME()),
+(3, 1, N'Hệ thống châm phân tự động Venturi Block A1', 'VT-A1', 'maintenance_repair', '2026-04-18', N'Lê Hoàng Nam', 'holding_tank', 1, N'Thông rửa ống hút định lượng và van một chiều, kiểm tra áp suất hoạt động ổn định', SYSUTCDATETIME());
+SET IDENTITY_INSERT [EquipmentMaintenanceLog] OFF;
+GO
+
+-- 42.3 Customer Complaints & Product Recall Logs (Mục 4.10)
+SET IDENTITY_INSERT [CustomerComplaintLog] ON;
+INSERT INTO [CustomerComplaintLog] (complaint_id, farm_id, harvest_record_id, lot_code, customer_name, customer_phone, received_date, issue_type, issue_description, severity, status, resolution_notes, is_recall_required, recalled_quantity, created_at)
+VALUES
+(1, 1, 1, 'LOT-000001', N'Siêu thị Co.opmart Cần Thơ', '0292383838', '2026-04-20', 'packaging_damage', N'Bao bì 3 thùng dưa lưới bị móp méo trong quá trình chuyển giao hàng sáng sớm', 'low', 'resolved', N'Đã tiến hành đổi ngay 3 thùng mới trước giờ mở cửa quầy hàng, lập biên bản nhắc nhở tài xế vận chuyển cẩn thận', 0, NULL, SYSUTCDATETIME()),
+(2, 1, 2, 'LOT-000002', N'Cửa hàng Nông sản Sạch EcoFresh', '0909123456', '2026-04-22', 'quality_defect', N'Khách hàng phản ánh độ ngọt (Brix) của 2 quả chưa đồng đều so với tiêu chuẩn Loại 1 cam kết', 'medium', 'resolved', N'Bộ phận kỹ thuật đã đối chiếu lại nhật ký thu hoạch Block A2, tặng voucher giảm 10% cho đơn hàng kế tiếp và khách hàng hài lòng', 0, NULL, SYSUTCDATETIME());
+SET IDENTITY_INSERT [CustomerComplaintLog] OFF;
 GO
 
 PRINT N'============================================================================';
