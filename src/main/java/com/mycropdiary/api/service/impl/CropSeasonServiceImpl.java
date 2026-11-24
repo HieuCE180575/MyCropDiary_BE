@@ -19,6 +19,7 @@ import com.mycropdiary.api.repository.cultivation.CropCategoryRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
 import com.mycropdiary.api.repository.cultivation.FarmingActivityRepository;
 import com.mycropdiary.api.repository.cultivation.HarvestRecordRepository;
+import com.mycropdiary.api.mapper.CropSeasonMapper;
 import com.mycropdiary.api.service.cultivation.CropSeasonService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import jakarta.persistence.criteria.Predicate;
@@ -225,28 +226,10 @@ public class CropSeasonServiceImpl implements CropSeasonService {
                 .toList();
     }
 
-    private CropSeasonResp mapToResponse(CropSeason cs) {
-        String farmName = cs.getFarm() != null ? cs.getFarm().getFarmName() : null;
-        Integer cropCatId = cs.getCropCategory() != null ? cs.getCropCategory().getId() : null;
-        String cropCatName = cs.getCropCategory() != null ? cs.getCropCategory().getCategoryName() : null;
-        Integer creatorId = cs.getCreatedBy() != null ? cs.getCreatedBy().getId() : null;
-        String creatorName = cs.getCreatedBy() != null ? cs.getCreatedBy().getFullName() : null;
+    private final CropSeasonMapper cropSeasonMapper = new CropSeasonMapper();
 
-        return new CropSeasonResp(
-                cs.getId(),
-                cs.getFarm() != null ? cs.getFarm().getId() : null,
-                farmName,
-                cropCatId,
-                cropCatName,
-                cs.getSeasonName(),
-                cs.getStartDate(),
-                cs.getEndDate(),
-                cs.getSeasonStatus(),
-                cs.getNotes(),
-                creatorId,
-                creatorName,
-                cs.getCreatedAt()
-        );
+    private CropSeasonResp mapToResponse(CropSeason cs) {
+        return cropSeasonMapper.toResponse(cs);
     }
 
     private CropCategory resolveCategory(Integer categoryId, String categoryName) {

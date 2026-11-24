@@ -13,6 +13,7 @@ import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
+import com.mycropdiary.api.mapper.ZoneMapper;
 import com.mycropdiary.api.service.ZoneAssignmentService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
@@ -201,22 +202,9 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
                 .collect(Collectors.toList());
     }
 
+    private final ZoneMapper zoneMapper = new ZoneMapper();
+
     private AssignmentResp toAssignmentResponse(StaffZoneAssignment a, FarmMember assigner) {
-        FarmMember fm = a.getFarmMember();
-        Zone zone = a.getZone();
-        return new AssignmentResp(
-                a.getId(),
-                fm.getId(),
-                fm.getUser() != null ? fm.getUser().getId() : null,
-                fm.getUser() != null ? fm.getUser().getFullName() : null,
-                fm.getUser() != null ? fm.getUser().getEmail() : null,
-                fm.getJobTitle(),
-                zone.getId(),
-                zone.getZoneName(),
-                assigner != null ? assigner.getId() : null,
-                assigner != null && assigner.getUser() != null ? assigner.getUser().getFullName() : null,
-                a.getAssignedAt(),
-                a.getEndedAt(),
-                a.isActive());
+        return zoneMapper.toAssignmentResponse(a, assigner);
     }
 }

@@ -17,6 +17,7 @@ import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
+import com.mycropdiary.api.mapper.BlockMapper;
 import com.mycropdiary.api.service.BlockService;
 import com.mycropdiary.api.entity.cultivation.CropSeasonBlock;
 import com.mycropdiary.api.exception.BadRequestException;
@@ -45,6 +46,7 @@ public class BlockServiceImpl implements BlockService {
     private final FarmMemberRepository farmMemberRepository;
     private final FarmAccessGuard accessGuard;
     private final CropSeasonBlockRepository cropSeasonBlockRepository;
+    private final BlockMapper blockMapper = new BlockMapper();
 
     public BlockServiceImpl(BlockRepository blockRepository,
                             ZoneRepository zoneRepository,
@@ -252,40 +254,10 @@ public class BlockServiceImpl implements BlockService {
     }
 
     private BlockResp toBlockResponse(Block b) {
-        return new BlockResp(
-                b.getId(),
-                b.getZone().getId(),
-                b.getZone().getZoneName(),
-                b.getZone().getFarm().getId(),
-                b.getBlockName(),
-                b.getAreaValue(),
-                b.getAreaUnit(),
-                b.getSoilType(),
-                b.getDescription(),
-                b.getImageUrl(),
-                "AVAILABLE",
-                null,
-                null,
-                null,
-                b.getCreatedAt()
-        );
+        return blockMapper.toBlockResponse(b);
     }
 
     private BlockConditionResp toBlockConditionResponse(BlockConditionObservation obs) {
-        Integer recorderId = obs.getRecordedBy() != null ? obs.getRecordedBy().getId() : null;
-        String recorderName = (obs.getRecordedBy() != null && obs.getRecordedBy().getUser() != null)
-                ? obs.getRecordedBy().getUser().getFullName() : null;
-
-        return new BlockConditionResp(
-                obs.getId(),
-                obs.getBlock().getId(),
-                obs.getBlock().getBlockName(),
-                recorderId,
-                recorderName,
-                obs.getConditionType(),
-                obs.getDescription(),
-                obs.getImageUrl(),
-                obs.getObservedAt()
-        );
+        return blockMapper.toBlockConditionResponse(obs);
     }
 }

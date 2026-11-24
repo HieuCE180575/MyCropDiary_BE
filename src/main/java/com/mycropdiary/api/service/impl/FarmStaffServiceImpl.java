@@ -21,6 +21,7 @@ import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.UserRepository;
+import com.mycropdiary.api.mapper.ComplianceAndUserMapper;
 import com.mycropdiary.api.service.FarmStaffService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
@@ -294,25 +295,12 @@ public class FarmStaffServiceImpl implements FarmStaffService {
         }
     }
 
+    private final ComplianceAndUserMapper complianceAndUserMapper = new ComplianceAndUserMapper();
+
     private FarmMemberResp toResponse(FarmMember member, Integer activeAssignmentCount) {
         int count = (activeAssignmentCount != null)
                 ? activeAssignmentCount
                 : assignmentRepository.findByFarmMemberIdAndEndedAtIsNull(member.getId()).size();
-
-        return new FarmMemberResp(
-                member.getId(),
-                member.getFarm().getId(),
-                member.getFarm().getFarmName(),
-                member.getUser().getId(),
-                member.getUser().getFullName(),
-                member.getUser().getEmail(),
-                member.getUser().getPhone(),
-                member.getMemberRole(),
-                member.getJobTitle(),
-                member.getJoinedAt(),
-                null,
-                member.getMembershipStatus(),
-                count
-        );
+        return complianceAndUserMapper.toStaffMemberResponse(member, count);
     }
 }

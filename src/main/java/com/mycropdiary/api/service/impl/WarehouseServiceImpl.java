@@ -15,6 +15,7 @@ import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.InventoryRepository;
 import com.mycropdiary.api.repository.cultivation.MaterialRepository;
 import com.mycropdiary.api.repository.cultivation.WarehouseRepository;
+import com.mycropdiary.api.mapper.WarehouseMapper;
 import com.mycropdiary.api.service.cultivation.WarehouseService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
@@ -209,35 +210,14 @@ public class WarehouseServiceImpl implements WarehouseService {
         inventoryRepository.delete(inventory);
     }
 
+    private final WarehouseMapper warehouseMapper = new WarehouseMapper();
+
     private WarehouseResp toWarehouseResp(Warehouse w) {
-        int count = w.getInventories() != null ? w.getInventories().size() : 0;
-        return new WarehouseResp(
-                w.getId(),
-                w.getFarm().getId(),
-                w.getFarm().getFarmName(),
-                w.getWarehouseName(),
-                w.getWarehouseType() != null ? w.getWarehouseType() : "kho_chung",
-                w.getAddress(),
-                w.getImageUrl(),
-                count,
-                w.getCreatedAt());
+        return warehouseMapper.toWarehouseResp(w);
     }
 
     private InventoryItemResp toInventoryItemResp(Inventory i) {
-        String matType = i.getMaterial().getMaterialType();
-        boolean lowStock = i.getQuantityOnHand().compareTo(i.getReorderLevel()) <= 0;
-        return new InventoryItemResp(
-                i.getId(),
-                i.getWarehouse().getId(),
-                i.getWarehouse().getWarehouseName(),
-                i.getMaterial().getId(),
-                i.getMaterial().getMaterialName(),
-                matType,
-                i.getMaterial().getUnit(),
-                i.getQuantityOnHand(),
-                i.getReorderLevel(),
-                lowStock,
-                i.getUpdatedAt());
+        return warehouseMapper.toInventoryItemResp(i);
     }
 
     @Override

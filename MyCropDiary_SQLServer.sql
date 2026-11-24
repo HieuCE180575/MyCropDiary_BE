@@ -93,6 +93,7 @@ CREATE TABLE [FarmRegistration] (
     reviewed_by INT REFERENCES [User](user_id) ON DELETE NO ACTION,
     reviewed_at DATETIME2(0),
     resulting_farm_id INT REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
+    version BIGINT NOT NULL DEFAULT 0,
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 

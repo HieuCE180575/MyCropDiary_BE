@@ -9,6 +9,7 @@ import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.AssessmentCriterionRepository;
+import com.mycropdiary.api.mapper.ComplianceAndUserMapper;
 import com.mycropdiary.api.service.cultivation.VietGapCriterionService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
@@ -232,20 +233,12 @@ public class VietGapCriterionServiceImpl implements VietGapCriterionService {
         return idx >= 0 ? full.substring(idx + "[Phương pháp đánh giá]:".length()).trim() : null;
     }
 
+    private final ComplianceAndUserMapper complianceAndUserMapper = new ComplianceAndUserMapper();
+
     private VietGapCriterionResp toResponse(AssessmentCriterion c) {
         String baseDesc = extractBaseDescription(c.getDescription());
         String method = extractEvaluationMethod(c.getDescription());
-        return new VietGapCriterionResp(
-                c.getId(),
-                c.getFarm().getId(),
-                c.getFarm().getFarmName(),
-                c.getCriterionName(),
-                baseDesc,
-                c.getMaxScore(),
-                method,
-                "TCVN 11892-1:2017",
-                c.getIsActive()
-        );
+        return complianceAndUserMapper.toVietGapCriterionResponse(c, baseDesc, method);
     }
 
     private record StandardCriterionDef(String title, String desc, String method) {

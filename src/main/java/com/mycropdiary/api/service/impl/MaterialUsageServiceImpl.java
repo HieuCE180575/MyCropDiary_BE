@@ -11,6 +11,7 @@ import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.*;
+import com.mycropdiary.api.mapper.MaterialUsageMapper;
 import com.mycropdiary.api.service.cultivation.MaterialUsageService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -631,12 +632,9 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         return "Dạng hạt";
     }
 
+    private final MaterialUsageMapper materialUsageMapper = new MaterialUsageMapper();
+
     private MaterialUsageResp mapToResponse(MaterialUsage usage) {
-        String recorderName = usage.getUsedBy() != null && usage.getUsedBy().getUser() != null
-                ? usage.getUsedBy().getUser().getFullName()
-                : null;
-        FarmingActivity act = usage.getFarmingActivity();
-        CropSeason cs = act != null ? act.getCropSeason() : null;
         Material mat = usage.getMaterial();
         String materialForm = cleanText(usage.getMaterialForm());
         if (materialForm == null && mat != null) {
@@ -645,30 +643,6 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
                 materialForm = inferMaterialForm(mat.getMaterialType(), mat.getUnit());
             }
         }
-
-        return new MaterialUsageResp(
-                usage.getId(),
-                act != null ? act.getId() : null,
-                act != null ? act.getActivityName() : null,
-                cs != null ? cs.getId() : null,
-                mat != null ? mat.getId() : null,
-                mat != null ? mat.getMaterialName() : null,
-                mat != null ? mat.getMaterialName() : null,
-                mat != null ? mat.getMaterialType() : null,
-                materialForm,
-                null,
-                usage.getUsedBy() != null ? usage.getUsedBy().getId() : null,
-                recorderName,
-                usage.getUsedAtLdt(),
-                usage.getQuantity(),
-                usage.getUnit(),
-                usage.getDosage(),
-                usage.getMethod(),
-                usage.getAppliedArea(),
-                usage.getAppliedAreaUnit(),
-                usage.getAppliedPlantCount(),
-                usage.getSafetyIntervalDays(),
-                usage.getNotes()
-        );
+        return materialUsageMapper.toResponse(usage, materialForm);
     }
 }

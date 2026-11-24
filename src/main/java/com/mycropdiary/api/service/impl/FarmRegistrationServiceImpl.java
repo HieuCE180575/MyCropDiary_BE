@@ -17,6 +17,7 @@ import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.farmregistration.FarmRegistrationRepository;
 import com.mycropdiary.api.service.NotificationService;
+import com.mycropdiary.api.mapper.FarmRegistrationMapper;
 import com.mycropdiary.api.service.farmregistration.FarmRegistrationService;
 import com.mycropdiary.api.util.EmailTemplateBuilder;
 import jakarta.mail.internet.MimeMessage;
@@ -407,66 +408,17 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         }
     }
 
-    private FarmRegistrationResp toAdminResponse(FarmRegistration reg) {
-        User applicant = reg.getUser();
-        User handler = reg.getReviewedBy();
+    private final FarmRegistrationMapper farmRegistrationMapper = new FarmRegistrationMapper();
 
-        return new FarmRegistrationResp(
-                reg.getId(),
-                applicant != null ? applicant.getId() : null,
-                applicant != null ? applicant.getEmail() : null,
-                applicant != null ? applicant.getFullName() : null,
-                reg.getFarmName(),
-                reg.getAddress(),
-                reg.getProvince(),
-                reg.getDistrict(),
-                reg.getWard(),
-                reg.getDescription(),
-                reg.getDocumentUrl(),
-                reg.getRegistrationStatus() != null ? reg.getRegistrationStatus().toUpperCase() : null,
-                handler != null ? handler.getId() : null,
-                handler != null ? handler.getFullName() : null,
-                reg.getSubmittedAt(),
-                reg.getHandledAt(),
-                reg.getRejectionReason(),
-                reg.getLatitude(),
-                reg.getLongitude(),
-                reg.getBoundaryCoordinates());
+    private FarmRegistrationResp toAdminResponse(FarmRegistration reg) {
+        return farmRegistrationMapper.toAdminResponse(reg);
     }
 
     private com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp mapToUserResponse(FarmRegistration reg) {
-        return new com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp(
-                reg.getId(),
-                reg.getFarmName(),
-                reg.getAddress(),
-                reg.getProvince(),
-                reg.getDistrict(),
-                reg.getWard(),
-                reg.getDescription(),
-                reg.getDocumentUrl(),
-                reg.getStatus(),
-                reg.getSubmittedAt(),
-                reg.getHandledAt(),
-                reg.getRejectionReason(),
-                reg.getLatitude(),
-                reg.getLongitude(),
-                reg.getBoundaryCoordinates());
+        return farmRegistrationMapper.toUserResponse(reg);
     }
 
     private FarmRegistrationSummaryResp mapToSummaryResponse(FarmRegistration reg) {
-        return new FarmRegistrationSummaryResp(
-                reg.getId(),
-                reg.getFarmName(),
-                reg.getAddress(),
-                reg.getProvince(),
-                reg.getDistrict(),
-                reg.getWard(),
-                reg.getStatus(),
-                reg.getSubmittedAt(),
-                reg.getHandledAt(),
-                reg.getRejectionReason(),
-                reg.getLatitude(),
-                reg.getLongitude(),
-                reg.getBoundaryCoordinates());
+        return farmRegistrationMapper.toSummaryResponse(reg);
     }
 }

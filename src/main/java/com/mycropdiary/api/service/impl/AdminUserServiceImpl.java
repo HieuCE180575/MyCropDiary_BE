@@ -15,6 +15,7 @@ import com.mycropdiary.api.repository.AccountTokenRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.UserRepository;
+import com.mycropdiary.api.mapper.ComplianceAndUserMapper;
 import com.mycropdiary.api.service.admin.AdminUserService;
 import com.mycropdiary.api.util.EmailTemplateBuilder;
 import jakarta.mail.internet.MimeMessage;
@@ -288,24 +289,9 @@ public class AdminUserServiceImpl implements AdminUserService {
         return toEnrichedUserResp(user, memberships, zoneAssignments);
     }
 
+    private final ComplianceAndUserMapper complianceAndUserMapper = new ComplianceAndUserMapper();
+
     private UserResp toEnrichedUserResp(User user, List<FarmMember> memberships, List<StaffZoneAssignment> zoneAssignments) {
-        String farmsSummary = memberships.isEmpty()
-                ? "Chưa tham gia trang trại"
-                : memberships.stream()
-                        .filter(m -> m.getFarm() != null)
-                        .map(m -> {
-                            String roleLabel = m.isOwner() ? "Chủ trại" : "Nhân sự";
-                            return m.getFarm().getFarmName() + " (" + roleLabel + ")";
-                        })
-                        .collect(Collectors.joining(", "));
-
-        String zonesSummary = zoneAssignments.isEmpty()
-                ? "Chưa phụ trách phân khu"
-                : zoneAssignments.stream()
-                        .filter(a -> a.getZone() != null)
-                        .map(a -> a.getZone().getZoneName() + (a.getZone().getFarm() != null ? " - " + a.getZone().getFarm().getFarmName() : ""))
-                        .collect(Collectors.joining(", "));
-
-        return UserResp.fromEntity(user, farmsSummary, zonesSummary);
+        return complianceAndUserMapper.toEnrichedUserResp(user, memberships, zoneAssignments);
     }
 }

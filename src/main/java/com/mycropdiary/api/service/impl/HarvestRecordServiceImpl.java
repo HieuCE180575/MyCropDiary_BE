@@ -17,6 +17,7 @@ import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonBlockRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
 import com.mycropdiary.api.repository.cultivation.HarvestRecordRepository;
+import com.mycropdiary.api.mapper.HarvestRecordMapper;
 import com.mycropdiary.api.service.cultivation.HarvestRecordService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -336,36 +337,9 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập hoặc ghi nhận thu hoạch cho mùa vụ của trang trại này."));
     }
 
+    private final HarvestRecordMapper harvestRecordMapper = new HarvestRecordMapper();
+
     private HarvestRecordResp mapToResponse(HarvestRecord record) {
-        CropSeason season = record.getCropSeason();
-        Farm farm = season != null ? season.getFarm() : record.getFarm();
-        Block block = record.getBlock();
-
-        String recorderName = record.getRecordedBy() != null && record.getRecordedBy().getUser() != null
-                ? record.getRecordedBy().getUser().getFullName()
-                : null;
-
-        return new HarvestRecordResp(
-                record.getId(),
-                season != null ? season.getId() : null,
-                season != null ? season.getSeasonName() : null,
-                season != null ? season.getSeasonName() : null,
-                farm != null ? farm.getId() : null,
-                farm != null ? farm.getFarmName() : null,
-                block != null ? block.getId() : null,
-                block != null ? block.getBlockName() : null,
-                block != null ? block.getBlockName() : null,
-                record.getRecordedBy() != null ? record.getRecordedBy().getId() : null,
-                recorderName,
-                record.getHarvestLotCode(),
-                record.getHarvestedAt(),
-                record.getQuantity(),
-                record.getDiscardedQuantity() != null ? record.getDiscardedQuantity() : BigDecimal.ZERO,
-                record.getUnit(),
-                record.getQualityGrade(),
-                record.getStorageLocation(),
-                record.getTraceabilityCode(),
-                record.getNotes()
-        );
+        return harvestRecordMapper.toResponse(record);
     }
 }

@@ -13,6 +13,7 @@ import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.cultivation.*;
+import com.mycropdiary.api.mapper.FarmingActivityMapper;
 import com.mycropdiary.api.service.cultivation.FarmingActivityService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -374,54 +375,14 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         return mapToResponse(activity, workerResponses, member);
     }
 
-    private FarmingActivityResp mapToResponse(FarmingActivity act, List<ActivityWorkerResp> workers, FarmMember supervisor) {
-        CropSeason cs = act.getCropSeason();
-        Farm farm = cs != null ? cs.getFarm() : act.getFarm();
-        Block block = act.getBlock();
+    private final FarmingActivityMapper farmingActivityMapper = new FarmingActivityMapper();
 
-        return new FarmingActivityResp(
-                act.getId(),
-                cs != null ? cs.getId() : null,
-                cs != null ? cs.getSeasonName() : null,
-                cs != null ? cs.getSeasonName() : null,
-                farm != null ? farm.getId() : null,
-                farm != null ? farm.getFarmName() : null,
-                block != null ? block.getId() : null,
-                block != null ? block.getBlockName() : null,
-                block != null ? block.getBlockName() : null,
-                supervisor != null ? supervisor.getId() : null,
-                supervisor != null && supervisor.getUser() != null ? supervisor.getUser().getFullName() : null,
-                act.getActivityType(),
-                act.getActivityName(),
-                act.getStartedAt(),
-                act.getEndedAt(),
-                act.getDescription(),
-                act.getResultNotes(),
-                act.getWeatherNotes(),
-                act.getFarmTaskId(),
-                workers,
-                act.getStartedAt()
-        );
+    private FarmingActivityResp mapToResponse(FarmingActivity act, List<ActivityWorkerResp> workers, FarmMember supervisor) {
+        return farmingActivityMapper.toResponse(act, workers, supervisor);
     }
 
     private FarmingActivitySummaryResp mapToSummaryResponse(FarmingActivity act, FarmMember supervisor) {
         List<ActivityWorker> workers = activityWorkerRepository.findByFarmingActivityId(act.getId());
-        Block block = act.getBlock();
-
-        return new FarmingActivitySummaryResp(
-                act.getId(),
-                act.getCropSeason() != null ? act.getCropSeason().getId() : null,
-                block != null ? block.getId() : null,
-                block != null ? block.getBlockName() : null,
-                act.getActivityType(),
-                act.getActivityName(),
-                act.getDescription(),
-                act.getStartedAt(),
-                act.getEndedAt(),
-                supervisor != null ? supervisor.getId() : null,
-                supervisor != null && supervisor.getUser() != null ? supervisor.getUser().getFullName() : null,
-                workers.size(),
-                act.getStartedAt()
-        );
+        return farmingActivityMapper.toSummaryResponse(act, supervisor, workers.size());
     }
 }

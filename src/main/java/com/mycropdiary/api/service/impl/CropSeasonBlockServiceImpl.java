@@ -15,6 +15,7 @@ import com.mycropdiary.api.repository.cultivation.CropSeasonBlockRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
 import com.mycropdiary.api.repository.cultivation.FarmingActivityRepository;
 import com.mycropdiary.api.repository.cultivation.HarvestRecordRepository;
+import com.mycropdiary.api.mapper.CropSeasonMapper;
 import com.mycropdiary.api.service.cultivation.CropSeasonBlockService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
@@ -240,34 +241,9 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
         }
     }
 
+    private final CropSeasonMapper cropSeasonMapper = new CropSeasonMapper();
+
     private CropSeasonBlockResp mapToResponse(CropSeasonBlock csb) {
-        CropSeason season = csb.getCropSeason();
-        Block block = csb.getBlock();
-
-        Integer seasonId = season != null ? season.getId() : null;
-        String seasonName = season != null ? season.getSeasonName() : null;
-        Integer blockId = block != null ? block.getId() : null;
-        String blockName = block != null ? block.getBlockName() : null;
-        Integer zoneId = (block != null && block.getZone() != null) ? block.getZone().getId() : null;
-        String zoneName = (block != null && block.getZone() != null) ? block.getZone().getZoneName() : null;
-        BigDecimal blockArea = block != null ? block.getAreaValue() : null;
-        String blockAreaUnit = block != null ? block.getAreaUnit() : null;
-        String soilType = block != null ? block.getSoilType() : null;
-
-        return new CropSeasonBlockResp(
-                seasonId,
-                seasonName,
-                blockId,
-                blockName,
-                zoneId,
-                zoneName,
-                blockArea,
-                blockAreaUnit,
-                soilType,
-                csb.getPlantedArea(),
-                csb.getAreaUnit(),
-                csb.getPlantedAt(),
-                csb.getExpectedHarvestAt()
-        );
+        return cropSeasonMapper.toBlockResponse(csb);
     }
 }

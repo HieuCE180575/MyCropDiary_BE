@@ -19,6 +19,8 @@ import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.service.ZoneAssignmentService;
+import com.mycropdiary.api.mapper.BlockMapper;
+import com.mycropdiary.api.mapper.ZoneMapper;
 import com.mycropdiary.api.service.ZoneService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
@@ -186,38 +188,14 @@ public class ZoneServiceImpl implements ZoneService {
         return getZoneById(currentUserId, zoneId);
     }
 
+    private final ZoneMapper zoneMapper = new ZoneMapper();
+    private final BlockMapper blockMapper = new BlockMapper();
+
     private ZoneResp toZoneResponse(Zone zone) {
-        return new ZoneResp(
-                zone.getId(),
-                zone.getFarm().getId(),
-                zone.getZoneName(),
-                zone.getAreaValue(),
-                zone.getAreaUnit(),
-                zone.getDescription(),
-                zone.getImageUrl(),
-                "active",
-                zone.getCreatedAt(),
-                zone.getCreatedAt()
-        );
+        return zoneMapper.toZoneResponse(zone);
     }
 
     private BlockResp toBlockResponse(Block b) {
-        return new BlockResp(
-                b.getId(),
-                b.getZone().getId(),
-                b.getZone().getZoneName(),
-                b.getZone().getFarm().getId(),
-                b.getBlockName(),
-                b.getAreaValue(),
-                b.getAreaUnit(),
-                b.getSoilType(),
-                b.getDescription(),
-                b.getImageUrl(),
-                "AVAILABLE",
-                null,
-                null,
-                null,
-                b.getCreatedAt()
-        );
+        return blockMapper.toBlockResponse(b);
     }
 }

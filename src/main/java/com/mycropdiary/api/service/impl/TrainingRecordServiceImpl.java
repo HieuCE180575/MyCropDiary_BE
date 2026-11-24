@@ -14,6 +14,7 @@ import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.FarmWorkerRepository;
 import com.mycropdiary.api.repository.cultivation.TrainingAttendeeRepository;
 import com.mycropdiary.api.repository.cultivation.TrainingRecordRepository;
+import com.mycropdiary.api.mapper.ComplianceAndUserMapper;
 import com.mycropdiary.api.service.cultivation.TrainingRecordService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import jakarta.persistence.criteria.Predicate;
@@ -203,41 +204,10 @@ public class TrainingRecordServiceImpl implements TrainingRecordService {
         trainingRecordRepository.delete(record);
     }
 
+    private final ComplianceAndUserMapper complianceAndUserMapper = new ComplianceAndUserMapper();
+
     private TrainingRecordResp toResponse(TrainingRecord r, boolean includeAttendees) {
-        List<TrainingAttendeeResp> attendeeList = null;
-        if (includeAttendees) {
-            attendeeList = r.getAttendees().stream().map(a -> {
-                FarmWorker worker = a.getFarmWorker();
-                String fullName = (worker != null && worker.getFarmMember() != null && worker.getFarmMember().getUser() != null)
-                        ? worker.getFarmMember().getUser().getFullName() : null;
-                return new TrainingAttendeeResp(
-                        worker != null ? worker.getId() : null,
-                        worker != null ? worker.getWorkerCode() : null,
-                        fullName,
-                        worker != null ? worker.getJobTitle() : null,
-                        a.getAttendanceStatus(),
-                        a.getNotes()
-                );
-            }).toList();
-        }
-
-        String organizerName = (r.getOrganizedBy() != null && r.getOrganizedBy().getUser() != null)
-                ? r.getOrganizedBy().getUser().getFullName() : null;
-
-        return new TrainingRecordResp(
-                r.getId(),
-                r.getFarm().getId(),
-                r.getFarm().getFarmName(),
-                r.getOrganizedBy() != null ? r.getOrganizedBy().getId() : null,
-                organizerName,
-                r.getTrainingTitle(),
-                r.getDescription(),
-                r.getTrainingDate(),
-                r.getImageUrl(),
-                r.getAttendees().size(),
-                attendeeList,
-                r.getCreatedAt()
-        );
+        return complianceAndUserMapper.toTrainingRecordResponse(r, includeAttendees);
     }
 }
 
