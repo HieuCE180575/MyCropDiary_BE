@@ -1,6 +1,6 @@
 package com.mycropdiary.api.controller;
 
-import com.mycropdiary.api.dto.admin.AdminStatisticsResp;
+import com.mycropdiary.api.dto.admin.AdminStatisticsRespDTO;
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.service.admin.AdminStatisticsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,8 +27,8 @@ public class AdminStatisticsController {
     @Operation(summary = "Xem thống kê tổng quan toàn hệ thống",
             description = "Trả về số liệu thống kê chi tiết về tài khoản, hồ sơ đăng ký, trang trại, mùa vụ và phản hồi AI.")
     @GetMapping("/overview")
-    public ApiResp<AdminStatisticsResp> getSystemStatistics() {
-        AdminStatisticsResp statistics = adminStatisticsService.getSystemStatistics();
+    public ApiResp<AdminStatisticsRespDTO> getSystemStatistics() {
+        AdminStatisticsRespDTO statistics = adminStatisticsService.getSystemStatistics();
         return ApiResp.ok("Báo cáo thống kê toàn hệ thống", statistics);
     }
 }

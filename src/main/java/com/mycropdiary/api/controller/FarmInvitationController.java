@@ -1,8 +1,8 @@
 package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.staff.FarmInvitationResp;
-import com.mycropdiary.api.dto.staff.RespondInvitationReq;
+import com.mycropdiary.api.dto.staff.FarmInvitationRespDTO;
+import com.mycropdiary.api.dto.staff.RespondInvitationReqDTO;
 import com.mycropdiary.api.service.FarmStaffService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,9 +30,9 @@ public class FarmInvitationController {
     @Operation(summary = "Xem danh sách lời mời tham gia trang trại",
             description = "Lấy danh sách các lời mời vào trang trại (với vai trò Staff hoặc Co-Owner) đang chờ tài khoản hiện tại phản hồi.")
     @GetMapping
-    public ApiResp<List<FarmInvitationResp>> getPendingInvitations() {
+    public ApiResp<List<FarmInvitationRespDTO>> getPendingInvitations() {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<FarmInvitationResp> invitations = farmStaffService.getPendingInvitations(currentUserId);
+        List<FarmInvitationRespDTO> invitations = farmStaffService.getPendingInvitations(currentUserId);
         return ApiResp.ok("Danh sách lời mời tham gia trang trại", invitations);
     }
 
@@ -59,7 +59,7 @@ public class FarmInvitationController {
     @PostMapping("/{memberId}/respond")
     public ApiResp<Void> respondInvitation(
             @PathVariable Integer memberId,
-            @Valid @RequestBody RespondInvitationReq request) {
+            @Valid @RequestBody RespondInvitationReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
         farmStaffService.respondInvitation(currentUserId, memberId, request.action());
         String msg = "approve".equalsIgnoreCase(request.action())

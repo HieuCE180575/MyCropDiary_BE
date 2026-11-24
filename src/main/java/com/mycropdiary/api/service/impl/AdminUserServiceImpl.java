@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.admin.CreateAdminUserReq;
-import com.mycropdiary.api.dto.admin.UpdateUserStatusReq;
-import com.mycropdiary.api.dto.admin.UserResp;
+import com.mycropdiary.api.dto.admin.CreateAdminUserReqDTO;
+import com.mycropdiary.api.dto.admin.UpdateUserStatusReqDTO;
+import com.mycropdiary.api.dto.admin.UserRespDTO;
 import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.entity.AccountToken;
 import com.mycropdiary.api.entity.FarmMember;
@@ -15,7 +15,7 @@ import com.mycropdiary.api.repository.AccountTokenRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.UserRepository;
-import com.mycropdiary.api.mapper.ComplianceAndUserMapper;
+import com.mycropdiary.api.mapper.UserMapper;
 import com.mycropdiary.api.service.admin.AdminUserService;
 import com.mycropdiary.api.util.EmailTemplateBuilder;
 import jakarta.mail.internet.MimeMessage;
@@ -82,7 +82,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResp<UserResp> getUsers(String status, String search, Pageable pageable) {
+    public PageResp<UserRespDTO> getUsers(String status, String search, Pageable pageable) {
         String cleanStatus = (status != null && !status.isBlank()) ? status.trim().toLowerCase() : null;
         String cleanSearch = (search != null && !search.isBlank()) ? search.trim() : null;
 
@@ -103,14 +103,14 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserResp getUserById(Integer userId) {
+    public UserRespDTO getUserById(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với mã ID: " + userId));
         return enrichSingleUser(user);
     }
 
     @Override
-    public UserResp updateUserStatus(Integer adminUserId, Integer targetUserId, UpdateUserStatusReq request) {
+    public UserRespDTO updateUserStatus(Integer adminUserId, Integer targetUserId, UpdateUserStatusReqDTO request) {
         String newStatus = request.status().trim().toLowerCase();
 
         if (adminUserId != null && adminUserId.equals(targetUserId) && "locked".equalsIgnoreCase(newStatus)) {
@@ -127,7 +127,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    public UserResp updateUser(Integer adminUserId, Integer targetUserId, com.mycropdiary.api.dto.admin.UpdateAdminUserReq request) {
+    public UserRespDTO updateUser(Integer adminUserId, Integer targetUserId, com.mycropdiary.api.dto.admin.UpdateUserReqDTO request) {
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với mã ID: " + targetUserId));
 
@@ -158,7 +158,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    public UserResp updateUserProfile(Integer adminUserId, Integer targetUserId, Map<String, Object> request) {
+    public UserRespDTO updateUserProfile(Integer adminUserId, Integer targetUserId, Map<String, Object> request) {
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với mã ID: " + targetUserId));
 
@@ -192,7 +192,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    public UserResp createUser(Integer adminUserId, CreateAdminUserReq request) {
+    public UserRespDTO createUser(Integer adminUserId, CreateAdminUserReqDTO request) {
         String cleanEmail = request.email().trim().toLowerCase();
         if (userRepository.existsByEmailIgnoreCase(cleanEmail)) {
             throw new ResourceConflictException("Email '" + cleanEmail + "' đã được sử dụng trong hệ thống.");
@@ -279,7 +279,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
     }
 
-    private UserResp enrichSingleUser(User user) {
+    private UserRespDTO enrichSingleUser(User user) {
         List<FarmMember> memberships = farmMemberRepository == null ? Collections.emptyList() : farmMemberRepository.findAll().stream()
                 .filter(m -> m.getUser() != null && user.getId().equals(m.getUser().getId()) && m.isActive())
                 .toList();
@@ -289,9 +289,9 @@ public class AdminUserServiceImpl implements AdminUserService {
         return toEnrichedUserResp(user, memberships, zoneAssignments);
     }
 
-    private final ComplianceAndUserMapper complianceAndUserMapper = new ComplianceAndUserMapper();
+    private final UserMapper userMapper = new UserMapper();
 
-    private UserResp toEnrichedUserResp(User user, List<FarmMember> memberships, List<StaffZoneAssignment> zoneAssignments) {
-        return complianceAndUserMapper.toEnrichedUserResp(user, memberships, zoneAssignments);
+    private UserRespDTO toEnrichedUserResp(User user, List<FarmMember> memberships, List<StaffZoneAssignment> zoneAssignments) {
+        return userMapper.toEnrichedUserResp(user, memberships, zoneAssignments);
     }
 }

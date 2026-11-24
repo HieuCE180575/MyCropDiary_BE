@@ -2,7 +2,7 @@ package com.mycropdiary.api.service.impl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.mycropdiary.api.dto.file.FileUploadResp;
+import com.mycropdiary.api.dto.file.FileUploadRespDTO;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.service.CloudinaryService;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     }
 
     @Override
-    public FileUploadResp uploadFile(MultipartFile file, String folder) {
+    public FileUploadRespDTO uploadFile(MultipartFile file, String folder) {
         validateFile(file);
 
         String targetFolder = (folder != null && !folder.isBlank()) ? folder.trim() : "mycropdiary/evidence";
@@ -65,7 +65,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             Long bytes = bytesNum != null ? bytesNum.longValue() : file.getSize();
 
             log.info("File uploaded successfully to Cloudinary: publicId={}, url={}", publicId, secureUrl);
-            return new FileUploadResp(secureUrl, publicId, originalFilename, resourceType, format, bytes);
+            return new FileUploadRespDTO(secureUrl, publicId, originalFilename, resourceType, format, bytes);
 
         } catch (Exception ex) {
             log.warn("Cloudinary upload failed ({}), falling back to local file storage...", ex.getMessage());
@@ -74,11 +74,11 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     }
 
     @Override
-    public List<FileUploadResp> uploadFiles(List<MultipartFile> files, String folder) {
+    public List<FileUploadRespDTO> uploadFiles(List<MultipartFile> files, String folder) {
         if (files == null || files.isEmpty()) {
             throw new BadRequestException("Danh sách tập tin tải lên không được để trống.");
         }
-        List<FileUploadResp> results = new ArrayList<>();
+        List<FileUploadRespDTO> results = new ArrayList<>();
         for (MultipartFile file : files) {
             if (file != null && !file.isEmpty()) {
                 results.add(uploadFile(file, folder));
@@ -174,7 +174,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         return "";
     }
 
-    private FileUploadResp saveLocally(MultipartFile file, String originalFilename) {
+    private FileUploadRespDTO saveLocally(MultipartFile file, String originalFilename) {
         try {
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
@@ -191,7 +191,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             String format = getFileExtension(originalFilename);
 
             log.info("Saved file locally at: {}", filePath.toAbsolutePath());
-            return new FileUploadResp(
+            return new FileUploadRespDTO(
                     localUrl,
                     "local_" + uniqueFilename,
                     originalFilename,

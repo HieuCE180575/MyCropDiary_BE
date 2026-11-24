@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycropdiary.api.dto.user.ChangePasswordReq;
-import com.mycropdiary.api.dto.user.UpdateProfileReq;
-import com.mycropdiary.api.dto.user.UserProfileResp;
+import com.mycropdiary.api.dto.user.ChangePasswordReqDTO;
+import com.mycropdiary.api.dto.user.UpdateProfileReqDTO;
+import com.mycropdiary.api.dto.user.UserProfileRespDTO;
 import com.mycropdiary.api.service.UserProfileService;
 import com.mycropdiary.api.util.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +55,7 @@ class UserProfileControllerTest {
     @DisplayName("GET /api/v1/user/profile -> 200 OK")
     void getProfile_Success() throws Exception {
         when(securityUtils.getCurrentUserId()).thenReturn(userId);
-        UserProfileResp resp = new UserProfileResp(
+        UserProfileRespDTO resp = new UserProfileRespDTO(
                 userId, "user@cropdiary.vn", "Nguyen Van A", "0901234567", null,
                 "USER", "ACTIVE", Instant.now(), Instant.now(), Instant.now(), Instant.now()
         );
@@ -71,12 +71,12 @@ class UserProfileControllerTest {
     @DisplayName("PUT /api/v1/user/profile -> 200 OK")
     void updateProfile_Success() throws Exception {
         when(securityUtils.getCurrentUserId()).thenReturn(userId);
-        UpdateProfileReq req = new UpdateProfileReq("Nguyen Van B", "0987654321", null);
-        UserProfileResp resp = new UserProfileResp(
+        UpdateProfileReqDTO req = new UpdateProfileReqDTO("Nguyen Van B", "0987654321", null);
+        UserProfileRespDTO resp = new UserProfileRespDTO(
                 userId, "user@cropdiary.vn", "Nguyen Van B", "0987654321", null,
                 "USER", "ACTIVE", Instant.now(), Instant.now(), Instant.now(), Instant.now()
         );
-        when(userProfileService.updateProfile(eq(userId), any(UpdateProfileReq.class))).thenReturn(resp);
+        when(userProfileService.updateProfile(eq(userId), any(UpdateProfileReqDTO.class))).thenReturn(resp);
 
         mockMvc.perform(put("/api/v1/user/profile")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -90,7 +90,7 @@ class UserProfileControllerTest {
     @DisplayName("POST /api/v1/user/change-password -> 200 OK")
     void changePassword_Success() throws Exception {
         when(securityUtils.getCurrentUserId()).thenReturn(userId);
-        ChangePasswordReq req = new ChangePasswordReq("OldPass@123", "NewPass@123", "NewPass@123");
+        ChangePasswordReqDTO req = new ChangePasswordReqDTO("OldPass@123", "NewPass@123", "NewPass@123");
 
         mockMvc.perform(post("/api/v1/user/change-password")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -98,6 +98,6 @@ class UserProfileControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(userProfileService).changePassword(eq(userId), any(ChangePasswordReq.class));
+        verify(userProfileService).changePassword(eq(userId), any(ChangePasswordReqDTO.class));
     }
 }

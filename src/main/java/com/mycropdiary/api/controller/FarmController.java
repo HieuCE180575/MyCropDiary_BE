@@ -36,23 +36,23 @@ public class FarmController {
     @Operation(summary = "Tạo mới trang trại", description = "Tạo mới trang trại. Người tạo sẽ tự động được cấp quyền OWNER.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<FarmResp> createFarm(@Valid @RequestBody CreateFarmReq request) {
+    public ApiResp<FarmRespDTO> createFarm(@Valid @RequestBody CreateFarmReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmResp response = farmService.createFarm(currentUserId, request);
+        FarmRespDTO response = farmService.createFarm(currentUserId, request);
         return ApiResp.ok("Farm created successfully", response);
     }
 
     @Operation(summary = "Lấy chi tiết trang trại", description = "Lấy chi tiết thông tin trang trại theo ID.")
     @GetMapping("/{farmId}")
-    public ApiResp<FarmResp> getFarmById(@PathVariable Integer farmId) {
+    public ApiResp<FarmRespDTO> getFarmById(@PathVariable Integer farmId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmResp response = farmService.getFarmById(currentUserId, farmId);
+        FarmRespDTO response = farmService.getFarmById(currentUserId, farmId);
         return ApiResp.ok("Farm details retrieved successfully", response);
     }
 
     @Operation(summary = "Tìm kiếm trang trại", description = "Tìm kiếm trang trại có phân trang theo từ khóa, tỉnh thành, trạng thái.")
     @GetMapping
-    public ApiResp<PageResp<FarmSummaryResp>> searchFarms(
+    public ApiResp<PageResp<FarmSummaryRespDTO>> searchFarms(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String province,
             @RequestParam(required = false) String status,
@@ -60,7 +60,7 @@ public class FarmController {
             @RequestParam(required = false) BigDecimal maxArea,
             @PageableDefault(size = 10) Pageable pageable) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        PageResp<FarmSummaryResp> response = farmService.searchFarms(
+        PageResp<FarmSummaryRespDTO> response = farmService.searchFarms(
                 currentUserId, keyword, province, status, minArea, maxArea, pageable
         );
         return ApiResp.ok("Farms retrieved successfully", response);
@@ -68,11 +68,11 @@ public class FarmController {
 
     @Operation(summary = "Cập nhật trang trại", description = "Cập nhật thông tin trang trại. Yêu cầu quyền OWNER hoặc ADMIN.")
     @PutMapping("/{farmId}")
-    public ApiResp<FarmResp> updateFarm(
+    public ApiResp<FarmRespDTO> updateFarm(
             @PathVariable Integer farmId,
-            @Valid @RequestBody UpdateFarmReq request) {
+            @Valid @RequestBody UpdateFarmReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmResp response = farmService.updateFarm(currentUserId, farmId, request);
+        FarmRespDTO response = farmService.updateFarm(currentUserId, farmId, request);
         return ApiResp.ok("Farm updated successfully", response);
     }
 
@@ -87,19 +87,19 @@ public class FarmController {
     @Operation(summary = "Thêm thành viên vào trang trại", description = "Thêm thành viên mới. Yêu cầu quyền OWNER hoặc ADMIN.")
     @PostMapping("/{farmId}/members")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<FarmMemberResp> addMember(
+    public ApiResp<FarmMemberRespDTO> addMember(
             @PathVariable Integer farmId,
-            @Valid @RequestBody AddFarmMemberReq request) {
+            @Valid @RequestBody AddFarmMemberReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmMemberResp response = farmService.addMember(currentUserId, farmId, request);
+        FarmMemberRespDTO response = farmService.addMember(currentUserId, farmId, request);
         return ApiResp.ok("Member added successfully", response);
     }
 
     @Operation(summary = "Lấy danh sách thành viên trang trại", description = "Lấy toàn bộ thành viên đang hoạt động trong trang trại.")
     @GetMapping("/{farmId}/members")
-    public ApiResp<List<FarmMemberResp>> getFarmMembers(@PathVariable Integer farmId) {
+    public ApiResp<List<FarmMemberRespDTO>> getFarmMembers(@PathVariable Integer farmId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        List<FarmMemberResp> response = farmService.getFarmMembers(currentUserId, farmId);
+        List<FarmMemberRespDTO> response = farmService.getFarmMembers(currentUserId, farmId);
         return ApiResp.ok("Farm members retrieved successfully", response);
     }
 

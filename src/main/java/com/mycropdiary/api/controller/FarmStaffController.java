@@ -1,10 +1,10 @@
 package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.staff.AddStaffReq;
-import com.mycropdiary.api.dto.staff.CandidateUserResp;
-import com.mycropdiary.api.dto.staff.FarmMemberResp;
-import com.mycropdiary.api.dto.staff.UpdateStaffReq;
+import com.mycropdiary.api.dto.staff.CreateStaffReqDTO;
+import com.mycropdiary.api.dto.staff.CandidateUserRespDTO;
+import com.mycropdiary.api.dto.staff.FarmMemberRespDTO;
+import com.mycropdiary.api.dto.staff.UpdateStaffReqDTO;
 import com.mycropdiary.api.service.FarmStaffService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,44 +31,44 @@ public class FarmStaffController {
 
     @Operation(summary = "Xem danh sách nhân viên trang trại", description = "Lấy danh sách nhân sự của trang trại kèm trạng thái và vai trò")
     @GetMapping("/staff")
-    public ApiResp<List<FarmMemberResp>> getStaffList(
+    public ApiResp<List<FarmMemberRespDTO>> getStaffList(
             @PathVariable Integer farmId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<FarmMemberResp> list = farmStaffService.getStaffList(currentUserId, farmId, status, keyword);
+        List<FarmMemberRespDTO> list = farmStaffService.getStaffList(currentUserId, farmId, status, keyword);
         return ApiResp.ok("Danh sách nhân viên trang trại", list);
     }
 
     @Operation(summary = "Tìm kiếm người dùng ứng viên", description = "Tìm kiếm tài khoản người dùng có thể mời tham gia trang trại")
     @GetMapping("/candidates")
-    public ApiResp<List<CandidateUserResp>> getCandidateUsers(
+    public ApiResp<List<CandidateUserRespDTO>> getCandidateUsers(
             @PathVariable Integer farmId,
             @RequestParam(required = false) String keyword) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<CandidateUserResp> list = farmStaffService.getCandidateUsers(currentUserId, farmId, keyword);
+        List<CandidateUserRespDTO> list = farmStaffService.getCandidateUsers(currentUserId, farmId, keyword);
         return ApiResp.ok("Danh sách ứng viên tài khoản", list);
     }
 
     @Operation(summary = "Thêm nhân viên vào trang trại", description = "Gán tài khoản người dùng làm nhân sự trang trại")
     @PostMapping("/staff")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<FarmMemberResp> addStaff(
+    public ApiResp<FarmMemberRespDTO> addStaff(
             @PathVariable Integer farmId,
-            @Valid @RequestBody AddStaffReq request) {
+            @Valid @RequestBody CreateStaffReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        FarmMemberResp response = farmStaffService.addStaff(currentUserId, farmId, request);
+        FarmMemberRespDTO response = farmStaffService.addStaff(currentUserId, farmId, request);
         return ApiResp.ok("Thêm nhân viên vào trang trại thành công", response);
     }
 
     @Operation(summary = "Cập nhật thông tin nhân sự", description = "Cập nhật vai trò, vị trí công việc hoặc trạng thái của nhân viên")
     @PutMapping("/{memberId}")
-    public ApiResp<FarmMemberResp> updateStaff(
+    public ApiResp<FarmMemberRespDTO> updateStaff(
             @PathVariable Integer farmId,
             @PathVariable Integer memberId,
-            @Valid @RequestBody UpdateStaffReq request) {
+            @Valid @RequestBody UpdateStaffReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        FarmMemberResp response = farmStaffService.updateStaff(currentUserId, farmId, memberId, request);
+        FarmMemberRespDTO response = farmStaffService.updateStaff(currentUserId, farmId, memberId, request);
         return ApiResp.ok("Cập nhật thông tin nhân viên thành công", response);
     }
 

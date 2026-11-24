@@ -5,7 +5,7 @@ import com.cloudinary.Uploader;
 import com.cloudinary.utils.ObjectUtils;
 import com.mycropdiary.api.controller.FileUploadController;
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.file.FileUploadResp;
+import com.mycropdiary.api.dto.file.FileUploadRespDTO;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.service.impl.CloudinaryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +72,7 @@ public class FE04_FileUploadAndCloudinaryUnitTest {
         when(cloudinary.uploader()).thenReturn(uploader);
         when(uploader.upload(any(byte[].class), anyMap())).thenReturn(uploadResult);
 
-        FileUploadResp resp = cloudinaryService.uploadFile(file, "farm_proofs");
+        FileUploadRespDTO resp = cloudinaryService.uploadFile(file, "farm_proofs");
 
         assertNotNull(resp);
         assertEquals("https://res.cloudinary.com/mcd/image/upload/v1/farm_certificate.png", resp.url());
@@ -144,7 +144,7 @@ public class FE04_FileUploadAndCloudinaryUnitTest {
         when(cloudinary.uploader()).thenReturn(uploader);
         when(uploader.upload(any(byte[].class), anyMap())).thenThrow(new RuntimeException("Cloudinary API Timeout"));
 
-        FileUploadResp resp = cloudinaryService.uploadFile(file, "soil_tests");
+        FileUploadRespDTO resp = cloudinaryService.uploadFile(file, "soil_tests");
 
         assertNotNull(resp);
         assertTrue(resp.publicId().startsWith("local_"));
@@ -174,7 +174,7 @@ public class FE04_FileUploadAndCloudinaryUnitTest {
         when(cloudinary.uploader()).thenReturn(uploader);
         when(uploader.upload(any(byte[].class), anyMap())).thenReturn(res1).thenReturn(res2);
 
-        List<FileUploadResp> results = cloudinaryService.uploadFiles(List.of(file1, file2), "proofs");
+        List<FileUploadRespDTO> results = cloudinaryService.uploadFiles(List.of(file1, file2), "proofs");
 
         assertEquals(2, results.size());
         assertEquals("land_title.jpg", results.get(0).originalFilename());

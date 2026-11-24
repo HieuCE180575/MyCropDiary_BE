@@ -1,9 +1,9 @@
 package com.mycropdiary.api.service;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
-import com.mycropdiary.api.dto.cultivation.UpdateHarvestRecordReq;
+import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReqDTO;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateHarvestRecordReqDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -134,7 +134,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Tạo HarvestRecord thành công với vai trò OWNER")
     void createHarvestRecord_AsOwner_Success() {
-        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
+        CreateHarvestRecordReqDTO request = new CreateHarvestRecordReqDTO(
                 activeSeasonId, "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú thu hoạch"
         );
 
@@ -152,7 +152,7 @@ class HarvestRecordServiceTest {
 
         when(harvestRecordRepository.save(any(HarvestRecord.class))).thenReturn(savedRecord);
 
-        HarvestRecordResp response = harvestRecordService.createHarvestRecord(ownerUserId, request);
+        HarvestRecordRespDTO response = harvestRecordService.createHarvestRecord(ownerUserId, request);
 
         assertNotNull(response);
         assertEquals(harvestRecordId, response.harvestRecordId());
@@ -163,7 +163,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Tạo HarvestRecord thất bại nếu không phải active member của farm")
     void createHarvestRecord_NotMember_ThrowsForbidden() {
-        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
+        CreateHarvestRecordReqDTO request = new CreateHarvestRecordReqDTO(
                 activeSeasonId, null, LocalDateTime.now(), new BigDecimal("100.000"), "kg", null, null, null, null
         );
 
@@ -178,7 +178,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Tạo HarvestRecord thất bại nếu Quantity <= 0")
     void createHarvestRecord_QuantityInvalid_ThrowsBadRequest() {
-        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
+        CreateHarvestRecordReqDTO request = new CreateHarvestRecordReqDTO(
                 activeSeasonId, null, LocalDateTime.now(), new BigDecimal("0.000"), "kg", null, null, null, null
         );
 
@@ -194,7 +194,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Tạo HarvestRecord thất bại khi CropSeason đã COMPLETED")
     void createHarvestRecord_ClosedSeason_ThrowsBadRequest() {
-        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
+        CreateHarvestRecordReqDTO request = new CreateHarvestRecordReqDTO(
                 completedSeasonId, null, LocalDateTime.now(), new BigDecimal("10.000"), "kg", null, null, null, null
         );
 
@@ -222,7 +222,7 @@ class HarvestRecordServiceTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
         when(harvestRecordRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(record)));
 
-        PageResp<HarvestRecordResp> result = harvestRecordService.getHarvestRecordsBySeason(ownerUserId, activeSeasonId, pageable);
+        PageResp<HarvestRecordRespDTO> result = harvestRecordService.getHarvestRecordsBySeason(ownerUserId, activeSeasonId, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.content().size());
@@ -248,7 +248,7 @@ class HarvestRecordServiceTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
         when(harvestRecordRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(record)));
 
-        PageResp<HarvestRecordResp> result = harvestRecordService.searchAndFilterHarvestRecords(
+        PageResp<HarvestRecordRespDTO> result = harvestRecordService.searchAndFilterHarvestRecords(
                 ownerUserId, activeSeasonId, "đợt 1", "Loại A", from, to, pageable);
 
         assertNotNull(result);
@@ -267,7 +267,7 @@ class HarvestRecordServiceTest {
         record.setQuantity(new BigDecimal("100.000"));
         record.setUnit("kg");
 
-        UpdateHarvestRecordReq updateReq = new UpdateHarvestRecordReq(
+        UpdateHarvestRecordReqDTO updateReq = new UpdateHarvestRecordReqDTO(
                 LocalDateTime.now(), new BigDecimal("250.000"), "tấn", "Loại Đặc Biệt", "Kho B", "Ghi chú mới"
         );
 
@@ -275,7 +275,7 @@ class HarvestRecordServiceTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
         when(harvestRecordRepository.save(any(HarvestRecord.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        HarvestRecordResp response = harvestRecordService.updateHarvestRecord(ownerUserId, harvestRecordId, updateReq);
+        HarvestRecordRespDTO response = harvestRecordService.updateHarvestRecord(ownerUserId, harvestRecordId, updateReq);
 
         assertNotNull(response);
         assertEquals(new BigDecimal("250.000"), response.quantity());
@@ -294,7 +294,7 @@ class HarvestRecordServiceTest {
         record.setCropSeason(activeSeason);
         record.setRecordedBy(ownerMember);
 
-        UpdateHarvestRecordReq updateReq = new UpdateHarvestRecordReq(
+        UpdateHarvestRecordReqDTO updateReq = new UpdateHarvestRecordReqDTO(
                 LocalDateTime.now(), new BigDecimal("0.000"), "kg", "Loại A", "Kho B", ""
         );
 
@@ -315,7 +315,7 @@ class HarvestRecordServiceTest {
         record.setCropSeason(completedSeason);
         record.setRecordedBy(ownerMember);
 
-        UpdateHarvestRecordReq updateReq = new UpdateHarvestRecordReq(
+        UpdateHarvestRecordReqDTO updateReq = new UpdateHarvestRecordReqDTO(
                 LocalDateTime.now(), new BigDecimal("100.000"), "kg", "Loại A", "Kho B", "Ghi chú"
         );
 
@@ -335,7 +335,7 @@ class HarvestRecordServiceTest {
         record.setFarm(farm);
         record.setCropSeason(activeSeason);
 
-        UpdateHarvestRecordReq updateReq = new UpdateHarvestRecordReq(
+        UpdateHarvestRecordReqDTO updateReq = new UpdateHarvestRecordReqDTO(
                 LocalDateTime.now(), new BigDecimal("100.000"), "kg", "Loại A", "Kho B", "Ghi chú"
         );
 
@@ -349,7 +349,7 @@ class HarvestRecordServiceTest {
     @Test
     @DisplayName("Cập nhật HarvestRecord thất bại khi bản ghi không tồn tại")
     void updateHarvestRecord_NotFound_ThrowsNotFound() {
-        UpdateHarvestRecordReq updateReq = new UpdateHarvestRecordReq(
+        UpdateHarvestRecordReqDTO updateReq = new UpdateHarvestRecordReqDTO(
                 LocalDateTime.now(), new BigDecimal("100.000"), "kg", "Loại A", "Kho B", "Ghi chú"
         );
 
@@ -371,7 +371,7 @@ class HarvestRecordServiceTest {
         when(harvestRecordRepository.findById(harvestRecordId)).thenReturn(Optional.of(record));
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
 
-        HarvestRecordResp response = harvestRecordService.getHarvestRecordById(ownerUserId, harvestRecordId);
+        HarvestRecordRespDTO response = harvestRecordService.getHarvestRecordById(ownerUserId, harvestRecordId);
 
         assertNotNull(response);
         assertEquals(harvestRecordId, response.harvestRecordId());

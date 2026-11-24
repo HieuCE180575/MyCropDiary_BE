@@ -1,15 +1,15 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.vietgap.CreateVietGapCriterionReq;
-import com.mycropdiary.api.dto.vietgap.UpdateVietGapCriterionReq;
-import com.mycropdiary.api.dto.vietgap.VietGapCriterionResp;
+import com.mycropdiary.api.dto.vietgap.CreateVietGapCriterionReqDTO;
+import com.mycropdiary.api.dto.vietgap.UpdateVietGapCriterionReqDTO;
+import com.mycropdiary.api.dto.vietgap.VietGapCriterionRespDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.cultivation.AssessmentCriterion;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.AssessmentCriterionRepository;
-import com.mycropdiary.api.mapper.ComplianceAndUserMapper;
+import com.mycropdiary.api.mapper.VietGapCriterionMapper;
 import com.mycropdiary.api.service.cultivation.VietGapCriterionService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
@@ -38,7 +38,7 @@ public class VietGapCriterionServiceImpl implements VietGapCriterionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<VietGapCriterionResp> getCriterionList(Integer currentUserId, Integer farmId, Boolean isActiveOnly, String keyword) {
+    public List<VietGapCriterionRespDTO> getCriterionList(Integer currentUserId, Integer farmId, Boolean isActiveOnly, String keyword) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
 
         List<AssessmentCriterion> list;
@@ -61,7 +61,7 @@ public class VietGapCriterionServiceImpl implements VietGapCriterionService {
 
     @Override
     @Transactional(readOnly = true)
-    public VietGapCriterionResp getCriterionDetails(Integer currentUserId, Integer criterionId) {
+    public VietGapCriterionRespDTO getCriterionDetails(Integer currentUserId, Integer criterionId) {
         AssessmentCriterion criterion = criterionRepository.findById(criterionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tiêu chuẩn đánh giá không tồn tại"));
 
@@ -70,7 +70,7 @@ public class VietGapCriterionServiceImpl implements VietGapCriterionService {
     }
 
     @Override
-    public VietGapCriterionResp createCriterion(Integer currentUserId, Integer farmId, CreateVietGapCriterionReq request) {
+    public VietGapCriterionRespDTO createCriterion(Integer currentUserId, Integer farmId, CreateVietGapCriterionReqDTO request) {
         accessGuard.requireFarmOwner(currentUserId, farmId);
 
         Farm farm = farmRepository.findById(farmId)
@@ -92,7 +92,7 @@ public class VietGapCriterionServiceImpl implements VietGapCriterionService {
     }
 
     @Override
-    public List<VietGapCriterionResp> importTcvnStandardCriteria(Integer currentUserId, Integer farmId) {
+    public List<VietGapCriterionRespDTO> importTcvnStandardCriteria(Integer currentUserId, Integer farmId) {
         accessGuard.requireFarmOwner(currentUserId, farmId);
 
         Farm farm = farmRepository.findById(farmId)
@@ -164,7 +164,7 @@ public class VietGapCriterionServiceImpl implements VietGapCriterionService {
     }
 
     @Override
-    public VietGapCriterionResp updateCriterion(Integer currentUserId, Integer criterionId, UpdateVietGapCriterionReq request) {
+    public VietGapCriterionRespDTO updateCriterion(Integer currentUserId, Integer criterionId, UpdateVietGapCriterionReqDTO request) {
         AssessmentCriterion criterion = criterionRepository.findById(criterionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tiêu chuẩn đánh giá không tồn tại"));
 
@@ -233,12 +233,12 @@ public class VietGapCriterionServiceImpl implements VietGapCriterionService {
         return idx >= 0 ? full.substring(idx + "[Phương pháp đánh giá]:".length()).trim() : null;
     }
 
-    private final ComplianceAndUserMapper complianceAndUserMapper = new ComplianceAndUserMapper();
+    private final VietGapCriterionMapper vietGapCriterionMapper = new VietGapCriterionMapper();
 
-    private VietGapCriterionResp toResponse(AssessmentCriterion c) {
+    private VietGapCriterionRespDTO toResponse(AssessmentCriterion c) {
         String baseDesc = extractBaseDescription(c.getDescription());
         String method = extractEvaluationMethod(c.getDescription());
-        return complianceAndUserMapper.toVietGapCriterionResponse(c, baseDesc, method);
+        return vietGapCriterionMapper.toVietGapCriterionResponse(c, baseDesc, method);
     }
 
     private record StandardCriterionDef(String title, String desc, String method) {

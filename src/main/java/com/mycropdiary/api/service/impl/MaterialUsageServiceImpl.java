@@ -71,7 +71,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
     @Override
     @Transactional
-    public MaterialUsageResp createMaterialUsage(Integer userId, CreateMaterialUsageReq request) {
+    public MaterialUsageRespDTO createMaterialUsage(Integer userId, CreateMaterialUsageReqDTO request) {
         // 1. Tìm FarmingActivity
         FarmingActivity activity = farmingActivityRepository.findById(request.farmingActivityId())
                 .orElseThrow(() -> new ResourceNotFoundException("Hoạt động canh tác không tồn tại."));
@@ -172,7 +172,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
     @Override
     @Transactional
-    public MaterialUsageResp updateMaterialUsage(Integer userId, Integer materialUsageId, UpdateMaterialUsageReq request) {
+    public MaterialUsageRespDTO updateMaterialUsage(Integer userId, Integer materialUsageId, UpdateMaterialUsageReqDTO request) {
         MaterialUsage usage = materialUsageRepository.findById(materialUsageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bản ghi sử dụng vật tư không tồn tại."));
 
@@ -279,12 +279,12 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
     }
 
     @Override
-    public PageResp<MaterialUsageResp> getMaterialUsagesByActivity(Integer userId, Integer farmingActivityId, Pageable pageable) {
+    public PageResp<MaterialUsageRespDTO> getMaterialUsagesByActivity(Integer userId, Integer farmingActivityId, Pageable pageable) {
         return searchAndFilterMaterialUsages(userId, null, farmingActivityId, null, null, null, null, null, pageable);
     }
 
     @Override
-    public PageResp<MaterialUsageResp> searchAndFilterMaterialUsages(
+    public PageResp<MaterialUsageRespDTO> searchAndFilterMaterialUsages(
             Integer userId,
             Integer farmingActivityId,
             Integer cropSeasonId,
@@ -297,7 +297,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
     }
 
     @Override
-    public PageResp<MaterialUsageResp> searchAndFilterMaterialUsages(
+    public PageResp<MaterialUsageRespDTO> searchAndFilterMaterialUsages(
             Integer userId,
             Integer farmId,
             Integer farmingActivityId,
@@ -394,7 +394,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
     @Override
     @Transactional
-    public List<MaterialOptionResp> getMaterialsByFarm(Integer userId, Integer farmId) {
+    public List<MaterialOptionRespDTO> getMaterialsByFarm(Integer userId, Integer farmId) {
         farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, userId, "active")
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền truy cập trang trại này."));
 
@@ -419,7 +419,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
                 m.setMaterialForm(inferMaterialForm(m.getMaterialType(), m.getUnit()));
             }
         }
-        return materials.stream().map(MaterialOptionResp::fromEntity).toList();
+        return materials.stream().map(MaterialOptionRespDTO::fromEntity).toList();
     }
 
     private Material createDefaultMaterial(Farm farm, String name, String type, String form, String unit, String description) {
@@ -430,7 +430,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
     @Override
     @Transactional
-    public MaterialOptionResp createMaterial(Integer userId, CreateMaterialReq request) {
+    public MaterialOptionRespDTO createMaterial(Integer userId, CreateMaterialReqDTO request) {
         farmMemberRepository.findByFarmIdAndUserIdAndStatus(request.farmId(), userId, "active")
                 .orElseThrow(() -> new ForbiddenException("Bạn không có quyền quản lý vật tư của trang trại này."));
 
@@ -462,7 +462,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             if (request.germinationRate() != null) {
                 existing.setGerminationRate(request.germinationRate());
             }
-            return MaterialOptionResp.fromEntity(materialRepository.save(existing));
+            return MaterialOptionRespDTO.fromEntity(materialRepository.save(existing));
         }
 
         Farm farm;
@@ -491,11 +491,11 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
             material.setGerminationRate(request.germinationRate());
         }
         Material saved = materialRepository.save(material);
-        return MaterialOptionResp.fromEntity(saved);
+        return MaterialOptionRespDTO.fromEntity(saved);
     }
 
     @Override
-    public MaterialUsageResp getMaterialUsageById(Integer userId, Integer materialUsageId) {
+    public MaterialUsageRespDTO getMaterialUsageById(Integer userId, Integer materialUsageId) {
         MaterialUsage usage = materialUsageRepository.findById(materialUsageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bản ghi sử dụng vật tư không tồn tại."));
 
@@ -634,7 +634,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
     private final MaterialUsageMapper materialUsageMapper = new MaterialUsageMapper();
 
-    private MaterialUsageResp mapToResponse(MaterialUsage usage) {
+    private MaterialUsageRespDTO mapToResponse(MaterialUsage usage) {
         Material mat = usage.getMaterial();
         String materialForm = cleanText(usage.getMaterialForm());
         if (materialForm == null && mat != null) {

@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.unit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycropdiary.api.dto.ai.AIMessageResp;
-import com.mycropdiary.api.dto.ai.AskAIQuestionReq;
+import com.mycropdiary.api.dto.ai.AIMessageRespDTO;
+import com.mycropdiary.api.dto.ai.AskAIQuestionReqDTO;
 import com.mycropdiary.api.entity.AIConversation;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.User;
@@ -118,7 +118,7 @@ class FE12_OpenAIRAGIntegrationUnitTest {
         );
         when(openAIService.getModel()).thenReturn("gpt-4o-mini");
 
-        AIMessageResp resp = aiAssistantService.askAIAssistant(1, new AskAIQuestionReq("Làm sao để bón phân đúng chuẩn VietGAP?", 100, 10));
+        AIMessageRespDTO resp = aiAssistantService.askAIAssistant(1, new AskAIQuestionReqDTO("Làm sao để bón phân đúng chuẩn VietGAP?", 100, 10));
 
         assertThat(resp).isNotNull();
         assertThat(resp.senderType()).isEqualTo("assistant");
@@ -141,7 +141,7 @@ class FE12_OpenAIRAGIntegrationUnitTest {
         // Giả lập OpenAI không phản hồi (Optional.empty)
         when(openAIService.generateAnswer(any(), any(), any())).thenReturn(Optional.empty());
 
-        AIMessageResp resp = aiAssistantService.askAIAssistant(1, new AskAIQuestionReq("Nguồn nước tưới thế nào là đạt chuẩn VietGAP?", 100, 10));
+        AIMessageRespDTO resp = aiAssistantService.askAIAssistant(1, new AskAIQuestionReqDTO("Nguồn nước tưới thế nào là đạt chuẩn VietGAP?", 100, 10));
 
         assertThat(resp).isNotNull();
         assertThat(resp.senderType()).isEqualTo("assistant");

@@ -1,7 +1,7 @@
 package com.mycropdiary.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycropdiary.api.dto.admin.UpdateUserStatusReq;
+import com.mycropdiary.api.dto.admin.UpdateUserStatusReqDTO;
 import com.mycropdiary.api.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -78,7 +78,7 @@ class AdminUserControllerTest {
     @DisplayName("Admin không thể tự khóa tài khoản của chính mình -> 400 Bad Request")
     void updateUserStatus_SelfLock_Returns400() throws Exception {
         String adminToken = jwtTokenProvider.generateAccessToken(1, "admin@test.com", "ADMIN");
-        UpdateUserStatusReq req = new UpdateUserStatusReq("LOCKED");
+        UpdateUserStatusReqDTO req = new UpdateUserStatusReqDTO("LOCKED");
 
         mockMvc.perform(put("/api/v1/admin/users/1/status")
                         .header("Authorization", "Bearer " + adminToken)

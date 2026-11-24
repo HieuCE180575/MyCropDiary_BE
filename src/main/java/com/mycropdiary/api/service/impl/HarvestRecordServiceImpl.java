@@ -1,9 +1,9 @@
 package com.mycropdiary.api.service.impl;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
-import com.mycropdiary.api.dto.cultivation.UpdateHarvestRecordReq;
+import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReqDTO;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateHarvestRecordReqDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -77,7 +77,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
 
     @Override
     @Transactional
-    public HarvestRecordResp createHarvestRecord(Integer userId, CreateHarvestRecordReq request) {
+    public HarvestRecordRespDTO createHarvestRecord(Integer userId, CreateHarvestRecordReqDTO request) {
         CropSeason season = cropSeasonRepository.findById(request.cropSeasonId())
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại."));
 
@@ -136,7 +136,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
 
     @Override
     @Transactional
-    public HarvestRecordResp updateHarvestRecord(Integer userId, Integer harvestRecordId, UpdateHarvestRecordReq request) {
+    public HarvestRecordRespDTO updateHarvestRecord(Integer userId, Integer harvestRecordId, UpdateHarvestRecordReqDTO request) {
         HarvestRecord record = harvestRecordRepository.findById(harvestRecordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bản ghi thu hoạch không tồn tại."));
 
@@ -212,12 +212,12 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
     }
 
     @Override
-    public PageResp<HarvestRecordResp> getHarvestRecordsBySeason(Integer userId, Integer cropSeasonId, Pageable pageable) {
+    public PageResp<HarvestRecordRespDTO> getHarvestRecordsBySeason(Integer userId, Integer cropSeasonId, Pageable pageable) {
         return searchAndFilterHarvestRecords(userId, cropSeasonId, null, null, null, null, pageable);
     }
 
     @Override
-    public PageResp<HarvestRecordResp> searchAndFilterHarvestRecords(
+    public PageResp<HarvestRecordRespDTO> searchAndFilterHarvestRecords(
             Integer userId,
             Integer cropSeasonId,
             String keyword,
@@ -266,7 +266,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
 
 
     @Override
-    public PageResp<HarvestRecordResp> searchFarmHarvestRecords(
+    public PageResp<HarvestRecordRespDTO> searchFarmHarvestRecords(
             Integer userId,
             Integer farmId,
             Integer cropSeasonId,
@@ -322,7 +322,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
     }
 
     @Override
-    public HarvestRecordResp getHarvestRecordById(Integer userId, Integer harvestRecordId) {
+    public HarvestRecordRespDTO getHarvestRecordById(Integer userId, Integer harvestRecordId) {
         HarvestRecord record = harvestRecordRepository.findById(harvestRecordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bản ghi thu hoạch không tồn tại."));
 
@@ -339,7 +339,7 @@ public class HarvestRecordServiceImpl implements HarvestRecordService {
 
     private final HarvestRecordMapper harvestRecordMapper = new HarvestRecordMapper();
 
-    private HarvestRecordResp mapToResponse(HarvestRecord record) {
+    private HarvestRecordRespDTO mapToResponse(HarvestRecord record) {
         return harvestRecordMapper.toResponse(record);
     }
 }

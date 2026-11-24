@@ -1,7 +1,7 @@
 package com.mycropdiary.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycropdiary.api.dto.farm.HandleRegistrationReq;
+import com.mycropdiary.api.dto.farm.HandleFarmRegReqDTO;
 import com.mycropdiary.api.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -86,7 +86,7 @@ class AdminFarmRegistrationSecurityTest {
     @DisplayName("PUT /api/v1/admin/farm-registrations/{id}/handle với token USER -> Trả về 403 Forbidden")
     void handleRegistration_UserRole_Returns403() throws Exception {
         String userToken = jwtTokenProvider.generateAccessToken(java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000), "farmer@test.com", "USER");
-        HandleRegistrationReq request = new HandleRegistrationReq("APPROVED", null);
+        HandleFarmRegReqDTO request = new HandleFarmRegReqDTO("APPROVED", null);
 
         mockMvc.perform(put("/api/v1/admin/farm-registrations/" + java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 100000) + "/handle")
                         .header("Authorization", "Bearer " + userToken)

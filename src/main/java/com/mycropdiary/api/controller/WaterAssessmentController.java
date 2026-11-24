@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.water.CreateWaterAssessmentReq;
-import com.mycropdiary.api.dto.water.UpdateWaterAssessmentReq;
-import com.mycropdiary.api.dto.water.WaterAssessmentResp;
+import com.mycropdiary.api.dto.water.CreateWaterReqDTO;
+import com.mycropdiary.api.dto.water.UpdateWaterReqDTO;
+import com.mycropdiary.api.dto.water.WaterAssessmentRespDTO;
 import com.mycropdiary.api.service.WaterAssessmentService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,45 +30,45 @@ public class WaterAssessmentController {
     @Operation(summary = "Tạo mới đánh giá chất lượng nguồn nước theo Block (Record Water Assessment)")
     @PostMapping("/blocks/{blockId}/water-assessments")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<WaterAssessmentResp> createWaterAssessment(
+    public ApiResp<WaterAssessmentRespDTO> createWaterAssessment(
             @PathVariable Integer blockId,
-            @Valid @RequestBody CreateWaterAssessmentReq request) {
+            @Valid @RequestBody CreateWaterReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        WaterAssessmentResp response = waterService.createWaterAssessment(currentUserId, blockId, request);
+        WaterAssessmentRespDTO response = waterService.createWaterAssessment(currentUserId, blockId, request);
         return ApiResp.ok("Tạo phiếu đánh giá nguồn nước thành công", response);
     }
 
     @Operation(summary = "Xem lịch sử đánh giá nước của Block (View Water History)")
     @GetMapping("/blocks/{blockId}/water-assessments")
-    public ApiResp<List<WaterAssessmentResp>> getWaterAssessmentHistory(@PathVariable Integer blockId) {
+    public ApiResp<List<WaterAssessmentRespDTO>> getWaterAssessmentHistory(@PathVariable Integer blockId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<WaterAssessmentResp> history = waterService.getWaterAssessmentHistory(currentUserId, blockId);
+        List<WaterAssessmentRespDTO> history = waterService.getWaterAssessmentHistory(currentUserId, blockId);
         return ApiResp.ok("Lịch sử đánh giá chất lượng nước lô đất", history);
     }
 
     @Operation(summary = "Xem lịch sử đánh giá nguồn nước toàn trang trại (View Water History)")
     @GetMapping("/farms/{farmId}/water-assessments")
-    public ApiResp<List<WaterAssessmentResp>> getFarmWaterAssessmentHistory(@PathVariable Integer farmId) {
+    public ApiResp<List<WaterAssessmentRespDTO>> getFarmWaterAssessmentHistory(@PathVariable Integer farmId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<WaterAssessmentResp> history = waterService.getFarmWaterAssessmentHistory(currentUserId, farmId);
+        List<WaterAssessmentRespDTO> history = waterService.getFarmWaterAssessmentHistory(currentUserId, farmId);
         return ApiResp.ok("Lịch sử đánh giá nguồn nước toàn trang trại", history);
     }
 
     @Operation(summary = "Xem chi tiết đánh giá nguồn nước (View Water Assessment Details)")
     @GetMapping("/water-assessments/{assessmentId}")
-    public ApiResp<WaterAssessmentResp> getWaterAssessmentDetails(@PathVariable Integer assessmentId) {
+    public ApiResp<WaterAssessmentRespDTO> getWaterAssessmentDetails(@PathVariable Integer assessmentId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        WaterAssessmentResp response = waterService.getWaterAssessmentDetails(currentUserId, assessmentId);
+        WaterAssessmentRespDTO response = waterService.getWaterAssessmentDetails(currentUserId, assessmentId);
         return ApiResp.ok("Chi tiết đánh giá nguồn nước", response);
     }
 
     @Operation(summary = "Cập nhật phiếu đánh giá nguồn nước (Update Water Assessment)")
     @PutMapping("/water-assessments/{assessmentId}")
-    public ApiResp<WaterAssessmentResp> updateWaterAssessment(
+    public ApiResp<WaterAssessmentRespDTO> updateWaterAssessment(
             @PathVariable Integer assessmentId,
-            @Valid @RequestBody UpdateWaterAssessmentReq request) {
+            @Valid @RequestBody UpdateWaterReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        WaterAssessmentResp response = waterService.updateWaterAssessment(currentUserId, assessmentId, request);
+        WaterAssessmentRespDTO response = waterService.updateWaterAssessment(currentUserId, assessmentId, request);
         return ApiResp.ok("Cập nhật đánh giá nguồn nước thành công", response);
     }
 

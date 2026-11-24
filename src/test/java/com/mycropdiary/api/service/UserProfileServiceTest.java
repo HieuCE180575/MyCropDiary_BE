@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.user.ChangePasswordReq;
-import com.mycropdiary.api.dto.user.UpdateProfileReq;
-import com.mycropdiary.api.dto.user.UserProfileResp;
+import com.mycropdiary.api.dto.user.ChangePasswordReqDTO;
+import com.mycropdiary.api.dto.user.UpdateProfileReqDTO;
+import com.mycropdiary.api.dto.user.UserProfileRespDTO;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
@@ -60,7 +60,7 @@ class UserProfileServiceTest {
     void getProfile_Success() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        UserProfileResp resp = userProfileService.getProfile(userId);
+        UserProfileRespDTO resp = userProfileService.getProfile(userId);
 
         assertNotNull(resp);
         assertEquals(userId, resp.userId());
@@ -82,8 +82,8 @@ class UserProfileServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UpdateProfileReq req = new UpdateProfileReq("Le Van Tien", "0987654321", "https://avatar.url");
-        UserProfileResp resp = userProfileService.updateProfile(userId, req);
+        UpdateProfileReqDTO req = new UpdateProfileReqDTO("Le Van Tien", "0987654321", "https://avatar.url");
+        UserProfileRespDTO resp = userProfileService.updateProfile(userId, req);
 
         assertNotNull(resp);
         assertEquals("Le Van Tien", resp.fullName());
@@ -102,7 +102,7 @@ class UserProfileServiceTest {
         when(accountTokenRepository.findAllByUser_IdAndTokenTypeAndUsedAtIsNull(userId, "refresh"))
                 .thenReturn(Collections.emptyList());
 
-        ChangePasswordReq req = new ChangePasswordReq("OldPassword@123", "NewPassword@456", "NewPassword@456");
+        ChangePasswordReqDTO req = new ChangePasswordReqDTO("OldPassword@123", "NewPassword@456", "NewPassword@456");
         assertDoesNotThrow(() -> userProfileService.changePassword(userId, req));
 
         assertEquals("hashed_new_password", user.getPasswordHash());
@@ -114,7 +114,7 @@ class UserProfileServiceTest {
     void changePassword_ConfirmPasswordMismatch_ThrowsBadRequest() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        ChangePasswordReq req = new ChangePasswordReq("OldPassword@123", "NewPassword@456", "WrongConfirmPassword");
+        ChangePasswordReqDTO req = new ChangePasswordReqDTO("OldPassword@123", "NewPassword@456", "WrongConfirmPassword");
         assertThrows(BadRequestException.class, () -> userProfileService.changePassword(userId, req));
     }
 
@@ -124,7 +124,7 @@ class UserProfileServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("WrongOldPassword", "hashed_old_password")).thenReturn(false);
 
-        ChangePasswordReq req = new ChangePasswordReq("WrongOldPassword", "NewPassword@456", "NewPassword@456");
+        ChangePasswordReqDTO req = new ChangePasswordReqDTO("WrongOldPassword", "NewPassword@456", "NewPassword@456");
         assertThrows(BadRequestException.class, () -> userProfileService.changePassword(userId, req));
     }
 
@@ -135,7 +135,7 @@ class UserProfileServiceTest {
         when(passwordEncoder.matches("OldPassword@123", "hashed_old_password")).thenReturn(true);
         when(passwordEncoder.matches("OldPassword@123", "hashed_old_password")).thenReturn(true);
 
-        ChangePasswordReq req = new ChangePasswordReq("OldPassword@123", "OldPassword@123", "OldPassword@123");
+        ChangePasswordReqDTO req = new ChangePasswordReqDTO("OldPassword@123", "OldPassword@123", "OldPassword@123");
         assertThrows(BadRequestException.class, () -> userProfileService.changePassword(userId, req));
     }
 }

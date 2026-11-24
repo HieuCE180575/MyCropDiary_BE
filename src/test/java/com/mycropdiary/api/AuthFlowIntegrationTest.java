@@ -1,8 +1,8 @@
 package com.mycropdiary.api;
 
-import com.mycropdiary.api.dto.auth.AuthResp;
-import com.mycropdiary.api.dto.auth.RegisterReq;
-import com.mycropdiary.api.dto.auth.VerifyOtpReq;
+import com.mycropdiary.api.dto.auth.AuthRespDTO;
+import com.mycropdiary.api.dto.auth.RegisterAccReqDTO;
+import com.mycropdiary.api.dto.auth.VerifyOtpReqDTO;
 import com.mycropdiary.api.entity.AccountToken;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.repository.AccountTokenRepository;
@@ -49,7 +49,7 @@ class AuthFlowIntegrationTest {
         String testEmail = "testuser_otp@fpt.edu.vn";
 
         // 1. Đăng ký
-        RegisterReq registerReq = new RegisterReq(
+        RegisterAccReqDTO registerReq = new RegisterAccReqDTO(
                 "Test User OTP",
                 testEmail,
                 "0987654321",
@@ -72,8 +72,8 @@ class AuthFlowIntegrationTest {
         accountTokenRepository.save(newOtp);
 
         // 4. Verify OTP
-        VerifyOtpReq verifyReq = new VerifyOtpReq(testEmail, "123456");
-        AuthResp authResponse = authService.verifyOtp(verifyReq);
+        VerifyOtpReqDTO verifyReq = new VerifyOtpReqDTO(testEmail, "123456");
+        AuthRespDTO authResponse = authService.verifyOtp(verifyReq);
 
         // 5. Kiểm tra kết quả
         assertThat(authResponse).isNotNull();

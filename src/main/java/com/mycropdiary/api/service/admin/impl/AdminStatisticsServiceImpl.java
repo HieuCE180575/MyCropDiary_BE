@@ -1,6 +1,12 @@
 package com.mycropdiary.api.service.admin.impl;
 
-import com.mycropdiary.api.dto.admin.AdminStatisticsResp;
+import com.mycropdiary.api.dto.admin.AccountStatsRespDTO;
+import com.mycropdiary.api.dto.admin.RegistrationStatsRespDTO;
+import com.mycropdiary.api.dto.admin.FarmStatsRespDTO;
+import com.mycropdiary.api.dto.admin.SeasonStatsRespDTO;
+import com.mycropdiary.api.dto.admin.AIFeedbackStatsRespDTO;
+import com.mycropdiary.api.dto.admin.*;
+import com.mycropdiary.api.mapper.AdminStatisticsMapper;
 import com.mycropdiary.api.repository.AIFeedbackRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
@@ -21,6 +27,7 @@ public class AdminStatisticsServiceImpl implements AdminStatisticsService {
     private final FarmRepository farmRepository;
     private final CropSeasonRepository cropSeasonRepository;
     private final AIFeedbackRepository aiFeedbackRepository;
+    private final AdminStatisticsMapper adminStatisticsMapper = new AdminStatisticsMapper();
 
     public AdminStatisticsServiceImpl(
             UserRepository userRepository,
@@ -38,7 +45,7 @@ public class AdminStatisticsServiceImpl implements AdminStatisticsService {
     }
 
     @Override
-    public AdminStatisticsResp getSystemStatistics() {
+    public AdminStatisticsRespDTO getSystemStatistics() {
         // 1. Account Statistics (UC-45.1)
         long totalUsers = userRepository.count();
         long activeUsers = userRepository.countByAccountStatusIgnoreCase("ACTIVE");
@@ -46,7 +53,7 @@ public class AdminStatisticsServiceImpl implements AdminStatisticsService {
         long ownerCount = userRepository.countBySystemRoleIgnoreCase("OWNER");
         long staffCount = userRepository.countBySystemRoleIgnoreCase("STAFF");
 
-        var accountStats = new AdminStatisticsResp.AccountStatistics(
+        var accountStats = new AccountStatsRespDTO(
                 totalUsers, activeUsers, lockedUsers, ownerCount, staffCount
         );
 
@@ -56,7 +63,7 @@ public class AdminStatisticsServiceImpl implements AdminStatisticsService {
         long approvedReg = farmRegistrationRepository.countByRegistrationStatusIgnoreCase("APPROVED");
         long rejectedReg = farmRegistrationRepository.countByRegistrationStatusIgnoreCase("REJECTED");
 
-        var regStats = new AdminStatisticsResp.RegistrationStatistics(
+        var regStats = new RegistrationStatsRespDTO(
                 totalReg, pendingReg, approvedReg, rejectedReg
         );
 
@@ -66,7 +73,7 @@ public class AdminStatisticsServiceImpl implements AdminStatisticsService {
                 .filter(f -> f.getFarmStatus() == null || f.getFarmStatus().equalsIgnoreCase("ACTIVE"))
                 .count();
 
-        var farmStats = new AdminStatisticsResp.FarmStatistics(
+        var farmStats = new FarmStatsRespDTO(
                 totalFarms, activeFarms
         );
 
@@ -76,7 +83,7 @@ public class AdminStatisticsServiceImpl implements AdminStatisticsService {
                 + cropSeasonRepository.countBySeasonStatusIgnoreCase("IN_PROGRESS");
         long completedSeasons = cropSeasonRepository.countBySeasonStatusIgnoreCase("COMPLETED");
 
-        var seasonStats = new AdminStatisticsResp.SeasonStatistics(
+        var seasonStats = new SeasonStatsRespDTO(
                 totalSeasons, activeSeasons, completedSeasons
         );
 
@@ -87,11 +94,11 @@ public class AdminStatisticsServiceImpl implements AdminStatisticsService {
         Double avgRating = aiFeedbackRepository.getAverageRating();
         double ratingVal = avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 5.0;
 
-        var aiFeedbackStats = new AdminStatisticsResp.AIFeedbackStatistics(
+        var aiFeedbackStats = new AIFeedbackStatsRespDTO(
                 totalFeedbacks, openFeedbacks, resolvedFeedbacks, ratingVal
         );
 
-        return new AdminStatisticsResp(accountStats, regStats, farmStats, seasonStats, aiFeedbackStats);
+        return adminStatisticsMapper.toResponse(accountStats, regStats, farmStats, seasonStats, aiFeedbackStats);
     }
 }
 

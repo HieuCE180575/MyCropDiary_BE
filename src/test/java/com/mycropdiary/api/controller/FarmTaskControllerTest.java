@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mycropdiary.api.controller.cultivation.FarmTaskController;
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateFarmTaskReq;
-import com.mycropdiary.api.dto.cultivation.FarmTaskResp;
-import com.mycropdiary.api.dto.cultivation.UpdateFarmTaskStatusReq;
+import com.mycropdiary.api.dto.cultivation.CreateFarmTaskReqDTO;
+import com.mycropdiary.api.dto.cultivation.FarmTaskRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateFarmTaskStatusReqDTO;
 import com.mycropdiary.api.service.cultivation.FarmTaskService;
 import com.mycropdiary.api.util.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,14 +64,14 @@ class FarmTaskControllerTest {
     @Test
     @DisplayName("GET /api/v1/farms/{farmId}/tasks -> 200 OK")
     void getFarmTasks_Success() throws Exception {
-        FarmTaskResp response = new FarmTaskResp(
+        FarmTaskRespDTO response = new FarmTaskRespDTO(
                 taskId, farmId, "Trang trại mẫu", null, null, null, null, null, null,
                 "Tưới nhỏ giọt", "Ghi chú", "Tưới tiêu", "normal", "planned",
                 LocalDateTime.now(), LocalDateTime.now().plusDays(1),
                 userId, "Chủ trang trại", List.of(), Instant.now()
         );
 
-        PageResp<FarmTaskResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
+        PageResp<FarmTaskRespDTO> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
 
         when(farmTaskService.getFarmTasks(eq(userId), eq(farmId), any(), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(pageResponse);
@@ -86,20 +86,20 @@ class FarmTaskControllerTest {
     @Test
     @DisplayName("POST /api/v1/farms/{farmId}/tasks -> 201 Created")
     void createTask_Success() throws Exception {
-        CreateFarmTaskReq req = new CreateFarmTaskReq(
+        CreateFarmTaskReqDTO req = new CreateFarmTaskReqDTO(
                 "Tưới nhỏ giọt", "Tưới tiêu", "normal", "planned",
                 null, null, null, null,
                 LocalDateTime.now(), LocalDateTime.now().plusDays(1), "Ghi chú"
         );
 
-        FarmTaskResp response = new FarmTaskResp(
+        FarmTaskRespDTO response = new FarmTaskRespDTO(
                 taskId, farmId, "Trang trại mẫu", null, null, null, null, null, null,
                 "Tưới nhỏ giọt", "Ghi chú", "Tưới tiêu", "normal", "planned",
                 req.startsAt(), req.dueAt(),
                 userId, "Chủ trang trại", List.of(), Instant.now()
         );
 
-        when(farmTaskService.createTask(eq(userId), eq(farmId), any(CreateFarmTaskReq.class)))
+        when(farmTaskService.createTask(eq(userId), eq(farmId), any(CreateFarmTaskReqDTO.class)))
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/v1/farms/" + farmId + "/tasks")
@@ -113,16 +113,16 @@ class FarmTaskControllerTest {
     @Test
     @DisplayName("PATCH /api/v1/tasks/{taskId}/status -> 200 OK")
     void updateTaskStatus_Success() throws Exception {
-        UpdateFarmTaskStatusReq req = new UpdateFarmTaskStatusReq("completed");
+        UpdateFarmTaskStatusReqDTO req = new UpdateFarmTaskStatusReqDTO("completed");
 
-        FarmTaskResp response = new FarmTaskResp(
+        FarmTaskRespDTO response = new FarmTaskRespDTO(
                 taskId, farmId, "Trang trại mẫu", null, null, null, null, null, null,
                 "Tưới nhỏ giọt", "Ghi chú", "Tưới tiêu", "normal", "completed",
                 LocalDateTime.now(), LocalDateTime.now().plusDays(1),
                 userId, "Chủ trang trại", List.of(), Instant.now()
         );
 
-        when(farmTaskService.updateTaskStatus(eq(userId), eq(taskId), any(UpdateFarmTaskStatusReq.class)))
+        when(farmTaskService.updateTaskStatus(eq(userId), eq(taskId), any(UpdateFarmTaskStatusReqDTO.class)))
                 .thenReturn(response);
 
         mockMvc.perform(patch("/api/v1/tasks/" + taskId + "/status")

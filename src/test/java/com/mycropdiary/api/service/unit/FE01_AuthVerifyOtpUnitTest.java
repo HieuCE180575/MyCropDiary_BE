@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.auth.AuthResp;
-import com.mycropdiary.api.dto.auth.VerifyOtpReq;
+import com.mycropdiary.api.dto.auth.AuthRespDTO;
+import com.mycropdiary.api.dto.auth.VerifyOtpReqDTO;
 import com.mycropdiary.api.entity.AccountToken;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.BadRequestException;
@@ -67,7 +67,7 @@ public class FE01_AuthVerifyOtpUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC01 [Normal] - Nhập OTP hợp lệ trong hạn 5 phút -> Kích hoạt tài khoản và cấp token (Passed)")
     void UTC01_verifyOtp_validOtpWithinWindow_shouldActivateUserAndReturnTokens() {
-        VerifyOtpReq req = new VerifyOtpReq("farmer@test.com", "123456");
+        VerifyOtpReqDTO req = new VerifyOtpReqDTO("farmer@test.com", "123456");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(pendingUser));
         when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(10, "email_verification"))
                 .thenReturn(Optional.of(validToken));
@@ -75,7 +75,7 @@ public class FE01_AuthVerifyOtpUnitTest {
         when(jwtTokenProvider.generateAccessToken(any(), any(), any())).thenReturn("mock-access");
         when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("mock-refresh");
 
-        AuthResp resp = authService.verifyOtp(req);
+        AuthRespDTO resp = authService.verifyOtp(req);
 
         assertNotNull(resp);
         assertEquals("active", pendingUser.getAccountStatus());
@@ -86,7 +86,7 @@ public class FE01_AuthVerifyOtpUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC02 [Abnormal] - OTP đã hết hạn (> 5 phút) -> Ném BadRequestException (Passed)")
     void UTC02_verifyOtp_expiredOtp_shouldThrowBadRequestException() {
-        VerifyOtpReq req = new VerifyOtpReq("farmer@test.com", "123456");
+        VerifyOtpReqDTO req = new VerifyOtpReqDTO("farmer@test.com", "123456");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(pendingUser));
         when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(10, "email_verification"))
                 .thenReturn(Optional.of(expiredToken));
@@ -97,7 +97,7 @@ public class FE01_AuthVerifyOtpUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC03 [Abnormal] - Sai mã OTP -> Ném BadRequestException (Passed)")
     void UTC03_verifyOtp_mismatchedOtp_shouldThrowBadRequestException() {
-        VerifyOtpReq req = new VerifyOtpReq("farmer@test.com", "999999");
+        VerifyOtpReqDTO req = new VerifyOtpReqDTO("farmer@test.com", "999999");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(pendingUser));
         when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(10, "email_verification"))
                 .thenReturn(Optional.of(validToken));
@@ -109,7 +109,7 @@ public class FE01_AuthVerifyOtpUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC04 [Abnormal] - Email không tồn tại -> Báo lỗi BadRequestException (Passed)")
     void UTC04_verifyOtp_nonExistentUser_shouldThrowBadRequestException() {
-        VerifyOtpReq req = new VerifyOtpReq("unknown@test.com", "123456");
+        VerifyOtpReqDTO req = new VerifyOtpReqDTO("unknown@test.com", "123456");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.empty());
 
         assertThrows(BadRequestException.class, () -> authService.verifyOtp(req));
@@ -118,7 +118,7 @@ public class FE01_AuthVerifyOtpUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC05 [Abnormal] - Tài khoản đã kích hoạt trước đó -> Báo lỗi (Passed)")
     void UTC05_verifyOtp_alreadyActiveUser_shouldThrowBadRequestException() {
-        VerifyOtpReq req = new VerifyOtpReq("active@test.com", "123456");
+        VerifyOtpReqDTO req = new VerifyOtpReqDTO("active@test.com", "123456");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(activeUser));
 
         assertThrows(BadRequestException.class, () -> authService.verifyOtp(req));
@@ -127,14 +127,14 @@ public class FE01_AuthVerifyOtpUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC06 [Boundary] - OTP chỉ có 5 chữ số -> Không đúng độ dài quy định (Passed)")
     void UTC06_verifyOtp_fiveDigits_shouldFailFormatValidation() {
-        VerifyOtpReq req = new VerifyOtpReq("farmer@test.com", "12345");
+        VerifyOtpReqDTO req = new VerifyOtpReqDTO("farmer@test.com", "12345");
         assertEquals(5, req.otp().length());
     }
 
     @Test
     @DisplayName("FE01_AUT_UTC07 [Boundary] - OTP có 7 chữ số -> Vượt quá độ dài quy định (Passed)")
     void UTC07_verifyOtp_sevenDigits_shouldFailFormatValidation() {
-        VerifyOtpReq req = new VerifyOtpReq("farmer@test.com", "1234567");
+        VerifyOtpReqDTO req = new VerifyOtpReqDTO("farmer@test.com", "1234567");
         assertEquals(7, req.otp().length());
     }
 
@@ -143,7 +143,7 @@ public class FE01_AuthVerifyOtpUnitTest {
     void UTC08_verifyOtp_atBoundary4m59s_defectDF004() {
         // Verified fix for DF-004: AccountToken and Hibernate JDBC standardized on UTC Instant
         AccountToken nearExpToken = AccountToken.createOtp(pendingUser, "hash123", Instant.now().plusSeconds(1));
-        VerifyOtpReq req = new VerifyOtpReq("farmer@test.com", "123456");
+        VerifyOtpReqDTO req = new VerifyOtpReqDTO("farmer@test.com", "123456");
 
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(pendingUser));
         when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(10, "email_verification"))
@@ -152,7 +152,7 @@ public class FE01_AuthVerifyOtpUnitTest {
         when(jwtTokenProvider.generateAccessToken(any(), any(), any())).thenReturn("mock-access");
         when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("mock-refresh");
 
-        AuthResp resp = authService.verifyOtp(req);
+        AuthRespDTO resp = authService.verifyOtp(req);
         assertNotNull(resp);
         assertEquals("active", pendingUser.getAccountStatus());
     }
@@ -163,7 +163,7 @@ public class FE01_AuthVerifyOtpUnitTest {
         // Verified fix for DF-005: failedAttempts counter locks OTP after 5 failed attempts
         AccountToken token = AccountToken.createOtp(pendingUser, "hash123", Instant.now().plus(5, ChronoUnit.MINUTES));
         token.setFailedAttempts(4);
-        VerifyOtpReq wrongReq = new VerifyOtpReq("farmer@test.com", "999999");
+        VerifyOtpReqDTO wrongReq = new VerifyOtpReqDTO("farmer@test.com", "999999");
 
         when(userRepository.findByEmailIgnoreCase(wrongReq.email())).thenReturn(Optional.of(pendingUser));
         when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(10, "email_verification"))

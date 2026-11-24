@@ -1,6 +1,6 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.cultivation.CropSeason;
@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @Component
 public class HarvestRecordMapper {
 
-    public HarvestRecordResp toResponse(HarvestRecord record) {
+    public HarvestRecordRespDTO toResponse(HarvestRecord record) {
         CropSeason season = record.getCropSeason();
         Farm farm = season != null ? season.getFarm() : record.getFarm();
         Block block = record.getBlock();
@@ -24,7 +24,7 @@ public class HarvestRecordMapper {
                 ? record.getRecordedBy().getUser().getFullName()
                 : null;
 
-        return new HarvestRecordResp(
+        return new HarvestRecordRespDTO(
                 record.getId(),
                 season != null ? season.getId() : null,
                 season != null ? season.getSeasonName() : null,

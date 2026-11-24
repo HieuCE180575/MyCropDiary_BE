@@ -1,14 +1,13 @@
 package com.mycropdiary.api.service.farmregistration;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.farm.HandleRegistrationReq;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateReq;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResp;
+import com.mycropdiary.api.dto.farm.HandleFarmRegReqDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationReqDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryRespDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.farmregistration.FarmRegistration;
-import com.mycropdiary.api.entity.farmregistration.FarmRegistrationStatus;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
@@ -16,6 +15,7 @@ import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.farmregistration.FarmRegistrationRepository;
+import com.mycropdiary.api.service.impl.AdminFarmRegServiceImpl;
 import com.mycropdiary.api.service.impl.FarmRegistrationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -54,6 +54,9 @@ class FarmRegistrationServiceTest {
     @InjectMocks
     private FarmRegistrationServiceImpl farmRegistrationService;
 
+    @InjectMocks
+    private AdminFarmRegServiceImpl adminFarmRegService;
+
     private User testUser;
     private User adminUser;
 
@@ -83,7 +86,7 @@ class FarmRegistrationServiceTest {
             return entity;
         });
 
-        FarmRegistrationCreateReq request = new FarmRegistrationCreateReq(
+        FarmRegistrationReqDTO request = new FarmRegistrationReqDTO(
                 "Nong Trai Xanh Da Lat",
                 "123 Duong Mai Anh Dao",
                 "Lam Dong",
@@ -93,7 +96,7 @@ class FarmRegistrationServiceTest {
                 "https://example.com/docs/chung-nhan-vietgap.pdf"
         );
 
-        FarmRegistrationResp response = farmRegistrationService.createRegistration(10, request);
+        FarmRegistrationRespDTO response = farmRegistrationService.createRegistration(10, request);
 
         assertNotNull(response);
         assertEquals(100, response.registrationId());
@@ -104,7 +107,7 @@ class FarmRegistrationServiceTest {
         assertEquals("Phuong 8", response.ward());
         assertEquals("Chuyen trong rau sach VietGAP", response.description());
         assertEquals("https://example.com/docs/chung-nhan-vietgap.pdf", response.documentUrl());
-        assertEquals(FarmRegistrationStatus.PENDING, response.status());
+        assertEquals("PENDING", response.status());
 
         ArgumentCaptor<FarmRegistration> captor = ArgumentCaptor.forClass(FarmRegistration.class);
         verify(farmRegistrationRepository).save(captor.capture());
@@ -131,7 +134,7 @@ class FarmRegistrationServiceTest {
             return entity;
         });
 
-        FarmRegistrationCreateReq request = new FarmRegistrationCreateReq(
+        FarmRegistrationReqDTO request = new FarmRegistrationReqDTO(
                 "Nong Trai Moi",
                 "456 Duong Hoang Dieu",
                 "   ",
@@ -141,7 +144,7 @@ class FarmRegistrationServiceTest {
                 null
         );
 
-        FarmRegistrationResp response = farmRegistrationService.createRegistration(10, request);
+        FarmRegistrationRespDTO response = farmRegistrationService.createRegistration(10, request);
 
         assertNotNull(response);
         assertEquals("Nong Trai Moi", response.farmName());
@@ -159,7 +162,7 @@ class FarmRegistrationServiceTest {
         testUser.setAccountStatus("locked");
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
 
-        FarmRegistrationCreateReq request = new FarmRegistrationCreateReq(
+        FarmRegistrationReqDTO request = new FarmRegistrationReqDTO(
                 "Nong Trai Moi", "456 Duong Hoang Dieu", null, null, null, null, null
         );
 
@@ -182,18 +185,18 @@ class FarmRegistrationServiceTest {
         when(farmRegistrationRepository.findByApplicantUserId(10, pageable))
                 .thenReturn(new PageImpl<>(List.of(reg), pageable, 1));
 
-        PageResp<FarmRegistrationSummaryResp> result = farmRegistrationService.getMyRegistrations(10, pageable);
+        PageResp<FarmRegistrationSummaryRespDTO> result = farmRegistrationService.getMyRegistrations(10, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.items().size());
-        FarmRegistrationSummaryResp summary = result.items().get(0);
+        FarmRegistrationSummaryRespDTO summary = result.items().get(0);
         assertEquals(201, summary.registrationId());
         assertEquals("Nong Trai A", summary.farmName());
         assertEquals("789 Duong ABC", summary.addressLine());
         assertEquals("Lam Dong", summary.province());
         assertEquals("Da Lat", summary.district());
         assertEquals("Phuong 1", summary.ward());
-        assertEquals(FarmRegistrationStatus.PENDING, summary.status());
+        assertEquals("PENDING", summary.status());
     }
 
     @Test
@@ -210,7 +213,7 @@ class FarmRegistrationServiceTest {
         when(farmRegistrationRepository.findByIdAndApplicantUserId(301, 10))
                 .thenReturn(Optional.of(reg));
 
-        FarmRegistrationResp resp = farmRegistrationService.getMyRegistrationDetail(10, 301);
+        FarmRegistrationRespDTO resp = farmRegistrationService.getMyRegistrationDetail(10, 301);
 
         assertNotNull(resp);
         assertEquals(301, resp.registrationId());
@@ -237,9 +240,9 @@ class FarmRegistrationServiceTest {
         when(farmRegistrationRepository.save(any(FarmRegistration.class)))
                 .thenAnswer(i -> i.getArgument(0));
 
-        FarmRegistrationResp resp = farmRegistrationService.cancelRegistration(10, 401);
+        FarmRegistrationRespDTO resp = farmRegistrationService.cancelRegistration(10, 401);
 
-        assertEquals(FarmRegistrationStatus.CANCELLED, resp.status());
+        assertEquals("CANCELLED", resp.status());
         assertEquals("cancelled", reg.getRegistrationStatus());
     }
 
@@ -278,8 +281,8 @@ class FarmRegistrationServiceTest {
         });
         when(farmRegistrationRepository.save(any(FarmRegistration.class))).thenAnswer(i -> i.getArgument(0));
 
-        HandleRegistrationReq req = new HandleRegistrationReq("APPROVED", null);
-        var resp = farmRegistrationService.handleRegistration(1, 501, req);
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("APPROVED", null);
+        var resp = adminFarmRegService.handleRegistration(1, 501, req);
 
         assertNotNull(resp);
         assertEquals("APPROVED", resp.status());
@@ -305,8 +308,8 @@ class FarmRegistrationServiceTest {
         when(farmRegistrationRepository.findById(601)).thenReturn(Optional.of(reg));
         when(farmRegistrationRepository.save(any(FarmRegistration.class))).thenAnswer(i -> i.getArgument(0));
 
-        HandleRegistrationReq req = new HandleRegistrationReq("REJECTED", "Thieu giay to chung nhan");
-        var resp = farmRegistrationService.handleRegistration(1, 601, req);
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("REJECTED", "Thieu giay to chung nhan");
+        var resp = adminFarmRegService.handleRegistration(1, 601, req);
 
         assertNotNull(resp);
         assertEquals("REJECTED", resp.status());

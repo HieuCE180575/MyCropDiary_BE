@@ -102,8 +102,8 @@ public class FE10_SupplierAndInputPurchaseUnitTest {
         saved.setId(11);
         when(supplierRepository.save(any(Supplier.class))).thenReturn(saved);
 
-        CreateSupplierReq req = new CreateSupplierReq("New Supplier", "Contact A", "0900000000", null, null, null);
-        SupplierResp resp = supplierService.createSupplier(3, 1, req);
+        CreateSupplierReqDTO req = new CreateSupplierReqDTO("New Supplier", "Contact A", "0900000000", null, null, null);
+        SupplierRespDTO resp = supplierService.createSupplier(3, 1, req);
 
         assertNotNull(resp);
         assertEquals(11, resp.supplierId());
@@ -116,7 +116,7 @@ public class FE10_SupplierAndInputPurchaseUnitTest {
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(supplierRepository.existsByFarmIdAndSupplierNameIgnoreCase(1, "Da Lat Green Agrochemical Co.")).thenReturn(true);
 
-        CreateSupplierReq req = new CreateSupplierReq("Da Lat Green Agrochemical Co.", null, null, null, null, null);
+        CreateSupplierReqDTO req = new CreateSupplierReqDTO("Da Lat Green Agrochemical Co.", null, null, null, null, null);
         assertThrows(ResourceConflictException.class, () -> supplierService.createSupplier(3, 1, req));
     }
 
@@ -154,8 +154,8 @@ public class FE10_SupplierAndInputPurchaseUnitTest {
         savedPurchase.setId(100);
         when(inputPurchaseRepository.save(any(InputPurchase.class))).thenReturn(savedPurchase);
 
-        PurchaseItemReq itemReq = new PurchaseItemReq(5, new BigDecimal("20.000"), new BigDecimal("50000.00"), 1);
-        CreateInputPurchaseReq req = new CreateInputPurchaseReq(
+        PurchaseItemReqDTO itemReq = new PurchaseItemReqDTO(5, new BigDecimal("20.000"), new BigDecimal("50000.00"), 1);
+        CreatePurchaseReqDTO req = new CreatePurchaseReqDTO(
                 10, LocalDate.now(), "PO-001", null, "NK-001", "Early Cantaloupe fertilizer", List.of(itemReq)
         );
 
@@ -163,7 +163,7 @@ public class FE10_SupplierAndInputPurchaseUnitTest {
         savedItem.setId(1);
         when(inputPurchaseItemRepository.save(any(InputPurchaseItem.class))).thenReturn(savedItem);
 
-        InputPurchaseResp resp = inputPurchaseService.recordInputPurchase(3, 1, req);
+        InputPurchaseRespDTO resp = inputPurchaseService.recordInputPurchase(3, 1, req);
         assertNotNull(resp);
         assertEquals(100, resp.purchaseId());
         assertEquals(1, resp.items().size());
@@ -194,8 +194,8 @@ public class FE10_SupplierAndInputPurchaseUnitTest {
         when(inputPurchaseRepository.findById(100)).thenReturn(Optional.of(purchase));
         when(inputPurchaseRepository.save(any(InputPurchase.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        LinkWarehouseReceiptReq req = new LinkWarehouseReceiptReq("WH-RECEIPT-2026-99", 1, "Completed stock entry");
-        InputPurchaseResp resp = inputPurchaseService.linkWarehouseReceipt(3, 100, req);
+        LinkWarehouseReceiptReqDTO req = new LinkWarehouseReceiptReqDTO("WH-RECEIPT-2026-99", 1, "Completed stock entry");
+        InputPurchaseRespDTO resp = inputPurchaseService.linkWarehouseReceipt(3, 100, req);
 
         assertNotNull(resp);
         assertEquals("WH-RECEIPT-2026-99", resp.warehouseReceiptNo());

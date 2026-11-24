@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.risk.CreateZoneRiskReq;
-import com.mycropdiary.api.dto.risk.UpdateRiskControlReq;
-import com.mycropdiary.api.dto.risk.ZoneRiskResp;
+import com.mycropdiary.api.dto.risk.CreateZoneRiskReqDTO;
+import com.mycropdiary.api.dto.risk.UpdateRiskControlReqDTO;
+import com.mycropdiary.api.dto.risk.ZoneRiskRespDTO;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.Zone;
 import com.mycropdiary.api.entity.ZoneRiskAssessment;
@@ -37,7 +37,7 @@ public class ZoneRiskServiceImpl implements ZoneRiskService {
     }
 
     @Override
-    public ZoneRiskResp recordZoneRisk(Integer currentUserId, Integer zoneId, CreateZoneRiskReq request) {
+    public ZoneRiskRespDTO recordZoneRisk(Integer currentUserId, Integer zoneId, CreateZoneRiskReqDTO request) {
         Zone zone = accessGuard.requireZoneAccess(currentUserId, zoneId);
         Integer farmId = zone.getFarm().getId();
 
@@ -61,36 +61,36 @@ public class ZoneRiskServiceImpl implements ZoneRiskService {
         );
 
         ZoneRiskAssessment saved = riskRepository.save(assessment);
-        return ZoneRiskResp.fromEntity(saved);
+        return ZoneRiskRespDTO.fromEntity(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ZoneRiskResp> getZoneRiskHistory(Integer currentUserId, Integer zoneId) {
+    public List<ZoneRiskRespDTO> getZoneRiskHistory(Integer currentUserId, Integer zoneId) {
         accessGuard.requireZoneAccess(currentUserId, zoneId);
         List<ZoneRiskAssessment> list = riskRepository.findByZoneIdOrderByAssessedAtDesc(zoneId);
-        return list.stream().map(ZoneRiskResp::fromEntity).toList();
+        return list.stream().map(ZoneRiskRespDTO::fromEntity).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ZoneRiskResp> getFarmRiskHistory(Integer currentUserId, Integer farmId) {
+    public List<ZoneRiskRespDTO> getFarmRiskHistory(Integer currentUserId, Integer farmId) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
         List<ZoneRiskAssessment> list = riskRepository.findByFarmIdOrderByAssessedAtDesc(farmId);
-        return list.stream().map(ZoneRiskResp::fromEntity).toList();
+        return list.stream().map(ZoneRiskRespDTO::fromEntity).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ZoneRiskResp getZoneRiskDetails(Integer currentUserId, Integer riskId) {
+    public ZoneRiskRespDTO getZoneRiskDetails(Integer currentUserId, Integer riskId) {
         ZoneRiskAssessment entity = riskRepository.findById(riskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bản ghi rủi ro ID: " + riskId));
         accessGuard.requireZoneAccess(currentUserId, entity.getZone().getId());
-        return ZoneRiskResp.fromEntity(entity);
+        return ZoneRiskRespDTO.fromEntity(entity);
     }
 
     @Override
-    public ZoneRiskResp updateRiskControlMeasures(Integer currentUserId, Integer riskId, UpdateRiskControlReq request) {
+    public ZoneRiskRespDTO updateRiskControlMeasures(Integer currentUserId, Integer riskId, UpdateRiskControlReqDTO request) {
         ZoneRiskAssessment entity = riskRepository.findById(riskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bản ghi rủi ro ID: " + riskId));
         accessGuard.requireZoneAccess(currentUserId, entity.getZone().getId());
@@ -120,7 +120,7 @@ public class ZoneRiskServiceImpl implements ZoneRiskService {
         }
 
         ZoneRiskAssessment updated = riskRepository.save(entity);
-        return ZoneRiskResp.fromEntity(updated);
+        return ZoneRiskRespDTO.fromEntity(updated);
     }
 
     @Override

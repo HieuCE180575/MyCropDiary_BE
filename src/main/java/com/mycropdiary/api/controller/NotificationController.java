@@ -1,8 +1,8 @@
 package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.notification.NotificationListResp;
-import com.mycropdiary.api.dto.notification.NotificationResp;
+import com.mycropdiary.api.dto.notification.NotificationListRespDTO;
+import com.mycropdiary.api.dto.notification.NotificationRespDTO;
 import com.mycropdiary.api.service.NotificationService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,17 +26,17 @@ public class NotificationController {
 
     @Operation(summary = "Xem danh sách thông báo (UC-10: View Notification)", description = "Lấy danh sách thông báo gần đây và số lượng chưa đọc của tài khoản hiện tại.")
     @GetMapping
-    public ApiResp<NotificationListResp> getMyNotifications(@RequestParam(defaultValue = "20") int limit) {
+    public ApiResp<NotificationListRespDTO> getMyNotifications(@RequestParam(defaultValue = "20") int limit) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        NotificationListResp resp = notificationService.getMyNotifications(currentUserId, limit);
+        NotificationListRespDTO resp = notificationService.getMyNotifications(currentUserId, limit);
         return ApiResp.ok("Lấy danh sách thông báo thành công.", resp);
     }
 
     @Operation(summary = "Đánh dấu thông báo đã đọc", description = "Cập nhật trạng thái một thông báo thành đã đọc.")
     @PatchMapping("/{notificationId}/read")
-    public ApiResp<NotificationResp> markAsRead(@PathVariable Integer notificationId) {
+    public ApiResp<NotificationRespDTO> markAsRead(@PathVariable Integer notificationId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        NotificationResp resp = notificationService.markAsRead(currentUserId, notificationId);
+        NotificationRespDTO resp = notificationService.markAsRead(currentUserId, notificationId);
         return ApiResp.ok("Đã đánh dấu thông báo đã đọc.", resp);
     }
 

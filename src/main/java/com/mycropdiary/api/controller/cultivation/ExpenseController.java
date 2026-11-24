@@ -1,10 +1,10 @@
 package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.expense.CreateExpenseReq;
-import com.mycropdiary.api.dto.expense.ExpenseResp;
-import com.mycropdiary.api.dto.expense.ExpenseSummaryResp;
-import com.mycropdiary.api.dto.expense.UpdateExpenseReq;
+import com.mycropdiary.api.dto.expense.CreateExpenseReqDTO;
+import com.mycropdiary.api.dto.expense.ExpenseRespDTO;
+import com.mycropdiary.api.dto.expense.ExpenseSummaryRespDTO;
+import com.mycropdiary.api.dto.expense.UpdateExpenseReqDTO;
 import com.mycropdiary.api.service.cultivation.ExpenseService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,7 +35,7 @@ public class ExpenseController {
     @Operation(summary = "View Expense List, Search Expenses, Filter Expenses",
             description = "Xem danh sách chi phí trang trại, hỗ trợ tìm kiếm theo từ khóa (mô tả, danh mục) và lọc theo mùa vụ, phân loại chi phí, khoảng thời gian.")
     @GetMapping("/farms/{farmId}/expenses")
-    public ApiResp<List<ExpenseResp>> getExpenseList(
+    public ApiResp<List<ExpenseRespDTO>> getExpenseList(
             @PathVariable Integer farmId,
             @RequestParam(required = false) Integer cropSeasonId,
             @RequestParam(required = false) String category,
@@ -43,36 +43,36 @@ public class ExpenseController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String keyword) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        List<ExpenseResp> list = expenseService.getExpenseList(currentUserId, farmId, cropSeasonId, category, startDate, endDate, keyword);
+        List<ExpenseRespDTO> list = expenseService.getExpenseList(currentUserId, farmId, cropSeasonId, category, startDate, endDate, keyword);
         return ApiResp.ok("Lấy danh sách chi phí sản xuất thành công.", list);
     }
 
     @Operation(summary = "View Expense Details", description = "Xem chi tiết một khoản chi phí sản xuất theo ID.")
     @GetMapping("/expenses/{expenseId}")
-    public ApiResp<ExpenseResp> getExpenseDetails(@PathVariable Integer expenseId) {
+    public ApiResp<ExpenseRespDTO> getExpenseDetails(@PathVariable Integer expenseId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        ExpenseResp details = expenseService.getExpenseDetails(currentUserId, expenseId);
+        ExpenseRespDTO details = expenseService.getExpenseDetails(currentUserId, expenseId);
         return ApiResp.ok("Chi tiết khoản chi phí.", details);
     }
 
     @Operation(summary = "Record Expense", description = "Ghi nhận một khoản chi phí sản xuất mới vào hệ thống.")
     @PostMapping("/farms/{farmId}/expenses")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<ExpenseResp> recordExpense(
+    public ApiResp<ExpenseRespDTO> recordExpense(
             @PathVariable Integer farmId,
-            @Valid @RequestBody CreateExpenseReq request) {
+            @Valid @RequestBody CreateExpenseReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        ExpenseResp response = expenseService.recordExpense(currentUserId, farmId, request);
+        ExpenseRespDTO response = expenseService.recordExpense(currentUserId, farmId, request);
         return ApiResp.ok("Ghi nhận chi phí thành công.", response);
     }
 
     @Operation(summary = "Update Expense", description = "Cập nhật thông tin chi phí, số tiền, ngày chi hoặc hóa đơn.")
     @PutMapping("/expenses/{expenseId}")
-    public ApiResp<ExpenseResp> updateExpense(
+    public ApiResp<ExpenseRespDTO> updateExpense(
             @PathVariable Integer expenseId,
-            @Valid @RequestBody UpdateExpenseReq request) {
+            @Valid @RequestBody UpdateExpenseReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        ExpenseResp response = expenseService.updateExpense(currentUserId, expenseId, request);
+        ExpenseRespDTO response = expenseService.updateExpense(currentUserId, expenseId, request);
         return ApiResp.ok("Cập nhật chi phí thành công.", response);
     }
 
@@ -87,13 +87,13 @@ public class ExpenseController {
     @Operation(summary = "View Expense and Production Cost Summary",
             description = "Báo cáo tổng hợp chi phí sản xuất theo danh mục (phân bón, nhân công, năng lượng...) và theo từng mùa vụ.")
     @GetMapping("/farms/{farmId}/expenses/summary")
-    public ApiResp<ExpenseSummaryResp> getExpenseSummary(
+    public ApiResp<ExpenseSummaryRespDTO> getExpenseSummary(
             @PathVariable Integer farmId,
             @RequestParam(required = false) Integer cropSeasonId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        ExpenseSummaryResp summary = expenseService.getExpenseSummary(currentUserId, farmId, cropSeasonId, startDate, endDate);
+        ExpenseSummaryRespDTO summary = expenseService.getExpenseSummary(currentUserId, farmId, cropSeasonId, startDate, endDate);
         return ApiResp.ok("Báo cáo tổng hợp chi phí sản xuất.", summary);
     }
 }

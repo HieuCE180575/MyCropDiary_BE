@@ -59,43 +59,43 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<InputPurchaseResp> getInputPurchases(Integer currentUserId, Integer farmId) {
+    public List<InputPurchaseRespDTO> getInputPurchases(Integer currentUserId, Integer farmId) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
         List<InputPurchase> list = inputPurchaseRepository.findByFarmIdOrderByPurchaseDateDesc(farmId);
         return list.stream().map(p -> {
-            List<PurchaseItemResp> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(p.getId())
-                    .stream().map(PurchaseItemResp::fromEntity).toList();
-            return InputPurchaseResp.fromEntity(p, items);
+            List<PurchaseItemRespDTO> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(p.getId())
+                    .stream().map(PurchaseItemRespDTO::fromEntity).toList();
+            return InputPurchaseRespDTO.fromEntity(p, items);
         }).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public InputPurchaseResp getInputPurchaseDetails(Integer currentUserId, Integer purchaseId) {
+    public InputPurchaseRespDTO getInputPurchaseDetails(Integer currentUserId, Integer purchaseId) {
         InputPurchase purchase = inputPurchaseRepository.findById(purchaseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mua vật tư ID: " + purchaseId));
         accessGuard.requireFarmAccess(currentUserId, purchase.getFarm().getId());
-        List<PurchaseItemResp> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(purchase.getId())
-                .stream().map(PurchaseItemResp::fromEntity).toList();
-        return InputPurchaseResp.fromEntity(purchase, items);
+        List<PurchaseItemRespDTO> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(purchase.getId())
+                .stream().map(PurchaseItemRespDTO::fromEntity).toList();
+        return InputPurchaseRespDTO.fromEntity(purchase, items);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<InputPurchaseResp> searchInputPurchases(Integer currentUserId, Integer farmId, String keyword,
+    public List<InputPurchaseRespDTO> searchInputPurchases(Integer currentUserId, Integer farmId, String keyword,
                                                         Integer supplierId, LocalDate fromDate, LocalDate toDate) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         List<InputPurchase> list = inputPurchaseRepository.searchPurchases(farmId, trimmedKeyword, supplierId, fromDate, toDate);
         return list.stream().map(p -> {
-            List<PurchaseItemResp> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(p.getId())
-                    .stream().map(PurchaseItemResp::fromEntity).toList();
-            return InputPurchaseResp.fromEntity(p, items);
+            List<PurchaseItemRespDTO> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(p.getId())
+                    .stream().map(PurchaseItemRespDTO::fromEntity).toList();
+            return InputPurchaseRespDTO.fromEntity(p, items);
         }).toList();
     }
 
     @Override
-    public InputPurchaseResp recordInputPurchase(Integer currentUserId, Integer farmId, CreateInputPurchaseReq request) {
+    public InputPurchaseRespDTO recordInputPurchase(Integer currentUserId, Integer farmId, CreatePurchaseReqDTO request) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nông trại ID: " + farmId));
@@ -131,7 +131,7 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
         BigDecimal calculatedTotal = BigDecimal.ZERO;
         List<InputPurchaseItem> savedItems = new ArrayList<>();
 
-        for (PurchaseItemReq itemReq : request.items()) {
+        for (PurchaseItemReqDTO itemReq : request.items()) {
             Material material = materialRepository.findById(itemReq.materialId())
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vật tư ID: " + itemReq.materialId()));
             if (!material.getFarm().getId().equals(farmId)) {
@@ -154,12 +154,12 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
         savedPurchase.setTotalAmount(calculatedTotal);
         savedPurchase = inputPurchaseRepository.save(savedPurchase);
 
-        List<PurchaseItemResp> itemResps = savedItems.stream().map(PurchaseItemResp::fromEntity).toList();
-        return InputPurchaseResp.fromEntity(savedPurchase, itemResps);
+        List<PurchaseItemRespDTO> itemResps = savedItems.stream().map(PurchaseItemRespDTO::fromEntity).toList();
+        return InputPurchaseRespDTO.fromEntity(savedPurchase, itemResps);
     }
 
     @Override
-    public InputPurchaseResp updateInputPurchase(Integer currentUserId, Integer purchaseId, UpdateInputPurchaseReq request) {
+    public InputPurchaseRespDTO updateInputPurchase(Integer currentUserId, Integer purchaseId, UpdatePurchaseReqDTO request) {
         InputPurchase purchase = inputPurchaseRepository.findById(purchaseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mua vật tư ID: " + purchaseId));
         Integer farmId = purchase.getFarm().getId();
@@ -185,7 +185,7 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
             BigDecimal newTotal = BigDecimal.ZERO;
             List<InputPurchaseItem> newItems = new ArrayList<>();
 
-            for (PurchaseItemReq itemReq : request.items()) {
+            for (PurchaseItemReqDTO itemReq : request.items()) {
                 Material material = materialRepository.findById(itemReq.materialId())
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vật tư ID: " + itemReq.materialId()));
 
@@ -203,9 +203,9 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
         }
 
         InputPurchase updated = inputPurchaseRepository.save(purchase);
-        List<PurchaseItemResp> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(updated.getId())
-                .stream().map(PurchaseItemResp::fromEntity).toList();
-        return InputPurchaseResp.fromEntity(updated, items);
+        List<PurchaseItemRespDTO> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(updated.getId())
+                .stream().map(PurchaseItemRespDTO::fromEntity).toList();
+        return InputPurchaseRespDTO.fromEntity(updated, items);
     }
 
     @Override
@@ -230,7 +230,7 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
     }
 
     @Override
-    public InputPurchaseResp linkWarehouseReceipt(Integer currentUserId, Integer purchaseId, LinkWarehouseReceiptReq request) {
+    public InputPurchaseRespDTO linkWarehouseReceipt(Integer currentUserId, Integer purchaseId, LinkWarehouseReceiptReqDTO request) {
         InputPurchase purchase = inputPurchaseRepository.findById(purchaseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu mua vật tư ID: " + purchaseId));
         accessGuard.requireFarmAccess(currentUserId, purchase.getFarm().getId());
@@ -242,9 +242,9 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
         }
 
         InputPurchase updated = inputPurchaseRepository.save(purchase);
-        List<PurchaseItemResp> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(updated.getId())
-                .stream().map(PurchaseItemResp::fromEntity).toList();
-        return InputPurchaseResp.fromEntity(updated, items);
+        List<PurchaseItemRespDTO> items = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(updated.getId())
+                .stream().map(PurchaseItemRespDTO::fromEntity).toList();
+        return InputPurchaseRespDTO.fromEntity(updated, items);
     }
 }
 

@@ -1,15 +1,15 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.staff.CandidateUserResp;
-import com.mycropdiary.api.dto.staff.FarmInvitationResp;
+import com.mycropdiary.api.dto.staff.CandidateUserRespDTO;
+import com.mycropdiary.api.dto.staff.FarmInvitationRespDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import java.util.Set;
-import com.mycropdiary.api.dto.staff.AddStaffReq;
-import com.mycropdiary.api.dto.staff.FarmMemberResp;
-import com.mycropdiary.api.dto.staff.UpdateStaffReq;
+import com.mycropdiary.api.dto.staff.CreateStaffReqDTO;
+import com.mycropdiary.api.dto.staff.FarmMemberRespDTO;
+import com.mycropdiary.api.dto.staff.UpdateStaffReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.StaffZoneAssignment;
@@ -21,7 +21,7 @@ import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.UserRepository;
-import com.mycropdiary.api.mapper.ComplianceAndUserMapper;
+import com.mycropdiary.api.mapper.FarmStaffMapper;
 import com.mycropdiary.api.service.FarmStaffService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.springframework.stereotype.Service;
@@ -56,7 +56,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FarmMemberResp> getStaffList(Integer currentUserId, Integer farmId, String status, String keyword) {
+    public List<FarmMemberRespDTO> getStaffList(Integer currentUserId, Integer farmId, String status, String keyword) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
 
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
@@ -81,7 +81,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
     }
 
     @Override
-    public FarmMemberResp addStaff(Integer currentUserId, Integer farmId, AddStaffReq request) {
+    public FarmMemberRespDTO addStaff(Integer currentUserId, Integer farmId, CreateStaffReqDTO request) {
         accessGuard.requireFarmOwner(currentUserId, farmId);
 
         Farm farm = farmRepository.findById(farmId)
@@ -123,7 +123,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
     }
 
     @Override
-    public FarmMemberResp updateStaff(Integer currentUserId, Integer farmId, Integer memberId, UpdateStaffReq request) {
+    public FarmMemberRespDTO updateStaff(Integer currentUserId, Integer farmId, Integer memberId, UpdateStaffReqDTO request) {
         accessGuard.requireFarmOwner(currentUserId, farmId);
 
         FarmMember member = farmMemberRepository.findById(memberId)
@@ -218,7 +218,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
 
         @Override
     @Transactional(readOnly = true)
-    public List<CandidateUserResp> getCandidateUsers(Integer currentUserId, Integer farmId, String keyword) {
+    public List<CandidateUserRespDTO> getCandidateUsers(Integer currentUserId, Integer farmId, String keyword) {
         accessGuard.requireFarmOwner(currentUserId, farmId);
 
         List<FarmMember> existingMembers = farmMemberRepository.findByFarmId(farmId);
@@ -233,7 +233,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
 
         return usersPage.getContent().stream()
                 .filter(u -> !excludedUserIds.contains(u.getId()))
-                .map(u -> new CandidateUserResp(
+                .map(u -> new CandidateUserRespDTO(
                         u.getId(),
                         u.getFullName(),
                         u.getEmail(),
@@ -246,7 +246,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FarmInvitationResp> getPendingInvitations(Integer currentUserId) {
+    public List<FarmInvitationRespDTO> getPendingInvitations(Integer currentUserId) {
         List<FarmMember> invitations = farmMemberRepository.findByUserIdAndStatus(currentUserId, "invited");
 
         return invitations.stream().map(inv -> {
@@ -257,7 +257,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
                     .findFirst()
                     .orElse("Chủ trang trại");
 
-            return new FarmInvitationResp(
+            return new FarmInvitationRespDTO(
                     inv.getId(),
                     farm.getId(),
                     farm.getFarmName(),
@@ -295,12 +295,12 @@ public class FarmStaffServiceImpl implements FarmStaffService {
         }
     }
 
-    private final ComplianceAndUserMapper complianceAndUserMapper = new ComplianceAndUserMapper();
+    private final FarmStaffMapper farmStaffMapper = new FarmStaffMapper();
 
-    private FarmMemberResp toResponse(FarmMember member, Integer activeAssignmentCount) {
+    private FarmMemberRespDTO toResponse(FarmMember member, Integer activeAssignmentCount) {
         int count = (activeAssignmentCount != null)
                 ? activeAssignmentCount
                 : assignmentRepository.findByFarmMemberIdAndEndedAtIsNull(member.getId()).size();
-        return complianceAndUserMapper.toStaffMemberResponse(member, count);
+        return farmStaffMapper.toStaffMemberResponse(member, count);
     }
 }

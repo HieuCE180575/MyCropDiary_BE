@@ -1,6 +1,5 @@
 package com.mycropdiary.api.dto.knowledge;
 
-import com.mycropdiary.api.entity.knowledge.KnowledgeStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,7 +18,7 @@ public record KnowledgeArticleRespDTO(
         String authorName,
         String authorAvatar,
         String sourceUrl,
-        KnowledgeStatus status,
+        String status,
         Boolean isPublic,
         LocalDateTime publishedAt,
         LocalDateTime createdAt,
@@ -36,7 +35,7 @@ public record KnowledgeArticleRespDTO(
             String content,
             String category,
             String sourceUrl,
-            KnowledgeStatus status,
+            String status,
             Boolean isPublic,
             LocalDateTime publishedAt,
             LocalDateTime createdAt,

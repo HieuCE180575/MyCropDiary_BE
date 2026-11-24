@@ -113,7 +113,7 @@ class FarmingActivityServiceTest {
     @Test
     @DisplayName("Tạo nhật ký canh tác thành công")
     void createActivity_Success() {
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 activeSeason.getId(),
                 "Tưới tiêu",
                 "Tưới nước nhỏ giọt",
@@ -135,7 +135,7 @@ class FarmingActivityServiceTest {
             return a;
         });
 
-        FarmingActivityResp resp = farmingActivityService.createActivity(supervisorUser.getId(), req);
+        FarmingActivityRespDTO resp = farmingActivityService.createActivity(supervisorUser.getId(), req);
 
         assertNotNull(resp);
         assertEquals(501, resp.farmingActivityId());
@@ -147,7 +147,7 @@ class FarmingActivityServiceTest {
     @Test
     @DisplayName("Tạo nhật ký thất bại khi mùa vụ đã hoàn thành")
     void createActivity_SeasonCompleted_ThrowsBadRequest() {
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 completedSeason.getId(),
                 "Thu hoạch",
                 "Thu hoạch sớm",
@@ -165,7 +165,7 @@ class FarmingActivityServiceTest {
     @Test
     @DisplayName("Cập nhật nhật ký canh tác thành công kèm danh sách công nhân")
     void updateActivity_Success() {
-        UpdateFarmingActivityReq req = new UpdateFarmingActivityReq(
+        UpdateFarmingActivityReqDTO req = new UpdateFarmingActivityReqDTO(
                 "Phun thuốc",
                 "Phun thuốc trừ sâu sinh học",
                 LocalDateTime.now().minusHours(4),
@@ -176,7 +176,7 @@ class FarmingActivityServiceTest {
                 null,
                 null,
                 null,
-                List.of(new ActivityWorkerReq(farmWorker.getId(), BigDecimal.valueOf(2.0), "Phun bình số 1"))
+                List.of(new ActivityWorkerReqDTO(farmWorker.getId(), BigDecimal.valueOf(2.0), "Phun bình số 1"))
         );
 
         when(farmingActivityRepository.findById(sampleActivity.getId())).thenReturn(Optional.of(sampleActivity));
@@ -186,7 +186,7 @@ class FarmingActivityServiceTest {
                 .thenReturn(List.of(farmWorker));
         when(farmingActivityRepository.save(any(FarmingActivity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        FarmingActivityResp resp = farmingActivityService.updateActivity(supervisorUser.getId(), sampleActivity.getId(), req);
+        FarmingActivityRespDTO resp = farmingActivityService.updateActivity(supervisorUser.getId(), sampleActivity.getId(), req);
 
         assertNotNull(resp);
         assertEquals("Phun thuốc", resp.activityType());
@@ -202,7 +202,7 @@ class FarmingActivityServiceTest {
     @Test
     @DisplayName("Cập nhật nhật ký thất bại khi không tìm thấy nhật ký")
     void updateActivity_NotFound_ThrowsException() {
-        UpdateFarmingActivityReq req = new UpdateFarmingActivityReq(
+        UpdateFarmingActivityReqDTO req = new UpdateFarmingActivityReqDTO(
                 "Phun thuốc", "Tên", LocalDateTime.now().minusHours(2), LocalDateTime.now(),
                 null, null, null, null, null
         );
@@ -216,7 +216,7 @@ class FarmingActivityServiceTest {
     @Test
     @DisplayName("Cập nhật nhật ký thất bại khi thời gian kết thúc trước thời gian bắt đầu")
     void updateActivity_InvalidTime_ThrowsBadRequest() {
-        UpdateFarmingActivityReq req = new UpdateFarmingActivityReq(
+        UpdateFarmingActivityReqDTO req = new UpdateFarmingActivityReqDTO(
                 "Phun thuốc", "Tên",
                 LocalDateTime.now().minusHours(1),
                 LocalDateTime.now().minusHours(3),
@@ -239,7 +239,7 @@ class FarmingActivityServiceTest {
         when(farmingActivityRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(sampleActivity)));
 
-        PageResp<FarmingActivitySummaryResp> result = farmingActivityService.searchAndFilterActivities(
+        PageResp<FarmingActivitySummaryRespDTO> result = farmingActivityService.searchAndFilterActivities(
                 supervisorUser.getId(),
                 activeSeason.getId(),
                 "bón phân",
@@ -263,7 +263,7 @@ class FarmingActivityServiceTest {
         when(activityWorkerRepository.findByFarmingActivityId(sampleActivity.getId()))
                 .thenReturn(List.of(new ActivityWorker(sampleActivity, farmWorker, BigDecimal.valueOf(1.5), "Hoàn tất")));
 
-        FarmingActivityResp resp = farmingActivityService.getActivityDetail(supervisorUser.getId(), sampleActivity.getId());
+        FarmingActivityRespDTO resp = farmingActivityService.getActivityDetail(supervisorUser.getId(), sampleActivity.getId());
 
         assertNotNull(resp);
         assertEquals(sampleActivity.getId(), resp.farmingActivityId());

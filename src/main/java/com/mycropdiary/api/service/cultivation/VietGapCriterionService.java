@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.cultivation;
 
-import com.mycropdiary.api.dto.vietgap.CreateVietGapCriterionReq;
-import com.mycropdiary.api.dto.vietgap.UpdateVietGapCriterionReq;
-import com.mycropdiary.api.dto.vietgap.VietGapCriterionResp;
+import com.mycropdiary.api.dto.vietgap.CreateVietGapCriterionReqDTO;
+import com.mycropdiary.api.dto.vietgap.UpdateVietGapCriterionReqDTO;
+import com.mycropdiary.api.dto.vietgap.VietGapCriterionRespDTO;
 
 import java.util.List;
 
@@ -11,27 +11,27 @@ public interface VietGapCriterionService {
     /**
      * Xem danh sách tiêu chuẩn đánh giá VietGAP của trang trại (View VietGAP Criterion List).
      */
-    List<VietGapCriterionResp> getCriterionList(Integer currentUserId, Integer farmId, Boolean isActiveOnly, String keyword);
+    List<VietGapCriterionRespDTO> getCriterionList(Integer currentUserId, Integer farmId, Boolean isActiveOnly, String keyword);
 
     /**
      * Xem chi tiết tiêu chuẩn và phương pháp đánh giá (View VietGAP Criterion Details).
      */
-    VietGapCriterionResp getCriterionDetails(Integer currentUserId, Integer criterionId);
+    VietGapCriterionRespDTO getCriterionDetails(Integer currentUserId, Integer criterionId);
 
     /**
      * Tạo mới tiêu chuẩn đánh giá VietGAP theo TCVN 11892-1:2017 (Create VietGAP Criterion from TCVN 11892-1:2017).
      */
-    VietGapCriterionResp createCriterion(Integer currentUserId, Integer farmId, CreateVietGapCriterionReq request);
+    VietGapCriterionRespDTO createCriterion(Integer currentUserId, Integer farmId, CreateVietGapCriterionReqDTO request);
 
     /**
      * Khởi tạo bộ tiêu chuẩn mặc định đầy đủ theo chuẩn quốc gia TCVN 11892-1:2017.
      */
-    List<VietGapCriterionResp> importTcvnStandardCriteria(Integer currentUserId, Integer farmId);
+    List<VietGapCriterionRespDTO> importTcvnStandardCriteria(Integer currentUserId, Integer farmId);
 
     /**
      * Cập nhật tiêu chuẩn và phương pháp đánh giá (Update VietGAP Criterion and Evaluation Method).
      */
-    VietGapCriterionResp updateCriterion(Integer currentUserId, Integer criterionId, UpdateVietGapCriterionReq request);
+    VietGapCriterionRespDTO updateCriterion(Integer currentUserId, Integer criterionId, UpdateVietGapCriterionReqDTO request);
 
     /**
      * Xóa tiêu chuẩn đánh giá.

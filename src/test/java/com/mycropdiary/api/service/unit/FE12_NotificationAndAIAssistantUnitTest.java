@@ -1,11 +1,12 @@
 package com.mycropdiary.api.service.unit;
 
 import com.mycropdiary.api.dto.ai.*;
-import com.mycropdiary.api.dto.notification.NotificationListResp;
-import com.mycropdiary.api.dto.notification.NotificationResp;
+import com.mycropdiary.api.dto.notification.NotificationListRespDTO;
+import com.mycropdiary.api.dto.notification.NotificationRespDTO;
 import com.mycropdiary.api.entity.*;
 import com.mycropdiary.api.repository.*;
 import com.mycropdiary.api.service.impl.AIAssistantServiceImpl;
+import com.mycropdiary.api.service.impl.AIFeedbackServiceImpl;
 import com.mycropdiary.api.service.impl.NotificationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +50,7 @@ class FE12_NotificationAndAIAssistantUnitTest {
 
     private NotificationServiceImpl notificationService;
     private AIAssistantServiceImpl aiAssistantService;
+    private AIFeedbackServiceImpl aiFeedbackService;
 
     private User mockUser;
 
@@ -62,6 +64,7 @@ class FE12_NotificationAndAIAssistantUnitTest {
                 userRepository,
                 farmRepository
         );
+        aiFeedbackService = new AIFeedbackServiceImpl(feedbackRepository, messageRepository, userRepository);
 
         mockUser = new User("farmer@example.com", "hash", "Tran Van Farmer", "0901234567", "user", "active");
         mockUser.setId(10);
@@ -81,7 +84,7 @@ class FE12_NotificationAndAIAssistantUnitTest {
                 .thenReturn(List.of(n));
         when(notificationRepository.countByUserIdAndIsReadFalse(10)).thenReturn(1L);
 
-        NotificationListResp resp = notificationService.getMyNotifications(10, 20);
+        NotificationListRespDTO resp = notificationService.getMyNotifications(10, 20);
 
         assertNotNull(resp);
         assertEquals(1, resp.items().size());
@@ -99,7 +102,7 @@ class FE12_NotificationAndAIAssistantUnitTest {
         when(notificationRepository.findByIdAndUserId(2, 10)).thenReturn(Optional.of(n));
         when(notificationRepository.save(any(Notification.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        NotificationResp resp = notificationService.markAsRead(10, 2);
+        NotificationRespDTO resp = notificationService.markAsRead(10, 2);
 
         assertNotNull(resp);
         assertTrue(resp.isRead());
@@ -126,8 +129,8 @@ class FE12_NotificationAndAIAssistantUnitTest {
         });
         when(conversationRepository.save(any(AIConversation.class))).thenReturn(conversation);
 
-        AskAIQuestionReq req = new AskAIQuestionReq("Bọ trĩ trên dưa lưới trị bằng gì theo VietGAP?", 101, null);
-        AIMessageResp resp = aiAssistantService.askAIAssistant(10, req);
+        AskAIQuestionReqDTO req = new AskAIQuestionReqDTO("Bọ trĩ trên dưa lưới trị bằng gì theo VietGAP?", 101, null);
+        AIMessageRespDTO resp = aiAssistantService.askAIAssistant(10, req);
 
         assertNotNull(resp);
         assertEquals("assistant", resp.senderType());
@@ -146,7 +149,7 @@ class FE12_NotificationAndAIAssistantUnitTest {
         when(messageRepository.findTopByConversationIdOrderByCreatedAtDesc(102))
                 .thenReturn(Optional.of(new AIMessage(c1, "assistant", "Nên ngưng bón phân trước 15 ngày", "VietGAP-LLM-v2")));
 
-        List<AIConversationResp> list = aiAssistantService.getMyConversations(10, "phân");
+        List<AIConversationRespDTO> list = aiAssistantService.getMyConversations(10, "phân");
 
         assertNotNull(list);
         assertEquals(1, list.size());
@@ -176,8 +179,8 @@ class FE12_NotificationAndAIAssistantUnitTest {
             return f;
         });
 
-        ReportAIMessageReq req = new ReportAIMessageReq(2, "Thông số pH trong câu trả lời chưa chuẩn với rau ăn lá");
-        AIFeedbackResp resp = aiAssistantService.reportAIMessage(10, 301, req);
+        ReportAIMessageReqDTO req = new ReportAIMessageReqDTO(2, "Thông số pH trong câu trả lời chưa chuẩn với rau ăn lá");
+        AIFeedbackRespDTO resp = aiFeedbackService.reportAIMessage(10, 301, req);
 
         assertNotNull(resp);
         assertEquals(401, resp.feedbackId());
@@ -189,7 +192,7 @@ class FE12_NotificationAndAIAssistantUnitTest {
         savedFeedback.setId(401);
         when(feedbackRepository.findByUserIdOrderByCreatedAtDesc(10)).thenReturn(List.of(savedFeedback));
 
-        List<AIFeedbackResp> history = aiAssistantService.getMyFeedbackHistory(10);
+        List<AIFeedbackRespDTO> history = aiFeedbackService.getMyFeedbackHistory(10);
         assertEquals(1, history.size());
         assertEquals(401, history.get(0).feedbackId());
     }
@@ -223,8 +226,8 @@ class FE12_NotificationAndAIAssistantUnitTest {
             return c;
         });
 
-        CreateAIConversationReq req = new CreateAIConversationReq("Tư vấn sâu hại dưa lưới", null);
-        AIConversationResp resp = aiAssistantService.createConversation(10, req);
+        CreateAIConversationReqDTO req = new CreateAIConversationReqDTO("Tư vấn sâu hại dưa lưới", null);
+        AIConversationRespDTO resp = aiAssistantService.createConversation(10, req);
 
         assertNotNull(resp);
         assertEquals(105, resp.conversationId());

@@ -1,12 +1,12 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.training.CreateTrainingRecordReq;
-import com.mycropdiary.api.dto.training.TrainingAttendeeReq;
-import com.mycropdiary.api.dto.training.TrainingRecordResp;
-import com.mycropdiary.api.dto.training.UpdateTrainingRecordReq;
-import com.mycropdiary.api.dto.vietgap.CreateVietGapCriterionReq;
-import com.mycropdiary.api.dto.vietgap.UpdateVietGapCriterionReq;
-import com.mycropdiary.api.dto.vietgap.VietGapCriterionResp;
+import com.mycropdiary.api.dto.training.CreateTrainingReqDTO;
+import com.mycropdiary.api.dto.training.TrainingAttendeeReqDTO;
+import com.mycropdiary.api.dto.training.TrainingRecordRespDTO;
+import com.mycropdiary.api.dto.training.UpdateTrainingReqDTO;
+import com.mycropdiary.api.dto.vietgap.CreateVietGapCriterionReqDTO;
+import com.mycropdiary.api.dto.vietgap.UpdateVietGapCriterionReqDTO;
+import com.mycropdiary.api.dto.vietgap.VietGapCriterionRespDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.User;
@@ -116,16 +116,16 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
             return tr;
         });
 
-        CreateTrainingRecordReq req = new CreateTrainingRecordReq(
+        CreateTrainingReqDTO req = new CreateTrainingReqDTO(
                 "Tập huấn an toàn sử dụng thuốc BVTV VietGAP",
                 "Hướng dẫn pha thuốc đúng nồng độ và sử dụng trang phục bảo hộ PPE",
                 LocalDate.of(2026, 3, 15),
                 "https://example.com/photo.jpg",
                 5,
-                List.of(new TrainingAttendeeReq(20, "attended", "Đạt chuẩn thực hành"))
+                List.of(new TrainingAttendeeReqDTO(20, "attended", "Đạt chuẩn thực hành"))
         );
 
-        TrainingRecordResp resp = trainingService.createTrainingRecord(10, 1, req);
+        TrainingRecordRespDTO resp = trainingService.createTrainingRecord(10, 1, req);
 
         assertNotNull(resp);
         assertEquals(100, resp.trainingRecordId());
@@ -155,7 +155,7 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
 
         when(trainingRecordRepository.findById(100)).thenReturn(Optional.of(tr));
 
-        TrainingRecordResp resp = trainingService.getTrainingRecordDetails(10, 100);
+        TrainingRecordRespDTO resp = trainingService.getTrainingRecordDetails(10, 100);
 
         assertNotNull(resp);
         assertEquals(100, resp.trainingRecordId());
@@ -180,16 +180,16 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
         when(farmWorkerRepository.findById(20)).thenReturn(Optional.of(testWorker));
         when(trainingRecordRepository.save(any(TrainingRecord.class))).thenReturn(tr);
 
-        UpdateTrainingRecordReq req = new UpdateTrainingRecordReq(
+        UpdateTrainingReqDTO req = new UpdateTrainingReqDTO(
                 "Tiêu đề mới cập nhật",
                 "Mô tả chi tiết hơn",
                 LocalDate.of(2026, 4, 2),
                 null,
                 null,
-                List.of(new TrainingAttendeeReq(20, "attended", "Đã hoàn thành"))
+                List.of(new TrainingAttendeeReqDTO(20, "attended", "Đã hoàn thành"))
         );
 
-        TrainingRecordResp resp = trainingService.updateTrainingRecord(10, 100, req);
+        TrainingRecordRespDTO resp = trainingService.updateTrainingRecord(10, 100, req);
 
         assertNotNull(resp);
         assertEquals("Tiêu đề mới cập nhật", tr.getTrainingTitle());
@@ -209,7 +209,7 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
             return c;
         });
 
-        CreateVietGapCriterionReq req = new CreateVietGapCriterionReq(
+        CreateVietGapCriterionReqDTO req = new CreateVietGapCriterionReqDTO(
                 "Kiểm soát nước tưới",
                 "Nước tưới phải đạt chuẩn QCVN 39:2011",
                 new BigDecimal("100.00"),
@@ -218,7 +218,7 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
                 true
         );
 
-        VietGapCriterionResp resp = criterionService.createCriterion(10, 1, req);
+        VietGapCriterionRespDTO resp = criterionService.createCriterion(10, 1, req);
 
         assertNotNull(resp);
         assertEquals(50, resp.criterionId());
@@ -235,7 +235,7 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
         when(farmRepository.findById(1)).thenReturn(Optional.of(testFarm));
         when(criterionRepository.existsByFarmIdAndCriterionName(1, "Kiểm soát nước tưới")).thenReturn(true);
 
-        CreateVietGapCriterionReq req = new CreateVietGapCriterionReq(
+        CreateVietGapCriterionReqDTO req = new CreateVietGapCriterionReqDTO(
                 "Kiểm soát nước tưới",
                 "Mô tả",
                 new BigDecimal("100.00"),
@@ -257,7 +257,7 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
             return c;
         });
 
-        List<VietGapCriterionResp> list = criterionService.importTcvnStandardCriteria(10, 1);
+        List<VietGapCriterionRespDTO> list = criterionService.importTcvnStandardCriteria(10, 1);
 
         assertNotNull(list);
         assertEquals(10, list.size());
@@ -282,7 +282,7 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
         when(criterionRepository.findById(70)).thenReturn(Optional.of(c));
         when(criterionRepository.save(any(AssessmentCriterion.class))).thenReturn(c);
 
-        UpdateVietGapCriterionReq req = new UpdateVietGapCriterionReq(
+        UpdateVietGapCriterionReqDTO req = new UpdateVietGapCriterionReqDTO(
                 "Quản lý đất trồng",
                 "Mô tả mới",
                 new BigDecimal("90.00"),
@@ -290,7 +290,7 @@ public class FE09_TrainingRecordAndVietGapCriterionUnitTest {
                 true
         );
 
-        VietGapCriterionResp resp = criterionService.updateCriterion(10, 70, req);
+        VietGapCriterionRespDTO resp = criterionService.updateCriterion(10, 70, req);
 
         assertNotNull(resp);
         assertEquals("Quản lý đất trồng", c.getCriterionName());

@@ -1,7 +1,7 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.farm.FarmRegistrationResp;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResp;
+import com.mycropdiary.api.dto.farm.AdminFarmRegRespDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryRespDTO;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.farmregistration.FarmRegistration;
 import org.springframework.stereotype.Component;
@@ -12,11 +12,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class FarmRegistrationMapper {
 
-    public FarmRegistrationResp toAdminResponse(FarmRegistration reg) {
+    public AdminFarmRegRespDTO toAdminResponse(FarmRegistration reg) {
         User applicant = reg.getUser();
         User handler = reg.getReviewedBy();
 
-        return new FarmRegistrationResp(
+        return new AdminFarmRegRespDTO(
                 reg.getId(),
                 applicant != null ? applicant.getId() : null,
                 applicant != null ? applicant.getEmail() : null,
@@ -40,8 +40,8 @@ public class FarmRegistrationMapper {
         );
     }
 
-    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp toUserResponse(FarmRegistration reg) {
-        return new com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp(
+    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO toUserResponse(FarmRegistration reg) {
+        return new com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO(
                 reg.getId(),
                 reg.getFarmName(),
                 reg.getAddress(),
@@ -60,8 +60,8 @@ public class FarmRegistrationMapper {
         );
     }
 
-    public FarmRegistrationSummaryResp toSummaryResponse(FarmRegistration reg) {
-        return new FarmRegistrationSummaryResp(
+    public FarmRegistrationSummaryRespDTO toSummaryResponse(FarmRegistration reg) {
+        return new FarmRegistrationSummaryRespDTO(
                 reg.getId(),
                 reg.getFarmName(),
                 reg.getAddress(),

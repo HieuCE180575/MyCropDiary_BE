@@ -2,10 +2,10 @@ package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateFarmingActivityReq;
-import com.mycropdiary.api.dto.cultivation.FarmingActivityResp;
-import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryResp;
-import com.mycropdiary.api.dto.cultivation.UpdateFarmingActivityReq;
+import com.mycropdiary.api.dto.cultivation.CreateFarmActivityReqDTO;
+import com.mycropdiary.api.dto.cultivation.FarmingActivityRespDTO;
+import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateFarmingActivityReqDTO;
 import com.mycropdiary.api.service.cultivation.FarmingActivityService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,9 +48,9 @@ public class FarmingActivityController {
     @Operation(summary = "Tạo mới nhật ký canh tác", description = "Tạo mới nhật ký canh tác cho một mùa vụ. Người ghi nhật ký tự động được xác định từ tài khoản đã đăng nhập.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<FarmingActivityResp> createActivity(@Valid @RequestBody CreateFarmingActivityReq request) {
+    public ApiResp<FarmingActivityRespDTO> createActivity(@Valid @RequestBody CreateFarmActivityReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmingActivityResp response = farmingActivityService.createActivity(currentUserId, request);
+        FarmingActivityRespDTO response = farmingActivityService.createActivity(currentUserId, request);
         return ApiResp.ok("Tạo nhật ký canh tác thành công.", response);
     }
 
@@ -63,11 +63,11 @@ public class FarmingActivityController {
      */
     @Operation(summary = "Cập nhật nhật ký canh tác", description = "Chỉnh sửa thông tin nhật ký canh tác đã tạo (UC-24.3).")
     @PutMapping("/{activityId}")
-    public ApiResp<FarmingActivityResp> updateActivity(
+    public ApiResp<FarmingActivityRespDTO> updateActivity(
             @PathVariable Integer activityId,
-            @Valid @RequestBody UpdateFarmingActivityReq request) {
+            @Valid @RequestBody UpdateFarmingActivityReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmingActivityResp response = farmingActivityService.updateActivity(currentUserId, activityId, request);
+        FarmingActivityRespDTO response = farmingActivityService.updateActivity(currentUserId, activityId, request);
         return ApiResp.ok("Cập nhật nhật ký canh tác thành công.", response);
     }
 
@@ -84,7 +84,7 @@ public class FarmingActivityController {
      */
     @Operation(summary = "Xem lịch sử nhật ký canh tác theo mùa vụ", description = "Lấy danh sách nhật ký canh tác của mùa vụ (Có phân trang, tìm kiếm theo từ khóa và lọc nâng cao).")
     @GetMapping
-    public ApiResp<PageResp<FarmingActivitySummaryResp>> getActivitiesByCropSeason(
+    public ApiResp<PageResp<FarmingActivitySummaryRespDTO>> getActivitiesByCropSeason(
             @RequestParam Integer cropSeasonId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String activityType,
@@ -92,7 +92,7 @@ public class FarmingActivityController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
             @PageableDefault(size = 20) Pageable pageable) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        PageResp<FarmingActivitySummaryResp> response = farmingActivityService.searchAndFilterActivities(
+        PageResp<FarmingActivitySummaryRespDTO> response = farmingActivityService.searchAndFilterActivities(
                 currentUserId, cropSeasonId, keyword, activityType, fromDate, toDate, pageable
         );
         return ApiResp.ok("Danh sách lịch sử nhật ký canh tác.", response);
@@ -106,9 +106,9 @@ public class FarmingActivityController {
      */
     @Operation(summary = "Xem chi tiết nhật ký canh tác", description = "Lấy chi tiết một nhật ký canh tác theo ID bao gồm danh sách công nhân trực tiếp thực hiện.")
     @GetMapping("/{activityId}")
-    public ApiResp<FarmingActivityResp> getActivityDetail(@PathVariable Integer activityId) {
+    public ApiResp<FarmingActivityRespDTO> getActivityDetail(@PathVariable Integer activityId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmingActivityResp response = farmingActivityService.getActivityDetail(currentUserId, activityId);
+        FarmingActivityRespDTO response = farmingActivityService.getActivityDetail(currentUserId, activityId);
         return ApiResp.ok("Chi tiết nhật ký canh tác.", response);
     }
 }

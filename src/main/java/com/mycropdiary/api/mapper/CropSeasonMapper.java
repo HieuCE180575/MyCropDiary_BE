@@ -1,7 +1,7 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.cultivation.CropSeasonBlockResp;
-import com.mycropdiary.api.dto.cultivation.CropSeasonResp;
+import com.mycropdiary.api.dto.cultivation.CropSeasonBlockRespDTO;
+import com.mycropdiary.api.dto.cultivation.CropSeasonRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.cultivation.CropSeason;
 import com.mycropdiary.api.entity.cultivation.CropSeasonBlock;
@@ -15,14 +15,14 @@ import java.math.BigDecimal;
 @Component
 public class CropSeasonMapper {
 
-    public CropSeasonResp toResponse(CropSeason cs) {
+    public CropSeasonRespDTO toResponse(CropSeason cs) {
         String farmName = cs.getFarm() != null ? cs.getFarm().getFarmName() : null;
         Integer cropCatId = cs.getCropCategory() != null ? cs.getCropCategory().getId() : null;
         String cropCatName = cs.getCropCategory() != null ? cs.getCropCategory().getCategoryName() : null;
         Integer creatorId = cs.getCreatedBy() != null ? cs.getCreatedBy().getId() : null;
         String creatorName = cs.getCreatedBy() != null ? cs.getCreatedBy().getFullName() : null;
 
-        return new CropSeasonResp(
+        return new CropSeasonRespDTO(
                 cs.getId(),
                 cs.getFarm() != null ? cs.getFarm().getId() : null,
                 farmName,
@@ -39,7 +39,7 @@ public class CropSeasonMapper {
         );
     }
 
-    public CropSeasonBlockResp toBlockResponse(CropSeasonBlock csb) {
+    public CropSeasonBlockRespDTO toBlockResponse(CropSeasonBlock csb) {
         CropSeason season = csb.getCropSeason();
         Block block = csb.getBlock();
 
@@ -53,7 +53,7 @@ public class CropSeasonMapper {
         String blockAreaUnit = block != null ? block.getAreaUnit() : null;
         String soilType = block != null ? block.getSoilType() : null;
 
-        return new CropSeasonBlockResp(
+        return new CropSeasonBlockRespDTO(
                 seasonId,
                 seasonName,
                 blockId,

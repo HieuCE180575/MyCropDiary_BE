@@ -1,9 +1,9 @@
 package com.mycropdiary.api.service.cultivation;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
-import com.mycropdiary.api.dto.cultivation.UpdateHarvestRecordReq;
+import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReqDTO;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateHarvestRecordReqDTO;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
@@ -16,22 +16,22 @@ public interface HarvestRecordService {
     /**
      * Tạo mới bản ghi thu hoạch sản phẩm.
      */
-    HarvestRecordResp createHarvestRecord(Integer userId, CreateHarvestRecordReq request);
+    HarvestRecordRespDTO createHarvestRecord(Integer userId, CreateHarvestRecordReqDTO request);
 
     /**
      * Cập nhật bản ghi thu hoạch sản phẩm (UC-26.3).
      */
-    HarvestRecordResp updateHarvestRecord(Integer userId, Integer harvestRecordId, UpdateHarvestRecordReq request);
+    HarvestRecordRespDTO updateHarvestRecord(Integer userId, Integer harvestRecordId, UpdateHarvestRecordReqDTO request);
 
     /**
      * Xem danh sách lịch sử thu hoạch theo Mùa vụ (có phân trang).
      */
-    PageResp<HarvestRecordResp> getHarvestRecordsBySeason(Integer userId, Integer cropSeasonId, Pageable pageable);
+    PageResp<HarvestRecordRespDTO> getHarvestRecordsBySeason(Integer userId, Integer cropSeasonId, Pageable pageable);
 
     /**
      * Tìm kiếm và lọc danh sách bản ghi thu hoạch theo mùa vụ (có phân trang, từ khóa, chất lượng, khoảng ngày).
      */
-    PageResp<HarvestRecordResp> searchAndFilterHarvestRecords(
+    PageResp<HarvestRecordRespDTO> searchAndFilterHarvestRecords(
             Integer userId,
             Integer cropSeasonId,
             String keyword,
@@ -43,7 +43,7 @@ public interface HarvestRecordService {
     /**
      * Tìm kiếm và lọc danh sách bản ghi thu hoạch trên toàn trang trại (hỗ trợ lọc theo mùa vụ, lô đất, chất lượng, từ khóa, khoảng ngày).
      */
-    PageResp<HarvestRecordResp> searchFarmHarvestRecords(
+    PageResp<HarvestRecordRespDTO> searchFarmHarvestRecords(
             Integer userId,
             Integer farmId,
             Integer cropSeasonId,
@@ -57,5 +57,5 @@ public interface HarvestRecordService {
     /**
      * Xem chi tiết một bản ghi thu hoạch theo ID.
      */
-    HarvestRecordResp getHarvestRecordById(Integer userId, Integer harvestRecordId);
+    HarvestRecordRespDTO getHarvestRecordById(Integer userId, Integer harvestRecordId);
 }

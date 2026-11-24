@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.admin.UpdateUserStatusReq;
-import com.mycropdiary.api.dto.admin.UserResp;
+import com.mycropdiary.api.dto.admin.UpdateUserStatusReqDTO;
+import com.mycropdiary.api.dto.admin.UserRespDTO;
 import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.BadRequestException;
@@ -78,7 +78,7 @@ public class FE13_AdminUserManageUnitTest {
         Page<User> mockPage = new PageImpl<>(List.of(adminUser, normalUser), pageable, 2);
         when(userRepository.searchUsers(null, null, pageable)).thenReturn(mockPage);
 
-        PageResp<UserResp> result = adminUserService.getUsers(null, null, pageable);
+        PageResp<UserRespDTO> result = adminUserService.getUsers(null, null, pageable);
 
         assertNotNull(result);
         assertEquals(2, result.totalElements());
@@ -93,7 +93,7 @@ public class FE13_AdminUserManageUnitTest {
         Page<User> mockPage = new PageImpl<>(List.of(lockedUser), pageable, 1);
         when(userRepository.searchUsers("locked", null, pageable)).thenReturn(mockPage);
 
-        PageResp<UserResp> result = adminUserService.getUsers("locked", null, pageable);
+        PageResp<UserRespDTO> result = adminUserService.getUsers("locked", null, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.totalElements());
@@ -106,7 +106,7 @@ public class FE13_AdminUserManageUnitTest {
         Page<User> mockPage = new PageImpl<>(List.of(normalUser), pageable, 1);
         when(userRepository.searchUsers(null, "farmer", pageable)).thenReturn(mockPage);
 
-        PageResp<UserResp> result = adminUserService.getUsers(null, "farmer", pageable);
+        PageResp<UserRespDTO> result = adminUserService.getUsers(null, "farmer", pageable);
 
         assertNotNull(result);
         assertEquals(1, result.totalElements());
@@ -118,7 +118,7 @@ public class FE13_AdminUserManageUnitTest {
     void UTC04_getUserById_validId_shouldReturnUserDetails() {
         when(userRepository.findById(10)).thenReturn(Optional.of(normalUser));
 
-        UserResp resp = adminUserService.getUserById(10);
+        UserRespDTO resp = adminUserService.getUserById(10);
 
         assertNotNull(resp);
         assertEquals(10, resp.userId());
@@ -141,8 +141,8 @@ public class FE13_AdminUserManageUnitTest {
         when(userRepository.findById(10)).thenReturn(Optional.of(normalUser));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        UpdateUserStatusReq req = new UpdateUserStatusReq("locked");
-        UserResp resp = adminUserService.updateUserStatus(1, 10, req);
+        UpdateUserStatusReqDTO req = new UpdateUserStatusReqDTO("locked");
+        UserRespDTO resp = adminUserService.updateUserStatus(1, 10, req);
 
         assertNotNull(resp);
         assertEquals("LOCKED", resp.accountStatus());
@@ -155,8 +155,8 @@ public class FE13_AdminUserManageUnitTest {
         when(userRepository.findById(20)).thenReturn(Optional.of(lockedUser));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        UpdateUserStatusReq req = new UpdateUserStatusReq("active");
-        UserResp resp = adminUserService.updateUserStatus(1, 20, req);
+        UpdateUserStatusReqDTO req = new UpdateUserStatusReqDTO("active");
+        UserRespDTO resp = adminUserService.updateUserStatus(1, 20, req);
 
         assertNotNull(resp);
         assertEquals("ACTIVE", resp.accountStatus());
@@ -167,7 +167,7 @@ public class FE13_AdminUserManageUnitTest {
     @DisplayName("FE13_ACC_UTC08 [Abnormal] - Cập nhật trạng thái cho tài khoản không tồn tại -> Ném ResourceNotFoundException (Passed)")
     void UTC08_updateUserStatus_nonExistentId_shouldThrowResourceNotFound() {
         when(userRepository.findById(9999)).thenReturn(Optional.empty());
-        UpdateUserStatusReq req = new UpdateUserStatusReq("locked");
+        UpdateUserStatusReqDTO req = new UpdateUserStatusReqDTO("locked");
 
         assertThrows(ResourceNotFoundException.class, () -> adminUserService.updateUserStatus(1, 9999, req));
     }
@@ -175,7 +175,7 @@ public class FE13_AdminUserManageUnitTest {
     @Test
     @DisplayName("FE13_ACC_UTC09 [Abnormal] - Quản trị viên cố tình tự khóa tài khoản của chính mình -> Ném BadRequestException (Passed)")
     void UTC09_updateUserStatus_adminSelfLock_shouldThrowBadRequest() {
-        UpdateUserStatusReq req = new UpdateUserStatusReq("locked");
+        UpdateUserStatusReqDTO req = new UpdateUserStatusReqDTO("locked");
 
         assertThrows(BadRequestException.class, () -> adminUserService.updateUserStatus(1, 1, req));
         verify(userRepository, never()).save(any(User.class));
@@ -187,7 +187,7 @@ public class FE13_AdminUserManageUnitTest {
         Page<User> mockPage = new PageImpl<>(List.of(normalUser), pageable, 1);
         when(userRepository.searchUsers("active", "farmer", pageable)).thenReturn(mockPage);
 
-        PageResp<UserResp> result = adminUserService.getUsers("   ACTIVE   ", "   farmer   ", pageable);
+        PageResp<UserRespDTO> result = adminUserService.getUsers("   ACTIVE   ", "   farmer   ", pageable);
 
         assertNotNull(result);
         assertEquals(1, result.totalElements());

@@ -63,7 +63,7 @@ public class FarmTaskServiceImpl implements FarmTaskService {
     }
 
     @Override
-    public PageResp<FarmTaskResp> getFarmTasks(
+    public PageResp<FarmTaskRespDTO> getFarmTasks(
             Integer userId,
             Integer farmId,
             Integer cropSeasonId,
@@ -117,7 +117,7 @@ public class FarmTaskServiceImpl implements FarmTaskService {
 
     @Override
     @Transactional(readOnly = true)
-    public FarmTaskResp getTaskById(Integer userId, Integer taskId) {
+    public FarmTaskRespDTO getTaskById(Integer userId, Integer taskId) {
         FarmTask task = farmTaskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Công việc không tồn tại ID: " + taskId));
 
@@ -126,7 +126,7 @@ public class FarmTaskServiceImpl implements FarmTaskService {
     }
 
     @Override
-    public FarmTaskResp createTask(Integer userId, Integer farmId, CreateFarmTaskReq request) {
+    public FarmTaskRespDTO createTask(Integer userId, Integer farmId, CreateFarmTaskReqDTO request) {
         farmAccessGuard.requireFarmMember(userId, farmId);
 
         Farm farm = farmRepository.findById(farmId)
@@ -191,7 +191,7 @@ public class FarmTaskServiceImpl implements FarmTaskService {
     }
 
     @Override
-    public FarmTaskResp updateTask(Integer userId, Integer taskId, UpdateFarmTaskReq request) {
+    public FarmTaskRespDTO updateTask(Integer userId, Integer taskId, UpdateFarmTaskReqDTO request) {
         FarmTask task = farmTaskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Công việc không tồn tại ID: " + taskId));
 
@@ -255,7 +255,7 @@ public class FarmTaskServiceImpl implements FarmTaskService {
     }
 
     @Override
-    public FarmTaskResp updateTaskStatus(Integer userId, Integer taskId, UpdateFarmTaskStatusReq request) {
+    public FarmTaskRespDTO updateTaskStatus(Integer userId, Integer taskId, UpdateFarmTaskStatusReqDTO request) {
         FarmTask task = farmTaskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Công việc không tồn tại ID: " + taskId));
 
@@ -352,7 +352,7 @@ public class FarmTaskServiceImpl implements FarmTaskService {
 
     private final FarmTaskMapper farmTaskMapper = new FarmTaskMapper();
 
-    private FarmTaskResp mapToResponse(FarmTask t) {
+    private FarmTaskRespDTO mapToResponse(FarmTask t) {
         return farmTaskMapper.toResponse(t);
     }
 }

@@ -1,11 +1,10 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.farm.FarmRegistrationResp;
-import com.mycropdiary.api.dto.farm.HandleRegistrationReq;
+import com.mycropdiary.api.dto.farm.AdminFarmRegRespDTO;
+import com.mycropdiary.api.dto.farm.HandleFarmRegReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.farmregistration.FarmRegistration;
-import com.mycropdiary.api.entity.farmregistration.FarmRegistrationStatus;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ForbiddenException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
@@ -14,7 +13,7 @@ import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.farmregistration.FarmRegistrationRepository;
 import com.mycropdiary.api.service.NotificationService;
-import com.mycropdiary.api.service.impl.FarmRegistrationServiceImpl;
+import com.mycropdiary.api.service.impl.AdminFarmRegServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
     private NotificationService notificationService;
 
     @InjectMocks
-    private FarmRegistrationServiceImpl farmRegistrationService;
+    private AdminFarmRegServiceImpl farmRegistrationService;
 
     private User adminUser;
     private User regularUser;
@@ -67,7 +66,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC01 [Normal] - Admin phê duyệt đơn PENDING -> Tạo Farm và gán vai trò OWNER (Passed)")
     void UTC01_reviewRegistration_adminApproves_shouldCreateFarmAndAssignOwnerRole() {
-        HandleRegistrationReq req = new HandleRegistrationReq("APPROVED", null);
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("APPROVED", null);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
         when(farmRegistrationRepository.findById(501)).thenReturn(Optional.of(pendingReg));
@@ -78,7 +77,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
         });
         when(farmRegistrationRepository.save(any(FarmRegistration.class))).thenAnswer(i -> i.getArgument(0));
 
-        FarmRegistrationResp resp = farmRegistrationService.handleRegistration(1, 501, req);
+        AdminFarmRegRespDTO resp = farmRegistrationService.handleRegistration(1, 501, req);
 
         assertNotNull(resp);
         assertEquals("APPROVED", resp.status().toUpperCase());
@@ -89,13 +88,13 @@ public class FE04_FarmRegistrationReviewUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC02 [Normal] - Admin từ chối đơn với lý do cụ thể -> Cập nhật REJECTED (Passed)")
     void UTC02_reviewRegistration_adminRejects_shouldSaveRejectReason() {
-        HandleRegistrationReq req = new HandleRegistrationReq("REJECTED", "Thiếu giấy tờ chứng nhận hợp lệ");
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("REJECTED", "Thiếu giấy tờ chứng nhận hợp lệ");
 
         when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
         when(farmRegistrationRepository.findById(501)).thenReturn(Optional.of(pendingReg));
         when(farmRegistrationRepository.save(any(FarmRegistration.class))).thenAnswer(i -> i.getArgument(0));
 
-        FarmRegistrationResp resp = farmRegistrationService.handleRegistration(1, 501, req);
+        AdminFarmRegRespDTO resp = farmRegistrationService.handleRegistration(1, 501, req);
 
         assertNotNull(resp);
         assertEquals("REJECTED", resp.status().toUpperCase());
@@ -105,7 +104,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC03 [Abnormal] - User không phải ADMIN cố tình duyệt -> Ném ForbiddenException (Passed)")
     void UTC03_reviewRegistration_nonAdminUser_shouldThrowForbiddenException() {
-        HandleRegistrationReq req = new HandleRegistrationReq("APPROVED", null);
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("APPROVED", null);
         when(userRepository.findById(2)).thenReturn(Optional.of(regularUser));
 
         assertThrows(ForbiddenException.class, () -> farmRegistrationService.handleRegistration(2, 501, req));
@@ -114,7 +113,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC04 [Abnormal] - Duyệt đơn không tồn tại (ID 999999) -> Ném ResourceNotFound (Passed)")
     void UTC04_reviewRegistration_nonExistentId_shouldThrowResourceNotFound() {
-        HandleRegistrationReq req = new HandleRegistrationReq("APPROVED", null);
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("APPROVED", null);
         when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
         when(farmRegistrationRepository.findById(999999)).thenReturn(Optional.empty());
 
@@ -124,7 +123,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC05 [Boundary] - Từ chối nhưng để trống lý do -> Ném BadRequestException (Passed)")
     void UTC05_reviewRegistration_rejectWithBlankReason_shouldThrowBadRequest() {
-        HandleRegistrationReq req = new HandleRegistrationReq("REJECTED", "   ");
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("REJECTED", "   ");
         when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
         when(farmRegistrationRepository.findById(501)).thenReturn(Optional.of(pendingReg));
 
@@ -135,7 +134,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
     @DisplayName("FE04_FAR_UTC06 [Abnormal] - Duyệt lại đơn đã REJECTED -> Báo lỗi trạng thái không hợp lệ (Passed)")
     void UTC06_reviewRegistration_reApproveRejectedRegistration_shouldThrowBadRequest() {
         pendingReg.setRegistrationStatus("rejected");
-        HandleRegistrationReq req = new HandleRegistrationReq("APPROVED", null);
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("APPROVED", null);
         when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
         when(farmRegistrationRepository.findById(501)).thenReturn(Optional.of(pendingReg));
 
@@ -146,7 +145,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
     @DisplayName("FE04_FAR_UTC07 [Abnormal] - Từ chối lại đơn đã APPROVED -> Báo lỗi trạng thái (Passed)")
     void UTC07_reviewRegistration_reRejectApprovedRegistration_shouldThrowBadRequest() {
         pendingReg.setRegistrationStatus("approved");
-        HandleRegistrationReq req = new HandleRegistrationReq("REJECTED", "Reason");
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("REJECTED", "Reason");
         when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
         when(farmRegistrationRepository.findById(501)).thenReturn(Optional.of(pendingReg));
 
@@ -158,7 +157,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
     void UTC08_reviewRegistration_reasonExceeds500Chars_defectDF009() {
         // Verified fix for DF-009: NVARCHAR(1000) + @Size(max=1000) + service-level length check
         String overLimitReason = "R".repeat(1001);
-        HandleRegistrationReq req = new HandleRegistrationReq("REJECTED", overLimitReason);
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("REJECTED", overLimitReason);
         when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
         when(farmRegistrationRepository.findById(501)).thenReturn(Optional.of(pendingReg));
 
@@ -170,12 +169,12 @@ public class FE04_FarmRegistrationReviewUnitTest {
     @DisplayName("FE04_FAR_UTC09 [Boundary] - Lý do từ chối đúng 500 ký tự -> Lưu thành công (Passed)")
     void UTC09_reviewRegistration_reasonExactly500Chars_shouldPass() {
         String exact500 = "R".repeat(500);
-        HandleRegistrationReq req = new HandleRegistrationReq("REJECTED", exact500);
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("REJECTED", exact500);
         when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
         when(farmRegistrationRepository.findById(501)).thenReturn(Optional.of(pendingReg));
         when(farmRegistrationRepository.save(any(FarmRegistration.class))).thenAnswer(i -> i.getArgument(0));
 
-        FarmRegistrationResp resp = farmRegistrationService.handleRegistration(1, 501, req);
+        AdminFarmRegRespDTO resp = farmRegistrationService.handleRegistration(1, 501, req);
         assertNotNull(resp);
         assertEquals("REJECTED", resp.status().toUpperCase());
     }
@@ -183,7 +182,7 @@ public class FE04_FarmRegistrationReviewUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC10 [Normal] - Ghi nhận Audit Log người duyệt và thời gian (Passed)")
     void UTC10_reviewRegistration_auditLogRecorded_shouldCaptureAdminDetails() {
-        HandleRegistrationReq req = new HandleRegistrationReq("REJECTED", "Lý do từ chối");
+        HandleFarmRegReqDTO req = new HandleFarmRegReqDTO("REJECTED", "Lý do từ chối");
         when(userRepository.findById(1)).thenReturn(Optional.of(adminUser));
         when(farmRegistrationRepository.findById(501)).thenReturn(Optional.of(pendingReg));
         when(farmRegistrationRepository.save(any(FarmRegistration.class))).thenAnswer(i -> i.getArgument(0));

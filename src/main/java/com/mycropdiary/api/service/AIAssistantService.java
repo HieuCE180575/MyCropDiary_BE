@@ -6,22 +6,15 @@ import java.util.List;
 
 public interface AIAssistantService {
 
-    AIConversationResp createConversation(Integer userId, CreateAIConversationReq req);
+    AIConversationRespDTO createConversation(Integer userId, CreateAIConversationReqDTO req);
 
-    List<AIConversationResp> getMyConversations(Integer userId, String keyword);
+    List<AIConversationRespDTO> getMyConversations(Integer userId, String keyword);
 
-    AIConversationDetailResp getConversationDetail(Integer userId, Integer conversationId);
+    AIConversationDetailRespDTO getConversationDetail(Integer userId, Integer conversationId);
 
-    AIMessageResp askAIAssistant(Integer userId, AskAIQuestionReq req);
-
-    AIFeedbackResp reportAIMessage(Integer userId, Integer messageId, ReportAIMessageReq req);
-
-    AIFeedbackResp updateFeedback(Integer userId, Integer feedbackId, ReportAIMessageReq req);
+    AIMessageRespDTO askAIAssistant(Integer userId, AskAIQuestionReqDTO req);
 
     void deleteConversation(Integer userId, Integer conversationId);
 
-    List<AIFeedbackResp> getMyFeedbackHistory(Integer userId);
-
-    VoiceActivityParseResp parseVoiceActivity(VoiceActivityParseReq req);
+    FarmingDraftRespDTO parseVoiceActivity(GenerateDraftReqDTO req);
 }
-

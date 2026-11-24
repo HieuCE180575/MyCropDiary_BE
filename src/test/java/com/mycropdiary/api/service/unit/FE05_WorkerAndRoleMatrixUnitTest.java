@@ -1,13 +1,16 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.ai.AIFeedbackResp;
-import com.mycropdiary.api.dto.ai.ReportAIMessageReq;
-import com.mycropdiary.api.dto.warehouse.CreateInventoryReq;
-import com.mycropdiary.api.dto.warehouse.CreateWarehouseReq;
-import com.mycropdiary.api.dto.warehouse.InventoryItemResp;
-import com.mycropdiary.api.dto.warehouse.WarehouseResp;
-import com.mycropdiary.api.dto.worker.FarmWorkerReq;
-import com.mycropdiary.api.dto.worker.FarmWorkerResp;
+import com.mycropdiary.api.dto.ai.AIFeedbackRespDTO;
+import com.mycropdiary.api.dto.ai.ReportAIMessageReqDTO;
+import com.mycropdiary.api.dto.ai.UpdateAIFeedbackReqDTO;
+import com.mycropdiary.api.dto.warehouse.StockInReqDTO;
+import com.mycropdiary.api.dto.warehouse.CreateWarehouseReqDTO;
+import com.mycropdiary.api.dto.warehouse.UpdateWarehouseReqDTO;
+import com.mycropdiary.api.dto.warehouse.InventoryRespDTO;
+import com.mycropdiary.api.dto.warehouse.WarehouseRespDTO;
+import com.mycropdiary.api.dto.worker.CreateWorkerReqDTO;
+import com.mycropdiary.api.dto.worker.UpdateWorkerReqDTO;
+import com.mycropdiary.api.dto.worker.FarmWorkerRespDTO;
 import com.mycropdiary.api.entity.AIConversation;
 import com.mycropdiary.api.entity.AIFeedback;
 import com.mycropdiary.api.entity.AIMessage;
@@ -29,7 +32,9 @@ import com.mycropdiary.api.repository.cultivation.InventoryRepository;
 import com.mycropdiary.api.repository.cultivation.MaterialRepository;
 import com.mycropdiary.api.repository.cultivation.WarehouseRepository;
 import com.mycropdiary.api.service.impl.AIAssistantServiceImpl;
+import com.mycropdiary.api.service.impl.AIFeedbackServiceImpl;
 import com.mycropdiary.api.service.impl.FarmWorkerServiceImpl;
+import com.mycropdiary.api.service.impl.InventoryServiceImpl;
 import com.mycropdiary.api.service.impl.WarehouseServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,7 +82,9 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
 
     private FarmWorkerServiceImpl farmWorkerService;
     private WarehouseServiceImpl warehouseService;
+    private InventoryServiceImpl inventoryService;
     private AIAssistantServiceImpl aiAssistantService;
+    private AIFeedbackServiceImpl aiFeedbackService;
 
     private Farm testFarm;
     private User testUser;
@@ -91,9 +98,11 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
     void setUp() {
         farmWorkerService = new FarmWorkerServiceImpl(farmWorkerRepository, farmMemberRepository, accessGuard);
         warehouseService = new WarehouseServiceImpl(warehouseRepository, inventoryRepository, materialRepository, farmRepository, accessGuard);
+        inventoryService = new InventoryServiceImpl(inventoryRepository, warehouseRepository, materialRepository, accessGuard);
         aiAssistantService = new AIAssistantServiceImpl(
                 conversationRepository, messageRepository, feedbackRepository, userRepository, farmRepository
         );
+        aiFeedbackService = new AIFeedbackServiceImpl(feedbackRepository, messageRepository, userRepository);
 
         testFarm = new Farm();
         testFarm.setId(10);
@@ -126,7 +135,7 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
     void testGetWorkersByFarm() {
         when(farmWorkerRepository.findByFarmId(10)).thenReturn(List.of(testWorker));
 
-        List<FarmWorkerResp> list = farmWorkerService.getWorkersByFarm(100, 10, null, null);
+        List<FarmWorkerRespDTO> list = farmWorkerService.getWorkersByFarm(100, 10, null, null);
 
         assertNotNull(list);
         assertEquals(1, list.size());
@@ -137,7 +146,7 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
     @Test
     @DisplayName("UC15-2: Tạo hồ sơ công nhân mới thành công")
     void testCreateWorker_success() {
-        FarmWorkerReq req = new FarmWorkerReq(20, "CN-002", "Công nhân chăm sóc", "active", LocalDate.now(), "Không");
+        CreateWorkerReqDTO req = new CreateWorkerReqDTO(20, "CN-002", "Công nhân chăm sóc", "active", LocalDate.now(), "Không");
         when(farmMemberRepository.findById(20)).thenReturn(Optional.of(testMember));
         when(farmWorkerRepository.findByFarmMemberId(20)).thenReturn(Optional.empty());
         when(farmWorkerRepository.existsByFarmMemberFarmIdAndWorkerCodeIgnoreCase(10, "CN-002")).thenReturn(false);
@@ -147,7 +156,7 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
             return w;
         });
 
-        FarmWorkerResp resp = farmWorkerService.createWorker(100, 10, req);
+        FarmWorkerRespDTO resp = farmWorkerService.createWorker(100, 10, req);
 
         assertNotNull(resp);
         assertEquals(6, resp.workerId());
@@ -161,8 +170,8 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
         when(farmWorkerRepository.findByIdAndFarmMemberFarmId(5, 10)).thenReturn(Optional.of(testWorker));
         when(farmWorkerRepository.save(any(FarmWorker.class))).thenReturn(testWorker);
 
-        FarmWorkerReq updateReq = new FarmWorkerReq(20, "CN-001", "Trưởng nhóm kỹ thuật", "active", LocalDate.now(), "Mới");
-        FarmWorkerResp updated = farmWorkerService.updateWorker(100, 10, 5, updateReq);
+        UpdateWorkerReqDTO updateReq = new UpdateWorkerReqDTO(20, "CN-001", "Trưởng nhóm kỹ thuật", "active", LocalDate.now(), "Mới");
+        FarmWorkerRespDTO updated = farmWorkerService.updateWorker(100, 10, 5, updateReq);
         assertEquals("Trưởng nhóm kỹ thuật", updated.jobTitle());
 
         farmWorkerService.deleteWorker(100, 10, 5);
@@ -176,8 +185,8 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
         when(warehouseRepository.findById(30)).thenReturn(Optional.of(testWarehouse));
         when(warehouseRepository.save(any(Warehouse.class))).thenReturn(testWarehouse);
 
-        CreateWarehouseReq req = new CreateWarehouseReq("Kho A Mới", "Địa chỉ mới", null);
-        WarehouseResp resp = warehouseService.updateWarehouse(100, 30, req);
+        UpdateWarehouseReqDTO req = new UpdateWarehouseReqDTO("Kho A Mới", "Địa chỉ mới", null);
+        WarehouseRespDTO resp = warehouseService.updateWarehouse(100, 30, req);
         assertEquals("Kho A Mới", resp.warehouseName());
 
         when(inventoryRepository.findByWarehouseId(30)).thenReturn(List.of(testInventory));
@@ -200,14 +209,14 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
             return inv;
         });
 
-        CreateInventoryReq req = new CreateInventoryReq(30, 40, BigDecimal.valueOf(50), BigDecimal.valueOf(10));
-        InventoryItemResp item = warehouseService.createInventory(100, 10, req);
+        StockInReqDTO req = new StockInReqDTO(30, 40, BigDecimal.valueOf(50), BigDecimal.valueOf(10));
+        InventoryRespDTO item = inventoryService.createInventory(100, 10, req);
 
         assertNotNull(item);
         assertEquals(51, item.inventoryId());
 
         when(inventoryRepository.findById(50)).thenReturn(Optional.of(testInventory));
-        warehouseService.deleteInventory(100, 50);
+        inventoryService.deleteInventory(100, 50);
         verify(inventoryRepository).delete(testInventory);
     }
 
@@ -237,8 +246,8 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
         when(feedbackRepository.findById(21)).thenReturn(Optional.of(feedback));
         when(feedbackRepository.save(any(AIFeedback.class))).thenReturn(feedback);
 
-        ReportAIMessageReq updateReq = new ReportAIMessageReq(5, "Đã hiểu rõ hơn sau khi hỏi lại");
-        AIFeedbackResp updatedFeedback = aiAssistantService.updateFeedback(100, 21, updateReq);
+        UpdateAIFeedbackReqDTO updateReq = new UpdateAIFeedbackReqDTO(5, "Đã hiểu rõ hơn sau khi hỏi lại");
+        AIFeedbackRespDTO updatedFeedback = aiFeedbackService.updateFeedback(100, 21, updateReq);
 
         assertNotNull(updatedFeedback);
         assertEquals(5, updatedFeedback.rating());
@@ -252,7 +261,7 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
     @Test
     @DisplayName("UC15-4 [Abnormal]: Thêm công nhân trùng mã workerCode trong cùng trang trại -> Báo lỗi BadRequestException")
     void testCreateWorker_duplicateWorkerCode_throwsBadRequest() {
-        FarmWorkerReq req = new FarmWorkerReq(20, "CN-001", "Công nhân", "active", LocalDate.now(), null);
+        CreateWorkerReqDTO req = new CreateWorkerReqDTO(20, "CN-001", "Công nhân", "active", LocalDate.now(), null);
         when(farmMemberRepository.findById(20)).thenReturn(Optional.of(testMember));
         when(farmWorkerRepository.findByFarmMemberId(20)).thenReturn(Optional.empty());
         when(farmWorkerRepository.existsByFarmMemberFarmIdAndWorkerCodeIgnoreCase(10, "CN-001")).thenReturn(true);
@@ -276,17 +285,17 @@ public class FE05_WorkerAndRoleMatrixUnitTest {
         when(materialRepository.findByIdAndFarmId(40, 10)).thenReturn(Optional.of(testMaterial));
         when(inventoryRepository.findByWarehouseIdAndMaterialId(30, 40)).thenReturn(Optional.of(testInventory));
 
-        CreateInventoryReq req = new CreateInventoryReq(30, 40, BigDecimal.valueOf(50), BigDecimal.valueOf(10));
+        StockInReqDTO req = new StockInReqDTO(30, 40, BigDecimal.valueOf(50), BigDecimal.valueOf(10));
         assertThrows(com.mycropdiary.api.exception.BadRequestException.class,
-                () -> warehouseService.createInventory(100, 10, req));
+                () -> inventoryService.createInventory(100, 10, req));
     }
 
     @Test
     @DisplayName("UC33-3 [Abnormal]: Thêm tồn kho với kho hàng ID không tồn tại -> Ném ResourceNotFoundException")
     void testCreateInventory_warehouseNotFound_throwsResourceNotFound() {
         when(warehouseRepository.findById(999)).thenReturn(Optional.empty());
-        CreateInventoryReq req = new CreateInventoryReq(999, 40, BigDecimal.valueOf(50), BigDecimal.valueOf(10));
+        StockInReqDTO req = new StockInReqDTO(999, 40, BigDecimal.valueOf(50), BigDecimal.valueOf(10));
         assertThrows(com.mycropdiary.api.exception.ResourceNotFoundException.class,
-                () -> warehouseService.createInventory(100, 10, req));
+                () -> inventoryService.createInventory(100, 10, req));
     }
 }

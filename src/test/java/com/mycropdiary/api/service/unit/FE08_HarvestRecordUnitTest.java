@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
+import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReqDTO;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -78,7 +78,7 @@ public class FE08_HarvestRecordUnitTest {
     @Test
     @DisplayName("FE08_HAR_UTC01 [Normal] - Ghi nhận thu hoạch hợp lệ (500kg, Loại 1) -> Lưu thành công (Passed)")
     void UTC01_recordHarvest_validInput_shouldCreateHarvestRecord() {
-        CreateHarvestRecordReq req = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now(),
+        CreateHarvestRecordReqDTO req = new CreateHarvestRecordReqDTO(50, "LOT-01", LocalDateTime.now(),
                 new BigDecimal("500.00"), "kg", "Loại 1", "Kho 1", "TR-01", "Thu hoạch đợt 1");
 
         when(cropSeasonRepository.findById(50)).thenReturn(Optional.of(activeSeason));
@@ -89,7 +89,7 @@ public class FE08_HarvestRecordUnitTest {
         saved.setQuantity(new BigDecimal("500.00"));
         when(harvestRecordRepository.save(any(HarvestRecord.class))).thenReturn(saved);
 
-        HarvestRecordResp resp = harvestRecordService.createHarvestRecord(10, req);
+        HarvestRecordRespDTO resp = harvestRecordService.createHarvestRecord(10, req);
 
         assertNotNull(resp);
         assertEquals(new BigDecimal("500.00"), resp.quantity());
@@ -99,7 +99,7 @@ public class FE08_HarvestRecordUnitTest {
     @Test
     @DisplayName("FE08_HAR_UTC02 [Abnormal] - Ngày thu hoạch trước ngày gieo trồng -> Báo lỗi ngày không hợp lệ (Passed)")
     void UTC02_recordHarvest_harvestDateBeforePlantingDate_shouldThrowBadRequest() {
-        CreateHarvestRecordReq req = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now().minusDays(100),
+        CreateHarvestRecordReqDTO req = new CreateHarvestRecordReqDTO(50, "LOT-01", LocalDateTime.now().minusDays(100),
                 new BigDecimal("500.00"), "kg", "Loại 1", "Kho 1", "TR-01", "Sai ngày");
 
         assertTrue(req.harvestedAt().toLocalDate().isBefore(activeSeason.getStartDate()));
@@ -109,7 +109,7 @@ public class FE08_HarvestRecordUnitTest {
     @DisplayName("FE08_HAR_UTC03 [Boundary] - Sản lượng thu hoạch bằng 0kg không có giải trình bị chặn; có giải trình được lưu (Passed)")
     void UTC03_recordHarvest_zeroYieldWithoutReason_defectDF013() {
         // Verified fix for DF-013: 0 kg harvest requires mandatory non-blank explanation note
-        CreateHarvestRecordReq reqNoNote = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now(),
+        CreateHarvestRecordReqDTO reqNoNote = new CreateHarvestRecordReqDTO(50, "LOT-01", LocalDateTime.now(),
                 BigDecimal.ZERO, "kg", "Loại 3", "Kho 1", "TR-01", "   ");
 
         when(cropSeasonRepository.findById(50)).thenReturn(Optional.of(activeSeason));
@@ -117,14 +117,14 @@ public class FE08_HarvestRecordUnitTest {
 
         assertThrows(BadRequestException.class, () -> harvestRecordService.createHarvestRecord(10, reqNoNote));
 
-        CreateHarvestRecordReq reqWithNote = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now(),
+        CreateHarvestRecordReqDTO reqWithNote = new CreateHarvestRecordReqDTO(50, "LOT-01", LocalDateTime.now(),
                 BigDecimal.ZERO, "kg", "Loại 3", "Kho 1", "TR-01", "Mất trắng do bão lũ");
         when(harvestRecordRepository.save(any(HarvestRecord.class))).thenAnswer(i -> {
             HarvestRecord r = i.getArgument(0);
             r.setId(105);
             return r;
         });
-        HarvestRecordResp resp = harvestRecordService.createHarvestRecord(10, reqWithNote);
+        HarvestRecordRespDTO resp = harvestRecordService.createHarvestRecord(10, reqWithNote);
         assertNotNull(resp);
         assertEquals(BigDecimal.ZERO, resp.quantity());
     }
@@ -132,7 +132,7 @@ public class FE08_HarvestRecordUnitTest {
     @Test
     @DisplayName("FE08_HAR_UTC04 [Boundary] - Sản lượng thu hoạch số âm (-50kg) -> Ném BadRequestException (Passed)")
     void UTC04_recordHarvest_negativeYield_shouldThrowBadRequest() {
-        CreateHarvestRecordReq req = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now(),
+        CreateHarvestRecordReqDTO req = new CreateHarvestRecordReqDTO(50, "LOT-01", LocalDateTime.now(),
                 new BigDecimal("-50.00"), "kg", "Loại 1", "Kho 1", "TR-01", "Am");
 
         when(cropSeasonRepository.findById(50)).thenReturn(Optional.of(activeSeason));
@@ -144,7 +144,7 @@ public class FE08_HarvestRecordUnitTest {
     @Test
     @DisplayName("FE08_HAR_UTC05 [Abnormal] - Mùa vụ không tồn tại -> Ném ResourceNotFoundException (Passed)")
     void UTC05_recordHarvest_nonExistentCropSeason_shouldThrowResourceNotFound() {
-        CreateHarvestRecordReq req = new CreateHarvestRecordReq(9999, "LOT-01", LocalDateTime.now(),
+        CreateHarvestRecordReqDTO req = new CreateHarvestRecordReqDTO(9999, "LOT-01", LocalDateTime.now(),
                 new BigDecimal("500.00"), "kg", "Loại 1", "Kho 1", "TR-01", "None");
 
         when(cropSeasonRepository.findById(9999)).thenReturn(Optional.empty());
@@ -155,7 +155,7 @@ public class FE08_HarvestRecordUnitTest {
     @Test
     @DisplayName("FE08_HAR_UTC06 [Abnormal] - Người dùng không thuộc trang trại -> Ném ForbiddenException (Passed)")
     void UTC06_recordHarvest_userNotInFarm_shouldThrowForbidden() {
-        CreateHarvestRecordReq req = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now(),
+        CreateHarvestRecordReqDTO req = new CreateHarvestRecordReqDTO(50, "LOT-01", LocalDateTime.now(),
                 new BigDecimal("500.00"), "kg", "Loại 1", "Kho 1", "TR-01", "None");
 
         when(cropSeasonRepository.findById(50)).thenReturn(Optional.of(activeSeason));
@@ -167,7 +167,7 @@ public class FE08_HarvestRecordUnitTest {
     @Test
     @DisplayName("FE08_HAR_UTC07 [Boundary] - Sản lượng lớn biên trên (999,999 kg) -> Lưu thành công (Passed)")
     void UTC07_recordHarvest_maxBoundaryYield999999_shouldPass() {
-        CreateHarvestRecordReq req = new CreateHarvestRecordReq(50, "LOT-01", LocalDateTime.now(),
+        CreateHarvestRecordReqDTO req = new CreateHarvestRecordReqDTO(50, "LOT-01", LocalDateTime.now(),
                 new BigDecimal("999999.00"), "kg", "Loại 1", "Kho 1", "TR-01", "Max");
 
         when(cropSeasonRepository.findById(50)).thenReturn(Optional.of(activeSeason));
@@ -178,7 +178,7 @@ public class FE08_HarvestRecordUnitTest {
         saved.setQuantity(new BigDecimal("999999.00"));
         when(harvestRecordRepository.save(any(HarvestRecord.class))).thenReturn(saved);
 
-        HarvestRecordResp resp = harvestRecordService.createHarvestRecord(10, req);
+        HarvestRecordRespDTO resp = harvestRecordService.createHarvestRecord(10, req);
         assertNotNull(resp);
     }
 
@@ -195,7 +195,7 @@ public class FE08_HarvestRecordUnitTest {
     @DisplayName("FE08_HAR_UTC09 [Boundary] - Kiểm tra tính toàn vẹn sản lượng loại bỏ không âm trên bản ghi thu hoạch (Passed)")
     void UTC09_recordHarvest_statusSoldWithNullRevenue_defectDF014() {
         // Verified DF-014: HarvestRecord schema refactored to ERD (no SOLD/null-revenue ambiguity) & discardedQuantity >= 0 validated
-        CreateHarvestRecordReq invalidDiscarded = new CreateHarvestRecordReq(
+        CreateHarvestRecordReqDTO invalidDiscarded = new CreateHarvestRecordReqDTO(
                 50, null, null, "LOT-01", LocalDateTime.now(),
                 new BigDecimal("100.00"), new BigDecimal("-5.00"), "kg", "Loại 1", "Kho 1", "TR-01", "Kiểm tra biên"
         );

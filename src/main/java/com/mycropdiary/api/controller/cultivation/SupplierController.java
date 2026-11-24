@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.procurement.CreateSupplierReq;
-import com.mycropdiary.api.dto.procurement.SupplierResp;
-import com.mycropdiary.api.dto.procurement.UpdateSupplierReq;
+import com.mycropdiary.api.dto.procurement.CreateSupplierReqDTO;
+import com.mycropdiary.api.dto.procurement.SupplierRespDTO;
+import com.mycropdiary.api.dto.procurement.UpdateSupplierReqDTO;
 import com.mycropdiary.api.service.cultivation.SupplierService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,40 +31,40 @@ public class SupplierController {
 
     @Operation(summary = "Xem danh sách nhà cung cấp của nông trại (View Supplier List)")
     @GetMapping("/farms/{farmId}/suppliers")
-    public ApiResp<List<SupplierResp>> getSuppliers(
+    public ApiResp<List<SupplierRespDTO>> getSuppliers(
             @PathVariable Integer farmId,
             @RequestParam(required = false) String keyword) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<SupplierResp> list = supplierService.getSuppliers(currentUserId, farmId, keyword);
+        List<SupplierRespDTO> list = supplierService.getSuppliers(currentUserId, farmId, keyword);
         return ApiResp.ok("Danh sách nhà cung cấp", list);
     }
 
     @Operation(summary = "Xem chi tiết nhà cung cấp (View Supplier Details)")
     @GetMapping("/suppliers/{supplierId}")
-    public ApiResp<SupplierResp> getSupplierDetails(@PathVariable Integer supplierId) {
+    public ApiResp<SupplierRespDTO> getSupplierDetails(@PathVariable Integer supplierId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        SupplierResp supplier = supplierService.getSupplierDetails(currentUserId, supplierId);
+        SupplierRespDTO supplier = supplierService.getSupplierDetails(currentUserId, supplierId);
         return ApiResp.ok("Chi tiết nhà cung cấp", supplier);
     }
 
     @Operation(summary = "Tạo mới nhà cung cấp (Create Supplier)")
     @PostMapping("/farms/{farmId}/suppliers")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<SupplierResp> createSupplier(
+    public ApiResp<SupplierRespDTO> createSupplier(
             @PathVariable Integer farmId,
-            @Valid @RequestBody CreateSupplierReq request) {
+            @Valid @RequestBody CreateSupplierReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        SupplierResp created = supplierService.createSupplier(currentUserId, farmId, request);
+        SupplierRespDTO created = supplierService.createSupplier(currentUserId, farmId, request);
         return ApiResp.ok("Tạo mới nhà cung cấp thành công", created);
     }
 
     @Operation(summary = "Cập nhật thông tin nhà cung cấp (Update Supplier)")
     @PutMapping("/suppliers/{supplierId}")
-    public ApiResp<SupplierResp> updateSupplier(
+    public ApiResp<SupplierRespDTO> updateSupplier(
             @PathVariable Integer supplierId,
-            @Valid @RequestBody UpdateSupplierReq request) {
+            @Valid @RequestBody UpdateSupplierReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        SupplierResp updated = supplierService.updateSupplier(currentUserId, supplierId, request);
+        SupplierRespDTO updated = supplierService.updateSupplier(currentUserId, supplierId, request);
         return ApiResp.ok("Cập nhật nhà cung cấp thành công", updated);
     }
 

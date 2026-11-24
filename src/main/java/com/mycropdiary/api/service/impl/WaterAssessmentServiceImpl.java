@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.water.CreateWaterAssessmentReq;
-import com.mycropdiary.api.dto.water.UpdateWaterAssessmentReq;
-import com.mycropdiary.api.dto.water.WaterAssessmentResp;
+import com.mycropdiary.api.dto.water.CreateWaterReqDTO;
+import com.mycropdiary.api.dto.water.UpdateWaterReqDTO;
+import com.mycropdiary.api.dto.water.WaterAssessmentRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -42,7 +42,7 @@ public class WaterAssessmentServiceImpl implements WaterAssessmentService {
     }
 
     @Override
-    public WaterAssessmentResp createWaterAssessment(Integer currentUserId, Integer blockId, CreateWaterAssessmentReq request) {
+    public WaterAssessmentRespDTO createWaterAssessment(Integer currentUserId, Integer blockId, CreateWaterReqDTO request) {
         Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
         Farm farm = block.getZone().getFarm();
 
@@ -84,28 +84,28 @@ public class WaterAssessmentServiceImpl implements WaterAssessmentService {
         assessment.setLabTestReportUrl(request.labTestReportUrl());
 
         WaterAssessment saved = waterRepository.save(assessment);
-        return WaterAssessmentResp.fromEntity(saved);
+        return WaterAssessmentRespDTO.fromEntity(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<WaterAssessmentResp> getWaterAssessmentHistory(Integer currentUserId, Integer blockId) {
+    public List<WaterAssessmentRespDTO> getWaterAssessmentHistory(Integer currentUserId, Integer blockId) {
         accessGuard.requireBlockAccess(currentUserId, blockId);
         List<WaterAssessment> list = waterRepository.findByBlockIdOrderByAssessedAtDesc(blockId);
-        return list.stream().map(WaterAssessmentResp::fromEntity).toList();
+        return list.stream().map(WaterAssessmentRespDTO::fromEntity).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<WaterAssessmentResp> getFarmWaterAssessmentHistory(Integer currentUserId, Integer farmId) {
+    public List<WaterAssessmentRespDTO> getFarmWaterAssessmentHistory(Integer currentUserId, Integer farmId) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
         List<WaterAssessment> list = waterRepository.findByFarmIdOrderByAssessedAtDesc(farmId);
-        return list.stream().map(WaterAssessmentResp::fromEntity).toList();
+        return list.stream().map(WaterAssessmentRespDTO::fromEntity).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public WaterAssessmentResp getWaterAssessmentDetails(Integer currentUserId, Integer assessmentId) {
+    public WaterAssessmentRespDTO getWaterAssessmentDetails(Integer currentUserId, Integer assessmentId) {
         WaterAssessment entity = waterRepository.findById(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kết quả đánh giá nguồn nước ID: " + assessmentId));
         if (entity.getBlock() != null) {
@@ -113,11 +113,11 @@ public class WaterAssessmentServiceImpl implements WaterAssessmentService {
         } else if (entity.getWaterSource() != null) {
             accessGuard.requireFarmAccess(currentUserId, entity.getWaterSource().getFarm().getId());
         }
-        return WaterAssessmentResp.fromEntity(entity);
+        return WaterAssessmentRespDTO.fromEntity(entity);
     }
 
     @Override
-    public WaterAssessmentResp updateWaterAssessment(Integer currentUserId, Integer assessmentId, UpdateWaterAssessmentReq request) {
+    public WaterAssessmentRespDTO updateWaterAssessment(Integer currentUserId, Integer assessmentId, UpdateWaterReqDTO request) {
         WaterAssessment entity = waterRepository.findById(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kết quả đánh giá nguồn nước ID: " + assessmentId));
         if (entity.getBlock() != null) {
@@ -155,7 +155,7 @@ public class WaterAssessmentServiceImpl implements WaterAssessmentService {
         }
 
         WaterAssessment saved = waterRepository.save(entity);
-        return WaterAssessmentResp.fromEntity(saved);
+        return WaterAssessmentRespDTO.fromEntity(saved);
     }
 
     @Override

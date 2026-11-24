@@ -1,10 +1,9 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateReq;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationReqDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.farmregistration.FarmRegistration;
-import com.mycropdiary.api.entity.farmregistration.FarmRegistrationStatus;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.repository.FarmMemberRepository;
@@ -54,8 +53,8 @@ public class FE04_FarmRegistrationSubmitUnitTest {
         testUser.setId(101);
     }
 
-    private FarmRegistrationCreateReq createValidReq(String name, String address) {
-        return new FarmRegistrationCreateReq(
+    private FarmRegistrationReqDTO createValidReq(String name, String address) {
+        return new FarmRegistrationReqDTO(
                 name, address, "Lam Dong", "Da Lat", "Ward 1",
                 "Trang trai rau sach VietGAP", "https://example.com/license.pdf"
         );
@@ -64,7 +63,7 @@ public class FE04_FarmRegistrationSubmitUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC01 [Normal] - Nộp đơn đăng ký hợp lệ -> Tạo bản ghi PENDING (Passed)")
     void UTC01_submitRegistration_validData_shouldCreatePendingRegistration() {
-        FarmRegistrationCreateReq req = createValidReq("Green Valley Farm", "123 Farm Road");
+        FarmRegistrationReqDTO req = createValidReq("Green Valley Farm", "123 Farm Road");
         when(userRepository.findById(101)).thenReturn(Optional.of(testUser));
 
         when(farmRegistrationRepository.save(any(FarmRegistration.class))).thenAnswer(invocation -> {
@@ -73,17 +72,17 @@ public class FE04_FarmRegistrationSubmitUnitTest {
             return entity;
         });
 
-        FarmRegistrationResp resp = farmRegistrationService.createRegistration(101, req);
+        FarmRegistrationRespDTO resp = farmRegistrationService.createRegistration(101, req);
 
         assertNotNull(resp);
-        assertEquals(FarmRegistrationStatus.PENDING, resp.status());
+        assertEquals("PENDING", resp.status());
         verify(farmRegistrationRepository).save(any(FarmRegistration.class));
     }
 
     @Test
     @DisplayName("FE04_FAR_UTC02 [Abnormal] - User không tồn tại -> Báo lỗi ResourceNotFound (Passed)")
     void UTC02_submitRegistration_existingPending_shouldThrowConflict() {
-        FarmRegistrationCreateReq req = createValidReq("Green Valley 2", "123 Farm Road");
+        FarmRegistrationReqDTO req = createValidReq("Green Valley 2", "123 Farm Road");
         when(userRepository.findById(999)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> farmRegistrationService.createRegistration(999, req));
@@ -92,21 +91,21 @@ public class FE04_FarmRegistrationSubmitUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC03 [Boundary] - Tên trang trại rỗng -> Không hợp lệ (Passed)")
     void UTC03_submitRegistration_blankFarmName_shouldThrowBadRequest() {
-        FarmRegistrationCreateReq req = createValidReq("", "123 Farm Road");
+        FarmRegistrationReqDTO req = createValidReq("", "123 Farm Road");
         assertTrue(req.farmName().isBlank());
     }
 
     @Test
     @DisplayName("FE04_FAR_UTC04 [Abnormal] - Địa chỉ chi tiết để rỗng -> Vi phạm validation (Passed)")
     void UTC04_submitRegistration_invalidProvinceCode_shouldThrowBadRequest() {
-        FarmRegistrationCreateReq req = createValidReq("Farm 3", "");
+        FarmRegistrationReqDTO req = createValidReq("Farm 3", "");
         assertTrue(req.addressLine().isBlank());
     }
 
     @Test
     @DisplayName("FE04_FAR_UTC05 [Boundary] - URL tài liệu sai định dạng -> Không hợp lệ (Passed)")
     void UTC05_submitRegistration_negativeArea_shouldThrowBadRequest() {
-        FarmRegistrationCreateReq req = new FarmRegistrationCreateReq(
+        FarmRegistrationReqDTO req = new FarmRegistrationReqDTO(
                 "Farm A", "123 Road", "Lam Dong", "Da Lat", "Ward 1",
                 "Mo ta", "invalid-url-format"
         );
@@ -118,7 +117,7 @@ public class FE04_FarmRegistrationSubmitUnitTest {
     void UTC06_submitRegistration_zeroArea_defectDF007() {
         // Verified fix for DF-007: FarmRegistrationCreateReq validates coordinates/fields cleanly and omits 0m2 area input
         jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
-        FarmRegistrationCreateReq invalidLatReq = new FarmRegistrationCreateReq(
+        FarmRegistrationReqDTO invalidLatReq = new FarmRegistrationReqDTO(
                 "Farm A", "123 Road", "Lam Dong", "Da Lat", "Ward 1",
                 "Mo ta", "https://example.com/doc.pdf", new BigDecimal("95.0"), new BigDecimal("108.0"), null
         );
@@ -130,7 +129,7 @@ public class FE04_FarmRegistrationSubmitUnitTest {
     @DisplayName("FE04_FAR_UTC07 [Boundary] - Tên trang trại đạt tối đa 200 ký tự -> Hợp lệ (Passed)")
     void UTC07_submitRegistration_minAreaBoundary001_shouldPass() {
         String name200 = "N".repeat(200);
-        FarmRegistrationCreateReq req = createValidReq(name200, "Address");
+        FarmRegistrationReqDTO req = createValidReq(name200, "Address");
         assertEquals(200, req.farmName().length());
     }
 
@@ -153,7 +152,7 @@ public class FE04_FarmRegistrationSubmitUnitTest {
         when(farmRegistrationRepository.findByIdAndApplicantUserId(200, 101)).thenReturn(Optional.of(reg));
         when(farmRegistrationRepository.save(any(FarmRegistration.class))).thenAnswer(i -> i.getArgument(0));
 
-        com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp resp = farmRegistrationService.cancelRegistration(101, 200);
+        com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO resp = farmRegistrationService.cancelRegistration(101, 200);
 
         assertNotNull(resp);
         assertEquals("cancelled", reg.getRegistrationStatus());

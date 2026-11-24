@@ -2,11 +2,11 @@ package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateCropSeasonReq;
-import com.mycropdiary.api.dto.cultivation.CropCategoryResp;
-import com.mycropdiary.api.dto.cultivation.CropSeasonResp;
-import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonReq;
-import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonStatusReq;
+import com.mycropdiary.api.dto.cultivation.CreateCropSeasonReqDTO;
+import com.mycropdiary.api.dto.cultivation.CropCategoryRespDTO;
+import com.mycropdiary.api.dto.cultivation.CropSeasonRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonReqDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonStatusReqDTO;
 import com.mycropdiary.api.service.cultivation.CropSeasonService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,52 +38,52 @@ public class CropSeasonController {
     @Operation(summary = "Tạo mới mùa vụ canh tác", description = "Tạo mùa vụ canh tác mới cho một trang trại (chỉ Chủ/Quản lý trang trại).")
     @PostMapping("/farms/{farmId}/crop-seasons")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<CropSeasonResp> createCropSeason(
+    public ApiResp<CropSeasonRespDTO> createCropSeason(
             @PathVariable Integer farmId,
-            @Valid @RequestBody CreateCropSeasonReq request) {
+            @Valid @RequestBody CreateCropSeasonReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        CropSeasonResp response = cropSeasonService.createCropSeason(currentUserId, farmId, request);
+        CropSeasonRespDTO response = cropSeasonService.createCropSeason(currentUserId, farmId, request);
         return ApiResp.ok("Tạo mùa vụ canh tác thành công.", response);
     }
 
     @Operation(summary = "Danh sách mùa vụ của trang trại", description = "Xem danh sách các mùa vụ của trang trại (có phân trang, tìm kiếm theo tên và lọc theo trạng thái/loại cây trồng).")
     @GetMapping("/farms/{farmId}/crop-seasons")
-    public ApiResp<PageResp<CropSeasonResp>> getCropSeasons(
+    public ApiResp<PageResp<CropSeasonRespDTO>> getCropSeasons(
             @PathVariable Integer farmId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer cropCategoryId,
             @PageableDefault(size = 15, sort = "startDate", direction = Sort.Direction.DESC) Pageable pageable) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        PageResp<CropSeasonResp> response = cropSeasonService.getCropSeasons(currentUserId, farmId, keyword, status, cropCategoryId, pageable);
+        PageResp<CropSeasonRespDTO> response = cropSeasonService.getCropSeasons(currentUserId, farmId, keyword, status, cropCategoryId, pageable);
         return ApiResp.ok("Danh sách mùa vụ canh tác.", response);
     }
 
     @Operation(summary = "Xem chi tiết mùa vụ canh tác", description = "Lấy thông tin chi tiết của một mùa vụ theo ID.")
     @GetMapping("/crop-seasons/{cropSeasonId}")
-    public ApiResp<CropSeasonResp> getCropSeasonById(@PathVariable Integer cropSeasonId) {
+    public ApiResp<CropSeasonRespDTO> getCropSeasonById(@PathVariable Integer cropSeasonId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        CropSeasonResp response = cropSeasonService.getCropSeasonById(currentUserId, cropSeasonId);
+        CropSeasonRespDTO response = cropSeasonService.getCropSeasonById(currentUserId, cropSeasonId);
         return ApiResp.ok("Chi tiết mùa vụ canh tác.", response);
     }
 
     @Operation(summary = "Cập nhật thông tin mùa vụ", description = "Chỉnh sửa tên vụ, loại cây, ngày bắt đầu/kết thúc hoặc ghi chú (không áp dụng cho vụ đã kết thúc/hủy).")
     @PutMapping("/crop-seasons/{cropSeasonId}")
-    public ApiResp<CropSeasonResp> updateCropSeason(
+    public ApiResp<CropSeasonRespDTO> updateCropSeason(
             @PathVariable Integer cropSeasonId,
-            @Valid @RequestBody UpdateCropSeasonReq request) {
+            @Valid @RequestBody UpdateCropSeasonReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        CropSeasonResp response = cropSeasonService.updateCropSeason(currentUserId, cropSeasonId, request);
+        CropSeasonRespDTO response = cropSeasonService.updateCropSeason(currentUserId, cropSeasonId, request);
         return ApiResp.ok("Cập nhật thông tin mùa vụ thành công.", response);
     }
 
     @Operation(summary = "Cập nhật trạng thái mùa vụ", description = "Cập nhật trạng thái mùa vụ: planned, active, completed, cancelled. Khi chuyển completed sẽ tự gán ngày kết thúc nếu chưa có.")
     @PatchMapping("/crop-seasons/{cropSeasonId}/status")
-    public ApiResp<CropSeasonResp> updateCropSeasonStatus(
+    public ApiResp<CropSeasonRespDTO> updateCropSeasonStatus(
             @PathVariable Integer cropSeasonId,
-            @Valid @RequestBody UpdateCropSeasonStatusReq request) {
+            @Valid @RequestBody UpdateCropSeasonStatusReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        CropSeasonResp response = cropSeasonService.updateCropSeasonStatus(currentUserId, cropSeasonId, request);
+        CropSeasonRespDTO response = cropSeasonService.updateCropSeasonStatus(currentUserId, cropSeasonId, request);
         return ApiResp.ok("Cập nhật trạng thái mùa vụ thành công.", response);
     }
 
@@ -97,8 +97,8 @@ public class CropSeasonController {
 
     @Operation(summary = "Danh mục loại cây trồng", description = "Lấy danh mục các loại cây trồng (dưa lưới, cà chua, sầu riêng...) để người dùng chọn khi tạo mùa vụ.")
     @GetMapping("/crop-categories")
-    public ApiResp<List<CropCategoryResp>> getCropCategories() {
-        List<CropCategoryResp> categories = cropSeasonService.getCropCategories();
+    public ApiResp<List<CropCategoryRespDTO>> getCropCategories() {
+        List<CropCategoryRespDTO> categories = cropSeasonService.getCropCategories();
         return ApiResp.ok("Danh mục loại cây trồng.", categories);
     }
 }

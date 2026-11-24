@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service.admin;
 
-import com.mycropdiary.api.dto.admin.UpdateUserStatusReq;
-import com.mycropdiary.api.dto.admin.UserResp;
+import com.mycropdiary.api.dto.admin.UpdateUserStatusReqDTO;
+import com.mycropdiary.api.dto.admin.UserRespDTO;
 import com.mycropdiary.api.dto.common.PageResp;
 import org.springframework.data.domain.Pageable;
 
@@ -9,15 +9,15 @@ import java.util.Map;
 
 public interface AdminUserService {
 
-    PageResp<UserResp> getUsers(String status, String search, Pageable pageable);
+    PageResp<UserRespDTO> getUsers(String status, String search, Pageable pageable);
 
-    UserResp getUserById(Integer userId);
+    UserRespDTO getUserById(Integer userId);
 
-    UserResp createUser(Integer adminUserId, com.mycropdiary.api.dto.admin.CreateAdminUserReq request);
+    UserRespDTO createUser(Integer adminUserId, com.mycropdiary.api.dto.admin.CreateAdminUserReqDTO request);
 
-    UserResp updateUserStatus(Integer adminUserId, Integer targetUserId, UpdateUserStatusReq request);
+    UserRespDTO updateUserStatus(Integer adminUserId, Integer targetUserId, UpdateUserStatusReqDTO request);
 
-    UserResp updateUserProfile(Integer adminUserId, Integer targetUserId, Map<String, Object> request);
+    UserRespDTO updateUserProfile(Integer adminUserId, Integer targetUserId, Map<String, Object> request);
 
-    UserResp updateUser(Integer adminUserId, Integer targetUserId, com.mycropdiary.api.dto.admin.UpdateAdminUserReq request);
+    UserRespDTO updateUser(Integer adminUserId, Integer targetUserId, com.mycropdiary.api.dto.admin.UpdateUserReqDTO request);
 }

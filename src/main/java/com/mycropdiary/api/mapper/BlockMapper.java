@@ -1,9 +1,9 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.block.BlockConditionResp;
-import com.mycropdiary.api.dto.block.BlockResp;
+import com.mycropdiary.api.dto.block.BlockConRespDTO;
+import com.mycropdiary.api.dto.block.BlockRespDTO;
 import com.mycropdiary.api.entity.Block;
-import com.mycropdiary.api.entity.BlockConditionObservation;
+import com.mycropdiary.api.entity.BlockCondition;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class BlockMapper {
 
-    public BlockResp toBlockResponse(Block b) {
-        return new BlockResp(
+    public BlockRespDTO toBlockResponse(Block b) {
+        return new BlockRespDTO(
                 b.getId(),
                 b.getZone().getId(),
                 b.getZone().getZoneName(),
@@ -32,12 +32,12 @@ public class BlockMapper {
         );
     }
 
-    public BlockConditionResp toBlockConditionResponse(BlockConditionObservation obs) {
+    public BlockConRespDTO toBlockConditionResponse(BlockCondition obs) {
         Integer recorderId = obs.getRecordedBy() != null ? obs.getRecordedBy().getId() : null;
         String recorderName = (obs.getRecordedBy() != null && obs.getRecordedBy().getUser() != null)
                 ? obs.getRecordedBy().getUser().getFullName() : null;
 
-        return new BlockConditionResp(
+        return new BlockConRespDTO(
                 obs.getId(),
                 obs.getBlock().getId(),
                 obs.getBlock().getBlockName(),

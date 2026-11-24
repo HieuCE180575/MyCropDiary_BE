@@ -3,7 +3,6 @@ package com.mycropdiary.api.service;
 import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.knowledge.KnowledgeArticleRespDTO;
 import com.mycropdiary.api.entity.knowledge.KnowledgeArticle;
-import com.mycropdiary.api.entity.knowledge.KnowledgeStatus;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.mapper.KnowledgeArticleMapper;
 import com.mycropdiary.api.repository.knowledge.KnowledgeArticleRepository;
@@ -92,7 +91,7 @@ class KnowledgeArticleServiceTest {
         assertNotNull(response);
         assertEquals(publicArticleId, response.id());
         assertEquals("Tomato Cultivation Guide", response.title());
-        assertEquals(KnowledgeStatus.PUBLISHED, response.status());
+        assertEquals("PUBLISHED", response.status());
     }
 
     @Test

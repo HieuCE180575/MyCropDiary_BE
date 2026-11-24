@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.cultivation;
 
-import com.mycropdiary.api.dto.cultivation.AssignCropSeasonBlockReq;
-import com.mycropdiary.api.dto.cultivation.CropSeasonBlockResp;
-import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonBlockReq;
+import com.mycropdiary.api.dto.cultivation.AssignCropSeasonBlockReqDTO;
+import com.mycropdiary.api.dto.cultivation.CropSeasonBlockRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonBlockReqDTO;
 
 import java.util.List;
 
@@ -11,22 +11,22 @@ public interface CropSeasonBlockService {
     /**
      * Gán lô đất vào mùa vụ canh tác.
      */
-    CropSeasonBlockResp assignBlockToSeason(Integer userId, Integer cropSeasonId, AssignCropSeasonBlockReq request);
+    CropSeasonBlockRespDTO assignBlockToSeason(Integer userId, Integer cropSeasonId, AssignCropSeasonBlockReqDTO request);
 
     /**
      * Danh sách tất cả các lô đất được gán trong mùa vụ.
      */
-    List<CropSeasonBlockResp> getBlocksBySeason(Integer userId, Integer cropSeasonId);
+    List<CropSeasonBlockRespDTO> getBlocksBySeason(Integer userId, Integer cropSeasonId);
 
     /**
      * Chi tiết gán lô đất trong mùa vụ.
      */
-    CropSeasonBlockResp getBlockInSeason(Integer userId, Integer cropSeasonId, Integer blockId);
+    CropSeasonBlockRespDTO getBlockInSeason(Integer userId, Integer cropSeasonId, Integer blockId);
 
     /**
      * Cập nhật diện tích, ngày gieo trồng hoặc ngày dự kiến thu hoạch của lô đất trong mùa vụ.
      */
-    CropSeasonBlockResp updateBlockInSeason(Integer userId, Integer cropSeasonId, Integer blockId, UpdateCropSeasonBlockReq request);
+    CropSeasonBlockRespDTO updateBlockInSeason(Integer userId, Integer cropSeasonId, Integer blockId, UpdateCropSeasonBlockReqDTO request);
 
     /**
      * Gỡ lô đất khỏi mùa vụ canh tác (khi chưa phát sinh nhật ký hoạt động / thu hoạch tại lô này).

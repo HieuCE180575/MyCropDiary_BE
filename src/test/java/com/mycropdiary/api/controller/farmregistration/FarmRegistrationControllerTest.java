@@ -2,11 +2,10 @@ package com.mycropdiary.api.controller.farmregistration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateReq;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResp;
-import com.mycropdiary.api.entity.farmregistration.FarmRegistrationStatus;
-import com.mycropdiary.api.exception.GlobalExceptionHandler;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationReqDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryRespDTO;
+import com.mycropdiary.api.exception.GlobalExHandler;
 import com.mycropdiary.api.service.farmregistration.FarmRegistrationService;
 import com.mycropdiary.api.util.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +50,7 @@ class FarmRegistrationControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(farmRegistrationController)
                 .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExHandler())
                 .build();
     }
 
@@ -60,7 +59,7 @@ class FarmRegistrationControllerTest {
     void createRegistration_Success() throws Exception {
         when(securityUtils.getCurrentUserId()).thenReturn(10);
 
-        FarmRegistrationCreateReq req = new FarmRegistrationCreateReq(
+        FarmRegistrationReqDTO req = new FarmRegistrationReqDTO(
                 "Nong Trai Hoa Sen",
                 "123 Duong Tran Phu",
                 "Dong Thap",
@@ -70,7 +69,7 @@ class FarmRegistrationControllerTest {
                 "https://example.com/certificate.pdf"
         );
 
-        FarmRegistrationResp resp = new FarmRegistrationResp(
+        FarmRegistrationRespDTO resp = new FarmRegistrationRespDTO(
                 1,
                 "Nong Trai Hoa Sen",
                 "123 Duong Tran Phu",
@@ -79,13 +78,13 @@ class FarmRegistrationControllerTest {
                 "Phuong 1",
                 "Mo ta nong trai sen sach",
                 "https://example.com/certificate.pdf",
-                FarmRegistrationStatus.PENDING,
+                "PENDING",
                 LocalDateTime.now(),
                 null,
                 null
         );
 
-        when(farmRegistrationService.createRegistration(eq(10), any(FarmRegistrationCreateReq.class)))
+        when(farmRegistrationService.createRegistration(eq(10), any(FarmRegistrationReqDTO.class)))
                 .thenReturn(resp);
 
         mockMvc.perform(post("/api/v1/farm-registrations")
@@ -107,7 +106,7 @@ class FarmRegistrationControllerTest {
     @Test
     @DisplayName("POST /api/v1/farm-registrations: Thiếu farmName hoặc addressLine -> 400 Bad Request")
     void createRegistration_InvalidRequest_Returns400() throws Exception {
-        FarmRegistrationCreateReq invalidReq = new FarmRegistrationCreateReq(
+        FarmRegistrationReqDTO invalidReq = new FarmRegistrationReqDTO(
                 "",
                 "",
                 null,
@@ -128,11 +127,11 @@ class FarmRegistrationControllerTest {
     void getMyRegistrations_Success() throws Exception {
         when(securityUtils.getCurrentUserId()).thenReturn(10);
 
-        FarmRegistrationSummaryResp item = new FarmRegistrationSummaryResp(
+        FarmRegistrationSummaryRespDTO item = new FarmRegistrationSummaryRespDTO(
                 1, "Farm A", "Dia chi", "Ha Noi", "Cau Giay", "Dich Vong",
-                FarmRegistrationStatus.PENDING, LocalDateTime.now(), null, null
+                "PENDING", LocalDateTime.now(), null, null
         );
-        PageResp<FarmRegistrationSummaryResp> page = new PageResp<>(List.of(item), 0, 20, 1L, 1, true);
+        PageResp<FarmRegistrationSummaryRespDTO> page = new PageResp<>(List.of(item), 0, 20, 1L, 1, true);
 
         when(farmRegistrationService.getMyRegistrations(eq(10), any(Pageable.class)))
                 .thenReturn(page);
@@ -152,9 +151,9 @@ class FarmRegistrationControllerTest {
     void getMyRegistrationDetail_Success() throws Exception {
         when(securityUtils.getCurrentUserId()).thenReturn(10);
 
-        FarmRegistrationResp resp = new FarmRegistrationResp(
+        FarmRegistrationRespDTO resp = new FarmRegistrationRespDTO(
                 2, "Farm B", "Dia chi B", "Bac Ninh", "Tu Son", "Dong Ngan",
-                "Mo ta", "https://doc.com", FarmRegistrationStatus.PENDING,
+                "Mo ta", "https://doc.com", "PENDING",
                 LocalDateTime.now(), null, null
         );
 
@@ -176,9 +175,9 @@ class FarmRegistrationControllerTest {
     void cancelRegistration_Success() throws Exception {
         when(securityUtils.getCurrentUserId()).thenReturn(10);
 
-        FarmRegistrationResp resp = new FarmRegistrationResp(
+        FarmRegistrationRespDTO resp = new FarmRegistrationRespDTO(
                 3, "Farm C", "Dia chi C", null, null, null, null, null,
-                FarmRegistrationStatus.CANCELLED, LocalDateTime.now(), null, null
+                "CANCELLED", LocalDateTime.now(), null, null
         );
 
         when(farmRegistrationService.cancelRegistration(10, 3)).thenReturn(resp);

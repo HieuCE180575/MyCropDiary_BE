@@ -91,7 +91,7 @@ public class FE10_ExpenseManagementUnitTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 5, "active")).thenReturn(Optional.of(ownerMember));
         when(expenseRepository.save(any(Expense.class))).thenReturn(expense1);
 
-        CreateExpenseReq req = new CreateExpenseReq(
+        CreateExpenseReqDTO req = new CreateExpenseReqDTO(
                 "Materials & Fertilizers",
                 new BigDecimal("18500000.00"),
                 LocalDate.of(2026, 1, 5),
@@ -100,7 +100,7 @@ public class FE10_ExpenseManagementUnitTest {
                 null
         );
 
-        ExpenseResp resp = expenseService.recordExpense(5, 1, req);
+        ExpenseRespDTO resp = expenseService.recordExpense(5, 1, req);
         assertNotNull(resp);
         assertEquals(101, resp.expenseId());
         assertEquals("Materials & Fertilizers", resp.expenseCategory());
@@ -113,7 +113,7 @@ public class FE10_ExpenseManagementUnitTest {
         when(accessGuard.requireFarmAccess(5, 1)).thenReturn(ownerMember);
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
 
-        CreateExpenseReq req = new CreateExpenseReq(
+        CreateExpenseReqDTO req = new CreateExpenseReqDTO(
                 "Labor",
                 new BigDecimal("-500000.00"),
                 LocalDate.now(),
@@ -130,7 +130,7 @@ public class FE10_ExpenseManagementUnitTest {
         when(expenseRepository.searchExpenses(1, 20, "Labor", null, null, "workers"))
                 .thenReturn(List.of(expense2));
 
-        List<ExpenseResp> list = expenseService.getExpenseList(5, 1, 20, "Labor", null, null, "workers");
+        List<ExpenseRespDTO> list = expenseService.getExpenseList(5, 1, 20, "Labor", null, null, "workers");
         assertNotNull(list);
         assertEquals(1, list.size());
         assertEquals("Labor", list.get(0).expenseCategory());
@@ -144,7 +144,7 @@ public class FE10_ExpenseManagementUnitTest {
         when(accessGuard.requireFarmAccess(5, 1)).thenReturn(ownerMember);
         when(expenseRepository.save(any(Expense.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        UpdateExpenseReq req = new UpdateExpenseReq(
+        UpdateExpenseReqDTO req = new UpdateExpenseReqDTO(
                 "Materials & Fertilizers",
                 new BigDecimal("19000000.00"),
                 LocalDate.of(2026, 1, 6),
@@ -153,7 +153,7 @@ public class FE10_ExpenseManagementUnitTest {
                 "https://img.com/receipt.jpg"
         );
 
-        ExpenseResp updated = expenseService.updateExpense(5, 101, req);
+        ExpenseRespDTO updated = expenseService.updateExpense(5, 101, req);
         assertNotNull(updated);
         assertEquals(new BigDecimal("19000000.00"), updated.amount());
         assertEquals("Updated invoice description", updated.description());
@@ -177,7 +177,7 @@ public class FE10_ExpenseManagementUnitTest {
         when(expenseRepository.findExpensesForSummary(1, null, null, null))
                 .thenReturn(List.of(expense1, expense2));
 
-        ExpenseSummaryResp summary = expenseService.getExpenseSummary(5, 1, null, null, null);
+        ExpenseSummaryRespDTO summary = expenseService.getExpenseSummary(5, 1, null, null, null);
         assertNotNull(summary);
         assertEquals(new BigDecimal("23000000.00"), summary.totalExpenseAmount());
         assertEquals(2, summary.totalExpenseCount());

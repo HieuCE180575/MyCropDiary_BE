@@ -1,11 +1,11 @@
 package com.mycropdiary.api.service.impl;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateCropSeasonReq;
-import com.mycropdiary.api.dto.cultivation.CropCategoryResp;
-import com.mycropdiary.api.dto.cultivation.CropSeasonResp;
-import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonReq;
-import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonStatusReq;
+import com.mycropdiary.api.dto.cultivation.CreateCropSeasonReqDTO;
+import com.mycropdiary.api.dto.cultivation.CropCategoryRespDTO;
+import com.mycropdiary.api.dto.cultivation.CropSeasonRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonReqDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonStatusReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.cultivation.CropCategory;
@@ -63,7 +63,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
     }
 
     @Override
-    public CropSeasonResp createCropSeason(Integer userId, Integer farmId, CreateCropSeasonReq request) {
+    public CropSeasonRespDTO createCropSeason(Integer userId, Integer farmId, CreateCropSeasonReqDTO request) {
         farmAccessGuard.requireOwnerOrAdmin(userId, farmId);
 
         Farm farm = farmRepository.findById(farmId)
@@ -105,7 +105,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
     }
 
     @Override
-    public CropSeasonResp updateCropSeason(Integer userId, Integer cropSeasonId, UpdateCropSeasonReq request) {
+    public CropSeasonRespDTO updateCropSeason(Integer userId, Integer cropSeasonId, UpdateCropSeasonReqDTO request) {
         CropSeason season = cropSeasonRepository.findById(cropSeasonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại ID: " + cropSeasonId));
 
@@ -140,7 +140,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
     }
 
     @Override
-    public CropSeasonResp updateCropSeasonStatus(Integer userId, Integer cropSeasonId, UpdateCropSeasonStatusReq request) {
+    public CropSeasonRespDTO updateCropSeasonStatus(Integer userId, Integer cropSeasonId, UpdateCropSeasonStatusReqDTO request) {
         CropSeason season = cropSeasonRepository.findById(cropSeasonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại ID: " + cropSeasonId));
 
@@ -158,7 +158,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
 
     @Override
     @Transactional(readOnly = true)
-    public CropSeasonResp getCropSeasonById(Integer userId, Integer cropSeasonId) {
+    public CropSeasonRespDTO getCropSeasonById(Integer userId, Integer cropSeasonId) {
         CropSeason season = cropSeasonRepository.findById(cropSeasonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại ID: " + cropSeasonId));
 
@@ -169,7 +169,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResp<CropSeasonResp> getCropSeasons(Integer userId, Integer farmId, String keyword, String status, Integer cropCategoryId, Pageable pageable) {
+    public PageResp<CropSeasonRespDTO> getCropSeasons(Integer userId, Integer farmId, String keyword, String status, Integer cropCategoryId, Pageable pageable) {
         farmAccessGuard.requireFarmMember(userId, farmId);
 
         Specification<CropSeason> spec = (root, query, cb) -> {
@@ -195,7 +195,7 @@ public class CropSeasonServiceImpl implements CropSeasonService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        Page<CropSeasonResp> page = cropSeasonRepository.findAll(spec, pageable)
+        Page<CropSeasonRespDTO> page = cropSeasonRepository.findAll(spec, pageable)
                 .map(this::mapToResponse);
 
         return PageResp.from(page);
@@ -220,15 +220,15 @@ public class CropSeasonServiceImpl implements CropSeasonService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CropCategoryResp> getCropCategories() {
+    public List<CropCategoryRespDTO> getCropCategories() {
         return cropCategoryRepository.findAll().stream()
-                .map(c -> new CropCategoryResp(c.getId(), c.getCategoryName(), c.getDescription(), c.getImageUrl(), c.getStatus()))
+                .map(c -> new CropCategoryRespDTO(c.getId(), c.getCategoryName(), c.getDescription(), c.getImageUrl(), c.getStatus()))
                 .toList();
     }
 
     private final CropSeasonMapper cropSeasonMapper = new CropSeasonMapper();
 
-    private CropSeasonResp mapToResponse(CropSeason cs) {
+    private CropSeasonRespDTO mapToResponse(CropSeason cs) {
         return cropSeasonMapper.toResponse(cs);
     }
 

@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.assignment.AssignedZoneResp;
-import com.mycropdiary.api.dto.assignment.AssignmentResp;
-import com.mycropdiary.api.dto.assignment.CreateAssignmentReq;
+import com.mycropdiary.api.dto.assignment.AssignedZoneRespDTO;
+import com.mycropdiary.api.dto.assignment.AssignmentRespDTO;
+import com.mycropdiary.api.dto.assignment.CreateAssignmentReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.StaffZoneAssignment;
@@ -84,7 +84,7 @@ public class FE05_ZoneAssignmentUnitTest {
     @Test
     @DisplayName("FE05_ASN_UTC01 [Normal] - Phân công nhân viên vào phân khu thành công (Passed)")
     void UTC01_assignStaff_validInput_shouldAssignSuccessfully() {
-        CreateAssignmentReq req = new CreateAssignmentReq(20, 5, Instant.now(), null);
+        CreateAssignmentReqDTO req = new CreateAssignmentReqDTO(20, 5, Instant.now(), null);
         when(accessGuard.requireFarmOwner(1, 1)).thenReturn(ownerMember);
         when(farmMemberRepository.findById(20)).thenReturn(Optional.of(staffMember));
         when(zoneRepository.findById(5)).thenReturn(Optional.of(zone));
@@ -94,7 +94,7 @@ public class FE05_ZoneAssignmentUnitTest {
         saved.setId(100);
         when(assignmentRepository.save(any(StaffZoneAssignment.class))).thenReturn(saved);
 
-        AssignmentResp resp = zoneAssignmentService.assignStaffToZone(1, 1, req);
+        AssignmentRespDTO resp = zoneAssignmentService.assignStaffToZone(1, 1, req);
 
         assertNotNull(resp);
         verify(assignmentRepository).save(any(StaffZoneAssignment.class));
@@ -103,7 +103,7 @@ public class FE05_ZoneAssignmentUnitTest {
     @Test
     @DisplayName("FE05_ASN_UTC02 [Abnormal] - Phân công nhân viên không tồn tại -> Báo lỗi ResourceNotFound (Passed)")
     void UTC02_assignStaff_nonExistentStaff_shouldThrowResourceNotFound() {
-        CreateAssignmentReq req = new CreateAssignmentReq(999, 5, Instant.now(), null);
+        CreateAssignmentReqDTO req = new CreateAssignmentReqDTO(999, 5, Instant.now(), null);
         when(accessGuard.requireFarmOwner(1, 1)).thenReturn(ownerMember);
         when(farmMemberRepository.findById(999)).thenReturn(Optional.empty());
 
@@ -118,7 +118,7 @@ public class FE05_ZoneAssignmentUnitTest {
         FarmMember foreignMember = new FarmMember(otherFarm, staffMember.getUser(), "staff", "active");
         foreignMember.setId(30);
 
-        CreateAssignmentReq req = new CreateAssignmentReq(30, 5, Instant.now(), null);
+        CreateAssignmentReqDTO req = new CreateAssignmentReqDTO(30, 5, Instant.now(), null);
         when(accessGuard.requireFarmOwner(1, 1)).thenReturn(ownerMember);
         when(farmMemberRepository.findById(30)).thenReturn(Optional.of(foreignMember));
 
@@ -129,7 +129,7 @@ public class FE05_ZoneAssignmentUnitTest {
     @DisplayName("FE05_ASN_UTC04 [Abnormal] - Nhân viên đã bị khóa/nghỉ việc -> Báo lỗi BusinessRuleException (Passed)")
     void UTC04_assignStaff_inactiveStaff_shouldThrowBusinessRule() {
         staffMember.setMembershipStatus("left");
-        CreateAssignmentReq req = new CreateAssignmentReq(20, 5, Instant.now(), null);
+        CreateAssignmentReqDTO req = new CreateAssignmentReqDTO(20, 5, Instant.now(), null);
         when(accessGuard.requireFarmOwner(1, 1)).thenReturn(ownerMember);
         when(farmMemberRepository.findById(20)).thenReturn(Optional.of(staffMember));
 
@@ -139,7 +139,7 @@ public class FE05_ZoneAssignmentUnitTest {
     @Test
     @DisplayName("FE05_ASN_UTC05 [Abnormal] - Khu vực sản xuất không tồn tại -> Báo lỗi ResourceNotFound (Passed)")
     void UTC05_assignStaff_nonExistentZone_shouldThrowResourceNotFound() {
-        CreateAssignmentReq req = new CreateAssignmentReq(20, 999, Instant.now(), null);
+        CreateAssignmentReqDTO req = new CreateAssignmentReqDTO(20, 999, Instant.now(), null);
         when(accessGuard.requireFarmOwner(1, 1)).thenReturn(ownerMember);
         when(farmMemberRepository.findById(20)).thenReturn(Optional.of(staffMember));
         when(zoneRepository.findById(999)).thenReturn(Optional.empty());
@@ -150,7 +150,7 @@ public class FE05_ZoneAssignmentUnitTest {
     @Test
     @DisplayName("FE05_ASN_UTC06 [Abnormal] - Nhân viên đang phụ trách phân khu đó -> Ném lỗi xung đột trùng lặp (Passed)")
     void UTC06_assignStaff_alreadyAssignedActive_shouldThrowResourceConflict() {
-        CreateAssignmentReq req = new CreateAssignmentReq(20, 5, Instant.now(), null);
+        CreateAssignmentReqDTO req = new CreateAssignmentReqDTO(20, 5, Instant.now(), null);
         when(accessGuard.requireFarmOwner(1, 1)).thenReturn(ownerMember);
         when(farmMemberRepository.findById(20)).thenReturn(Optional.of(staffMember));
         when(zoneRepository.findById(5)).thenReturn(Optional.of(zone));
@@ -164,7 +164,7 @@ public class FE05_ZoneAssignmentUnitTest {
     void UTC07_assignStaff_endedAtBeforeAssignedAt_shouldThrowBusinessRule() {
         Instant now = Instant.now();
         Instant past = now.minus(2, ChronoUnit.DAYS);
-        CreateAssignmentReq req = new CreateAssignmentReq(20, 5, now, past);
+        CreateAssignmentReqDTO req = new CreateAssignmentReqDTO(20, 5, now, past);
 
         when(accessGuard.requireFarmOwner(1, 1)).thenReturn(ownerMember);
         when(farmMemberRepository.findById(20)).thenReturn(Optional.of(staffMember));
@@ -194,7 +194,7 @@ public class FE05_ZoneAssignmentUnitTest {
     void UTC09_assignStaff_pastAssignedAt_defectDF018() {
         // Verified fix for DF-018: Reject assignedAt older than 1 year
         Instant veryPast = Instant.now().minus(3650, ChronoUnit.DAYS);
-        CreateAssignmentReq req = new CreateAssignmentReq(20, 5, veryPast, null);
+        CreateAssignmentReqDTO req = new CreateAssignmentReqDTO(20, 5, veryPast, null);
         when(accessGuard.requireFarmOwner(1, 1)).thenReturn(ownerMember);
         when(farmMemberRepository.findById(20)).thenReturn(Optional.of(staffMember));
         when(zoneRepository.findById(5)).thenReturn(Optional.of(zone));
@@ -211,7 +211,7 @@ public class FE05_ZoneAssignmentUnitTest {
         when(zoneRepository.findByFarmId(1)).thenReturn(List.of(zone));
         when(blockRepository.findByZoneId(5)).thenReturn(Collections.emptyList());
 
-        List<AssignedZoneResp> result = zoneAssignmentService.getAssignedZonesForCurrentStaff(1, 1);
+        List<AssignedZoneRespDTO> result = zoneAssignmentService.getAssignedZonesForCurrentStaff(1, 1);
 
         assertNotNull(result);
         assertEquals(1, result.size());

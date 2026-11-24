@@ -1,9 +1,9 @@
 package com.mycropdiary.api.service.unit;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateFarmTaskReq;
-import com.mycropdiary.api.dto.cultivation.FarmTaskResp;
-import com.mycropdiary.api.dto.cultivation.UpdateFarmTaskStatusReq;
+import com.mycropdiary.api.dto.cultivation.CreateFarmTaskReqDTO;
+import com.mycropdiary.api.dto.cultivation.FarmTaskRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateFarmTaskStatusReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.cultivation.FarmTask;
@@ -99,7 +99,7 @@ public class FE07_CropSeasonAndFarmTaskUnitTest {
         when(farmTaskRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(task)));
 
-        PageResp<FarmTaskResp> result = farmTaskService.getFarmTasks(
+        PageResp<FarmTaskRespDTO> result = farmTaskService.getFarmTasks(
                 10, 1, null, null, null, null, null, pageable);
 
         assertNotNull(result);
@@ -111,7 +111,7 @@ public class FE07_CropSeasonAndFarmTaskUnitTest {
     @Test
     @DisplayName("FE07_TSK_UTC02 [Normal] - Tạo mới công việc canh tác trong mùa vụ thành công")
     void UTC02_createTask_validPayload_shouldSaveAndReturnTask() {
-        CreateFarmTaskReq req = new CreateFarmTaskReq(
+        CreateFarmTaskReqDTO req = new CreateFarmTaskReqDTO(
                 "Bón thúc phân trùn quế", "Bón phân", "high", "planned",
                 null, null, null, null,
                 LocalDateTime.now(), LocalDateTime.now().plusDays(2), "Ghi chú bón phân"
@@ -125,7 +125,7 @@ public class FE07_CropSeasonAndFarmTaskUnitTest {
             return t;
         });
 
-        FarmTaskResp resp = farmTaskService.createTask(10, 1, req);
+        FarmTaskRespDTO resp = farmTaskService.createTask(10, 1, req);
 
         assertNotNull(resp);
         assertEquals(101, resp.taskId());
@@ -137,7 +137,7 @@ public class FE07_CropSeasonAndFarmTaskUnitTest {
     @Test
     @DisplayName("FE07_TSK_UTC03 [Boundary] - Tạo công việc thất bại khi hạn kết thúc trước ngày bắt đầu")
     void UTC03_createTask_endDateBeforeStartDate_shouldThrowBadRequest() {
-        CreateFarmTaskReq req = new CreateFarmTaskReq(
+        CreateFarmTaskReqDTO req = new CreateFarmTaskReqDTO(
                 "Nhiệm vụ lỗi ngày", "Chăm sóc", "normal", "planned",
                 null, null, null, null,
                 LocalDateTime.now().plusDays(2), LocalDateTime.now(), "Lỗi thời gian"
@@ -154,8 +154,8 @@ public class FE07_CropSeasonAndFarmTaskUnitTest {
         when(farmTaskRepository.findById(100)).thenReturn(Optional.of(task));
         when(farmTaskRepository.save(any(FarmTask.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UpdateFarmTaskStatusReq req = new UpdateFarmTaskStatusReq("in_progress");
-        FarmTaskResp resp = farmTaskService.updateTaskStatus(10, 100, req);
+        UpdateFarmTaskStatusReqDTO req = new UpdateFarmTaskStatusReqDTO("in_progress");
+        FarmTaskRespDTO resp = farmTaskService.updateTaskStatus(10, 100, req);
 
         assertNotNull(resp);
         assertEquals("in_progress", resp.status());
@@ -167,7 +167,7 @@ public class FE07_CropSeasonAndFarmTaskUnitTest {
     void UTC05_updateTaskStatus_nonExistentTask_shouldThrowResourceNotFound() {
         when(farmTaskRepository.findById(999)).thenReturn(Optional.empty());
 
-        UpdateFarmTaskStatusReq req = new UpdateFarmTaskStatusReq("completed");
+        UpdateFarmTaskStatusReqDTO req = new UpdateFarmTaskStatusReqDTO("completed");
         assertThrows(ResourceNotFoundException.class, () -> farmTaskService.updateTaskStatus(10, 999, req));
     }
 

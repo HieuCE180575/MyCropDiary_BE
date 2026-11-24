@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.cultivation.AssignCropSeasonBlockReq;
-import com.mycropdiary.api.dto.cultivation.CropSeasonBlockResp;
-import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonBlockReq;
+import com.mycropdiary.api.dto.cultivation.AssignCropSeasonBlockReqDTO;
+import com.mycropdiary.api.dto.cultivation.CropSeasonBlockRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonBlockReqDTO;
 import com.mycropdiary.api.service.cultivation.CropSeasonBlockService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,40 +32,40 @@ public class CropSeasonBlockController {
     @Operation(summary = "Gán lô đất vào mùa vụ", description = "Gán một lô đất vào mùa vụ canh tác kèm diện tích gieo trồng và ngày xuống giống/dự kiến thu hoạch.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<CropSeasonBlockResp> assignBlockToSeason(
+    public ApiResp<CropSeasonBlockRespDTO> assignBlockToSeason(
             @PathVariable Integer cropSeasonId,
-            @Valid @RequestBody AssignCropSeasonBlockReq request) {
+            @Valid @RequestBody AssignCropSeasonBlockReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        CropSeasonBlockResp response = cropSeasonBlockService.assignBlockToSeason(currentUserId, cropSeasonId, request);
+        CropSeasonBlockRespDTO response = cropSeasonBlockService.assignBlockToSeason(currentUserId, cropSeasonId, request);
         return ApiResp.ok("Gán lô đất vào mùa vụ thành công.", response);
     }
 
     @Operation(summary = "Danh sách lô đất trong mùa vụ", description = "Xem danh sách tất cả các lô đất đang được gieo trồng trong mùa vụ này.")
     @GetMapping
-    public ApiResp<List<CropSeasonBlockResp>> getBlocksBySeason(@PathVariable Integer cropSeasonId) {
+    public ApiResp<List<CropSeasonBlockRespDTO>> getBlocksBySeason(@PathVariable Integer cropSeasonId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        List<CropSeasonBlockResp> response = cropSeasonBlockService.getBlocksBySeason(currentUserId, cropSeasonId);
+        List<CropSeasonBlockRespDTO> response = cropSeasonBlockService.getBlocksBySeason(currentUserId, cropSeasonId);
         return ApiResp.ok("Danh sách lô đất trong mùa vụ.", response);
     }
 
     @Operation(summary = "Chi tiết lô đất trong mùa vụ", description = "Xem thông tin chi tiết của một lô đất cụ thể trong mùa vụ.")
     @GetMapping("/{blockId}")
-    public ApiResp<CropSeasonBlockResp> getBlockInSeason(
+    public ApiResp<CropSeasonBlockRespDTO> getBlockInSeason(
             @PathVariable Integer cropSeasonId,
             @PathVariable Integer blockId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        CropSeasonBlockResp response = cropSeasonBlockService.getBlockInSeason(currentUserId, cropSeasonId, blockId);
+        CropSeasonBlockRespDTO response = cropSeasonBlockService.getBlockInSeason(currentUserId, cropSeasonId, blockId);
         return ApiResp.ok("Chi tiết lô đất trong mùa vụ.", response);
     }
 
     @Operation(summary = "Cập nhật lô đất trong mùa vụ", description = "Chỉnh sửa diện tích gieo trồng, ngày xuống giống hoặc ngày dự kiến thu hoạch của lô đất trong mùa vụ.")
     @PutMapping("/{blockId}")
-    public ApiResp<CropSeasonBlockResp> updateBlockInSeason(
+    public ApiResp<CropSeasonBlockRespDTO> updateBlockInSeason(
             @PathVariable Integer cropSeasonId,
             @PathVariable Integer blockId,
-            @Valid @RequestBody UpdateCropSeasonBlockReq request) {
+            @Valid @RequestBody UpdateCropSeasonBlockReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        CropSeasonBlockResp response = cropSeasonBlockService.updateBlockInSeason(currentUserId, cropSeasonId, blockId, request);
+        CropSeasonBlockRespDTO response = cropSeasonBlockService.updateBlockInSeason(currentUserId, cropSeasonId, blockId, request);
         return ApiResp.ok("Cập nhật thông tin lô đất trong mùa vụ thành công.", response);
     }
 

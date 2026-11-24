@@ -1,9 +1,10 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.controller.AdminCropCategoryController;
+import com.mycropdiary.api.controller.CropCategoryController;
 import com.mycropdiary.api.controller.AdminFarmDirectoryController;
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.cultivation.CropCategoryResp;
+import com.mycropdiary.api.dto.cultivation.UpdateCropCategoryStatusReqDTO;
+import com.mycropdiary.api.dto.cultivation.CropCategoryRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.Zone;
@@ -17,6 +18,7 @@ import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.repository.cultivation.CropCategoryRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
+import com.mycropdiary.api.service.admin.impl.CropCategoryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -62,7 +64,7 @@ public class FE13_AdminDirectoryAndOversightUnitTest {
     private CropCategoryRepository cropCategoryRepository;
 
     private AdminFarmDirectoryController adminFarmDirectoryController;
-    private AdminCropCategoryController adminCropCategoryController;
+    private CropCategoryController adminCropCategoryController;
 
     private Farm testFarm;
     private Zone testZone;
@@ -80,7 +82,7 @@ public class FE13_AdminDirectoryAndOversightUnitTest {
                 cropCategoryRepository
         );
 
-        adminCropCategoryController = new AdminCropCategoryController(cropCategoryRepository);
+        adminCropCategoryController = new CropCategoryController(new CropCategoryServiceImpl(cropCategoryRepository));
 
         testFarm = new Farm();
         ReflectionTestUtils.setField(testFarm, "id", 1);
@@ -270,7 +272,7 @@ public class FE13_AdminDirectoryAndOversightUnitTest {
 
         when(cropCategoryRepository.findAll()).thenReturn(List.of(category));
 
-        ApiResp<List<CropCategoryResp>> resp = adminCropCategoryController.getCropCategories();
+        ApiResp<List<CropCategoryRespDTO>> resp = adminCropCategoryController.getCropCategories();
 
         assertNotNull(resp);
         assertEquals(1, resp.data().size());
@@ -289,8 +291,8 @@ public class FE13_AdminDirectoryAndOversightUnitTest {
         when(cropCategoryRepository.findById(1)).thenReturn(Optional.of(category));
         when(cropCategoryRepository.save(any(CropCategory.class))).thenAnswer(i -> i.getArgument(0));
 
-        ApiResp<CropCategoryResp> resp = adminCropCategoryController.updateCropCategoryStatus(
-                1, new AdminCropCategoryController.UpdateCropCategoryStatusReq("INACTIVE")
+        ApiResp<CropCategoryRespDTO> resp = adminCropCategoryController.updateCropCategoryStatus(
+                1, new UpdateCropCategoryStatusReqDTO("INACTIVE")
         );
 
         assertNotNull(resp);

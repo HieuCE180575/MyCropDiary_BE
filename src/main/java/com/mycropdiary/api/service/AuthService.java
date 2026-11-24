@@ -6,13 +6,13 @@ import com.mycropdiary.api.dto.auth.*;
 public interface AuthService {
 
     /** UC-04: Đăng ký tài khoản mới, lưu trạng thái PENDING, tạo OTP và gửi email xác thực */
-    void register(RegisterReq request);
+    void register(RegisterAccReqDTO request);
 
     /** UC-04: Xác thực OTP email, chuyển tài khoản sang ACTIVE, trả về JWT tokens */
-    AuthResp verifyOtp(VerifyOtpReq request);
+    AuthRespDTO verifyOtp(VerifyOtpReqDTO request);
 
     /** UC-03: Đăng nhập bằng email + password, trả về JWT access + refresh token */
-    AuthResp login(LoginReq request);
+    AuthRespDTO login(LoginReqDTO request);
 
     /** Gửi lại OTP nếu người dùng chưa nhận được email */
     void resendOtp(String email);
@@ -23,7 +23,7 @@ public interface AuthService {
 
     // [AI_CHANGE] UC-05: Cấp mới Access Token từ Refresh Token hợp lệ
     /** UC-05: Làm mới Access Token bằng Refresh Token còn hiệu lực */
-    AuthResp refreshToken(String refreshToken);
+    AuthRespDTO refreshToken(String refreshToken);
 
     // [AI_CHANGE] UC-06: Gửi OTP đặt lại mật khẩu qua email
     /** UC-06: Quên mật khẩu – gửi OTP đặt lại qua email */
@@ -31,8 +31,8 @@ public interface AuthService {
 
     // [AI_CHANGE] UC-06: Xác minh OTP và đặt lại mật khẩu mới
     /** UC-06: Đặt lại mật khẩu sau khi xác minh OTP */
-    void resetPassword(ResetPasswordReq request);
+    void resetPassword(ResetPasswordReqDTO request);
 
     /** Đăng nhập / Đăng ký tài khoản nhanh qua Google OAuth2 / ID Token */
-    AuthResp loginWithGoogle(GoogleAuthReq request);
+    AuthRespDTO loginWithGoogle(GoogleAuthReqDTO request);
 }

@@ -1,11 +1,13 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.worker.FarmWorkerReq;
-import com.mycropdiary.api.dto.worker.FarmWorkerResp;
+import com.mycropdiary.api.dto.worker.CreateWorkerReqDTO;
+import com.mycropdiary.api.dto.worker.UpdateWorkerReqDTO;
+import com.mycropdiary.api.dto.worker.FarmWorkerRespDTO;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.cultivation.FarmWorker;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.FarmWorkerMapper;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.cultivation.FarmWorkerRepository;
 import com.mycropdiary.api.service.cultivation.FarmWorkerService;
@@ -22,6 +24,7 @@ public class FarmWorkerServiceImpl implements FarmWorkerService {
     private final FarmWorkerRepository farmWorkerRepository;
     private final FarmMemberRepository farmMemberRepository;
     private final FarmAccessGuard accessGuard;
+    private final FarmWorkerMapper farmWorkerMapper = new FarmWorkerMapper();
 
     public FarmWorkerServiceImpl(FarmWorkerRepository farmWorkerRepository,
                                  FarmMemberRepository farmMemberRepository,
@@ -33,7 +36,7 @@ public class FarmWorkerServiceImpl implements FarmWorkerService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FarmWorkerResp> getWorkersByFarm(Integer userId, Integer farmId, String status, String keyword) {
+    public List<FarmWorkerRespDTO> getWorkersByFarm(Integer userId, Integer farmId, String status, String keyword) {
         accessGuard.requireFarmAccess(userId, farmId);
         List<FarmWorker> workers = farmWorkerRepository.findByFarmId(farmId);
 
@@ -53,20 +56,20 @@ public class FarmWorkerServiceImpl implements FarmWorkerService {
                     .toList();
         }
 
-        return workers.stream().map(FarmWorkerResp::fromEntity).toList();
+        return farmWorkerMapper.toResponseList(workers);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public FarmWorkerResp getWorkerById(Integer userId, Integer farmId, Integer workerId) {
+    public FarmWorkerRespDTO getWorkerById(Integer userId, Integer farmId, Integer workerId) {
         accessGuard.requireFarmAccess(userId, farmId);
         FarmWorker worker = farmWorkerRepository.findByIdAndFarmMemberFarmId(workerId, farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hồ sơ công nhân ID=" + workerId + " không tồn tại."));
-        return FarmWorkerResp.fromEntity(worker);
+        return farmWorkerMapper.toResponse(worker);
     }
 
     @Override
-    public FarmWorkerResp createWorker(Integer userId, Integer farmId, FarmWorkerReq req) {
+    public FarmWorkerRespDTO createWorker(Integer userId, Integer farmId, CreateWorkerReqDTO req) {
         accessGuard.requireFarmAccess(userId, farmId);
 
         FarmMember member = farmMemberRepository.findById(req.farmMemberId())
@@ -95,11 +98,11 @@ public class FarmWorkerServiceImpl implements FarmWorkerService {
         );
 
         FarmWorker saved = farmWorkerRepository.save(worker);
-        return FarmWorkerResp.fromEntity(saved);
+        return farmWorkerMapper.toResponse(saved);
     }
 
     @Override
-    public FarmWorkerResp updateWorker(Integer userId, Integer farmId, Integer workerId, FarmWorkerReq req) {
+    public FarmWorkerRespDTO updateWorker(Integer userId, Integer farmId, Integer workerId, UpdateWorkerReqDTO req) {
         accessGuard.requireFarmAccess(userId, farmId);
 
         FarmWorker worker = farmWorkerRepository.findByIdAndFarmMemberFarmId(workerId, farmId)
@@ -120,7 +123,7 @@ public class FarmWorkerServiceImpl implements FarmWorkerService {
         worker.setNotes(req.notes() != null ? req.notes().trim() : null);
 
         FarmWorker saved = farmWorkerRepository.save(worker);
-        return FarmWorkerResp.fromEntity(saved);
+        return farmWorkerMapper.toResponse(saved);
     }
 
     @Override

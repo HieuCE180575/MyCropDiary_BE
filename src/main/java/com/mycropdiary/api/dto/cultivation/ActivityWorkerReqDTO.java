@@ -1,0 +1,23 @@
+package com.mycropdiary.api.dto.cultivation;
+
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
+
+import java.math.BigDecimal;
+
+/**
+ * DTO chứa thông tin nhân công trực tiếp thực hiện một nhật ký canh tác.
+ */
+public record ActivityWorkerReqDTO(
+        @NotNull(message = "Farm worker ID is required")
+        Integer workerId,
+
+        @PositiveOrZero(message = "Work hours must be positive or zero")
+        @DecimalMax(value = "24.00", message = "Work hours must not exceed 24 hours per day")
+        BigDecimal workHours,
+
+        @Size(max = 500, message = "Notes must not exceed 500 characters")
+        String notes
+) {}

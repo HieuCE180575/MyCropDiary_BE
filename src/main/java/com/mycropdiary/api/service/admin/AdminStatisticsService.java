@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.admin;
 
-import com.mycropdiary.api.dto.admin.AdminStatisticsResp;
+import com.mycropdiary.api.dto.admin.AdminStatisticsRespDTO;
 
 public interface AdminStatisticsService {
-    AdminStatisticsResp getSystemStatistics();
+    AdminStatisticsRespDTO getSystemStatistics();
 }
 

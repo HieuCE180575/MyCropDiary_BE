@@ -86,7 +86,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-04: Đăng ký tài khoản ====================
     @Override
     @Transactional
-    public void register(RegisterReq request) {
+    public void register(RegisterAccReqDTO request) {
         String trimmedEmail = request.email().trim();
         String normalizedEmail = trimmedEmail.toLowerCase();
         String trimmedFullName = request.fullName() != null ? request.fullName().trim() : "";
@@ -117,7 +117,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-04: Xác thực OTP ====================
     @Override
     @Transactional(noRollbackFor = BadRequestException.class)
-    public AuthResp verifyOtp(VerifyOtpReq request) {
+    public AuthRespDTO verifyOtp(VerifyOtpReqDTO request) {
         User user = userRepository.findByEmailIgnoreCase(request.email().trim())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản với email này."));
 
@@ -146,7 +146,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-03: Đăng nhập ====================
     @Override
     @Transactional
-    public AuthResp login(LoginReq request) {
+    public AuthRespDTO login(LoginReqDTO request) {
         String normalizedEmail = request.email() != null ? request.email().trim() : "";
         String normalizedPassword = normalizeAndValidatePassword(request.password());
 
@@ -206,7 +206,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-05: Cấp mới Access Token từ Refresh Token ====================
     @Override
     @Transactional
-    public AuthResp refreshToken(String refreshToken) {
+    public AuthRespDTO refreshToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new BadRequestException("Refresh token không hợp lệ hoặc đã hết hạn.");
         }
@@ -233,7 +233,7 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("UC-05: Đã cấp access token mới cho user: {}", user.getEmail());
 
-        return AuthResp.of(newAccessToken, refreshToken,
+        return AuthRespDTO.of(newAccessToken, refreshToken,
                 user.getId(), user.getEmail(), user.getFullName(), user.getSystemRole());
     }
 
@@ -265,7 +265,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== UC-06: Đặt lại mật khẩu ====================
     @Override
     @Transactional(noRollbackFor = BadRequestException.class)
-    public void resetPassword(ResetPasswordReq request) {
+    public void resetPassword(ResetPasswordReqDTO request) {
         String normalizedNewPassword = normalizeAndValidatePassword(request.newPassword());
 
         User user = userRepository.findByEmailIgnoreCase(request.email().trim())
@@ -301,7 +301,7 @@ public class AuthServiceImpl implements AuthService {
     // ==================== Google OAuth2 Sign-In / Register ====================
     @Override
     @Transactional
-    public AuthResp loginWithGoogle(GoogleAuthReq request) {
+    public AuthRespDTO loginWithGoogle(GoogleAuthReqDTO request) {
         if (request == null) {
             throw new BadRequestException("Dữ liệu xác thực Google không hợp lệ.");
         }
@@ -490,7 +490,7 @@ public class AuthServiceImpl implements AuthService {
         return googleJwkCache.get(kid);
     }
 
-    private AuthResp issueTokens(User user) {
+    private AuthRespDTO issueTokens(User user) {
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId(), user.getEmail(), user.getSystemRole());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
@@ -502,7 +502,7 @@ public class AuthServiceImpl implements AuthService {
         );
         accountTokenRepository.save(refreshTokenEntity);
 
-        return AuthResp.of(accessToken, refreshToken,
+        return AuthRespDTO.of(accessToken, refreshToken,
                 user.getId(), user.getEmail(), user.getFullName(), user.getSystemRole());
     }
 

@@ -2,9 +2,9 @@ package com.mycropdiary.api.controller.farmregistration;
 
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateReq;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResp;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationReqDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryRespDTO;
 import com.mycropdiary.api.service.farmregistration.FarmRegistrationService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,9 +43,9 @@ public class FarmRegistrationController {
     @Operation(summary = "Gửi yêu cầu đăng ký trang trại", description = "Người dùng đã xác thực gửi yêu cầu đăng ký trang trại mới (Trạng thái mặc định: PENDING).")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<FarmRegistrationResp> createRegistration(@Valid @RequestBody FarmRegistrationCreateReq request) {
+    public ApiResp<FarmRegistrationRespDTO> createRegistration(@Valid @RequestBody FarmRegistrationReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmRegistrationResp response = farmRegistrationService.createRegistration(currentUserId, request);
+        FarmRegistrationRespDTO response = farmRegistrationService.createRegistration(currentUserId, request);
         return ApiResp.ok("Gửi yêu cầu đăng ký trang trại thành công.", response);
     }
 
@@ -57,10 +57,10 @@ public class FarmRegistrationController {
      */
     @Operation(summary = "Xem danh sách yêu cầu đăng ký của tôi", description = "Lấy danh sách các yêu cầu đăng ký trang trại của người dùng đang đăng nhập (Có phân trang).")
     @GetMapping
-    public ApiResp<PageResp<FarmRegistrationSummaryResp>> getMyRegistrations(
+    public ApiResp<PageResp<FarmRegistrationSummaryRespDTO>> getMyRegistrations(
             @PageableDefault(size = 20) Pageable pageable) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        PageResp<FarmRegistrationSummaryResp> response = farmRegistrationService.getMyRegistrations(currentUserId, pageable);
+        PageResp<FarmRegistrationSummaryRespDTO> response = farmRegistrationService.getMyRegistrations(currentUserId, pageable);
         return ApiResp.ok("Danh sách yêu cầu đăng ký trang trại của tôi.", response);
     }
 
@@ -72,9 +72,9 @@ public class FarmRegistrationController {
      */
     @Operation(summary = "Xem chi tiết yêu cầu đăng ký của tôi", description = "Lấy thông tin chi tiết một yêu cầu đăng ký trang trại của người dùng đang đăng nhập theo ID.")
     @GetMapping("/{registrationId}")
-    public ApiResp<FarmRegistrationResp> getMyRegistrationDetail(@PathVariable Integer registrationId) {
+    public ApiResp<FarmRegistrationRespDTO> getMyRegistrationDetail(@PathVariable Integer registrationId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmRegistrationResp response = farmRegistrationService.getMyRegistrationDetail(currentUserId, registrationId);
+        FarmRegistrationRespDTO response = farmRegistrationService.getMyRegistrationDetail(currentUserId, registrationId);
         return ApiResp.ok("Chi tiết yêu cầu đăng ký trang trại.", response);
     }
 
@@ -86,9 +86,9 @@ public class FarmRegistrationController {
      */
     @Operation(summary = "Hủy yêu cầu đăng ký trang trại", description = "Người dùng hủy yêu cầu đăng ký trang trại của chính mình khi trạng thái là PENDING.")
     @PatchMapping("/{registrationId}/cancel")
-    public ApiResp<FarmRegistrationResp> cancelRegistration(@PathVariable Integer registrationId) {
+    public ApiResp<FarmRegistrationRespDTO> cancelRegistration(@PathVariable Integer registrationId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmRegistrationResp response = farmRegistrationService.cancelRegistration(currentUserId, registrationId);
+        FarmRegistrationRespDTO response = farmRegistrationService.cancelRegistration(currentUserId, registrationId);
         return ApiResp.ok("Hủy yêu cầu đăng ký trang trại thành công.", response);
     }
 }

@@ -2,8 +2,7 @@ package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.PageResp;
 import com.mycropdiary.api.dto.knowledge.KnowledgeArticleRespDTO;
-import com.mycropdiary.api.entity.knowledge.KnowledgeStatus;
-import com.mycropdiary.api.exception.GlobalExceptionHandler;
+import com.mycropdiary.api.exception.GlobalExHandler;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.service.KnowledgeArticleService;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +42,7 @@ class KnowledgeArticleControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(knowledgeArticleController)
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExHandler())
                 .build();
     }
 
@@ -61,7 +60,7 @@ class KnowledgeArticleControllerTest {
                 "Full content",
                 "tomato",
                 "https://example.com/guide",
-                KnowledgeStatus.PUBLISHED,
+                "PUBLISHED",
                 true,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
@@ -97,7 +96,7 @@ class KnowledgeArticleControllerTest {
                 "Full content",
                 "tomato",
                 "https://example.com/guide",
-                KnowledgeStatus.PUBLISHED,
+                "PUBLISHED",
                 true,
                 LocalDateTime.now(),
                 LocalDateTime.now(),

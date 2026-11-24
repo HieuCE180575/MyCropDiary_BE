@@ -41,9 +41,9 @@ public class MaterialUsageController {
     @Operation(summary = "Tạo mới nhật ký sử dụng vật tư", description = "Ghi nhận sử dụng vật tư (phân bón, thuốc BVTV, v.v.) cho một hoạt động canh tác.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<MaterialUsageResp> createMaterialUsage(@Valid @RequestBody CreateMaterialUsageReq request) {
+    public ApiResp<MaterialUsageRespDTO> createMaterialUsage(@Valid @RequestBody CreateMaterialUsageReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        MaterialUsageResp response = materialUsageService.createMaterialUsage(currentUserId, request);
+        MaterialUsageRespDTO response = materialUsageService.createMaterialUsage(currentUserId, request);
         return ApiResp.ok("Ghi nhận sử dụng vật tư thành công.", response);
     }
 
@@ -52,11 +52,11 @@ public class MaterialUsageController {
      */
     @Operation(summary = "Cập nhật nhật ký sử dụng vật tư", description = "Chỉnh sửa thông tin bản ghi sử dụng vật tư đã tạo (UC-25.3).")
     @PutMapping("/{materialUsageId}")
-    public ApiResp<MaterialUsageResp> updateMaterialUsage(
+    public ApiResp<MaterialUsageRespDTO> updateMaterialUsage(
             @PathVariable Integer materialUsageId,
-            @Valid @RequestBody UpdateMaterialUsageReq request) {
+            @Valid @RequestBody UpdateMaterialUsageReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        MaterialUsageResp response = materialUsageService.updateMaterialUsage(currentUserId, materialUsageId, request);
+        MaterialUsageRespDTO response = materialUsageService.updateMaterialUsage(currentUserId, materialUsageId, request);
         return ApiResp.ok("Cập nhật sử dụng vật tư thành công.", response);
     }
 
@@ -65,7 +65,7 @@ public class MaterialUsageController {
      */
     @Operation(summary = "Xem lịch sử sử dụng vật tư", description = "Lấy danh sách vật tư đã sử dụng theo trang trại, hoạt động canh tác hoặc mùa vụ (có phân trang, tìm kiếm theo từ khóa và lọc nâng cao).")
     @GetMapping
-    public ApiResp<PageResp<MaterialUsageResp>> getMaterialUsages(
+    public ApiResp<PageResp<MaterialUsageRespDTO>> getMaterialUsages(
             @RequestParam(required = false) Integer farmId,
             @RequestParam(required = false) Integer farmingActivityId,
             @RequestParam(required = false) Integer cropSeasonId,
@@ -75,7 +75,7 @@ public class MaterialUsageController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
             @PageableDefault(size = 20, sort = "usedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        PageResp<MaterialUsageResp> response;
+        PageResp<MaterialUsageRespDTO> response;
         if (farmId != null) {
             response = materialUsageService.searchAndFilterMaterialUsages(
                     currentUserId, farmId, farmingActivityId, cropSeasonId, keyword, materialType, fromDate, toDate, pageable);
@@ -102,9 +102,9 @@ public class MaterialUsageController {
      */
     @Operation(summary = "Danh sách vật tư của trang trại", description = "Lấy danh mục vật tư (phân bón, thuốc BVTV sinh học, hạt giống...) đang khả dụng của trang trại.")
     @GetMapping("/materials")
-    public ApiResp<java.util.List<MaterialOptionResp>> getMaterials(@RequestParam Integer farmId) {
+    public ApiResp<java.util.List<MaterialOptionRespDTO>> getMaterials(@RequestParam Integer farmId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        java.util.List<MaterialOptionResp> response = materialUsageService.getMaterialsByFarm(currentUserId, farmId);
+        java.util.List<MaterialOptionRespDTO> response = materialUsageService.getMaterialsByFarm(currentUserId, farmId);
         return ApiResp.ok("Lấy danh mục vật tư thành công.", response);
     }
 
@@ -114,9 +114,9 @@ public class MaterialUsageController {
     @Operation(summary = "Tạo mới vật tư cho trang trại", description = "Thêm một loại vật tư mới vào danh mục của trang trại.")
     @PostMapping("/materials")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<MaterialOptionResp> createMaterial(@Valid @RequestBody CreateMaterialReq request) {
+    public ApiResp<MaterialOptionRespDTO> createMaterial(@Valid @RequestBody CreateMaterialReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        MaterialOptionResp response = materialUsageService.createMaterial(currentUserId, request);
+        MaterialOptionRespDTO response = materialUsageService.createMaterial(currentUserId, request);
         return ApiResp.ok("Tạo mới vật tư thành công.", response);
     }
 
@@ -125,9 +125,9 @@ public class MaterialUsageController {
      */
     @Operation(summary = "Xem chi tiết bản ghi sử dụng vật tư", description = "Lấy thông tin chi tiết của bản ghi sử dụng vật tư theo ID.")
     @GetMapping("/{materialUsageId}")
-    public ApiResp<MaterialUsageResp> getMaterialUsageById(@PathVariable("materialUsageId") Integer materialUsageId) {
+    public ApiResp<MaterialUsageRespDTO> getMaterialUsageById(@PathVariable("materialUsageId") Integer materialUsageId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        MaterialUsageResp response = materialUsageService.getMaterialUsageById(currentUserId, materialUsageId);
+        MaterialUsageRespDTO response = materialUsageService.getMaterialUsageById(currentUserId, materialUsageId);
         return ApiResp.ok("Lấy chi tiết sử dụng vật tư thành công.", response);
     }
 }

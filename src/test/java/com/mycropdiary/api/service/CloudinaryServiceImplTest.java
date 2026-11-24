@@ -2,7 +2,7 @@ package com.mycropdiary.api.service;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Uploader;
-import com.mycropdiary.api.dto.file.FileUploadResp;
+import com.mycropdiary.api.dto.file.FileUploadRespDTO;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.service.impl.CloudinaryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,7 +77,7 @@ class CloudinaryServiceImplTest {
 
         when(uploader.upload(any(byte[].class), anyMap())).thenReturn(uploadResult);
 
-        FileUploadResp resp = cloudinaryService.uploadFile(file, "mycropdiary/evidence");
+        FileUploadRespDTO resp = cloudinaryService.uploadFile(file, "mycropdiary/evidence");
 
         assertNotNull(resp);
         assertEquals("https://res.cloudinary.com/drajm922/image/upload/v12345/vietgap_cert.pdf", resp.url());
@@ -96,7 +96,7 @@ class CloudinaryServiceImplTest {
         when(cloudinary.uploader()).thenReturn(uploader);
         when(uploader.upload(any(byte[].class), anyMap())).thenThrow(new RuntimeException("Cloudinary network timeout"));
 
-        FileUploadResp resp = cloudinaryService.uploadFile(file, "mycropdiary/evidence");
+        FileUploadRespDTO resp = cloudinaryService.uploadFile(file, "mycropdiary/evidence");
 
         assertNotNull(resp);
         assertTrue(resp.url().startsWith("/files/"));

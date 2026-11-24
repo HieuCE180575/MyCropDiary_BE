@@ -1,12 +1,13 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.user.ChangePasswordReq;
-import com.mycropdiary.api.dto.user.UpdateProfileReq;
-import com.mycropdiary.api.dto.user.UserProfileResp;
+import com.mycropdiary.api.dto.user.ChangePasswordReqDTO;
+import com.mycropdiary.api.dto.user.UpdateProfileReqDTO;
+import com.mycropdiary.api.dto.user.UserProfileRespDTO;
 import com.mycropdiary.api.entity.AccountToken;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.UserMapper;
 import com.mycropdiary.api.repository.AccountTokenRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.service.UserProfileService;
@@ -27,6 +28,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserRepository userRepository;
     private final AccountTokenRepository accountTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper = new UserMapper();
 
     public UserProfileServiceImpl(UserRepository userRepository,
                                   AccountTokenRepository accountTokenRepository,
@@ -37,15 +39,15 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
-    public UserProfileResp getProfile(Integer userId) {
+    public UserProfileRespDTO getProfile(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng."));
-        return UserProfileResp.fromEntity(user);
+        return userMapper.toProfileResponse(user);
     }
 
     @Override
     @Transactional
-    public UserProfileResp updateProfile(Integer userId, UpdateProfileReq request) {
+    public UserProfileRespDTO updateProfile(Integer userId, UpdateProfileReqDTO request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng."));
 
@@ -63,12 +65,12 @@ public class UserProfileServiceImpl implements UserProfileService {
 
         User saved = userRepository.save(user);
         log.info("Cập nhật hồ sơ thành công cho userId: {}", userId);
-        return UserProfileResp.fromEntity(saved);
+        return userMapper.toProfileResponse(saved);
     }
 
     @Override
     @Transactional
-    public void changePassword(Integer userId, ChangePasswordReq request) {
+    public void changePassword(Integer userId, ChangePasswordReqDTO request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng."));
 

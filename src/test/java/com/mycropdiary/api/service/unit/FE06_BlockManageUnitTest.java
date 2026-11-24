@@ -1,19 +1,19 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.block.BlockConditionResp;
-import com.mycropdiary.api.dto.block.BlockResp;
-import com.mycropdiary.api.dto.block.CreateBlockReq;
-import com.mycropdiary.api.dto.block.RecordBlockConditionReq;
-import com.mycropdiary.api.dto.block.UpdateBlockReq;
+import com.mycropdiary.api.dto.block.BlockConRespDTO;
+import com.mycropdiary.api.dto.block.BlockRespDTO;
+import com.mycropdiary.api.dto.block.CreateBlockReqDTO;
+import com.mycropdiary.api.dto.block.RecordBlockConReqDTO;
+import com.mycropdiary.api.dto.block.UpdateBlockReqDTO;
 import com.mycropdiary.api.entity.Block;
-import com.mycropdiary.api.entity.BlockConditionObservation;
+import com.mycropdiary.api.entity.BlockCondition;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.Zone;
 import com.mycropdiary.api.exception.BusinessRuleException;
 import com.mycropdiary.api.exception.ResourceConflictException;
-import com.mycropdiary.api.repository.BlockConditionObservationRepository;
+import com.mycropdiary.api.repository.BlockConditionRepository;
 import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
@@ -51,7 +51,7 @@ public class FE06_BlockManageUnitTest {
     @Mock
     private StaffZoneAssignmentRepository assignmentRepository;
     @Mock
-    private BlockConditionObservationRepository conditionObservationRepository;
+    private BlockConditionRepository conditionObservationRepository;
     @Mock
     private FarmMemberRepository farmMemberRepository;
     @Mock
@@ -91,7 +91,7 @@ public class FE06_BlockManageUnitTest {
     @Test
     @DisplayName("FE06_BLK_UTC01 [Normal] - Tạo mới lô đất trong phân khu thành công (Passed)")
     void UTC01_createBlock_validInput_shouldCreateSuccessfully() {
-        CreateBlockReq req = new CreateBlockReq(
+        CreateBlockReqDTO req = new CreateBlockReqDTO(
                 "Lô A02", "Lô trồng cà chua", new BigDecimal("2500.00"), "m2",
                 "Đất cát pha", null, "AVAILABLE", new BigDecimal("10.762622"), new BigDecimal("106.660172"), null
         );
@@ -108,7 +108,7 @@ public class FE06_BlockManageUnitTest {
         savedBlock.setAreaUnit("m2");
         when(blockRepository.save(any(Block.class))).thenReturn(savedBlock);
 
-        BlockResp resp = blockService.createBlock(1, 5, req);
+        BlockRespDTO resp = blockService.createBlock(1, 5, req);
 
         assertNotNull(resp);
         assertEquals(21, resp.id());
@@ -119,7 +119,7 @@ public class FE06_BlockManageUnitTest {
     @Test
     @DisplayName("FE06_BLK_UTC02 [Abnormal] - Tên lô đất bị trùng trong cùng phân khu -> Báo lỗi ResourceConflict (Passed)")
     void UTC02_createBlock_duplicateNameInZone_shouldThrowResourceConflict() {
-        CreateBlockReq req = new CreateBlockReq("Lô A01", new BigDecimal("2000.00"), "Lô trùng");
+        CreateBlockReqDTO req = new CreateBlockReqDTO("Lô A01", new BigDecimal("2000.00"), "Lô trùng");
         when(accessGuard.requireZoneAccess(1, 5)).thenReturn(zone);
         when(blockRepository.existsByZoneIdAndBlockNameIgnoreCase(5, "Lô A01")).thenReturn(true);
 
@@ -129,7 +129,7 @@ public class FE06_BlockManageUnitTest {
     @Test
     @DisplayName("FE06_BLK_UTC03 [Abnormal] - Nhập thiếu vĩ độ hoặc kinh độ -> Báo lỗi BusinessRule (Passed)")
     void UTC03_createBlock_incompleteCoordinates_shouldThrowBusinessRule() {
-        CreateBlockReq req = new CreateBlockReq(
+        CreateBlockReqDTO req = new CreateBlockReqDTO(
                 "Lô A03", "Thiếu kinh độ", new BigDecimal("1000.00"), "m2",
                 "Đất thịt", null, "AVAILABLE", new BigDecimal("10.762622"), null, null
         );
@@ -144,7 +144,7 @@ public class FE06_BlockManageUnitTest {
     @DisplayName("FE06_BLK_UTC04 [Boundary] - Tổng diện tích các lô vượt quá diện tích phân khu -> Chặn vi phạm BusinessRule (Passed)")
     void UTC04_createBlock_exceedZoneCapacity_shouldThrowBusinessRule() {
         // Zone area = 10000 m2, currently used = 8500 m2, new block = 2000 m2 -> total 10500 > 10000
-        CreateBlockReq req = new CreateBlockReq("Lô A04", new BigDecimal("2000.00"), "Quá sức chứa");
+        CreateBlockReqDTO req = new CreateBlockReqDTO("Lô A04", new BigDecimal("2000.00"), "Quá sức chứa");
         when(accessGuard.requireZoneAccess(1, 5)).thenReturn(zone);
         when(blockRepository.existsByZoneIdAndBlockNameIgnoreCase(5, "Lô A04")).thenReturn(false);
         when(blockRepository.sumAreaValueByZoneId(5, null)).thenReturn(new BigDecimal("8500.00"));
@@ -155,7 +155,7 @@ public class FE06_BlockManageUnitTest {
     @Test
     @DisplayName("FE06_BLK_UTC05 [Normal] - Cập nhật thông tin lô đất thành công (Passed)")
     void UTC05_updateBlock_validInput_shouldUpdateSuccessfully() {
-        UpdateBlockReq req = new UpdateBlockReq(
+        UpdateBlockReqDTO req = new UpdateBlockReqDTO(
                 "Lô A01 Cải Tạo", "Đã bón phân lót", new BigDecimal("3200.00"), "m2",
                 "Đất phù sa giàu mùn", null, "AVAILABLE", null, null, null
         );
@@ -165,7 +165,7 @@ public class FE06_BlockManageUnitTest {
         when(blockRepository.sumAreaValueByZoneId(5, 20)).thenReturn(new BigDecimal("4000.00"));
         when(blockRepository.save(any(Block.class))).thenAnswer(i -> i.getArgument(0));
 
-        BlockResp resp = blockService.updateBlock(1, 20, req);
+        BlockRespDTO resp = blockService.updateBlock(1, 20, req);
 
         assertNotNull(resp);
         assertEquals("Lô A01 Cải Tạo", resp.blockName());
@@ -187,7 +187,7 @@ public class FE06_BlockManageUnitTest {
     void UTC07_getBlockById_validId_shouldReturnBlockDetail() {
         when(accessGuard.requireBlockAccess(1, 20)).thenReturn(block);
 
-        BlockResp resp = blockService.getBlockById(1, 20);
+        BlockRespDTO resp = blockService.getBlockById(1, 20);
 
         assertNotNull(resp);
         assertEquals(20, resp.id());
@@ -199,28 +199,28 @@ public class FE06_BlockManageUnitTest {
     @DisplayName("FE06_BLK_UTC08 [Normal] - Ghi nhận tình trạng lô đất thành công (Passed)")
     void UTC08_recordBlockCondition_validInput_shouldSaveObservation() {
         Instant now = Instant.now();
-        RecordBlockConditionReq req = new RecordBlockConditionReq("Độ ẩm", "Độ ẩm đạt 65%", null, now);
+        RecordBlockConReqDTO req = new RecordBlockConReqDTO("Độ ẩm", "Độ ẩm đạt 65%", null, now);
 
         when(accessGuard.requireBlockAccess(1, 20)).thenReturn(block);
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 1, "active")).thenReturn(Optional.of(recorderMember));
 
-        BlockConditionObservation savedObs = new BlockConditionObservation(block, recorderMember, "Độ ẩm", "Độ ẩm đạt 65%", null, now);
+        BlockCondition savedObs = new BlockCondition(block, recorderMember, "Độ ẩm", "Độ ẩm đạt 65%", null, now);
         savedObs.setId(100);
-        when(conditionObservationRepository.save(any(BlockConditionObservation.class))).thenReturn(savedObs);
+        when(conditionObservationRepository.save(any(BlockCondition.class))).thenReturn(savedObs);
 
-        BlockConditionResp resp = blockService.recordBlockCondition(1, 20, req);
+        BlockConRespDTO resp = blockService.recordBlockCondition(1, 20, req);
 
         assertNotNull(resp);
         assertEquals(100, resp.observationId());
         assertEquals("Độ ẩm", resp.conditionType());
-        verify(conditionObservationRepository).save(any(BlockConditionObservation.class));
+        verify(conditionObservationRepository).save(any(BlockCondition.class));
     }
 
     @Test
     @DisplayName("FE06_BLK_UTC09 [Boundary] - Tính toán sức chứa phân khu chính xác tuyệt đối với BigDecimal (Passed)")
     void UTC09_createBlock_precisionBoundaryOverflow_defectDF020() {
         // Verified fix for DF-020: BigDecimal capacity arithmetic rejects 9999.9999 + 0.0002 > 10000.00 cleanly
-        CreateBlockReq overflowReq = new CreateBlockReq("Lô Lẻ Vượt Biên", new BigDecimal("0.0002"), "Chính xác số thực");
+        CreateBlockReqDTO overflowReq = new CreateBlockReqDTO("Lô Lẻ Vượt Biên", new BigDecimal("0.0002"), "Chính xác số thực");
         when(accessGuard.requireZoneAccess(1, 5)).thenReturn(zone);
         when(blockRepository.existsByZoneIdAndBlockNameIgnoreCase(5, "Lô Lẻ Vượt Biên")).thenReturn(false);
         when(blockRepository.sumAreaValueByZoneId(5, null)).thenReturn(new BigDecimal("9999.9999"));
@@ -234,7 +234,7 @@ public class FE06_BlockManageUnitTest {
     void UTC10_recordBlockCondition_futureObservedAt_defectDF021() {
         // Verified fix for DF-021: @PastOrPresent on RecordBlockConditionReq + service timestamp guard
         Instant future = Instant.now().plus(10, ChronoUnit.DAYS);
-        RecordBlockConditionReq req = new RecordBlockConditionReq("Độ ẩm", "Tương lai", null, future);
+        RecordBlockConReqDTO req = new RecordBlockConReqDTO("Độ ẩm", "Tương lai", null, future);
         jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
         assertFalse(validator.validate(req).isEmpty());
 

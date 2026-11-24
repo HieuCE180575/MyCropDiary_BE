@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.soil.CreateSoilAssessmentReq;
-import com.mycropdiary.api.dto.soil.SoilAssessmentResp;
-import com.mycropdiary.api.dto.soil.UpdateSoilAssessmentReq;
+import com.mycropdiary.api.dto.soil.CreateSoilReqDTO;
+import com.mycropdiary.api.dto.soil.SoilAssessmentRespDTO;
+import com.mycropdiary.api.dto.soil.UpdateSoilReqDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.SoilAssessment;
@@ -35,7 +35,7 @@ public class SoilAssessmentServiceImpl implements SoilAssessmentService {
     }
 
     @Override
-    public SoilAssessmentResp createSoilAssessment(Integer currentUserId, Integer blockId, CreateSoilAssessmentReq request) {
+    public SoilAssessmentRespDTO createSoilAssessment(Integer currentUserId, Integer blockId, CreateSoilReqDTO request) {
         Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
         Integer farmId = block.getZone().getFarm().getId();
 
@@ -62,36 +62,36 @@ public class SoilAssessmentServiceImpl implements SoilAssessmentService {
         assessment.setLabTestReportUrl(request.labTestReportUrl());
 
         SoilAssessment saved = soilRepository.save(assessment);
-        return SoilAssessmentResp.fromEntity(saved);
+        return SoilAssessmentRespDTO.fromEntity(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<SoilAssessmentResp> getSoilAssessmentHistory(Integer currentUserId, Integer blockId) {
+    public List<SoilAssessmentRespDTO> getSoilAssessmentHistory(Integer currentUserId, Integer blockId) {
         accessGuard.requireBlockAccess(currentUserId, blockId);
         List<SoilAssessment> list = soilRepository.findByBlockIdOrderByAssessedAtDesc(blockId);
-        return list.stream().map(SoilAssessmentResp::fromEntity).toList();
+        return list.stream().map(SoilAssessmentRespDTO::fromEntity).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<SoilAssessmentResp> getFarmSoilAssessmentHistory(Integer currentUserId, Integer farmId) {
+    public List<SoilAssessmentRespDTO> getFarmSoilAssessmentHistory(Integer currentUserId, Integer farmId) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
         List<SoilAssessment> list = soilRepository.findByFarmIdOrderByAssessedAtDesc(farmId);
-        return list.stream().map(SoilAssessmentResp::fromEntity).toList();
+        return list.stream().map(SoilAssessmentRespDTO::fromEntity).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SoilAssessmentResp getSoilAssessmentDetails(Integer currentUserId, Integer assessmentId) {
+    public SoilAssessmentRespDTO getSoilAssessmentDetails(Integer currentUserId, Integer assessmentId) {
         SoilAssessment entity = soilRepository.findById(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kết quả đánh giá thổ nhưỡng ID: " + assessmentId));
         accessGuard.requireBlockAccess(currentUserId, entity.getBlock().getId());
-        return SoilAssessmentResp.fromEntity(entity);
+        return SoilAssessmentRespDTO.fromEntity(entity);
     }
 
     @Override
-    public SoilAssessmentResp updateSoilAssessment(Integer currentUserId, Integer assessmentId, UpdateSoilAssessmentReq request) {
+    public SoilAssessmentRespDTO updateSoilAssessment(Integer currentUserId, Integer assessmentId, UpdateSoilReqDTO request) {
         SoilAssessment entity = soilRepository.findById(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kết quả đánh giá thổ nhưỡng ID: " + assessmentId));
         accessGuard.requireBlockAccess(currentUserId, entity.getBlock().getId());
@@ -126,7 +126,7 @@ public class SoilAssessmentServiceImpl implements SoilAssessmentService {
         }
 
         SoilAssessment updated = soilRepository.save(entity);
-        return SoilAssessmentResp.fromEntity(updated);
+        return SoilAssessmentRespDTO.fromEntity(updated);
     }
 
     @Override

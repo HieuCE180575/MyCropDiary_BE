@@ -1,10 +1,10 @@
 package com.mycropdiary.api.service.impl;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.knowledge.CreateKnowledgeArticleReq;
+import com.mycropdiary.api.dto.knowledge.CreateKnowledgeArticleReqDTO;
 import com.mycropdiary.api.dto.knowledge.KnowledgeArticleRespDTO;
-import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeArticleReq;
-import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeStatusReq;
+import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeArticleReqDTO;
+import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeStatusReqDTO;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.knowledge.KnowledgeArticle;
 import com.mycropdiary.api.exception.ResourceConflictException;
@@ -83,7 +83,7 @@ public class AdminKnowledgeArticleServiceImpl implements AdminKnowledgeArticleSe
     }
 
     @Override
-    public KnowledgeArticleRespDTO createArticle(Integer adminUserId, CreateKnowledgeArticleReq request) {
+    public KnowledgeArticleRespDTO createArticle(Integer adminUserId, CreateKnowledgeArticleReqDTO request) {
         User author = null;
         if (adminUserId != null) {
             author = userRepository.findById(adminUserId).orElse(null);
@@ -114,7 +114,7 @@ public class AdminKnowledgeArticleServiceImpl implements AdminKnowledgeArticleSe
     }
 
     @Override
-    public KnowledgeArticleRespDTO updateArticle(Integer adminUserId, Integer id, UpdateKnowledgeArticleReq request) {
+    public KnowledgeArticleRespDTO updateArticle(Integer adminUserId, Integer id, UpdateKnowledgeArticleReqDTO request) {
         KnowledgeArticle article = knowledgeArticleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài viết kiến thức với ID: " + id));
 
@@ -142,7 +142,7 @@ public class AdminKnowledgeArticleServiceImpl implements AdminKnowledgeArticleSe
     }
 
     @Override
-    public KnowledgeArticleRespDTO updateArticleStatus(Integer adminUserId, Integer id, UpdateKnowledgeStatusReq request) {
+    public KnowledgeArticleRespDTO updateArticleStatus(Integer adminUserId, Integer id, UpdateKnowledgeStatusReqDTO request) {
         KnowledgeArticle article = knowledgeArticleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài viết kiến thức với ID: " + id));
 

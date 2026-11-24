@@ -1,11 +1,11 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.assignment.AssignedZoneResp;
-import com.mycropdiary.api.dto.block.BlockResp;
-import com.mycropdiary.api.dto.farm.CreateZoneReq;
-import com.mycropdiary.api.dto.farm.UpdateZoneReq;
-import com.mycropdiary.api.dto.farm.ZoneDetailResp;
-import com.mycropdiary.api.dto.farm.ZoneResp;
+import com.mycropdiary.api.dto.assignment.AssignedZoneRespDTO;
+import com.mycropdiary.api.dto.block.BlockRespDTO;
+import com.mycropdiary.api.dto.farm.CreateZoneReqDTO;
+import com.mycropdiary.api.dto.farm.UpdateZoneReqDTO;
+import com.mycropdiary.api.dto.farm.ZoneDetailRespDTO;
+import com.mycropdiary.api.dto.farm.ZoneRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -54,7 +54,7 @@ public class ZoneServiceImpl implements ZoneService {
     }
 
     @Override
-    public ZoneResp createZone(Integer currentUserId, Integer farmId, CreateZoneReq request) {
+    public ZoneRespDTO createZone(Integer currentUserId, Integer farmId, CreateZoneReqDTO request) {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy trang trại ID: " + farmId));
 
@@ -81,7 +81,7 @@ public class ZoneServiceImpl implements ZoneService {
     }
 
     @Override
-    public ZoneResp updateZone(Integer currentUserId, Integer zoneId, UpdateZoneReq request) {
+    public ZoneRespDTO updateZone(Integer currentUserId, Integer zoneId, UpdateZoneReqDTO request) {
         Zone zone = accessGuard.requireZoneAccess(currentUserId, zoneId);
         accessGuard.requireOwnerOrAdmin(currentUserId, zone.getFarm().getId());
 
@@ -132,12 +132,12 @@ public class ZoneServiceImpl implements ZoneService {
 
     @Override
     @Transactional(readOnly = true)
-    public ZoneDetailResp getZoneById(Integer currentUserId, Integer zoneId) {
+    public ZoneDetailRespDTO getZoneById(Integer currentUserId, Integer zoneId) {
         Zone zone = accessGuard.requireZoneAccess(currentUserId, zoneId);
         List<Block> blocks = blockRepository.findByZoneId(zoneId);
-        List<BlockResp> blockResps = blocks.stream().map(this::toBlockResponse).toList();
+        List<BlockRespDTO> blockResps = blocks.stream().map(this::toBlockResponse).toList();
 
-        return new ZoneDetailResp(
+        return new ZoneDetailRespDTO(
                 zone.getId(),
                 zone.getFarm().getId(),
                 zone.getZoneName(),
@@ -155,7 +155,7 @@ public class ZoneServiceImpl implements ZoneService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ZoneResp> searchZones(Integer currentUserId, Integer farmId, String keyword, String status) {
+    public List<ZoneRespDTO> searchZones(Integer currentUserId, Integer farmId, String keyword, String status) {
         FarmMember member = accessGuard.requireFarmMember(currentUserId, farmId);
         String role = accessGuard.getUserRoleInFarm(currentUserId, farmId);
 
@@ -178,24 +178,24 @@ public class ZoneServiceImpl implements ZoneService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AssignedZoneResp> getAssignedZones(Integer currentUserId, Integer farmId) {
+    public List<AssignedZoneRespDTO> getAssignedZones(Integer currentUserId, Integer farmId) {
         return zoneAssignmentService.getAssignedZonesForCurrentStaff(currentUserId, farmId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ZoneDetailResp getAssignedZoneDetail(Integer currentUserId, Integer zoneId) {
+    public ZoneDetailRespDTO getAssignedZoneDetail(Integer currentUserId, Integer zoneId) {
         return getZoneById(currentUserId, zoneId);
     }
 
     private final ZoneMapper zoneMapper = new ZoneMapper();
     private final BlockMapper blockMapper = new BlockMapper();
 
-    private ZoneResp toZoneResponse(Zone zone) {
+    private ZoneRespDTO toZoneResponse(Zone zone) {
         return zoneMapper.toZoneResponse(zone);
     }
 
-    private BlockResp toBlockResponse(Block b) {
+    private BlockRespDTO toBlockResponse(Block b) {
         return blockMapper.toBlockResponse(b);
     }
 }

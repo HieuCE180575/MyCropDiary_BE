@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
-import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
+import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReqDTO;
+import com.mycropdiary.api.dto.cultivation.MaterialUsageRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -108,7 +108,7 @@ public class FE08_MaterialUsageUnitTest {
     @Test
     @DisplayName("FE08_MAT_UTC01 [Normal] - Xuất kho phân bón hợp lệ -> Trừ tồn kho và lưu nhật ký (Passed)")
     void UTC01_recordMaterialUsage_validStock_shouldDeductAndRecordUsage() {
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 activityId, materialId, null, LocalDateTime.now(), new BigDecimal("10.00"), "kg", "50g/gốc", "Rải gốc", null, "Thời tiết nắng"
         );
 
@@ -124,7 +124,7 @@ public class FE08_MaterialUsageUnitTest {
         savedUsage.setQuantity(new BigDecimal("10.00"));
         when(materialUsageRepository.save(any(MaterialUsage.class))).thenReturn(savedUsage);
 
-        MaterialUsageResp resp = materialUsageService.createMaterialUsage(staffUserId, req);
+        MaterialUsageRespDTO resp = materialUsageService.createMaterialUsage(staffUserId, req);
 
         assertNotNull(resp);
         assertEquals(1001, resp.materialUsageId());
@@ -135,7 +135,7 @@ public class FE08_MaterialUsageUnitTest {
     @Test
     @DisplayName("FE08_MAT_UTC02 [Abnormal] - Hoạt động canh tác không tồn tại -> Báo lỗi ResourceNotFound (Passed)")
     void UTC02_recordMaterialUsage_quantityExceedsStock_shouldThrowBadRequest() {
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 9999, materialId, null, LocalDateTime.now(), new BigDecimal("150.00"), "kg", "50g/gốc", "Rải gốc", null, "Quá nhiều"
         );
 
@@ -147,7 +147,7 @@ public class FE08_MaterialUsageUnitTest {
     @Test
     @DisplayName("FE08_MAT_UTC03 [Boundary] - Số lượng dùng âm (-5kg) -> Vi phạm validation (Passed)")
     void UTC03_recordMaterialUsage_negativeQuantity_shouldThrowBadRequest() {
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 activityId, materialId, null, LocalDateTime.now(), new BigDecimal("-5.00"), "kg", "50g/gốc", "Rải gốc", null, "Âm"
         );
         assertTrue(req.quantity().compareTo(BigDecimal.ZERO) < 0);
@@ -156,7 +156,7 @@ public class FE08_MaterialUsageUnitTest {
     @Test
     @DisplayName("FE08_MAT_UTC04 [Boundary] - Số lượng dùng bằng 0 -> Vi phạm validation @DecimalMin (Passed)")
     void UTC04_recordMaterialUsage_zeroQuantity_shouldThrowBadRequest() {
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 activityId, materialId, null, LocalDateTime.now(), BigDecimal.ZERO, "kg", "50g/gốc", "Rải gốc", null, "Zero"
         );
         assertFalse(req.quantity().compareTo(BigDecimal.ZERO) > 0);
@@ -165,7 +165,7 @@ public class FE08_MaterialUsageUnitTest {
     @Test
     @DisplayName("FE08_MAT_UTC05 [Abnormal] - Vật tư không tồn tại trong hệ thống -> Báo lỗi không tìm thấy (Passed)")
     void UTC05_recordMaterialUsage_nonExistentMaterial_shouldThrowResourceNotFound() {
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 activityId, 9999, null, LocalDateTime.now(), new BigDecimal("10.00"), "kg", "50g/gốc", "Rải gốc", null, "Không tồn tại"
         );
 
@@ -179,7 +179,7 @@ public class FE08_MaterialUsageUnitTest {
     @Test
     @DisplayName("FE08_MAT_UTC06 [Abnormal] - Người dùng không thuộc trang trại -> Ném ForbiddenException (Passed)")
     void UTC06_recordMaterialUsage_userNotInFarm_shouldThrowForbidden() {
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 activityId, materialId, null, LocalDateTime.now(), new BigDecimal("10.00"), "kg", "50g/gốc", "Rải gốc", null, "Người ngoài"
         );
 
@@ -192,7 +192,7 @@ public class FE08_MaterialUsageUnitTest {
     @Test
     @DisplayName("FE08_MAT_UTC07 [Boundary] - Số lượng lẻ nhỏ nhất 0.001 kg -> Hợp lệ (Passed)")
     void UTC07_recordMaterialUsage_smallestDecimalQuantity0001_shouldPass() {
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 activityId, materialId, null, LocalDateTime.now(), new BigDecimal("0.001"), "kg", "Nhỏ nhất", "Rải gốc", null, "Biên"
         );
 
@@ -208,7 +208,7 @@ public class FE08_MaterialUsageUnitTest {
         savedUsage.setQuantity(new BigDecimal("0.001"));
         when(materialUsageRepository.save(any(MaterialUsage.class))).thenReturn(savedUsage);
 
-        MaterialUsageResp resp = materialUsageService.createMaterialUsage(staffUserId, req);
+        MaterialUsageRespDTO resp = materialUsageService.createMaterialUsage(staffUserId, req);
         assertNotNull(resp);
     }
 
@@ -224,7 +224,7 @@ public class FE08_MaterialUsageUnitTest {
         liquidMaterial.setUnit("L");
         liquidMaterial.setIsActive(true);
 
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 activityId, 11, null, LocalDateTime.now(), new BigDecimal("500"), "ml", "10ml/bình", "Phun lá", null, "Quy đổi đơn vị"
         );
 
@@ -237,7 +237,7 @@ public class FE08_MaterialUsageUnitTest {
             return u;
         });
 
-        MaterialUsageResp resp = materialUsageService.createMaterialUsage(staffUserId, req);
+        MaterialUsageRespDTO resp = materialUsageService.createMaterialUsage(staffUserId, req);
         assertNotNull(resp);
         assertEquals(0, new BigDecimal("0.500").compareTo(resp.quantity()));
     }
@@ -247,7 +247,7 @@ public class FE08_MaterialUsageUnitTest {
     void UTC09_recordMaterialUsage_futureDate_defectDF012() {
         // Verified fix for DF-012: @PastOrPresent on usedAt + service-level future timestamp guard
         LocalDateTime future = LocalDateTime.now().plusDays(7);
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 activityId, materialId, null, future, new BigDecimal("5.00"), "kg", "50g/gốc", "Rải gốc", null, "Tương lai"
         );
         jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
@@ -272,7 +272,7 @@ public class FE08_MaterialUsageUnitTest {
         closedActivity.setId(88);
         closedActivity.setCropSeason(closedSeason);
 
-        CreateMaterialUsageReq req = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO req = new CreateMaterialUsageReqDTO(
                 88, materialId, null, LocalDateTime.now(), new BigDecimal("10.00"), "kg", "50g/gốc", "Rải gốc", null, "Đã đóng"
         );
 

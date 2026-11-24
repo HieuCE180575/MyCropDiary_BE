@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.farm.CreateFarmReq;
-import com.mycropdiary.api.dto.farm.FarmResp;
-import com.mycropdiary.api.dto.farm.UpdateFarmReq;
+import com.mycropdiary.api.dto.farm.CreateFarmReqDTO;
+import com.mycropdiary.api.dto.farm.FarmRespDTO;
+import com.mycropdiary.api.dto.farm.UpdateFarmReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.User;
@@ -81,13 +81,13 @@ public class FE04_FarmManageInfoUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC01 [Normal] - Tạo trang trại hợp lệ -> Lưu Farm và gán vai trò OWNER (Passed)")
     void UTC01_createFarm_validInput_shouldCreateFarmAndAssignOwnerMember() {
-        CreateFarmReq req = new CreateFarmReq("FARM001", "Green Valley Farm", "123 Way", "Lam Dong", "Da Lat", "Ward 1",
+        CreateFarmReqDTO req = new CreateFarmReqDTO("FARM001", "Green Valley Farm", "123 Way", "Lam Dong", "Da Lat", "Ward 1",
                 new BigDecimal("11.94"), new BigDecimal("108.45"), new BigDecimal("5000"));
 
         when(userRepository.findById(30)).thenReturn(Optional.of(ownerUser));
         when(farmRepository.save(any(Farm.class))).thenReturn(sampleFarm);
 
-        FarmResp resp = farmService.createFarm(30, req);
+        FarmRespDTO resp = farmService.createFarm(30, req);
 
         assertNotNull(resp);
         assertEquals("Green Valley Farm", resp.farmName());
@@ -97,7 +97,7 @@ public class FE04_FarmManageInfoUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC02 [Abnormal] - User không tồn tại -> Ném ResourceNotFoundException (Passed)")
     void UTC02_createFarm_duplicateFarmCode_shouldThrowConflict() {
-        CreateFarmReq req = new CreateFarmReq("FARM001", "Another Farm", "123 Way", "Lam Dong", "Da Lat", "Ward 1",
+        CreateFarmReqDTO req = new CreateFarmReqDTO("FARM001", "Another Farm", "123 Way", "Lam Dong", "Da Lat", "Ward 1",
                 new BigDecimal("11.94"), new BigDecimal("108.45"), new BigDecimal("5000"));
 
         when(userRepository.findById(999)).thenReturn(Optional.empty());
@@ -108,14 +108,14 @@ public class FE04_FarmManageInfoUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC03 [Boundary] - Tọa độ hợp lệ trong biên (-90 đến 90, -180 đến 180) (Passed)")
     void UTC03_createFarm_codeLength3_shouldPassMinBoundary() {
-        CreateFarmReq req = new CreateFarmReq("Green Farm", "Mo ta", "Dia chi", new BigDecimal("89.99"), new BigDecimal("179.99"), null);
+        CreateFarmReqDTO req = new CreateFarmReqDTO("Green Farm", "Mo ta", "Dia chi", new BigDecimal("89.99"), new BigDecimal("179.99"), null);
         assertNotNull(req);
     }
 
     @Test
     @DisplayName("FE04_FAR_UTC04 [Boundary] - Tọa độ vượt biên (Latitude > 90) -> Ném IllegalArgumentException (Passed)")
     void UTC04_createFarm_codeLength2_shouldFailMinBoundary() {
-        CreateFarmReq req = new CreateFarmReq("Green Farm", "Mo ta", "Dia chi", new BigDecimal("95.00"), new BigDecimal("108.00"), null);
+        CreateFarmReqDTO req = new CreateFarmReqDTO("Green Farm", "Mo ta", "Dia chi", new BigDecimal("95.00"), new BigDecimal("108.00"), null);
         assertThrows(IllegalArgumentException.class, () -> farmService.createFarm(30, req));
     }
 
@@ -125,7 +125,7 @@ public class FE04_FarmManageInfoUnitTest {
         when(farmRepository.findById(10)).thenReturn(Optional.of(sampleFarm));
         when(farmAccessGuard.getUserRoleInFarm(30, 10)).thenReturn("owner");
 
-        FarmResp resp = farmService.getFarmById(30, 10);
+        FarmRespDTO resp = farmService.getFarmById(30, 10);
 
         assertNotNull(resp);
         assertEquals("owner", resp.currentUserRole());
@@ -144,12 +144,12 @@ public class FE04_FarmManageInfoUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC07 [Normal] - Cập nhật thông tin trang trại thành công (Passed)")
     void UTC07_updateFarm_validGpsCoordinates_shouldUpdateSuccessfully() {
-        UpdateFarmReq req = new UpdateFarmReq("Updated Farm", "Mo ta moi", "Dia chi moi", new BigDecimal("12.00"), new BigDecimal("109.00"), null, "active");
+        UpdateFarmReqDTO req = new UpdateFarmReqDTO("Updated Farm", "Mo ta moi", "Dia chi moi", new BigDecimal("12.00"), new BigDecimal("109.00"), null, "active");
         when(farmRepository.findById(10)).thenReturn(Optional.of(sampleFarm));
         when(farmRepository.save(any(Farm.class))).thenReturn(sampleFarm);
         when(farmAccessGuard.getUserRoleInFarm(30, 10)).thenReturn("owner");
 
-        FarmResp resp = farmService.updateFarm(30, 10, req);
+        FarmRespDTO resp = farmService.updateFarm(30, 10, req);
 
         assertNotNull(resp);
         verify(farmAccessGuard).requireOwnerOrAdmin(30, 10);
@@ -158,7 +158,7 @@ public class FE04_FarmManageInfoUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC08 [Boundary] - Tên trang trại rỗng -> Vi phạm validation (Passed)")
     void UTC08_updateFarm_blankFarmName_shouldThrowValidationException() {
-        CreateFarmReq req = new CreateFarmReq("", "Mo ta", "Dia chi", null, null, null);
+        CreateFarmReqDTO req = new CreateFarmReqDTO("", "Mo ta", "Dia chi", null, null, null);
         assertTrue(req.farmName().isBlank());
     }
 
@@ -180,7 +180,7 @@ public class FE04_FarmManageInfoUnitTest {
     @Test
     @DisplayName("FE04_FAR_UTC10 [Abnormal] - Cập nhật trang trại đã bị xóa hoặc không tồn tại -> Ném ResourceNotFoundException (Passed)")
     void UTC10_updateFarm_concurrentUpdate_optimisticLocking() {
-        UpdateFarmReq req = new UpdateFarmReq("Concurrent Farm", "Mo ta", "Dia chi", new BigDecimal("12.00"), new BigDecimal("109.00"), null, "active");
+        UpdateFarmReqDTO req = new UpdateFarmReqDTO("Concurrent Farm", "Mo ta", "Dia chi", new BigDecimal("12.00"), new BigDecimal("109.00"), null, "active");
         when(farmRepository.findById(999)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> farmService.updateFarm(30, 999, req));

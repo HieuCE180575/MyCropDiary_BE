@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.user.ChangePasswordReq;
-import com.mycropdiary.api.dto.user.UpdateProfileReq;
-import com.mycropdiary.api.dto.user.UserProfileResp;
+import com.mycropdiary.api.dto.user.ChangePasswordReqDTO;
+import com.mycropdiary.api.dto.user.UpdateProfileReqDTO;
+import com.mycropdiary.api.dto.user.UserProfileRespDTO;
 import com.mycropdiary.api.entity.AccountToken;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.BadRequestException;
@@ -63,7 +63,7 @@ public class FE02_UserProfileUnitTest {
     void UTC01_getProfile_validUserId_shouldReturnUserProfile() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        UserProfileResp resp = userProfileService.getProfile(userId);
+        UserProfileRespDTO resp = userProfileService.getProfile(userId);
 
         assertNotNull(resp);
         assertEquals(userId, resp.userId());
@@ -88,8 +88,8 @@ public class FE02_UserProfileUnitTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        UpdateProfileReq req = new UpdateProfileReq("Le Van Tien", "0987654321", "https://image.url/avatar.png");
-        UserProfileResp resp = userProfileService.updateProfile(userId, req);
+        UpdateProfileReqDTO req = new UpdateProfileReqDTO("Le Van Tien", "0987654321", "https://image.url/avatar.png");
+        UserProfileRespDTO resp = userProfileService.updateProfile(userId, req);
 
         assertNotNull(resp);
         assertEquals("Le Van Tien", resp.fullName());
@@ -102,7 +102,7 @@ public class FE02_UserProfileUnitTest {
     @DisplayName("FE02_PRO_UTC04 [Abnormal] - Cập nhật hồ sơ với ID không tồn tại -> Ném ResourceNotFoundException (Passed)")
     void UTC04_updateProfile_nonExistentUserId_shouldThrowResourceNotFound() {
         when(userRepository.findById(999)).thenReturn(Optional.empty());
-        UpdateProfileReq req = new UpdateProfileReq("Le Van Tien", "0987654321", null);
+        UpdateProfileReqDTO req = new UpdateProfileReqDTO("Le Van Tien", "0987654321", null);
 
         assertThrows(ResourceNotFoundException.class, () -> userProfileService.updateProfile(999, req));
     }
@@ -113,8 +113,8 @@ public class FE02_UserProfileUnitTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        UpdateProfileReq req = new UpdateProfileReq("Farmer Tran", "   ", "   ");
-        UserProfileResp resp = userProfileService.updateProfile(userId, req);
+        UpdateProfileReqDTO req = new UpdateProfileReqDTO("Farmer Tran", "   ", "   ");
+        UserProfileRespDTO resp = userProfileService.updateProfile(userId, req);
 
         assertNotNull(resp);
         assertNull(resp.phone());
@@ -136,7 +136,7 @@ public class FE02_UserProfileUnitTest {
         when(accountTokenRepository.findAllByUser_IdAndTokenTypeAndUsedAtIsNull(userId, "refresh"))
                 .thenReturn(List.of(oldToken));
 
-        ChangePasswordReq req = new ChangePasswordReq("OldPass@123", "NewPass@456", "NewPass@456");
+        ChangePasswordReqDTO req = new ChangePasswordReqDTO("OldPass@123", "NewPass@456", "NewPass@456");
         assertDoesNotThrow(() -> userProfileService.changePassword(userId, req));
 
         assertEquals("hashed_new_password", user.getPasswordHash());
@@ -149,7 +149,7 @@ public class FE02_UserProfileUnitTest {
     void UTC07_changePassword_confirmMismatch_shouldThrowBadRequest() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        ChangePasswordReq req = new ChangePasswordReq("OldPass@123", "NewPass@456", "WrongConfirmPass@456");
+        ChangePasswordReqDTO req = new ChangePasswordReqDTO("OldPass@123", "NewPass@456", "WrongConfirmPass@456");
         assertThrows(BadRequestException.class, () -> userProfileService.changePassword(userId, req));
     }
 
@@ -159,7 +159,7 @@ public class FE02_UserProfileUnitTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("WrongOldPass@123", "hashed_old_password")).thenReturn(false);
 
-        ChangePasswordReq req = new ChangePasswordReq("WrongOldPass@123", "NewPass@456", "NewPass@456");
+        ChangePasswordReqDTO req = new ChangePasswordReqDTO("WrongOldPass@123", "NewPass@456", "NewPass@456");
         assertThrows(BadRequestException.class, () -> userProfileService.changePassword(userId, req));
     }
 
@@ -169,7 +169,7 @@ public class FE02_UserProfileUnitTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("OldPass@123", "hashed_old_password")).thenReturn(true);
 
-        ChangePasswordReq req = new ChangePasswordReq("OldPass@123", "OldPass@123", "OldPass@123");
+        ChangePasswordReqDTO req = new ChangePasswordReqDTO("OldPass@123", "OldPass@123", "OldPass@123");
         assertThrows(BadRequestException.class, () -> userProfileService.changePassword(userId, req));
     }
 
@@ -179,8 +179,8 @@ public class FE02_UserProfileUnitTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        UpdateProfileReq req = new UpdateProfileReq("   Nguyen Van Tien   ", "0912345678", null);
-        UserProfileResp resp = userProfileService.updateProfile(userId, req);
+        UpdateProfileReqDTO req = new UpdateProfileReqDTO("   Nguyen Van Tien   ", "0912345678", null);
+        UserProfileRespDTO resp = userProfileService.updateProfile(userId, req);
 
         assertNotNull(resp);
         assertEquals("Nguyen Van Tien", resp.fullName());

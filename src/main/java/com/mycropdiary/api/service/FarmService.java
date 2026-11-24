@@ -11,13 +11,13 @@ import java.util.List;
  * Interface định nghĩa các dịch vụ nghiệp vụ cốt lõi cho trang trại (Farm Core).
  */
 public interface FarmService {
-    FarmResp createFarm(Integer currentUserId, CreateFarmReq request);
+    FarmRespDTO createFarm(Integer currentUserId, CreateFarmReqDTO request);
 
-    FarmResp getFarmById(Integer currentUserId, Integer farmId);
+    FarmRespDTO getFarmById(Integer currentUserId, Integer farmId);
 
-    PageResp<FarmSummaryResp> searchFarms(Integer currentUserId, String keyword, String status, String province, Pageable pageable);
+    PageResp<FarmSummaryRespDTO> searchFarms(Integer currentUserId, String keyword, String status, String province, Pageable pageable);
 
-    PageResp<FarmSummaryResp> searchFarms(
+    PageResp<FarmSummaryRespDTO> searchFarms(
             Integer currentUserId,
             String keyword,
             String province,
@@ -27,21 +27,21 @@ public interface FarmService {
             Pageable pageable
     );
 
-    List<FarmSummaryResp> findAllAccessibleFarms(Integer currentUserId);
+    List<FarmSummaryRespDTO> findAllAccessibleFarms(Integer currentUserId);
 
-    FarmResp updateFarm(Integer currentUserId, Integer farmId, UpdateFarmReq request);
+    FarmRespDTO updateFarm(Integer currentUserId, Integer farmId, UpdateFarmReqDTO request);
 
     void deleteFarm(Integer currentUserId, Integer farmId);
 
-    FarmMemberResp addMember(Integer currentUserId, Integer farmId, AddFarmMemberReq request);
+    FarmMemberRespDTO addMember(Integer currentUserId, Integer farmId, AddFarmMemberReqDTO request);
 
-    List<FarmMemberResp> getFarmMembers(Integer currentUserId, Integer farmId);
+    List<FarmMemberRespDTO> getFarmMembers(Integer currentUserId, Integer farmId);
 
     void removeMember(Integer currentUserId, Integer farmId, Integer memberId);
 
-    StaffZoneAssignmentResp assignStaffToZone(Integer currentUserId, Integer farmId, Integer memberId, AssignStaffZoneReq request);
+    StaffZoneAssignmentRespDTO assignStaffToZone(Integer currentUserId, Integer farmId, Integer memberId, AssignStaffZoneReqDTO request);
 
-    ZoneResp createZone(Integer currentUserId, Integer farmId, CreateZoneReq request);
+    ZoneRespDTO createZone(Integer currentUserId, Integer farmId, CreateZoneReqDTO request);
 
-    List<ZoneResp> getZones(Integer currentUserId, Integer farmId);
+    List<ZoneRespDTO> getZones(Integer currentUserId, Integer farmId);
 }

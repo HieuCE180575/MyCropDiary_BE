@@ -192,14 +192,14 @@ public class FarmRegistration {
         this.rejectionReason = rejectionReason;
     }
 
-    public FarmRegistrationStatus getStatus() {
-        if ("approved".equalsIgnoreCase(registrationStatus)) return FarmRegistrationStatus.APPROVED;
-        if ("rejected".equalsIgnoreCase(registrationStatus)) return FarmRegistrationStatus.REJECTED;
-        if ("cancelled".equalsIgnoreCase(registrationStatus)) return FarmRegistrationStatus.CANCELLED;
-        return FarmRegistrationStatus.PENDING;
+    public String getStatus() {
+        if ("approved".equalsIgnoreCase(registrationStatus)) return "APPROVED";
+        if ("rejected".equalsIgnoreCase(registrationStatus)) return "REJECTED";
+        if ("cancelled".equalsIgnoreCase(registrationStatus)) return "CANCELLED";
+        return "PENDING";
     }
 
-    public void setStatus(FarmRegistrationStatus status) {
-        this.registrationStatus = status != null ? status.name().toLowerCase() : "pending";
+    public void setStatus(String status) {
+        this.registrationStatus = status != null ? status.toLowerCase() : "pending";
     }
 }

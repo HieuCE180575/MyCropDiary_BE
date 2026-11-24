@@ -1,8 +1,9 @@
 package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.worker.FarmWorkerReq;
-import com.mycropdiary.api.dto.worker.FarmWorkerResp;
+import com.mycropdiary.api.dto.worker.CreateWorkerReqDTO;
+import com.mycropdiary.api.dto.worker.UpdateWorkerReqDTO;
+import com.mycropdiary.api.dto.worker.FarmWorkerRespDTO;
 import com.mycropdiary.api.service.cultivation.FarmWorkerService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,44 +31,44 @@ public class FarmWorkerController {
 
     @Operation(summary = "Xem danh sách hồ sơ công nhân", description = "Lấy danh sách hồ sơ công nhân lao động của trang trại, lọc theo trạng thái và tìm kiếm.")
     @GetMapping
-    public ApiResp<List<FarmWorkerResp>> getWorkersByFarm(
+    public ApiResp<List<FarmWorkerRespDTO>> getWorkersByFarm(
             @PathVariable Integer farmId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        List<FarmWorkerResp> list = workerService.getWorkersByFarm(currentUserId, farmId, status, keyword);
+        List<FarmWorkerRespDTO> list = workerService.getWorkersByFarm(currentUserId, farmId, status, keyword);
         return ApiResp.ok("Lấy danh sách hồ sơ công nhân thành công.", list);
     }
 
     @Operation(summary = "Xem chi tiết hồ sơ công nhân", description = "Xem thông tin chi tiết một công nhân theo ID.")
     @GetMapping("/{workerId}")
-    public ApiResp<FarmWorkerResp> getWorkerById(
+    public ApiResp<FarmWorkerRespDTO> getWorkerById(
             @PathVariable Integer farmId,
             @PathVariable Integer workerId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmWorkerResp resp = workerService.getWorkerById(currentUserId, farmId, workerId);
+        FarmWorkerRespDTO resp = workerService.getWorkerById(currentUserId, farmId, workerId);
         return ApiResp.ok("Chi tiết hồ sơ công nhân.", resp);
     }
 
     @Operation(summary = "Tạo mới hồ sơ công nhân", description = "Tạo hồ sơ công nhân lao động mới liên kết với thành viên trang trại.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<FarmWorkerResp> createWorker(
+    public ApiResp<FarmWorkerRespDTO> createWorker(
             @PathVariable Integer farmId,
-            @Valid @RequestBody FarmWorkerReq req) {
+            @Valid @RequestBody CreateWorkerReqDTO req) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmWorkerResp resp = workerService.createWorker(currentUserId, farmId, req);
+        FarmWorkerRespDTO resp = workerService.createWorker(currentUserId, farmId, req);
         return ApiResp.ok("Tạo hồ sơ công nhân thành công.", resp);
     }
 
     @Operation(summary = "Cập nhật hồ sơ công nhân", description = "Chỉnh sửa mã công nhân, chức danh, trạng thái và ngày vào làm.")
     @PutMapping("/{workerId}")
-    public ApiResp<FarmWorkerResp> updateWorker(
+    public ApiResp<FarmWorkerRespDTO> updateWorker(
             @PathVariable Integer farmId,
             @PathVariable Integer workerId,
-            @Valid @RequestBody FarmWorkerReq req) {
+            @Valid @RequestBody UpdateWorkerReqDTO req) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmWorkerResp resp = workerService.updateWorker(currentUserId, farmId, workerId, req);
+        FarmWorkerRespDTO resp = workerService.updateWorker(currentUserId, farmId, workerId, req);
         return ApiResp.ok("Cập nhật hồ sơ công nhân thành công.", resp);
     }
 

@@ -1,12 +1,12 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.assignment.AssignmentResp;
-import com.mycropdiary.api.dto.expense.ExpenseResp;
-import com.mycropdiary.api.dto.expense.ExpenseSummaryResp;
-import com.mycropdiary.api.dto.procurement.InputPurchaseResp;
-import com.mycropdiary.api.dto.procurement.SupplierResp;
-import com.mycropdiary.api.dto.staff.CandidateUserResp;
-import com.mycropdiary.api.dto.staff.FarmMemberResp;
+import com.mycropdiary.api.dto.assignment.AssignmentRespDTO;
+import com.mycropdiary.api.dto.expense.ExpenseRespDTO;
+import com.mycropdiary.api.dto.expense.ExpenseSummaryRespDTO;
+import com.mycropdiary.api.dto.procurement.InputPurchaseRespDTO;
+import com.mycropdiary.api.dto.procurement.SupplierRespDTO;
+import com.mycropdiary.api.dto.staff.CandidateUserRespDTO;
+import com.mycropdiary.api.dto.staff.FarmMemberRespDTO;
 import com.mycropdiary.api.service.FarmStaffService;
 import com.mycropdiary.api.service.ZoneAssignmentService;
 import com.mycropdiary.api.service.cultivation.ExpenseService;
@@ -49,14 +49,14 @@ public class FE10_StaffProcurementExpenseUnitTest {
     @Test
     @DisplayName("Manage Farm Staff - View Staff List")
     void testGetStaffList_success() {
-        FarmMemberResp staff1 = new FarmMemberResp(
+        FarmMemberRespDTO staff1 = new FarmMemberRespDTO(
                 1, 1, "Trang trai 1", 10, "Tran Van B", "staff_b@example.com",
                 "0901234567", "staff", "Ky su nong nghiep", Instant.now(), null, "active", 0
         );
         when(farmStaffService.getStaffList(eq(1), eq(1), isNull(), isNull()))
                 .thenReturn(List.of(staff1));
 
-        List<FarmMemberResp> result = farmStaffService.getStaffList(1, 1, null, null);
+        List<FarmMemberRespDTO> result = farmStaffService.getStaffList(1, 1, null, null);
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Tran Van B", result.get(0).fullName());
@@ -66,13 +66,13 @@ public class FE10_StaffProcurementExpenseUnitTest {
     @Test
     @DisplayName("Manage Farm Staff - Search Candidate Users")
     void testGetCandidateUsers_success() {
-        CandidateUserResp candidate = new CandidateUserResp(
+        CandidateUserRespDTO candidate = new CandidateUserRespDTO(
                 15, "Candidate User", "candidate@example.com", "0988776655", null, "USER"
         );
         when(farmStaffService.getCandidateUsers(eq(1), eq(1), eq("candidate")))
                 .thenReturn(List.of(candidate));
 
-        List<CandidateUserResp> result = farmStaffService.getCandidateUsers(1, 1, "candidate");
+        List<CandidateUserRespDTO> result = farmStaffService.getCandidateUsers(1, 1, "candidate");
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("candidate@example.com", result.get(0).email());
@@ -81,14 +81,14 @@ public class FE10_StaffProcurementExpenseUnitTest {
     @Test
     @DisplayName("Zone Assignments - View Zone Assignment List")
     void testGetZoneAssignments_success() {
-        AssignmentResp assignment = new AssignmentResp(
+        AssignmentRespDTO assignment = new AssignmentRespDTO(
                 101, 1, 10, "Tran Van B", "staff_b@example.com", "Ky su",
                 1, "Khu nha mang 1", 1, "Owner", Instant.now(), null, true
         );
         when(zoneAssignmentService.getZoneAssignments(eq(1), eq(1), isNull()))
                 .thenReturn(List.of(assignment));
 
-        List<AssignmentResp> list = zoneAssignmentService.getZoneAssignments(1, 1, null);
+        List<AssignmentRespDTO> list = zoneAssignmentService.getZoneAssignments(1, 1, null);
         assertNotNull(list);
         assertEquals(1, list.size());
         assertEquals("Khu nha mang 1", list.get(0).zoneName());
@@ -98,14 +98,14 @@ public class FE10_StaffProcurementExpenseUnitTest {
     @Test
     @DisplayName("Supplier Management - View Supplier List")
     void testGetSuppliers_success() {
-        SupplierResp supplier = new SupplierResp(
+        SupplierRespDTO supplier = new SupplierRespDTO(
                 1, 1, "Cong ty Vat tu Nong nghiep Xanh", "Nguyen Van A",
                 "0912345678", "contact@xanh.com", "TP.HCM", "Ghi chu", Instant.now(), 5L
         );
         when(supplierService.getSuppliers(eq(1), eq(1), isNull()))
                 .thenReturn(List.of(supplier));
 
-        List<SupplierResp> list = supplierService.getSuppliers(1, 1, null);
+        List<SupplierRespDTO> list = supplierService.getSuppliers(1, 1, null);
         assertNotNull(list);
         assertEquals(1, list.size());
         assertEquals("Cong ty Vat tu Nong nghiep Xanh", list.get(0).supplierName());
@@ -114,14 +114,14 @@ public class FE10_StaffProcurementExpenseUnitTest {
     @Test
     @DisplayName("Supplier Management - View Supplier Details")
     void testGetSupplierDetails_success() {
-        SupplierResp supplier = new SupplierResp(
+        SupplierRespDTO supplier = new SupplierRespDTO(
                 1, 1, "Cong ty Vat tu Nong nghiep Xanh", "Nguyen Van A",
                 "0912345678", "contact@xanh.com", "TP.HCM", "Ghi chu", Instant.now(), 5L
         );
         when(supplierService.getSupplierDetails(eq(1), eq(1)))
                 .thenReturn(supplier);
 
-        SupplierResp details = supplierService.getSupplierDetails(1, 1);
+        SupplierRespDTO details = supplierService.getSupplierDetails(1, 1);
         assertNotNull(details);
         assertEquals(1, details.supplierId());
         assertEquals("Nguyen Van A", details.contactName());
@@ -130,7 +130,7 @@ public class FE10_StaffProcurementExpenseUnitTest {
     @Test
     @DisplayName("Input Purchases - View Purchase List")
     void testGetInputPurchases_success() {
-        InputPurchaseResp purchase = new InputPurchaseResp(
+        InputPurchaseRespDTO purchase = new InputPurchaseRespDTO(
                 1, 1, 1, "Cong ty Xanh", 1, "Nguoi mua",
                 LocalDate.now(), "HD-2026-001", BigDecimal.valueOf(15000000),
                 null, null, "Ghi chu", Instant.now(), List.of()
@@ -138,7 +138,7 @@ public class FE10_StaffProcurementExpenseUnitTest {
         when(inputPurchaseService.getInputPurchases(eq(1), eq(1)))
                 .thenReturn(List.of(purchase));
 
-        List<InputPurchaseResp> list = inputPurchaseService.getInputPurchases(1, 1);
+        List<InputPurchaseRespDTO> list = inputPurchaseService.getInputPurchases(1, 1);
         assertNotNull(list);
         assertEquals(1, list.size());
         assertEquals("HD-2026-001", list.get(0).referenceNo());
@@ -147,7 +147,7 @@ public class FE10_StaffProcurementExpenseUnitTest {
     @Test
     @DisplayName("Input Purchases - Search & Filter Purchases")
     void testSearchInputPurchases_success() {
-        InputPurchaseResp purchase = new InputPurchaseResp(
+        InputPurchaseRespDTO purchase = new InputPurchaseRespDTO(
                 2, 1, 1, "Cong ty Xanh", 1, "Nguoi mua",
                 LocalDate.of(2026, 3, 1), "HD-2026-002", BigDecimal.valueOf(8000000),
                 null, null, "Ghi chu", Instant.now(), List.of()
@@ -155,7 +155,7 @@ public class FE10_StaffProcurementExpenseUnitTest {
         when(inputPurchaseService.searchInputPurchases(eq(1), eq(1), eq("dua luoi"), eq(1), any(), any()))
                 .thenReturn(List.of(purchase));
 
-        List<InputPurchaseResp> list = inputPurchaseService.searchInputPurchases(
+        List<InputPurchaseRespDTO> list = inputPurchaseService.searchInputPurchases(
                 1, 1, "dua luoi", 1, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31)
         );
         assertNotNull(list);
@@ -166,7 +166,7 @@ public class FE10_StaffProcurementExpenseUnitTest {
     @Test
     @DisplayName("Expense Management - View Expense List & Filter")
     void testGetExpenseList_success() {
-        ExpenseResp expense = new ExpenseResp(
+        ExpenseRespDTO expense = new ExpenseRespDTO(
                 1, 1, 1, "Vu Xuan 2026", null, null,
                 "Phan bon & Dinh duong", "Mua 5 bao phan huu co",
                 BigDecimal.valueOf(2500000), LocalDate.now(), 1, "Nguoi ghi", null, Instant.now()
@@ -174,7 +174,7 @@ public class FE10_StaffProcurementExpenseUnitTest {
         when(expenseService.getExpenseList(eq(1), eq(1), eq(1), eq("Phan bon & Dinh duong"), any(), any(), isNull()))
                 .thenReturn(List.of(expense));
 
-        List<ExpenseResp> list = expenseService.getExpenseList(
+        List<ExpenseRespDTO> list = expenseService.getExpenseList(
                 1, 1, 1, "Phan bon & Dinh duong", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), null
         );
         assertNotNull(list);
@@ -185,13 +185,13 @@ public class FE10_StaffProcurementExpenseUnitTest {
     @Test
     @DisplayName("Expense Management - View Expense Summary")
     void testGetExpenseSummary_success() {
-        ExpenseSummaryResp summary = new ExpenseSummaryResp(
+        ExpenseSummaryRespDTO summary = new ExpenseSummaryRespDTO(
                 1, null, null, BigDecimal.valueOf(35000000), 12, List.of(), List.of()
         );
         when(expenseService.getExpenseSummary(eq(1), eq(1), eq(1), any(), any()))
                 .thenReturn(summary);
 
-        ExpenseSummaryResp result = expenseService.getExpenseSummary(
+        ExpenseSummaryRespDTO result = expenseService.getExpenseSummary(
                 1, 1, 1, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31)
         );
         assertNotNull(result);

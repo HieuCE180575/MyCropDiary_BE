@@ -2,10 +2,10 @@ package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.knowledge.CreateKnowledgeArticleReq;
+import com.mycropdiary.api.dto.knowledge.CreateKnowledgeArticleReqDTO;
 import com.mycropdiary.api.dto.knowledge.KnowledgeArticleRespDTO;
-import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeArticleReq;
-import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeStatusReq;
+import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeArticleReqDTO;
+import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeStatusReqDTO;
 import com.mycropdiary.api.service.admin.AdminKnowledgeArticleService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,7 +59,7 @@ public class AdminKnowledgeArticleController {
             description = "Tạo bài viết mới. Tự động sinh đường dẫn slug chuẩn SEO từ tiêu đề bài viết nếu không nhập slug.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<KnowledgeArticleRespDTO> createArticle(@Valid @RequestBody CreateKnowledgeArticleReq request) {
+    public ApiResp<KnowledgeArticleRespDTO> createArticle(@Valid @RequestBody CreateKnowledgeArticleReqDTO request) {
         Integer adminUserId = securityUtils.getCurrentUserId();
         KnowledgeArticleRespDTO created = adminKnowledgeArticleService.createArticle(adminUserId, request);
         return ApiResp.ok("Tạo bài viết kiến thức thành công", created);
@@ -70,7 +70,7 @@ public class AdminKnowledgeArticleController {
     @PutMapping("/{id}")
     public ApiResp<KnowledgeArticleRespDTO> updateArticle(
             @PathVariable Integer id,
-            @Valid @RequestBody UpdateKnowledgeArticleReq request) {
+            @Valid @RequestBody UpdateKnowledgeArticleReqDTO request) {
         Integer adminUserId = securityUtils.getCurrentUserId();
         KnowledgeArticleRespDTO updated = adminKnowledgeArticleService.updateArticle(adminUserId, id, request);
         return ApiResp.ok("Cập nhật bài viết kiến thức thành công", updated);
@@ -81,7 +81,7 @@ public class AdminKnowledgeArticleController {
     @PatchMapping("/{id}/status")
     public ApiResp<KnowledgeArticleRespDTO> updateArticleStatus(
             @PathVariable Integer id,
-            @Valid @RequestBody UpdateKnowledgeStatusReq request) {
+            @Valid @RequestBody UpdateKnowledgeStatusReqDTO request) {
         Integer adminUserId = securityUtils.getCurrentUserId();
         KnowledgeArticleRespDTO updated = adminKnowledgeArticleService.updateArticleStatus(adminUserId, id, request);
         return ApiResp.ok("Cập nhật trạng thái bài viết thành công", updated);

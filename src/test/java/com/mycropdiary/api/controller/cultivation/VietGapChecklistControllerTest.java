@@ -2,11 +2,11 @@ package com.mycropdiary.api.controller.cultivation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.mycropdiary.api.dto.vietgap.ChecklistResultItemResp;
-import com.mycropdiary.api.dto.vietgap.ChecklistRunResp;
-import com.mycropdiary.api.dto.vietgap.InitVietGapAuditRunReq;
-import com.mycropdiary.api.dto.vietgap.UpdateChecklistItemReq;
-import com.mycropdiary.api.service.cultivation.VietGapChecklistService;
+import com.mycropdiary.api.dto.vietgap.ChecklistResultItemRespDTO;
+import com.mycropdiary.api.dto.vietgap.ChecklistResultRespDTO;
+import com.mycropdiary.api.dto.vietgap.InitVietGapAuditRunReqDTO;
+import com.mycropdiary.api.dto.vietgap.UpdateChecklistItemReqDTO;
+import com.mycropdiary.api.service.cultivation.ChecklistReviewService;
 import com.mycropdiary.api.util.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,27 +35,27 @@ class VietGapChecklistControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Mock
-    private VietGapChecklistService checklistService;
+    private ChecklistReviewService checklistService;
 
     @Mock
     private SecurityUtils securityUtils;
 
     @InjectMocks
-    private VietGapChecklistController controller;
+    private ChecklistReviewController controller;
 
     private final Integer currentUserId = 10;
     private final Integer farmId = 1;
     private final Integer runId = 100;
     private final Integer resultId = 500;
 
-    private ChecklistRunResp sampleRunResp;
-    private ChecklistResultItemResp sampleItemResp;
+    private ChecklistResultRespDTO sampleRunResp;
+    private ChecklistResultItemRespDTO sampleItemResp;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        sampleItemResp = new ChecklistResultItemResp(
+        sampleItemResp = new ChecklistResultItemRespDTO(
                 resultId,
                 runId,
                 1,
@@ -75,7 +75,7 @@ class VietGapChecklistControllerTest {
                 Instant.now()
         );
 
-        sampleRunResp = new ChecklistRunResp(
+        sampleRunResp = new ChecklistResultRespDTO(
                 runId,
                 null,
                 "Đợt tự đánh giá VietGAP toàn diện (33 tiêu chí)",
@@ -104,9 +104,9 @@ class VietGapChecklistControllerTest {
     @Test
     @DisplayName("POST /api/v1/farms/{farmId}/checklist-runs/init -> 201 Created")
     void testInitAuditRun_Success() throws Exception {
-        InitVietGapAuditRunReq req = new InitVietGapAuditRunReq(1, 1, null, null, "Ghi chú");
+        InitVietGapAuditRunReqDTO req = new InitVietGapAuditRunReqDTO(1, 1, null, null, "Ghi chú");
         when(securityUtils.getCurrentUserId()).thenReturn(currentUserId);
-        when(checklistService.initVietGapAuditRun(eq(currentUserId), eq(farmId), any(InitVietGapAuditRunReq.class)))
+        when(checklistService.initVietGapAuditRun(eq(currentUserId), eq(farmId), any(InitVietGapAuditRunReqDTO.class)))
                 .thenReturn(sampleRunResp);
 
         mockMvc.perform(post("/api/v1/farms/{farmId}/checklist-runs/init", farmId)
@@ -122,11 +122,11 @@ class VietGapChecklistControllerTest {
     @Test
     @DisplayName("PUT /api/v1/farms/{farmId}/checklist-runs/{runId}/items/{resultId} -> 200 OK")
     void testUpdateChecklistItem_Success() throws Exception {
-        UpdateChecklistItemReq req = new UpdateChecklistItemReq(
+        UpdateChecklistItemReqDTO req = new UpdateChecklistItemReqDTO(
                 "pass", "Đã kiểm nghiệm đạt chuẩn", "https://image.com/test.jpg", "DOCUMENT", 1
         );
         when(securityUtils.getCurrentUserId()).thenReturn(currentUserId);
-        when(checklistService.updateChecklistItem(eq(currentUserId), eq(farmId), eq(runId), eq(resultId), any(UpdateChecklistItemReq.class)))
+        when(checklistService.updateChecklistItem(eq(currentUserId), eq(farmId), eq(runId), eq(resultId), any(UpdateChecklistItemReqDTO.class)))
                 .thenReturn(sampleItemResp);
 
         mockMvc.perform(put("/api/v1/farms/{farmId}/checklist-runs/{runId}/items/{resultId}", farmId, runId, resultId)

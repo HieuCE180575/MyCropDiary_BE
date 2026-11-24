@@ -1,8 +1,8 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.cultivation.ActivityWorkerResp;
-import com.mycropdiary.api.dto.cultivation.FarmingActivityResp;
-import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryResp;
+import com.mycropdiary.api.dto.cultivation.ActivityWorkerRespDTO;
+import com.mycropdiary.api.dto.cultivation.FarmingActivityRespDTO;
+import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -18,12 +18,12 @@ import java.util.List;
 @Component
 public class FarmingActivityMapper {
 
-    public FarmingActivityResp toResponse(FarmingActivity act, List<ActivityWorkerResp> workers, FarmMember supervisor) {
+    public FarmingActivityRespDTO toResponse(FarmingActivity act, List<ActivityWorkerRespDTO> workers, FarmMember supervisor) {
         CropSeason cs = act.getCropSeason();
         Farm farm = cs != null ? cs.getFarm() : act.getFarm();
         Block block = act.getBlock();
 
-        return new FarmingActivityResp(
+        return new FarmingActivityRespDTO(
                 act.getId(),
                 cs != null ? cs.getId() : null,
                 cs != null ? cs.getSeasonName() : null,
@@ -48,10 +48,10 @@ public class FarmingActivityMapper {
         );
     }
 
-    public FarmingActivitySummaryResp toSummaryResponse(FarmingActivity act, FarmMember supervisor, int workerCount) {
+    public FarmingActivitySummaryRespDTO toSummaryResponse(FarmingActivity act, FarmMember supervisor, int workerCount) {
         Block block = act.getBlock();
 
-        return new FarmingActivitySummaryResp(
+        return new FarmingActivitySummaryRespDTO(
                 act.getId(),
                 act.getCropSeason() != null ? act.getCropSeason().getId() : null,
                 block != null ? block.getId() : null,

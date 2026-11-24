@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mycropdiary.api.controller.cultivation.HarvestRecordController;
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReq;
-import com.mycropdiary.api.dto.cultivation.HarvestRecordResp;
-import com.mycropdiary.api.dto.cultivation.UpdateHarvestRecordReq;
+import com.mycropdiary.api.dto.cultivation.CreateHarvestRecordReqDTO;
+import com.mycropdiary.api.dto.cultivation.HarvestRecordRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateHarvestRecordReqDTO;
 import com.mycropdiary.api.service.cultivation.HarvestRecordService;
 import com.mycropdiary.api.util.SecurityUtils;
 
@@ -71,16 +71,16 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("POST /api/v1/harvest-records -> 201 Created khi tạo thành công")
     void createHarvestRecord_Success() throws Exception {
-        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
+        CreateHarvestRecordReqDTO request = new CreateHarvestRecordReqDTO(
                 cropSeasonId, "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
-        HarvestRecordResp response = new HarvestRecordResp(
+        HarvestRecordRespDTO response = new HarvestRecordRespDTO(
                 harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
                 recordedByMemberId, "Chủ Nông Trại", "LOT-001", request.harvestedAt(), request.quantity(), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
-        when(harvestRecordService.createHarvestRecord(eq(userId), any(CreateHarvestRecordReq.class))).thenReturn(response);
+        when(harvestRecordService.createHarvestRecord(eq(userId), any(CreateHarvestRecordReqDTO.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/harvest-records")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -94,7 +94,7 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("POST /api/v1/harvest-records -> 400 Bad Request khi validation thất bại (Quantity <= 0)")
     void createHarvestRecord_ValidationFailed() throws Exception {
-        CreateHarvestRecordReq request = new CreateHarvestRecordReq(
+        CreateHarvestRecordReqDTO request = new CreateHarvestRecordReqDTO(
                 null, "LOT-001", null, new BigDecimal("-10.000"), "", null, null, null, null
         );
 
@@ -107,16 +107,16 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("PUT /api/v1/harvest-records/{id} -> 200 OK khi cập nhật thành công")
     void updateHarvestRecord_Success() throws Exception {
-        UpdateHarvestRecordReq request = new UpdateHarvestRecordReq(
+        UpdateHarvestRecordReqDTO request = new UpdateHarvestRecordReqDTO(
                 LocalDateTime.now(), new BigDecimal("200.000"), "kg", "Loại A", "Kho C", "Ghi chú cập nhật"
         );
 
-        HarvestRecordResp response = new HarvestRecordResp(
+        HarvestRecordRespDTO response = new HarvestRecordRespDTO(
                 harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
                 recordedByMemberId, "Chủ Nông Trại", "LOT-001", request.harvestedAt(), request.quantity(), "kg", "Loại A", "Kho C", "TR-001", "Ghi chú cập nhật"
         );
 
-        when(harvestRecordService.updateHarvestRecord(eq(userId), eq(harvestRecordId), any(UpdateHarvestRecordReq.class)))
+        when(harvestRecordService.updateHarvestRecord(eq(userId), eq(harvestRecordId), any(UpdateHarvestRecordReqDTO.class)))
                 .thenReturn(response);
 
         mockMvc.perform(put("/api/v1/harvest-records/" + harvestRecordId)
@@ -131,7 +131,7 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("PUT /api/v1/harvest-records/{id} -> 400 Bad Request khi quantity <= 0")
     void updateHarvestRecord_ValidationFailed() throws Exception {
-        UpdateHarvestRecordReq request = new UpdateHarvestRecordReq(
+        UpdateHarvestRecordReqDTO request = new UpdateHarvestRecordReqDTO(
                 LocalDateTime.now(), new BigDecimal("-5.000"), "kg", "Loại A", "Kho C", "Ghi chú"
         );
 
@@ -144,12 +144,12 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("GET /api/v1/harvest-records?cropSeasonId=... -> 200 OK với PageResp")
     void getHarvestRecords_Success() throws Exception {
-        HarvestRecordResp response = new HarvestRecordResp(
+        HarvestRecordRespDTO response = new HarvestRecordRespDTO(
                 harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
                 recordedByMemberId, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );
 
-        PageResp<HarvestRecordResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
+        PageResp<HarvestRecordRespDTO> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
 
         when(harvestRecordService.searchAndFilterHarvestRecords(eq(userId), eq(cropSeasonId), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(pageResponse);
@@ -164,12 +164,12 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("GET /api/v1/harvest-records với bộ lọc -> 200 OK với PageResp")
     void getHarvestRecords_WithFilters_Success() throws Exception {
-        HarvestRecordResp response = new HarvestRecordResp(
+        HarvestRecordRespDTO response = new HarvestRecordRespDTO(
                 harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
                 recordedByMemberId, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại A", "Kho A", "TR-001", "Ghi chú"
         );
 
-        PageResp<HarvestRecordResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
+        PageResp<HarvestRecordRespDTO> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
 
         when(harvestRecordService.searchAndFilterHarvestRecords(eq(userId), eq(cropSeasonId), eq("nông sản"), eq("Loại A"), any(), any(), any(Pageable.class)))
                 .thenReturn(pageResponse);
@@ -186,7 +186,7 @@ class HarvestRecordControllerTest {
     @Test
     @DisplayName("GET /api/v1/harvest-records/{id} -> 200 OK với chi tiết bản ghi")
     void getHarvestRecordById_Success() throws Exception {
-        HarvestRecordResp response = new HarvestRecordResp(
+        HarvestRecordRespDTO response = new HarvestRecordRespDTO(
                 harvestRecordId, cropSeasonId, "S2026", "Mùa Vụ Đông Xuân", farmId, "Nông trại Việt", plotId, "P01", "Thửa 1",
                 recordedByMemberId, "Chủ Nông Trại", "LOT-001", LocalDateTime.now(), new BigDecimal("150.500"), "kg", "Loại 1", "Kho A", "TR-001", "Ghi chú"
         );

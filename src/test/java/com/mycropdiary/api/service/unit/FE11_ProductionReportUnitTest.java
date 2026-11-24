@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.report.CropSeasonReportResp;
-import com.mycropdiary.api.dto.report.FarmReportResp;
+import com.mycropdiary.api.dto.report.CropSeasonReportRespDTO;
+import com.mycropdiary.api.dto.report.FarmReportRespDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.cultivation.CropSeason;
 import com.mycropdiary.api.entity.cultivation.Expense;
@@ -14,7 +14,7 @@ import com.mycropdiary.api.repository.cultivation.ExpenseRepository;
 import com.mycropdiary.api.repository.cultivation.FarmingActivityRepository;
 import com.mycropdiary.api.repository.cultivation.HarvestRecordRepository;
 import com.mycropdiary.api.repository.cultivation.InputPurchaseRepository;
-import com.mycropdiary.api.service.impl.ReportServiceImpl;
+import com.mycropdiary.api.service.impl.ProductionReportServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,12 +52,12 @@ public class FE11_ProductionReportUnitTest {
     @Mock
     private FarmAccessGuard accessGuard;
 
-    private ReportServiceImpl reportService;
+    private ProductionReportServiceImpl reportService;
     private Farm testFarm;
 
     @BeforeEach
     void setUp() {
-        reportService = new ReportServiceImpl(
+        reportService = new ProductionReportServiceImpl(
                 farmRepository,
                 cropSeasonRepository,
                 blockRepository,
@@ -99,7 +99,7 @@ public class FE11_ProductionReportUnitTest {
         when(cropSeasonRepository.findByFarmIdOrderByStartDateDesc(1)).thenReturn(List.of(season));
         when(blockRepository.findByZoneFarmId(1)).thenReturn(List.of());
 
-        FarmReportResp report = reportService.generateFarmReport(1, 1);
+        FarmReportRespDTO report = reportService.generateFarmReport(1, 1);
 
         assertNotNull(report);
         assertEquals("Trang trại VietGAP Đà Lạt", report.farmName());
@@ -127,7 +127,7 @@ public class FE11_ProductionReportUnitTest {
         when(cropSeasonRepository.findByFarmIdOrderByStartDateDesc(1)).thenReturn(List.of());
         when(blockRepository.findByZoneFarmId(1)).thenReturn(List.of());
 
-        FarmReportResp report = reportService.generateFarmReport(1, 1);
+        FarmReportRespDTO report = reportService.generateFarmReport(1, 1);
 
         assertNotNull(report);
         assertEquals(BigDecimal.ZERO, report.totalHarvestYield());
@@ -150,7 +150,7 @@ public class FE11_ProductionReportUnitTest {
         when(expenseRepository.findExpensesForSummary(1, 1, null, null)).thenReturn(List.of());
         when(farmingActivityRepository.countByCropSeasonId(1)).thenReturn(8L);
 
-        CropSeasonReportResp report = reportService.getCropSeasonReport(1, 1);
+        CropSeasonReportRespDTO report = reportService.getCropSeasonReport(1, 1);
 
         assertNotNull(report);
         assertEquals("Mùa dưa lưới 2026", report.seasonName());

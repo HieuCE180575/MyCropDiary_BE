@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.assignment.AssignedZoneResp;
-import com.mycropdiary.api.dto.assignment.AssignmentResp;
-import com.mycropdiary.api.dto.assignment.CreateAssignmentReq;
+import com.mycropdiary.api.dto.assignment.AssignedZoneRespDTO;
+import com.mycropdiary.api.dto.assignment.AssignmentRespDTO;
+import com.mycropdiary.api.dto.assignment.CreateAssignmentReqDTO;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.StaffZoneAssignment;
 import com.mycropdiary.api.entity.Zone;
@@ -52,7 +52,7 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
     }
 
     @Override
-    public AssignmentResp assignStaffToZone(Integer currentUserId, Integer farmId, CreateAssignmentReq request) {
+    public AssignmentRespDTO assignStaffToZone(Integer currentUserId, Integer farmId, CreateAssignmentReqDTO request) {
         System.out.println(">>> assignStaffToZone REACHED");
         // Business Rule: Chỉ OWNER của farm mới có quyền phân công khu vực
         FarmMember ownerMember = accessGuard.requireFarmOwner(currentUserId, farmId);
@@ -148,7 +148,7 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AssignedZoneResp> getAssignedZonesForCurrentStaff(Integer currentUserId, Integer farmId) {
+    public List<AssignedZoneRespDTO> getAssignedZonesForCurrentStaff(Integer currentUserId, Integer farmId) {
         FarmMember member = accessGuard.requireFarmAccess(currentUserId, farmId);
 
         if (member != null && member.isOwner()) {
@@ -156,7 +156,7 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
             List<Zone> zones = zoneRepository.findByFarmId(farmId);
             return zones.stream().map(zone -> {
                 int count = blockRepository.findByZoneId(zone.getId()).size();
-                return new AssignedZoneResp(
+                return new AssignedZoneRespDTO(
                         zone.getId(),
                         farmId,
                         zone.getZoneName(),
@@ -178,7 +178,7 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
         return assignments.stream().map(a -> {
             Zone zone = a.getZone();
             int count = blockRepository.findByZoneId(zone.getId()).size();
-            return new AssignedZoneResp(
+            return new AssignedZoneRespDTO(
                     zone.getId(),
                     farmId,
                     zone.getZoneName(),
@@ -194,7 +194,7 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AssignmentResp> getZoneAssignments(Integer currentUserId, Integer farmId, Integer zoneId) {
+    public List<AssignmentRespDTO> getZoneAssignments(Integer currentUserId, Integer farmId, Integer zoneId) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
         List<StaffZoneAssignment> list = assignmentRepository.findAssignments(farmId, zoneId, null);
         return list.stream()
@@ -204,7 +204,7 @@ public class ZoneAssignmentServiceImpl implements ZoneAssignmentService {
 
     private final ZoneMapper zoneMapper = new ZoneMapper();
 
-    private AssignmentResp toAssignmentResponse(StaffZoneAssignment a, FarmMember assigner) {
+    private AssignmentRespDTO toAssignmentResponse(StaffZoneAssignment a, FarmMember assigner) {
         return zoneMapper.toAssignmentResponse(a, assigner);
     }
 }

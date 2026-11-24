@@ -1,10 +1,9 @@
 package com.mycropdiary.api.service.impl;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.farm.FarmRegistrationResp;
-import com.mycropdiary.api.dto.farm.HandleRegistrationReq;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationCreateReq;
-import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryResp;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationReqDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO;
+import com.mycropdiary.api.dto.farmregistration.FarmRegistrationSummaryRespDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.User;
@@ -107,8 +106,8 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
 
     @Override
     @Transactional
-    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp createRegistration(
-            Integer currentUserId, FarmRegistrationCreateReq request) {
+    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO createRegistration(
+            Integer currentUserId, FarmRegistrationReqDTO request) {
         User applicantUser = validateAndGetActiveUser(currentUserId);
 
         FarmRegistration registration = new FarmRegistration();
@@ -157,14 +156,14 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
     }
 
     @Override
-    public PageResp<FarmRegistrationSummaryResp> getMyRegistrations(Integer currentUserId, Pageable pageable) {
+    public PageResp<FarmRegistrationSummaryRespDTO> getMyRegistrations(Integer currentUserId, Pageable pageable) {
         validateAndGetActiveUser(currentUserId);
         Page<FarmRegistration> page = farmRegistrationRepository.findByApplicantUserId(currentUserId, pageable);
         return PageResp.map(page, this::mapToSummaryResponse);
     }
 
     @Override
-    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp getMyRegistrationDetail(
+    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO getMyRegistrationDetail(
             Integer currentUserId, Integer registrationId) {
         validateAndGetActiveUser(currentUserId);
         FarmRegistration registration = farmRegistrationRepository
@@ -175,7 +174,7 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
 
     @Override
     @Transactional
-    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp cancelRegistration(
+    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO cancelRegistration(
             Integer currentUserId, Integer registrationId) {
         validateAndGetActiveUser(currentUserId);
         FarmRegistration registration = farmRegistrationRepository
@@ -216,209 +215,13 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
         return mapToUserResponse(updated);
     }
 
-    // ==================== UC-39: Admin side APIs ====================
-
-    @Override
-    public PageResp<FarmRegistrationResp> getRegistrations(String status, Pageable pageable) {
-        Page<FarmRegistration> page;
-        if (status != null && !status.isBlank()) {
-            page = farmRegistrationRepository.findByStatusString(status.trim().toLowerCase(), pageable);
-        } else {
-            page = farmRegistrationRepository.findAll(pageable);
-        }
-
-        return PageResp.map(page, this::toAdminResponse);
-    }
-
-    @Override
-    public FarmRegistrationResp getRegistrationById(Integer registrationId) {
-        FarmRegistration registration = farmRegistrationRepository.findById(registrationId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy đơn đăng ký trang trại với ID: " + registrationId));
-        return toAdminResponse(registration);
-    }
-
-    @Override
-    @Transactional
-    public FarmRegistrationResp handleRegistration(Integer adminUserId, Integer registrationId,
-            HandleRegistrationReq request) {
-        User adminUser = userRepository.findById(adminUserId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Không tìm thấy tài khoản admin với ID: " + adminUserId));
-
-        if (!"admin".equalsIgnoreCase(adminUser.getSystemRole())) {
-            throw new ForbiddenException("Chỉ quản trị viên mới có quyền xét duyệt đơn đăng ký.");
-        }
-
-        FarmRegistration registration = farmRegistrationRepository.findById(registrationId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy đơn đăng ký trang trại với ID: " + registrationId));
-
-        if (!"pending".equalsIgnoreCase(registration.getRegistrationStatus())) {
-            throw new BadRequestException(
-                    "Đơn đăng ký này đã được xử lý trước đó (trạng thái hiện tại: "
-                            + registration.getRegistrationStatus() + "). Không thể xử lý lại.");
-        }
-
-        String action = request.action().toUpperCase();
-
-        if ("APPROVED".equals(action)) {
-            return handleApproval(registration, adminUser);
-        } else {
-            return handleRejection(registration, adminUser, request.rejectionReason());
-        }
-    }
-
-    private FarmRegistrationResp handleApproval(FarmRegistration registration, User adminUser) {
-        Farm farm = new Farm();
-        farm.setFarmName(registration.getFarmName());
-        farm.setAddress(registration.getAddress());
-        farm.setDescription(registration.getRegistrationNote());
-        farm.setLatitude(registration.getLatitude());
-        farm.setLongitude(registration.getLongitude());
-        farm.setBoundaryCoordinates(registration.getBoundaryCoordinates());
-        farm.setCreatedBy(registration.getUser());
-        farm.setFarmStatus("active");
-        farm = farmRepository.save(farm);
-
-        FarmMember ownerMember = new FarmMember(
-                farm,
-                registration.getUser(),
-                "owner",
-                "active");
-        farmMemberRepository.save(ownerMember);
-
-        // Nâng cấp vai trò người dùng thành 'owner' nếu đang là 'user'
-        User applicant = registration.getUser();
-        if (applicant != null && "user".equalsIgnoreCase(applicant.getSystemRole())) {
-            applicant.setSystemRole("owner");
-            userRepository.save(applicant);
-            log.info("UC-39: User #{} ({}) đã được nâng cấp systemRole thành 'owner' sau khi đăng ký trang trại được duyệt.",
-                    applicant.getId(), applicant.getEmail());
-        }
-
-        registration.setRegistrationStatus("approved");
-        registration.setReviewedBy(adminUser);
-        registration.setReviewedAt(Instant.now());
-        registration.setResultingFarmId(farm.getId());
-        farmRegistrationRepository.save(registration);
-
-        // Notify applicant that registration was approved
-        sendUserNotification(
-                registration.getUser().getId(),
-                "Đăng ký trang trại được phê duyệt",
-                "Chúc mừng! Trang trại " + farm.getFarmName()
-                        + " của bạn đã được phê duyệt. Bạn hiện có thể bắt đầu quản lý trang trại.",
-                "FARM_REGISTRATION",
-                "/dashboard");
-
-        log.info("UC-39: Admin {} đã DUYỆT đơn đăng ký #{} -> Farm '{}' đã được tạo, OWNER: {}",
-                adminUser.getEmail(), registration.getId(), farm.getFarmName(),
-                registration.getUser().getEmail());
-
-        sendApprovalEmail(registration, farm);
-
-        return toAdminResponse(registration);
-    }
-
-    private FarmRegistrationResp handleRejection(FarmRegistration registration, User adminUser,
-            String rejectionReason) {
-        if (rejectionReason == null || rejectionReason.isBlank()) {
-            throw new BadRequestException("Vui lòng cung cấp lý do từ chối đơn đăng ký.");
-        }
-        String trimmedReason = rejectionReason.trim();
-        if (trimmedReason.length() > 1000) {
-            throw new BadRequestException("Lý do từ chối không được vượt quá 1000 ký tự.");
-        }
-
-        registration.setRegistrationStatus("rejected");
-        registration.setReviewedBy(adminUser);
-        registration.setReviewedAt(Instant.now());
-        registration.setRejectionReason(trimmedReason);
-        farmRegistrationRepository.save(registration);
-
-        // Notify applicant that registration was rejected
-        sendUserNotification(
-                registration.getUser().getId(),
-                "Đăng ký trang trại bị từ chối",
-                "Yêu cầu đăng ký trang trại " + registration.getFarmName()
-                        + " đã bị từ chối. Lý do: " + trimmedReason,
-                "FARM_REGISTRATION",
-                "/farm-registrations/" + registration.getId());
-
-        log.info("UC-39: Admin {} đã TỪ CHỐI đơn đăng ký #{} với lý do: {}",
-                adminUser.getEmail(), registration.getId(), rejectionReason);
-
-        sendRejectionEmail(registration, rejectionReason.trim());
-
-        return toAdminResponse(registration);
-    }
-
-    private void sendApprovalEmail(FarmRegistration registration, Farm farm) {
-        if (mailSender == null)
-            return;
-        try {
-            User applicant = registration.getUser();
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            if (mimeMessage == null) {
-                mimeMessage = new JavaMailSenderImpl().createMimeMessage();
-            }
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
-            if (mailFrom != null && !mailFrom.isBlank()) {
-                helper.setFrom(mailFrom, "MyCropDiary");
-            }
-            helper.setTo(applicant.getEmail());
-            helper.setSubject("[MyCropDiary] Chúc mừng! Đơn đăng ký trang trại của bạn đã được phê duyệt");
-            String htmlContent = EmailTemplateBuilder.buildFarmApprovedEmail(
-                    applicant.getFullName(), farm.getFarmName(), farm.getFarmCode());
-            helper.setText(htmlContent, true);
-
-            mailSender.send(mimeMessage);
-            log.info("Approval notification email sent to: {}", applicant.getEmail());
-        } catch (Exception e) {
-            log.warn("Không thể gửi email thông báo duyệt trang trại tới {}: {}",
-                    registration.getUser().getEmail(), e.getMessage());
-        }
-    }
-
-    private void sendRejectionEmail(FarmRegistration registration, String rejectionReason) {
-        if (mailSender == null)
-            return;
-        try {
-            User applicant = registration.getUser();
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            if (mimeMessage == null) {
-                mimeMessage = new JavaMailSenderImpl().createMimeMessage();
-            }
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
-            if (mailFrom != null && !mailFrom.isBlank()) {
-                helper.setFrom(mailFrom, "MyCropDiary");
-            }
-            helper.setTo(applicant.getEmail());
-            helper.setSubject("[MyCropDiary] Kết quả thẩm định đơn đăng ký trang trại");
-            String htmlContent = EmailTemplateBuilder.buildFarmRejectedEmail(
-                    applicant.getFullName(), registration.getFarmName(), rejectionReason);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(mimeMessage);
-            log.info("Rejection notification email sent to: {}", applicant.getEmail());
-        } catch (Exception e) {
-            log.warn("Không thể gửi email thông báo từ chối trang trại tới {}: {}",
-                    registration.getUser().getEmail(), e.getMessage());
-        }
-    }
-
     private final FarmRegistrationMapper farmRegistrationMapper = new FarmRegistrationMapper();
 
-    private FarmRegistrationResp toAdminResponse(FarmRegistration reg) {
-        return farmRegistrationMapper.toAdminResponse(reg);
-    }
-
-    private com.mycropdiary.api.dto.farmregistration.FarmRegistrationResp mapToUserResponse(FarmRegistration reg) {
+    private FarmRegistrationRespDTO mapToUserResponse(FarmRegistration reg) {
         return farmRegistrationMapper.toUserResponse(reg);
     }
 
-    private FarmRegistrationSummaryResp mapToSummaryResponse(FarmRegistration reg) {
+    private FarmRegistrationSummaryRespDTO mapToSummaryResponse(FarmRegistration reg) {
         return farmRegistrationMapper.toSummaryResponse(reg);
     }
 }

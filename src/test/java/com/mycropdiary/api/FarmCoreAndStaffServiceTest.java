@@ -1,19 +1,19 @@
 package com.mycropdiary.api;
 
-import com.mycropdiary.api.dto.assignment.AssignedZoneResp;
-import com.mycropdiary.api.dto.assignment.AssignmentResp;
-import com.mycropdiary.api.dto.assignment.CreateAssignmentReq;
-import com.mycropdiary.api.dto.block.BlockConditionResp;
-import com.mycropdiary.api.dto.block.BlockResp;
-import com.mycropdiary.api.dto.block.CreateBlockReq;
-import com.mycropdiary.api.dto.block.RecordBlockConditionReq;
-import com.mycropdiary.api.dto.block.UpdateBlockReq;
-import com.mycropdiary.api.dto.farm.CreateZoneReq;
-import com.mycropdiary.api.dto.farm.UpdateZoneReq;
-import com.mycropdiary.api.dto.farm.ZoneDetailResp;
-import com.mycropdiary.api.dto.farm.ZoneResp;
-import com.mycropdiary.api.dto.staff.AddStaffReq;
-import com.mycropdiary.api.dto.staff.FarmMemberResp;
+import com.mycropdiary.api.dto.assignment.AssignedZoneRespDTO;
+import com.mycropdiary.api.dto.assignment.AssignmentRespDTO;
+import com.mycropdiary.api.dto.assignment.CreateAssignmentReqDTO;
+import com.mycropdiary.api.dto.block.BlockConRespDTO;
+import com.mycropdiary.api.dto.block.BlockRespDTO;
+import com.mycropdiary.api.dto.block.CreateBlockReqDTO;
+import com.mycropdiary.api.dto.block.RecordBlockConReqDTO;
+import com.mycropdiary.api.dto.block.UpdateBlockReqDTO;
+import com.mycropdiary.api.dto.farm.CreateZoneReqDTO;
+import com.mycropdiary.api.dto.farm.UpdateZoneReqDTO;
+import com.mycropdiary.api.dto.farm.ZoneDetailRespDTO;
+import com.mycropdiary.api.dto.farm.ZoneRespDTO;
+import com.mycropdiary.api.dto.staff.CreateStaffReqDTO;
+import com.mycropdiary.api.dto.staff.FarmMemberRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -23,7 +23,7 @@ import com.mycropdiary.api.entity.Zone;
 import com.mycropdiary.api.exception.BusinessRuleException;
 import com.mycropdiary.api.exception.ResourceConflictException;
 import com.mycropdiary.api.repository.AccountTokenRepository;
-import com.mycropdiary.api.repository.BlockConditionObservationRepository;
+import com.mycropdiary.api.repository.BlockConditionRepository;
 import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
@@ -88,7 +88,7 @@ class FarmCoreAndStaffServiceTest {
     private BlockRepository blockRepository;
 
     @Autowired
-    private BlockConditionObservationRepository conditionRepository;
+    private BlockConditionRepository conditionRepository;
 
     private User ownerUser;
     private User staffUser;
@@ -132,17 +132,17 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-16: Tạo, cập nhật và xem chi tiết Zone")
     void testZoneCRUD_Success() {
-        CreateZoneReq createReq = new CreateZoneReq("Khu Cay An Trai", new BigDecimal("8000.00"), "Vuon sau rieng");
-        ZoneResp created = zoneService.createZone(ownerUser.getId(), farm.getId(), createReq);
+        CreateZoneReqDTO createReq = new CreateZoneReqDTO("Khu Cay An Trai", new BigDecimal("8000.00"), "Vuon sau rieng");
+        ZoneRespDTO created = zoneService.createZone(ownerUser.getId(), farm.getId(), createReq);
         assertNotNull(created.zoneId());
         assertEquals("Khu Cay An Trai", created.zoneName());
 
-        UpdateZoneReq updateReq = new UpdateZoneReq("Khu Sau Rieng Xuat Khau", new BigDecimal("8500.00"), "m2", "Cap nhat mo ta", null);
-        ZoneResp updated = zoneService.updateZone(ownerUser.getId(), created.zoneId(), updateReq);
+        UpdateZoneReqDTO updateReq = new UpdateZoneReqDTO("Khu Sau Rieng Xuat Khau", new BigDecimal("8500.00"), "m2", "Cap nhat mo ta", null);
+        ZoneRespDTO updated = zoneService.updateZone(ownerUser.getId(), created.zoneId(), updateReq);
         assertEquals("Khu Sau Rieng Xuat Khau", updated.zoneName());
         assertEquals(new BigDecimal("8500.00"), updated.areaValue());
 
-        ZoneDetailResp detail = zoneService.getZoneById(ownerUser.getId(), created.zoneId());
+        ZoneDetailRespDTO detail = zoneService.getZoneById(ownerUser.getId(), created.zoneId());
         assertEquals("Khu Sau Rieng Xuat Khau", detail.zoneName());
         assertEquals(0, detail.totalBlocks());
     }
@@ -150,7 +150,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-16.3, 16.4, 16.5: Tìm kiếm và lọc danh sách Zones")
     void testZoneSearch_Success() {
-        List<ZoneResp> zones = zoneService.searchZones(ownerUser.getId(), farm.getId(), "KV-01", null);
+        List<ZoneRespDTO> zones = zoneService.searchZones(ownerUser.getId(), farm.getId(), "KV-01", null);
         assertEquals(1, zones.size());
         assertEquals("KV-01", zones.get(0).zoneName());
     }
@@ -162,14 +162,14 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-14: Thêm nhân sự vào trang trại thành công với role hợp lệ")
     void testAddStaff_Success() {
-        AddStaffReq request = new AddStaffReq(
+        CreateStaffReqDTO request = new CreateStaffReqDTO(
                 outsiderUser.getEmail(),
                 null,
                 "staff",
                 "Ky thuat vien nong nghiep"
         );
 
-        FarmMemberResp resp = farmStaffService.addStaff(ownerUser.getId(), farm.getId(), request);
+        FarmMemberRespDTO resp = farmStaffService.addStaff(ownerUser.getId(), farm.getId(), request);
         assertNotNull(resp.id());
         assertEquals("staff", resp.farmRole());
         assertEquals(outsiderUser.getEmail(), resp.email());
@@ -178,7 +178,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-14: Thêm nhân sự trùng lặp -> Ném lỗi ResourceConflictException")
     void testAddStaff_AlreadyMember_ThrowsConflict() {
-        AddStaffReq request = new AddStaffReq(
+        CreateStaffReqDTO request = new CreateStaffReqDTO(
                 staffUser.getEmail(),
                 null,
                 "staff",
@@ -192,14 +192,14 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-35: Phân công nhân viên vào phân khu thành công")
     void testAssignStaffToZone_Success() {
-        CreateAssignmentReq request = new CreateAssignmentReq(
+        CreateAssignmentReqDTO request = new CreateAssignmentReqDTO(
                 staffMember.getId(),
                 area1.getId(),
                 Instant.now(),
                 null
         );
 
-        AssignmentResp resp = zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), request);
+        AssignmentRespDTO resp = zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), request);
         assertNotNull(resp.id());
         assertEquals(area1.getId(), resp.zoneId());
         assertEquals(staffMember.getId(), resp.farmMemberId());
@@ -208,7 +208,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-35: Phân công trùng lặp vào cùng phân khu -> Ném lỗi ResourceConflictException")
     void testAssignStaffToZone_AlreadyAssigned_ThrowsConflict() {
-        CreateAssignmentReq request = new CreateAssignmentReq(
+        CreateAssignmentReqDTO request = new CreateAssignmentReqDTO(
                 staffMember.getId(),
                 area1.getId(),
                 Instant.now(),
@@ -225,26 +225,26 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-35: Hủy phân công nhân viên khỏi phân khu")
     void testUnassignStaffFromZone_Success() {
-        CreateAssignmentReq request = new CreateAssignmentReq(
+        CreateAssignmentReqDTO request = new CreateAssignmentReqDTO(
                 staffMember.getId(),
                 area1.getId(),
                 Instant.now(),
                 null
         );
-        AssignmentResp resp = zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), request);
+        AssignmentRespDTO resp = zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), request);
 
         // Hủy phân công
         zoneAssignmentService.unassignStaffFromZone(ownerUser.getId(), farm.getId(), resp.id());
 
         // Kiểm tra danh sách phân công còn active không
-        List<AssignedZoneResp> assigned = zoneAssignmentService.getAssignedZonesForCurrentStaff(staffUser.getId(), farm.getId());
+        List<AssignedZoneRespDTO> assigned = zoneAssignmentService.getAssignedZonesForCurrentStaff(staffUser.getId(), farm.getId());
         assertEquals(0, assigned.size());
     }
 
     @Test
     @DisplayName("UC-16.1 & UC-35.1: Nhân viên xem danh sách các phân khu được phân công")
     void testGetAssignedZones_Success() {
-        CreateAssignmentReq request = new CreateAssignmentReq(
+        CreateAssignmentReqDTO request = new CreateAssignmentReqDTO(
                 staffMember.getId(),
                 area1.getId(),
                 Instant.now(),
@@ -253,7 +253,7 @@ class FarmCoreAndStaffServiceTest {
         zoneAssignmentService.assignStaffToZone(ownerUser.getId(), farm.getId(), request);
 
         // Staff gọi API xem khu vực được giao
-        List<AssignedZoneResp> assignedZones = zoneAssignmentService.getAssignedZonesForCurrentStaff(staffUser.getId(), farm.getId());
+        List<AssignedZoneRespDTO> assignedZones = zoneAssignmentService.getAssignedZonesForCurrentStaff(staffUser.getId(), farm.getId());
         assertEquals(1, assignedZones.size());
         assertEquals("KV-01", assignedZones.get(0).zoneName());
     }
@@ -265,7 +265,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-17: Tạo thửa đất thành công khi có quyền phụ trách khu vực")
     void testCreatePlot_Success() {
-        CreateBlockReq request = new CreateBlockReq(
+        CreateBlockReqDTO request = new CreateBlockReqDTO(
                 "THUA-01",
                 "Thua Dat 1",
                 new BigDecimal("1500.00"),
@@ -276,7 +276,7 @@ class FarmCoreAndStaffServiceTest {
                 "AVAILABLE"
         );
 
-        BlockResp response = blockService.createBlock(ownerUser.getId(), area1.getId(), request);
+        BlockRespDTO response = blockService.createBlock(ownerUser.getId(), area1.getId(), request);
         assertNotNull(response.id());
         assertEquals("THUA-01", response.blockCode());
         assertEquals(new BigDecimal("1500.00"), response.areaValue());
@@ -286,8 +286,8 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-17: Tạo thửa đất trùng mã trong cùng khu vực -> Ném lỗi ResourceConflictException")
     void testCreatePlot_DuplicateCode_ThrowsConflict() {
-        CreateBlockReq request1 = new CreateBlockReq("THUA-01", "Thua 1", new BigDecimal("1000.00"), null, null, null, null, null, null, null, "AVAILABLE");
-        CreateBlockReq request2 = new CreateBlockReq("THUA-01", "Thua 1 trung", new BigDecimal("500.00"), null, null, null, null, null, null, null, "AVAILABLE");
+        CreateBlockReqDTO request1 = new CreateBlockReqDTO("THUA-01", "Thua 1", new BigDecimal("1000.00"), null, null, null, null, null, null, null, "AVAILABLE");
+        CreateBlockReqDTO request2 = new CreateBlockReqDTO("THUA-01", "Thua 1 trung", new BigDecimal("500.00"), null, null, null, null, null, null, null, "AVAILABLE");
 
         blockService.createBlock(ownerUser.getId(), area1.getId(), request1);
 
@@ -298,7 +298,7 @@ class FarmCoreAndStaffServiceTest {
     @Test
     @DisplayName("UC-17: Nhân viên chưa được phân công khu vực tạo thửa đất -> Chặn AccessDeniedException")
     void testCreatePlot_UnassignedStaff_ThrowsAccessDenied() {
-        CreateBlockReq request = new CreateBlockReq("THUA-X", "Thua X", new BigDecimal("500.00"), null, null, null, null, null, null, null, "AVAILABLE");
+        CreateBlockReqDTO request = new CreateBlockReqDTO("THUA-X", "Thua X", new BigDecimal("500.00"), null, null, null, null, null, null, null, "AVAILABLE");
 
         // staffUser chưa được gán area2 -> phải bị chặn
         assertThrows(AccessDeniedException.class, () -> 
@@ -309,7 +309,7 @@ class FarmCoreAndStaffServiceTest {
     @DisplayName("UC-17: Tạo thửa đất vượt quá diện tích tối đa của khu vực -> Ném lỗi BusinessRuleException")
     void testCreatePlot_ExceedsAreaCapacity_ThrowsBusinessRule() {
         // area1 diện tích 10,000 m2 -> tạo thửa 15,000 m2 phải bị chặn
-        CreateBlockReq request = new CreateBlockReq("THUA-BIG", "Thua Sieu To", new BigDecimal("15000.00"), null, null, null, null, null, null, null, "AVAILABLE");
+        CreateBlockReqDTO request = new CreateBlockReqDTO("THUA-BIG", "Thua Sieu To", new BigDecimal("15000.00"), null, null, null, null, null, null, null, "AVAILABLE");
 
         assertThrows(BusinessRuleException.class, () -> 
                 blockService.createBlock(ownerUser.getId(), area1.getId(), request));
@@ -323,25 +323,25 @@ class FarmCoreAndStaffServiceTest {
     @DisplayName("UC-17.4: Ghi nhận tình trạng lô đất và xem lịch sử tình trạng thành công")
     void testRecordBlockCondition_Success() {
         // Tạo block trước
-        CreateBlockReq blockReq = new CreateBlockReq("THUA-02", "Thua Dat 2", new BigDecimal("1000.00"), null, null, null, null, null, null, null, "AVAILABLE");
-        BlockResp block = blockService.createBlock(ownerUser.getId(), area1.getId(), blockReq);
+        CreateBlockReqDTO blockReq = new CreateBlockReqDTO("THUA-02", "Thua Dat 2", new BigDecimal("1000.00"), null, null, null, null, null, null, null, "AVAILABLE");
+        BlockRespDTO block = blockService.createBlock(ownerUser.getId(), area1.getId(), blockReq);
 
         // Ghi nhận tình trạng (Record Condition)
-        RecordBlockConditionReq conditionReq = new RecordBlockConditionReq(
+        RecordBlockConReqDTO conditionReq = new RecordBlockConReqDTO(
                 "Độ ẩm thấp",
                 "Đất khô cằn do nắng gắt 3 ngày liên tục, cần tưới bổ sung",
                 "https://images.example.com/soil_dry.jpg",
                 Instant.now()
         );
 
-        BlockConditionResp savedCondition = blockService.recordBlockCondition(ownerUser.getId(), block.blockId(), conditionReq);
+        BlockConRespDTO savedCondition = blockService.recordBlockCondition(ownerUser.getId(), block.blockId(), conditionReq);
         assertNotNull(savedCondition.observationId());
         assertEquals(block.blockId(), savedCondition.blockId());
         assertEquals("Độ ẩm thấp", savedCondition.conditionType());
         assertEquals("Đất khô cằn do nắng gắt 3 ngày liên tục, cần tưới bổ sung", savedCondition.description());
 
         // Lấy lịch sử tình trạng
-        List<BlockConditionResp> history = blockService.getBlockConditions(ownerUser.getId(), block.blockId());
+        List<BlockConRespDTO> history = blockService.getBlockConditions(ownerUser.getId(), block.blockId());
         assertEquals(1, history.size());
         assertEquals(savedCondition.observationId(), history.get(0).observationId());
     }

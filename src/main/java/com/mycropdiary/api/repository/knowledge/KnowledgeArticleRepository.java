@@ -1,7 +1,6 @@
 package com.mycropdiary.api.repository.knowledge;
 
 import com.mycropdiary.api.entity.knowledge.KnowledgeArticle;
-import com.mycropdiary.api.entity.knowledge.KnowledgeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,8 +19,8 @@ public interface KnowledgeArticleRepository extends JpaRepository<KnowledgeArtic
     @Query("SELECT k FROM KnowledgeArticle k WHERE LOWER(k.articleStatus) = LOWER(:status)")
     List<KnowledgeArticle> findByStatusString(@Param("status") String status);
 
-    default List<KnowledgeArticle> findByStatus(KnowledgeStatus status) {
-        return findByStatusString(status.name());
+    default List<KnowledgeArticle> findByStatus(String status) {
+        return findByStatusString(status);
     }
 
     Optional<KnowledgeArticle> findBySlug(String slug);

@@ -1,8 +1,8 @@
 package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.vietgap.ConductInternalAssessmentReq;
-import com.mycropdiary.api.dto.vietgap.InternalAssessmentResp;
+import com.mycropdiary.api.dto.vietgap.ConductAssessmentReqDTO;
+import com.mycropdiary.api.dto.vietgap.AssessmentRespDTO;
 import com.mycropdiary.api.service.cultivation.InternalAssessmentService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,30 +31,30 @@ public class InternalAssessmentController {
     @Operation(summary = "Conduct Internal VietGAP Assessment", description = "Tiến hành một đợt đánh giá nội bộ toàn diện theo các tiêu chí chuẩn VietGAP, chấm điểm và đính kèm bằng chứng thẩm định.")
     @PostMapping("/farms/{farmId}/internal-assessments")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<InternalAssessmentResp> conductInternalAssessment(
+    public ApiResp<AssessmentRespDTO> conductInternalAssessment(
             @PathVariable Integer farmId,
-            @Valid @RequestBody ConductInternalAssessmentReq request) {
+            @Valid @RequestBody ConductAssessmentReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        InternalAssessmentResp response = assessmentService.conductInternalAssessment(currentUserId, farmId, request);
+        AssessmentRespDTO response = assessmentService.conductInternalAssessment(currentUserId, farmId, request);
         return ApiResp.ok("Hoàn thành đợt đánh giá nội bộ VietGAP thành công.", response);
     }
 
     @Operation(summary = "View Internal Assessment History", description = "Xem lịch sử các đợt đánh giá nội bộ của trang trại (hỗ trợ lọc theo mùa vụ hoặc phân khu).")
     @GetMapping("/farms/{farmId}/internal-assessments")
-    public ApiResp<List<InternalAssessmentResp>> getInternalAssessmentHistory(
+    public ApiResp<List<AssessmentRespDTO>> getInternalAssessmentHistory(
             @PathVariable Integer farmId,
             @RequestParam(required = false) Integer cropSeasonId,
             @RequestParam(required = false) Integer zoneId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        List<InternalAssessmentResp> history = assessmentService.getInternalAssessmentHistory(currentUserId, farmId, cropSeasonId, zoneId);
+        List<AssessmentRespDTO> history = assessmentService.getInternalAssessmentHistory(currentUserId, farmId, cropSeasonId, zoneId);
         return ApiResp.ok("Lịch sử đánh giá nội bộ VietGAP.", history);
     }
 
     @Operation(summary = "View Internal Assessment Details", description = "Xem chi tiết một đợt đánh giá nội bộ, danh sách điểm số từng tiêu chí, tỷ lệ tuân thủ và bằng chứng.")
     @GetMapping("/internal-assessments/{assessmentId}")
-    public ApiResp<InternalAssessmentResp> getInternalAssessmentDetails(@PathVariable Integer assessmentId) {
+    public ApiResp<AssessmentRespDTO> getInternalAssessmentDetails(@PathVariable Integer assessmentId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        InternalAssessmentResp response = assessmentService.getInternalAssessmentDetails(currentUserId, assessmentId);
+        AssessmentRespDTO response = assessmentService.getInternalAssessmentDetails(currentUserId, assessmentId);
         return ApiResp.ok("Chi tiết đợt đánh giá nội bộ VietGAP.", response);
     }
 }

@@ -1,17 +1,19 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.report.CropSeasonReportResp;
-import com.mycropdiary.api.dto.report.FarmReportResp;
-import com.mycropdiary.api.dto.warehouse.CreateWarehouseReq;
-import com.mycropdiary.api.dto.warehouse.InventoryItemResp;
-import com.mycropdiary.api.dto.warehouse.UpdateInventoryReq;
-import com.mycropdiary.api.dto.warehouse.WarehouseResp;
+import com.mycropdiary.api.dto.report.CropSeasonReportRespDTO;
+import com.mycropdiary.api.dto.report.FarmReportRespDTO;
+import com.mycropdiary.api.dto.warehouse.CreateWarehouseReqDTO;
+import com.mycropdiary.api.dto.warehouse.UpdateWarehouseReqDTO;
+import com.mycropdiary.api.dto.warehouse.InventoryRespDTO;
+import com.mycropdiary.api.dto.warehouse.UpdateInventoryReqDTO;
+import com.mycropdiary.api.dto.warehouse.WarehouseRespDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.cultivation.*;
 import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.*;
-import com.mycropdiary.api.service.impl.ReportServiceImpl;
+import com.mycropdiary.api.service.impl.InventoryServiceImpl;
+import com.mycropdiary.api.service.impl.ProductionReportServiceImpl;
 import com.mycropdiary.api.service.impl.WarehouseServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,12 +66,17 @@ public class FE14_WarehouseAndInventoryUnitTest {
     private FarmingActivityRepository farmingActivityRepository;
 
     @Mock
+    private MaterialRepository materialRepository;
+
+    @Mock
     private FarmAccessGuard accessGuard;
 
     @InjectMocks
     private WarehouseServiceImpl warehouseService;
 
-    private ReportServiceImpl reportService;
+    private InventoryServiceImpl inventoryService;
+
+    private ProductionReportServiceImpl reportService;
 
     private Farm testFarm;
     private Warehouse testWarehouse;
@@ -78,7 +85,13 @@ public class FE14_WarehouseAndInventoryUnitTest {
 
     @BeforeEach
     void setUp() {
-        reportService = new ReportServiceImpl(
+        inventoryService = new InventoryServiceImpl(
+                inventoryRepository,
+                warehouseRepository,
+                materialRepository,
+                accessGuard
+        );
+        reportService = new ProductionReportServiceImpl(
                 farmRepository,
                 cropSeasonRepository,
                 blockRepository,
@@ -110,7 +123,7 @@ public class FE14_WarehouseAndInventoryUnitTest {
     void testGetWarehousesByFarm_success() {
         when(warehouseRepository.findByFarmIdOrderByWarehouseNameAsc(1)).thenReturn(List.of(testWarehouse));
 
-        List<WarehouseResp> result = warehouseService.getWarehousesByFarm(1, 1);
+        List<WarehouseRespDTO> result = warehouseService.getWarehousesByFarm(1, 1);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -121,7 +134,7 @@ public class FE14_WarehouseAndInventoryUnitTest {
     @Test
     @DisplayName("UTC02 - Tạo kho hàng mới thành công")
     void testCreateWarehouse_success() {
-        CreateWarehouseReq req = new CreateWarehouseReq("Kho lạnh số 2", "Đà Lạt", null);
+        CreateWarehouseReqDTO req = new CreateWarehouseReqDTO("Kho lạnh số 2", "Đà Lạt", null);
         when(farmRepository.findById(1)).thenReturn(Optional.of(testFarm));
         when(warehouseRepository.existsByFarmIdAndWarehouseNameIgnoreCase(1, "Kho lạnh số 2")).thenReturn(false);
         when(warehouseRepository.save(any(Warehouse.class))).thenAnswer(invocation -> {
@@ -130,7 +143,7 @@ public class FE14_WarehouseAndInventoryUnitTest {
             return saved;
         });
 
-        WarehouseResp result = warehouseService.createWarehouse(1, 1, req);
+        WarehouseRespDTO result = warehouseService.createWarehouse(1, 1, req);
 
         assertNotNull(result);
         assertEquals(2, result.warehouseId());
@@ -142,7 +155,7 @@ public class FE14_WarehouseAndInventoryUnitTest {
     void testGetInventoriesByFarm_success() {
         when(inventoryRepository.findByFarmId(1)).thenReturn(List.of(testInventory));
 
-        List<InventoryItemResp> result = warehouseService.getInventoriesByFarm(1, 1, null, null);
+        List<InventoryRespDTO> result = inventoryService.getInventoriesByFarm(1, 1, null, null);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -153,11 +166,11 @@ public class FE14_WarehouseAndInventoryUnitTest {
     @Test
     @DisplayName("UTC04 - Cập nhật số lượng tồn kho thành công")
     void testUpdateInventory_success() {
-        UpdateInventoryReq req = new UpdateInventoryReq(new BigDecimal("500.000"), new BigDecimal("120.000"));
+        UpdateInventoryReqDTO req = new UpdateInventoryReqDTO(new BigDecimal("500.000"), new BigDecimal("120.000"));
         when(inventoryRepository.findById(1)).thenReturn(Optional.of(testInventory));
         when(inventoryRepository.save(any(Inventory.class))).thenReturn(testInventory);
 
-        InventoryItemResp result = warehouseService.updateInventory(1, 1, req);
+        InventoryRespDTO result = inventoryService.updateInventory(1, 1, req);
 
         assertNotNull(result);
         assertEquals(new BigDecimal("500.000"), testInventory.getQuantityOnHand());
@@ -190,7 +203,7 @@ public class FE14_WarehouseAndInventoryUnitTest {
         when(cropSeasonRepository.findByFarmIdOrderByStartDateDesc(1)).thenReturn(List.of(season));
         when(blockRepository.findByZoneFarmId(1)).thenReturn(List.of());
 
-        FarmReportResp report = reportService.generateFarmReport(1, 1);
+        FarmReportRespDTO report = reportService.generateFarmReport(1, 1);
 
         assertNotNull(report);
         assertEquals("Trang trại VietGAP Đà Lạt", report.farmName());
@@ -216,7 +229,7 @@ public class FE14_WarehouseAndInventoryUnitTest {
         when(expenseRepository.findExpensesForSummary(1, 1, null, null)).thenReturn(List.of());
         when(farmingActivityRepository.countByCropSeasonId(1)).thenReturn(8L);
 
-        CropSeasonReportResp report = reportService.getCropSeasonReport(1, 1);
+        CropSeasonReportRespDTO report = reportService.getCropSeasonReport(1, 1);
 
         assertNotNull(report);
         assertEquals("Mùa dưa lưới 2026", report.seasonName());

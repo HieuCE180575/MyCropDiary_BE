@@ -1,13 +1,13 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.notification.NotificationListResp;
-import com.mycropdiary.api.dto.notification.NotificationResp;
+import com.mycropdiary.api.dto.notification.NotificationListRespDTO;
+import com.mycropdiary.api.dto.notification.NotificationRespDTO;
 
 public interface NotificationService {
 
-    NotificationListResp getMyNotifications(Integer userId, int limit);
+    NotificationListRespDTO getMyNotifications(Integer userId, int limit);
 
-    NotificationResp markAsRead(Integer userId, Integer notificationId);
+    NotificationRespDTO markAsRead(Integer userId, Integer notificationId);
 
     void markAllAsRead(Integer userId);
 

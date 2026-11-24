@@ -116,13 +116,13 @@ public class KnowledgeArticle extends BaseEntity {
     public String getContent() { return body; }
     public void setContent(String content) { this.body = content; }
 
-    public KnowledgeStatus getStatus() {
-        if ("published".equalsIgnoreCase(articleStatus)) return KnowledgeStatus.PUBLISHED;
-        if ("archived".equalsIgnoreCase(articleStatus)) return KnowledgeStatus.ARCHIVED;
-        return KnowledgeStatus.DRAFT;
+    public String getStatus() {
+        if ("published".equalsIgnoreCase(articleStatus)) return "PUBLISHED";
+        if ("archived".equalsIgnoreCase(articleStatus)) return "ARCHIVED";
+        return "DRAFT";
     }
-    public void setStatus(KnowledgeStatus status) {
-        this.articleStatus = status != null ? status.name().toLowerCase() : "draft";
+    public void setStatus(String status) {
+        this.articleStatus = status != null ? status.toLowerCase() : "draft";
     }
 
     public Boolean getIsPublic() { return "published".equalsIgnoreCase(articleStatus); }

@@ -1,10 +1,11 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.notification.NotificationListResp;
-import com.mycropdiary.api.dto.notification.NotificationResp;
+import com.mycropdiary.api.dto.notification.NotificationListRespDTO;
+import com.mycropdiary.api.dto.notification.NotificationRespDTO;
 import com.mycropdiary.api.entity.Notification;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.NotificationMapper;
 import com.mycropdiary.api.repository.NotificationRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.service.NotificationService;
@@ -19,6 +20,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final NotificationMapper notificationMapper = new NotificationMapper();
 
     public NotificationServiceImpl(NotificationRepository notificationRepository, UserRepository userRepository) {
         this.notificationRepository = notificationRepository;
@@ -27,7 +29,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public NotificationListResp getMyNotifications(Integer userId, int limit) {
+    public NotificationListRespDTO getMyNotifications(Integer userId, int limit) {
         int safeLimit = Math.max(1, Math.min(limit, 50));
         List<Notification> list = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, safeLimit));
         long unreadCount = notificationRepository.countByUserIdAndIsReadFalse(userId);
@@ -49,18 +51,18 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
 
-        List<NotificationResp> dtos = list.stream().map(NotificationResp::fromEntity).toList();
-        return new NotificationListResp(dtos, unreadCount);
+        List<NotificationRespDTO> dtos = notificationMapper.toResponseList(list);
+        return new NotificationListRespDTO(dtos, unreadCount);
     }
 
     @Override
     @Transactional
-    public NotificationResp markAsRead(Integer userId, Integer notificationId) {
+    public NotificationRespDTO markAsRead(Integer userId, Integer notificationId) {
         Notification notification = notificationRepository.findByIdAndUserId(notificationId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông báo hoặc bạn không có quyền truy cập."));
         notification.setIsRead(true);
         Notification saved = notificationRepository.save(notification);
-        return NotificationResp.fromEntity(saved);
+        return notificationMapper.toResponse(saved);
     }
 
     @Override

@@ -1,13 +1,14 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.procurement.CreateSupplierReq;
-import com.mycropdiary.api.dto.procurement.SupplierResp;
-import com.mycropdiary.api.dto.procurement.UpdateSupplierReq;
+import com.mycropdiary.api.dto.procurement.CreateSupplierReqDTO;
+import com.mycropdiary.api.dto.procurement.SupplierRespDTO;
+import com.mycropdiary.api.dto.procurement.UpdateSupplierReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.cultivation.Supplier;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceConflictException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.SupplierMapper;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.InputPurchaseRepository;
 import com.mycropdiary.api.repository.cultivation.SupplierRepository;
@@ -26,6 +27,7 @@ public class SupplierServiceImpl implements SupplierService {
     private final InputPurchaseRepository inputPurchaseRepository;
     private final FarmRepository farmRepository;
     private final FarmAccessGuard accessGuard;
+    private final SupplierMapper supplierMapper = new SupplierMapper();
 
     public SupplierServiceImpl(SupplierRepository supplierRepository,
                                InputPurchaseRepository inputPurchaseRepository,
@@ -39,7 +41,7 @@ public class SupplierServiceImpl implements SupplierService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SupplierResp> getSuppliers(Integer currentUserId, Integer farmId, String keyword) {
+    public List<SupplierRespDTO> getSuppliers(Integer currentUserId, Integer farmId, String keyword) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
         List<Supplier> list = (keyword != null && !keyword.isBlank())
                 ? supplierRepository.searchSuppliers(farmId, keyword.trim())
@@ -47,22 +49,22 @@ public class SupplierServiceImpl implements SupplierService {
 
         return list.stream().map(s -> {
             Long count = inputPurchaseRepository.countBySupplierId(s.getId());
-            return SupplierResp.fromEntity(s, count);
+            return supplierMapper.toResponse(s, count);
         }).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SupplierResp getSupplierDetails(Integer currentUserId, Integer supplierId) {
+    public SupplierRespDTO getSupplierDetails(Integer currentUserId, Integer supplierId) {
         Supplier supplier = supplierRepository.findById(supplierId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà cung cấp ID: " + supplierId));
         accessGuard.requireFarmAccess(currentUserId, supplier.getFarm().getId());
         Long count = inputPurchaseRepository.countBySupplierId(supplier.getId());
-        return SupplierResp.fromEntity(supplier, count);
+        return supplierMapper.toResponse(supplier, count);
     }
 
     @Override
-    public SupplierResp createSupplier(Integer currentUserId, Integer farmId, CreateSupplierReq request) {
+    public SupplierRespDTO createSupplier(Integer currentUserId, Integer farmId, CreateSupplierReqDTO request) {
         accessGuard.requireFarmOwner(currentUserId, farmId);
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nông trại ID: " + farmId));
@@ -83,11 +85,11 @@ public class SupplierServiceImpl implements SupplierService {
         );
 
         Supplier saved = supplierRepository.save(supplier);
-        return SupplierResp.fromEntity(saved, 0L);
+        return supplierMapper.toResponse(saved, 0L);
     }
 
     @Override
-    public SupplierResp updateSupplier(Integer currentUserId, Integer supplierId, UpdateSupplierReq request) {
+    public SupplierRespDTO updateSupplier(Integer currentUserId, Integer supplierId, UpdateSupplierReqDTO request) {
         Supplier supplier = supplierRepository.findById(supplierId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhà cung cấp ID: " + supplierId));
         Integer farmId = supplier.getFarm().getId();
@@ -107,7 +109,7 @@ public class SupplierServiceImpl implements SupplierService {
 
         Supplier updated = supplierRepository.save(supplier);
         Long count = inputPurchaseRepository.countBySupplierId(updated.getId());
-        return SupplierResp.fromEntity(updated, count);
+        return supplierMapper.toResponse(updated, count);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package com.mycropdiary.api.controller;
 
-import com.mycropdiary.api.dto.assignment.AssignedZoneResp;
-import com.mycropdiary.api.dto.assignment.AssignmentResp;
-import com.mycropdiary.api.dto.assignment.CreateAssignmentReq;
+import com.mycropdiary.api.dto.assignment.AssignedZoneRespDTO;
+import com.mycropdiary.api.dto.assignment.AssignmentRespDTO;
+import com.mycropdiary.api.dto.assignment.CreateAssignmentReqDTO;
 import com.mycropdiary.api.dto.common.ApiResp;
 import com.mycropdiary.api.service.ZoneAssignmentService;
 import com.mycropdiary.api.util.SecurityUtils;
@@ -31,11 +31,11 @@ public class ZoneAssignmentController {
     @Operation(summary = "Phân công nhân viên vào Vùng", description = "Phân công nhân viên phụ trách một vùng canh tác")
     @PostMapping("/zone-assignments")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<AssignmentResp> assignStaffToZone(
+    public ApiResp<AssignmentRespDTO> assignStaffToZone(
             @PathVariable Integer farmId,
-            @Valid @RequestBody CreateAssignmentReq request) {
+            @Valid @RequestBody CreateAssignmentReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        AssignmentResp response = zoneAssignmentService.assignStaffToZone(currentUserId, farmId, request);
+        AssignmentRespDTO response = zoneAssignmentService.assignStaffToZone(currentUserId, farmId, request);
         return ApiResp.ok("Phân công nhân viên vào vùng canh tác thành công", response);
     }
 
@@ -51,20 +51,20 @@ public class ZoneAssignmentController {
 
     @Operation(summary = "Lấy danh sách các Vùng được phân công của nhân viên hiện tại")
     @GetMapping("/my-assigned-zones")
-    public ApiResp<List<AssignedZoneResp>> getAssignedZonesForCurrentStaff(
+    public ApiResp<List<AssignedZoneRespDTO>> getAssignedZonesForCurrentStaff(
             @PathVariable Integer farmId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<AssignedZoneResp> list = zoneAssignmentService.getAssignedZonesForCurrentStaff(currentUserId, farmId);
+        List<AssignedZoneRespDTO> list = zoneAssignmentService.getAssignedZonesForCurrentStaff(currentUserId, farmId);
         return ApiResp.ok("Danh sách vùng được phân công phụ trách", list);
     }
 
     @Operation(summary = "Lấy danh sách phân công nhân viên theo Vùng", description = "Xem danh sách phân công nhân viên trong các vùng canh tác")
     @GetMapping("/zone-assignments")
-    public ApiResp<List<AssignmentResp>> getZoneAssignments(
+    public ApiResp<List<AssignmentRespDTO>> getZoneAssignments(
             @PathVariable Integer farmId,
             @RequestParam(required = false) Integer zoneId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<AssignmentResp> list = zoneAssignmentService.getZoneAssignments(currentUserId, farmId, zoneId);
+        List<AssignmentRespDTO> list = zoneAssignmentService.getZoneAssignments(currentUserId, farmId, zoneId);
         return ApiResp.ok("Danh sách phân công vùng sản xuất", list);
     }
 }

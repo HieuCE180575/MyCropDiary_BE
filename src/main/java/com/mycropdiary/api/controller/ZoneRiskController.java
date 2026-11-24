@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.risk.CreateZoneRiskReq;
-import com.mycropdiary.api.dto.risk.UpdateRiskControlReq;
-import com.mycropdiary.api.dto.risk.ZoneRiskResp;
+import com.mycropdiary.api.dto.risk.CreateZoneRiskReqDTO;
+import com.mycropdiary.api.dto.risk.UpdateRiskControlReqDTO;
+import com.mycropdiary.api.dto.risk.ZoneRiskRespDTO;
 import com.mycropdiary.api.service.ZoneRiskService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,45 +29,45 @@ public class ZoneRiskController {
     @Operation(summary = "Ghi nhận rủi ro sản xuất phân khu (Record Zone Production Risk)")
     @PostMapping("/zones/{zoneId}/risks")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<ZoneRiskResp> recordZoneRisk(
+    public ApiResp<ZoneRiskRespDTO> recordZoneRisk(
             @PathVariable Integer zoneId,
-            @Valid @RequestBody CreateZoneRiskReq request) {
+            @Valid @RequestBody CreateZoneRiskReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        ZoneRiskResp response = riskService.recordZoneRisk(currentUserId, zoneId, request);
+        ZoneRiskRespDTO response = riskService.recordZoneRisk(currentUserId, zoneId, request);
         return ApiResp.ok("Ghi nhận rủi ro phân khu thành công", response);
     }
 
     @Operation(summary = "Xem lịch sử rủi ro của phân khu (View Zone Risk History)")
     @GetMapping("/zones/{zoneId}/risks")
-    public ApiResp<List<ZoneRiskResp>> getZoneRiskHistory(@PathVariable Integer zoneId) {
+    public ApiResp<List<ZoneRiskRespDTO>> getZoneRiskHistory(@PathVariable Integer zoneId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<ZoneRiskResp> history = riskService.getZoneRiskHistory(currentUserId, zoneId);
+        List<ZoneRiskRespDTO> history = riskService.getZoneRiskHistory(currentUserId, zoneId);
         return ApiResp.ok("Lịch sử rủi ro phân khu", history);
     }
 
     @Operation(summary = "Xem lịch sử rủi ro toàn trang trại (Farm Risk History)")
     @GetMapping("/farms/{farmId}/risks")
-    public ApiResp<List<ZoneRiskResp>> getFarmRiskHistory(@PathVariable Integer farmId) {
+    public ApiResp<List<ZoneRiskRespDTO>> getFarmRiskHistory(@PathVariable Integer farmId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<ZoneRiskResp> history = riskService.getFarmRiskHistory(currentUserId, farmId);
+        List<ZoneRiskRespDTO> history = riskService.getFarmRiskHistory(currentUserId, farmId);
         return ApiResp.ok("Lịch sử rủi ro toàn trang trại", history);
     }
 
     @Operation(summary = "Xem chi tiết rủi ro (View Zone Risk Details)")
     @GetMapping("/risks/{riskId}")
-    public ApiResp<ZoneRiskResp> getZoneRiskDetails(@PathVariable Integer riskId) {
+    public ApiResp<ZoneRiskRespDTO> getZoneRiskDetails(@PathVariable Integer riskId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        ZoneRiskResp response = riskService.getZoneRiskDetails(currentUserId, riskId);
+        ZoneRiskRespDTO response = riskService.getZoneRiskDetails(currentUserId, riskId);
         return ApiResp.ok("Chi tiết rủi ro phân khu", response);
     }
 
     @Operation(summary = "Cập nhật biện pháp kiểm soát rủi ro (Update Risk Control Measures)")
     @PutMapping("/risks/{riskId}")
-    public ApiResp<ZoneRiskResp> updateRiskControlMeasures(
+    public ApiResp<ZoneRiskRespDTO> updateRiskControlMeasures(
             @PathVariable Integer riskId,
-            @Valid @RequestBody UpdateRiskControlReq request) {
+            @Valid @RequestBody UpdateRiskControlReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        ZoneRiskResp response = riskService.updateRiskControlMeasures(currentUserId, riskId, request);
+        ZoneRiskRespDTO response = riskService.updateRiskControlMeasures(currentUserId, riskId, request);
         return ApiResp.ok("Cập nhật biện pháp kiểm soát rủi ro thành công", response);
     }
 

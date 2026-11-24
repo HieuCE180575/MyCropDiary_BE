@@ -30,7 +30,7 @@ public class AuthController {
     @Operation(summary = "Đăng ký tài khoản mới (UC-04)", description = "Tạo user mới ở trạng thái PENDING, sinh mã OTP 6 số gửi qua email để kích hoạt.")
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<Map<String, String>> register(@Valid @RequestBody RegisterReq request) {
+    public ApiResp<Map<String, String>> register(@Valid @RequestBody RegisterAccReqDTO request) {
         authService.register(request);
         return ApiResp.ok(
                 "Đăng ký thành công. Vui lòng kiểm tra email để nhận mã OTP xác thực.",
@@ -44,8 +44,8 @@ public class AuthController {
      */
     @Operation(summary = "Xác thực mã OTP (UC-04)", description = "Xác thực mã OTP 6 số nhận từ email. Nếu chính xác, tài khoản được kích hoạt (ACTIVE) và trả về Access Token + Refresh Token.")
     @PostMapping("/verify-otp")
-    public ApiResp<AuthResp> verifyOtp(@Valid @RequestBody VerifyOtpReq request) {
-        AuthResp response = authService.verifyOtp(request);
+    public ApiResp<AuthRespDTO> verifyOtp(@Valid @RequestBody VerifyOtpReqDTO request) {
+        AuthRespDTO response = authService.verifyOtp(request);
         return ApiResp.ok("Xác thực OTP thành công. Tài khoản đã được kích hoạt.", response);
     }
 
@@ -55,8 +55,8 @@ public class AuthController {
      */
     @Operation(summary = "Đăng nhập hệ thống (UC-03)", description = "Đăng nhập bằng Email và Password, trả về Access Token (15 phút) và Refresh Token (30 ngày).")
     @PostMapping("/login")
-    public ApiResp<AuthResp> login(@Valid @RequestBody LoginReq request) {
-        AuthResp response = authService.login(request);
+    public ApiResp<AuthRespDTO> login(@Valid @RequestBody LoginReqDTO request) {
+        AuthRespDTO response = authService.login(request);
         return ApiResp.ok("Đăng nhập thành công.", response);
     }
 
@@ -65,8 +65,8 @@ public class AuthController {
      */
     @Operation(summary = "Đăng nhập / Đăng ký bằng Google", description = "Xác thực qua Google OAuth2 / Identity Services (GSI). Tự động kích hoạt hoặc khởi tạo tài khoản nếu chưa tồn tại.")
     @PostMapping("/google")
-    public ApiResp<AuthResp> loginWithGoogle(@Valid @RequestBody GoogleAuthReq request) {
-        AuthResp response = authService.loginWithGoogle(request);
+    public ApiResp<AuthRespDTO> loginWithGoogle(@Valid @RequestBody GoogleAuthReqDTO request) {
+        AuthRespDTO response = authService.loginWithGoogle(request);
         return ApiResp.ok("Xác thực Google thành công.", response);
     }
 
@@ -92,7 +92,7 @@ public class AuthController {
     @Operation(summary = "Đăng xuất (UC-05)",
             description = "Thu hồi Refresh Token hiện tại. Sau khi đăng xuất, token này không thể dùng để làm mới phiên.")
     @PostMapping("/logout")
-    public ApiResp<Void> logout(@Valid @RequestBody LogoutReq request) {
+    public ApiResp<Void> logout(@Valid @RequestBody LogoutReqDTO request) {
         authService.logout(request.refreshToken());
         return ApiResp.ok("Đăng xuất thành công. Phiên đã được đóng.", null);
     }
@@ -104,8 +104,8 @@ public class AuthController {
     @Operation(summary = "Làm mới Access Token (UC-05)",
             description = "Dùng Refresh Token còn hiệu lực để cấp Access Token mới mà không cần đăng nhập lại.")
     @PostMapping("/refresh-token")
-    public ApiResp<AuthResp> refreshToken(@Valid @RequestBody RefreshTokenReq request) {
-        AuthResp response = authService.refreshToken(request.refreshToken());
+    public ApiResp<AuthRespDTO> refreshToken(@Valid @RequestBody RefreshTokenReqDTO request) {
+        AuthRespDTO response = authService.refreshToken(request.refreshToken());
         return ApiResp.ok("Đã cấp Access Token mới.", response);
     }
 
@@ -119,7 +119,7 @@ public class AuthController {
             description = "Gửi mã OTP đặt lại mật khẩu tới email người dùng. " +
                           "API luôn trả về thành công để bảo vệ quyền riêng tư email.")
     @PostMapping("/forgot-password")
-    public ApiResp<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordReq request) {
+    public ApiResp<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordReqDTO request) {
         authService.forgotPassword(request.email());
         return ApiResp.ok(
                 "Nếu email tồn tại trong hệ thống, mã OTP đặt lại mật khẩu đã được gửi.",
@@ -135,7 +135,7 @@ public class AuthController {
             description = "Xác minh mã OTP nhận từ email và đặt mật khẩu mới. " +
                           "Tất cả phiên đăng nhập cũ sẽ bị đóng sau khi đổi mật khẩu.")
     @PostMapping("/reset-password")
-    public ApiResp<Void> resetPassword(@Valid @RequestBody ResetPasswordReq request) {
+    public ApiResp<Void> resetPassword(@Valid @RequestBody ResetPasswordReqDTO request) {
         authService.resetPassword(request);
         return ApiResp.ok("Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.", null);
     }

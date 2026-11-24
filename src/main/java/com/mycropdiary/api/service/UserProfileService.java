@@ -1,11 +1,11 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.user.ChangePasswordReq;
-import com.mycropdiary.api.dto.user.UpdateProfileReq;
-import com.mycropdiary.api.dto.user.UserProfileResp;
+import com.mycropdiary.api.dto.user.ChangePasswordReqDTO;
+import com.mycropdiary.api.dto.user.UpdateProfileReqDTO;
+import com.mycropdiary.api.dto.user.UserProfileRespDTO;
 
 public interface UserProfileService {
-    UserProfileResp getProfile(Integer userId);
-    UserProfileResp updateProfile(Integer userId, UpdateProfileReq request);
-    void changePassword(Integer userId, ChangePasswordReq request);
+    UserProfileRespDTO getProfile(Integer userId);
+    UserProfileRespDTO updateProfile(Integer userId, UpdateProfileReqDTO request);
+    void changePassword(Integer userId, ChangePasswordReqDTO request);
 }

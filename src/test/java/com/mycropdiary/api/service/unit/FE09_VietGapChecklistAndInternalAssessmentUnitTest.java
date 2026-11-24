@@ -13,7 +13,7 @@ import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.repository.cultivation.*;
 import com.mycropdiary.api.service.impl.InternalAssessmentServiceImpl;
-import com.mycropdiary.api.service.impl.VietGapChecklistServiceImpl;
+import com.mycropdiary.api.service.impl.ChecklistReviewServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +39,7 @@ public class FE09_VietGapChecklistAndInternalAssessmentUnitTest {
     @Mock
     private ChecklistRuleRepository checklistRuleRepository;
     @Mock
-    private ChecklistRunRepository checklistRunRepository;
+    private ChecklistReviewRepository checklistRunRepository;
     @Mock
     private ChecklistResultRepository checklistResultRepository;
     @Mock
@@ -62,7 +62,7 @@ public class FE09_VietGapChecklistAndInternalAssessmentUnitTest {
     private FarmAccessGuard accessGuard;
 
     @InjectMocks
-    private VietGapChecklistServiceImpl checklistService;
+    private ChecklistReviewServiceImpl checklistService;
 
     @InjectMocks
     private InternalAssessmentServiceImpl assessmentService;
@@ -110,13 +110,13 @@ public class FE09_VietGapChecklistAndInternalAssessmentUnitTest {
         savedResult.setId(601);
         when(checklistResultRepository.save(any(ChecklistResult.class))).thenReturn(savedResult);
 
-        RunChecklistReq req = new RunChecklistReq(
+        RunChecklistReqDTO req = new RunChecklistReqDTO(
                 100, null, null, null, null,
                 "Check before harvesting tomato crop",
-                List.of(new SubmitChecklistItemReq("pass", "14 days quarantine satisfied", "https://img.com/evidence1.jpg"))
+                List.of(new SubmitChecklistItemReqDTO("pass", "14 days quarantine satisfied", "https://img.com/evidence1.jpg"))
         );
 
-        ChecklistRunResp resp = checklistService.runChecklist(10, 1, req);
+        ChecklistResultRespDTO resp = checklistService.runChecklist(10, 1, req);
         assertNotNull(resp);
         assertEquals(501, resp.runId());
         assertEquals("Pre-Harvest Interval (PHI) Quarantine Check", resp.ruleName());
@@ -137,9 +137,9 @@ public class FE09_VietGapChecklistAndInternalAssessmentUnitTest {
         savedRun.setId(501);
         when(checklistRunRepository.save(any(ChecklistRun.class))).thenReturn(savedRun);
 
-        RunChecklistReq req = new RunChecklistReq(
+        RunChecklistReqDTO req = new RunChecklistReqDTO(
                 100, null, null, null, null, "Check",
-                List.of(new SubmitChecklistItemReq("UNKNOWN_STATUS", "Note", null))
+                List.of(new SubmitChecklistItemReqDTO("UNKNOWN_STATUS", "Note", null))
         );
 
         assertThrows(BadRequestException.class, () -> checklistService.runChecklist(10, 1, req));
@@ -160,7 +160,7 @@ public class FE09_VietGapChecklistAndInternalAssessmentUnitTest {
 
         when(checklistResultRepository.findByRunIdWithDetails(501)).thenReturn(List.of(r1, r2));
 
-        List<ChecklistResultItemResp> items = checklistService.getChecklistItemDetails(10, 501);
+        List<ChecklistResultItemRespDTO> items = checklistService.getChecklistItemDetails(10, 501);
         assertEquals(2, items.size());
         assertTrue(items.get(0).isMissingEvidence());
         assertFalse(items.get(1).isMissingEvidence());
@@ -189,15 +189,15 @@ public class FE09_VietGapChecklistAndInternalAssessmentUnitTest {
 
         when(itemRepository.save(any(InternalAssessmentItem.class))).thenReturn(item1).thenReturn(item2);
 
-        ConductInternalAssessmentReq req = new ConductInternalAssessmentReq(
+        ConductAssessmentReqDTO req = new ConductAssessmentReqDTO(
                 "Quarterly Internal Audit Q1", null, null, Instant.now(), "Overall good adherence", null,
                 List.of(
-                        new InternalAssessmentItemReq(1, new BigDecimal("90.00"), "Safe distance to industry", "https://pic.com/1.jpg"),
-                        new InternalAssessmentItemReq(2, new BigDecimal("85.00"), "Organic compost certified", "https://pic.com/2.jpg")
+                        new InternalAssessmentItemReqDTO(1, new BigDecimal("90.00"), "Safe distance to industry", "https://pic.com/1.jpg"),
+                        new InternalAssessmentItemReqDTO(2, new BigDecimal("85.00"), "Organic compost certified", "https://pic.com/2.jpg")
                 )
         );
 
-        InternalAssessmentResp resp = assessmentService.conductInternalAssessment(10, 1, req);
+        AssessmentRespDTO resp = assessmentService.conductInternalAssessment(10, 1, req);
         assertNotNull(resp);
         assertEquals(701, resp.internalAssessmentId());
         assertEquals("COMPLIANT", resp.complianceStatus());
@@ -222,9 +222,9 @@ public class FE09_VietGapChecklistAndInternalAssessmentUnitTest {
         when(assessmentRepository.save(any(InternalAssessment.class))).thenReturn(savedAssessment);
         when(criterionRepository.findById(1)).thenReturn(Optional.of(criterion1));
 
-        ConductInternalAssessmentReq req = new ConductInternalAssessmentReq(
+        ConductAssessmentReqDTO req = new ConductAssessmentReqDTO(
                 "Audit", null, null, Instant.now(), null, null,
-                List.of(new InternalAssessmentItemReq(1, new BigDecimal("150.00"), "Over max score", null))
+                List.of(new InternalAssessmentItemReqDTO(1, new BigDecimal("150.00"), "Over max score", null))
         );
 
         assertThrows(BadRequestException.class, () -> assessmentService.conductInternalAssessment(10, 1, req));

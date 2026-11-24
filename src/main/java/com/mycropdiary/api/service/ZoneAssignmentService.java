@@ -1,14 +1,14 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.assignment.AssignedZoneResp;
-import com.mycropdiary.api.dto.assignment.AssignmentResp;
-import com.mycropdiary.api.dto.assignment.CreateAssignmentReq;
+import com.mycropdiary.api.dto.assignment.AssignedZoneRespDTO;
+import com.mycropdiary.api.dto.assignment.AssignmentRespDTO;
+import com.mycropdiary.api.dto.assignment.CreateAssignmentReqDTO;
 
 import java.util.List;
 
 public interface ZoneAssignmentService {
-    AssignmentResp assignStaffToZone(Integer currentUserId, Integer farmId, CreateAssignmentReq request);
+    AssignmentRespDTO assignStaffToZone(Integer currentUserId, Integer farmId, CreateAssignmentReqDTO request);
     void unassignStaffFromZone(Integer currentUserId, Integer farmId, Integer assignmentId);
-    List<AssignedZoneResp> getAssignedZonesForCurrentStaff(Integer currentUserId, Integer farmId);
-    List<AssignmentResp> getZoneAssignments(Integer currentUserId, Integer farmId, Integer zoneId);
+    List<AssignedZoneRespDTO> getAssignedZonesForCurrentStaff(Integer currentUserId, Integer farmId);
+    List<AssignmentRespDTO> getZoneAssignments(Integer currentUserId, Integer farmId, Integer zoneId);
 }

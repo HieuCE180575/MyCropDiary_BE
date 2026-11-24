@@ -1,9 +1,9 @@
 package com.mycropdiary.api.service.cultivation;
 
-import com.mycropdiary.api.dto.vietgap.ChecklistResultItemResp;
-import com.mycropdiary.api.dto.vietgap.ChecklistRunResp;
-import com.mycropdiary.api.dto.vietgap.InitVietGapAuditRunReq;
-import com.mycropdiary.api.dto.vietgap.UpdateChecklistItemReq;
+import com.mycropdiary.api.dto.vietgap.ChecklistResultItemRespDTO;
+import com.mycropdiary.api.dto.vietgap.ChecklistResultRespDTO;
+import com.mycropdiary.api.dto.vietgap.InitVietGapAuditRunReqDTO;
+import com.mycropdiary.api.dto.vietgap.UpdateChecklistItemReqDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -20,7 +20,7 @@ import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.SoilAssessmentRepository;
 import com.mycropdiary.api.repository.WaterAssessmentRepository;
 import com.mycropdiary.api.repository.cultivation.*;
-import com.mycropdiary.api.service.impl.VietGapChecklistServiceImpl;
+import com.mycropdiary.api.service.impl.ChecklistReviewServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,7 +52,7 @@ class VietGapChecklistServiceTest {
     @Mock
     private ChecklistRuleRepository checklistRuleRepository;
     @Mock
-    private ChecklistRunRepository checklistRunRepository;
+    private ChecklistReviewRepository checklistRunRepository;
     @Mock
     private ChecklistResultRepository checklistResultRepository;
     @Mock
@@ -83,7 +83,7 @@ class VietGapChecklistServiceTest {
     private FarmAccessGuard accessGuard;
 
     @InjectMocks
-    private VietGapChecklistServiceImpl checklistService;
+    private ChecklistReviewServiceImpl checklistService;
 
     private Farm farm;
     private Zone zone;
@@ -135,7 +135,7 @@ class VietGapChecklistServiceTest {
         @Test
         @DisplayName("Khởi tạo thành công đợt đánh giá 33 tiêu chí VietGAP và tự động đối soát")
         void testInitVietGapAuditRun_Success() {
-            InitVietGapAuditRunReq req = new InitVietGapAuditRunReq(
+            InitVietGapAuditRunReqDTO req = new InitVietGapAuditRunReqDTO(
                     1, 1, null, Instant.now(), "Đợt tự đánh giá nội bộ trước thu hoạch"
             );
 
@@ -183,7 +183,7 @@ class VietGapChecklistServiceTest {
                 return res;
             });
 
-            ChecklistRunResp resp = checklistService.initVietGapAuditRun(10, 1, req);
+            ChecklistResultRespDTO resp = checklistService.initVietGapAuditRun(10, 1, req);
 
             assertNotNull(resp);
             assertEquals(50, resp.runId());
@@ -200,7 +200,7 @@ class VietGapChecklistServiceTest {
         @Test
         @DisplayName("Ném ResourceNotFoundException khi mùa vụ không tồn tại")
         void testInitVietGapAuditRun_SeasonNotFound() {
-            InitVietGapAuditRunReq req = new InitVietGapAuditRunReq(999, null, null, null, null);
+            InitVietGapAuditRunReqDTO req = new InitVietGapAuditRunReqDTO(999, null, null, null, null);
             when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
             when(cropSeasonRepository.findById(999)).thenReturn(Optional.empty());
 
@@ -215,7 +215,7 @@ class VietGapChecklistServiceTest {
             otherFarm.setId(99);
             season.setFarm(otherFarm);
 
-            InitVietGapAuditRunReq req = new InitVietGapAuditRunReq(1, null, null, null, null);
+            InitVietGapAuditRunReqDTO req = new InitVietGapAuditRunReqDTO(1, null, null, null, null);
             when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
             when(cropSeasonRepository.findById(1)).thenReturn(Optional.of(season));
 
@@ -233,7 +233,7 @@ class VietGapChecklistServiceTest {
             otherZone.setFarm(otherFarm);
             block.setZone(otherZone);
 
-            InitVietGapAuditRunReq req = new InitVietGapAuditRunReq(1, 1, null, null, null);
+            InitVietGapAuditRunReqDTO req = new InitVietGapAuditRunReqDTO(1, 1, null, null, null);
             when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
             when(cropSeasonRepository.findById(1)).thenReturn(Optional.of(season));
             when(blockRepository.findById(1)).thenReturn(Optional.of(block));
@@ -559,7 +559,7 @@ class VietGapChecklistServiceTest {
             when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 10, "active")).thenReturn(Optional.of(member));
             when(checklistResultRepository.save(any(ChecklistResult.class))).thenAnswer(i -> i.getArgument(0));
 
-            UpdateChecklistItemReq req = new UpdateChecklistItemReq(
+            UpdateChecklistItemReqDTO req = new UpdateChecklistItemReqDTO(
                     "pass",
                     "Đã bổ sung tài liệu và kiểm tra đạt yêu cầu",
                     "https://storage.mycropdiary.com/evidence/doc-pass.png",
@@ -567,7 +567,7 @@ class VietGapChecklistServiceTest {
                     15
             );
 
-            ChecklistResultItemResp updated = checklistService.updateChecklistItem(10, 1, 1, 20, req);
+            ChecklistResultItemRespDTO updated = checklistService.updateChecklistItem(10, 1, 1, 20, req);
 
             assertEquals("pass", updated.resultStatus());
             assertEquals("Đã bổ sung tài liệu và kiểm tra đạt yêu cầu", updated.notes());
@@ -585,7 +585,7 @@ class VietGapChecklistServiceTest {
 
             when(checklistRunRepository.findByIdWithDetails(1)).thenReturn(Optional.of(completedRun));
 
-            UpdateChecklistItemReq req = new UpdateChecklistItemReq("pass", "Sửa đổi lén", null, null, null);
+            UpdateChecklistItemReqDTO req = new UpdateChecklistItemReqDTO("pass", "Sửa đổi lén", null, null, null);
 
             BadRequestException ex = assertThrows(BadRequestException.class, () ->
                     checklistService.updateChecklistItem(10, 1, 1, 20, req));
@@ -608,7 +608,7 @@ class VietGapChecklistServiceTest {
             when(checklistRunRepository.findByIdWithDetails(1)).thenReturn(Optional.of(run));
             when(checklistResultRepository.findById(20)).thenReturn(Optional.of(result));
 
-            UpdateChecklistItemReq req = new UpdateChecklistItemReq("invalid_status", null, null, null, null);
+            UpdateChecklistItemReqDTO req = new UpdateChecklistItemReqDTO("invalid_status", null, null, null, null);
 
             BadRequestException ex = assertThrows(BadRequestException.class, () ->
                     checklistService.updateChecklistItem(10, 1, 1, 20, req));
@@ -645,7 +645,7 @@ class VietGapChecklistServiceTest {
             when(checklistResultRepository.findByRunIdWithDetails(1)).thenReturn(List.of(r1, r2, r3));
             when(checklistRunRepository.save(any(ChecklistRun.class))).thenAnswer(i -> i.getArgument(0));
 
-            ChecklistRunResp completed = checklistService.completeChecklistRun(10, 1, 1);
+            ChecklistResultRespDTO completed = checklistService.completeChecklistRun(10, 1, 1);
 
             assertEquals("completed", completed.runStatus());
             assertEquals(3, completed.totalItems());
@@ -698,14 +698,14 @@ class VietGapChecklistServiceTest {
             when(checklistRunRepository.findByIdWithDetails(1)).thenReturn(Optional.of(run));
             when(checklistResultRepository.findByRunIdWithDetails(1)).thenReturn(List.of());
             byte[] mockPdf = new byte[]{0x25, 0x50, 0x44, 0x46, 0x2D}; // %PDF-
-            when(pdfExportService.generateAuditReportPdf(any(ChecklistRunResp.class))).thenReturn(mockPdf);
+            when(pdfExportService.generateAuditReportPdf(any(ChecklistResultRespDTO.class))).thenReturn(mockPdf);
 
             byte[] pdfBytes = checklistService.exportAuditReportPdf(10, 1, 1);
 
             assertNotNull(pdfBytes);
             assertTrue(pdfBytes.length > 0);
             assertEquals(mockPdf, pdfBytes);
-            verify(pdfExportService, times(1)).generateAuditReportPdf(any(ChecklistRunResp.class));
+            verify(pdfExportService, times(1)).generateAuditReportPdf(any(ChecklistResultRespDTO.class));
         }
     }
 }

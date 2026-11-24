@@ -1,9 +1,9 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.vietgap.ConductInternalAssessmentReq;
-import com.mycropdiary.api.dto.vietgap.InternalAssessmentItemReq;
-import com.mycropdiary.api.dto.vietgap.InternalAssessmentItemResp;
-import com.mycropdiary.api.dto.vietgap.InternalAssessmentResp;
+import com.mycropdiary.api.dto.vietgap.ConductAssessmentReqDTO;
+import com.mycropdiary.api.dto.vietgap.InternalAssessmentItemReqDTO;
+import com.mycropdiary.api.dto.vietgap.InternalAssessmentItemRespDTO;
+import com.mycropdiary.api.dto.vietgap.AssessmentRespDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.Zone;
@@ -62,7 +62,7 @@ public class InternalAssessmentServiceImpl implements InternalAssessmentService 
     }
 
     @Override
-    public InternalAssessmentResp conductInternalAssessment(Integer currentUserId, Integer farmId, ConductInternalAssessmentReq request) {
+    public AssessmentRespDTO conductInternalAssessment(Integer currentUserId, Integer farmId, ConductAssessmentReqDTO request) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
 
         Farm farm = farmRepository.findById(farmId)
@@ -102,8 +102,8 @@ public class InternalAssessmentServiceImpl implements InternalAssessmentService 
 
         InternalAssessment savedAssessment = assessmentRepository.save(assessment);
 
-        List<InternalAssessmentItemResp> itemResps = new ArrayList<>();
-        for (InternalAssessmentItemReq itemReq : request.items()) {
+        List<InternalAssessmentItemRespDTO> itemResps = new ArrayList<>();
+        for (InternalAssessmentItemReqDTO itemReq : request.items()) {
             AssessmentCriterion criterion = criterionRepository.findById(itemReq.assessmentCriterionId())
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tiêu chí đánh giá ID: " + itemReq.assessmentCriterionId()));
 
@@ -124,38 +124,38 @@ public class InternalAssessmentServiceImpl implements InternalAssessmentService 
                     itemReq.evidenceImageUrl() != null ? itemReq.evidenceImageUrl().trim() : null
             );
             InternalAssessmentItem savedItem = itemRepository.save(item);
-            itemResps.add(InternalAssessmentItemResp.fromEntity(savedItem));
+            itemResps.add(InternalAssessmentItemRespDTO.fromEntity(savedItem));
         }
 
-        return InternalAssessmentResp.fromEntity(savedAssessment, itemResps);
+        return AssessmentRespDTO.fromEntity(savedAssessment, itemResps);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<InternalAssessmentResp> getInternalAssessmentHistory(Integer currentUserId, Integer farmId, Integer cropSeasonId, Integer zoneId) {
+    public List<AssessmentRespDTO> getInternalAssessmentHistory(Integer currentUserId, Integer farmId, Integer cropSeasonId, Integer zoneId) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
 
         List<InternalAssessment> assessments = assessmentRepository.findAssessmentsByFarm(farmId, cropSeasonId, zoneId);
 
         return assessments.stream().map(assessment -> {
             List<InternalAssessmentItem> items = itemRepository.findByInternalAssessmentIdWithCriterion(assessment.getId());
-            List<InternalAssessmentItemResp> itemResps = items.stream().map(InternalAssessmentItemResp::fromEntity).toList();
-            return InternalAssessmentResp.fromEntity(assessment, itemResps);
+            List<InternalAssessmentItemRespDTO> itemResps = items.stream().map(InternalAssessmentItemRespDTO::fromEntity).toList();
+            return AssessmentRespDTO.fromEntity(assessment, itemResps);
         }).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public InternalAssessmentResp getInternalAssessmentDetails(Integer currentUserId, Integer assessmentId) {
+    public AssessmentRespDTO getInternalAssessmentDetails(Integer currentUserId, Integer assessmentId) {
         InternalAssessment assessment = assessmentRepository.findByIdWithDetails(assessmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đợt đánh giá nội bộ ID: " + assessmentId));
 
         accessGuard.requireFarmAccess(currentUserId, assessment.getFarm().getId());
 
         List<InternalAssessmentItem> items = itemRepository.findByInternalAssessmentIdWithCriterion(assessmentId);
-        List<InternalAssessmentItemResp> itemResps = items.stream().map(InternalAssessmentItemResp::fromEntity).toList();
+        List<InternalAssessmentItemRespDTO> itemResps = items.stream().map(InternalAssessmentItemRespDTO::fromEntity).toList();
 
-        return InternalAssessmentResp.fromEntity(assessment, itemResps);
+        return AssessmentRespDTO.fromEntity(assessment, itemResps);
     }
 }
 

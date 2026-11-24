@@ -1,7 +1,7 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.assignment.AssignmentResp;
-import com.mycropdiary.api.dto.farm.ZoneResp;
+import com.mycropdiary.api.dto.assignment.AssignmentRespDTO;
+import com.mycropdiary.api.dto.farm.ZoneRespDTO;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.StaffZoneAssignment;
 import com.mycropdiary.api.entity.Zone;
@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ZoneMapper {
 
-    public ZoneResp toZoneResponse(Zone zone) {
-        return new ZoneResp(
+    public ZoneRespDTO toZoneResponse(Zone zone) {
+        return new ZoneRespDTO(
                 zone.getId(),
                 zone.getFarm().getId(),
                 zone.getZoneName(),
@@ -28,10 +28,10 @@ public class ZoneMapper {
         );
     }
 
-    public AssignmentResp toAssignmentResponse(StaffZoneAssignment a, FarmMember assigner) {
+    public AssignmentRespDTO toAssignmentResponse(StaffZoneAssignment a, FarmMember assigner) {
         FarmMember fm = a.getFarmMember();
         Zone zone = a.getZone();
-        return new AssignmentResp(
+        return new AssignmentRespDTO(
                 a.getId(),
                 fm.getId(),
                 fm.getUser() != null ? fm.getUser().getId() : null,

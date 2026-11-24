@@ -30,7 +30,7 @@ public class FarmTaskController {
 
     @Operation(summary = "Lấy danh sách công việc của trang trại", description = "Lấy danh sách công việc phân công theo trang trại kèm bộ lọc mùa vụ, khu vực, trạng thái và độ ưu tiên.")
     @GetMapping("/api/v1/farms/{farmId}/tasks")
-    public ApiResp<PageResp<FarmTaskResp>> getFarmTasks(
+    public ApiResp<PageResp<FarmTaskRespDTO>> getFarmTasks(
             @PathVariable Integer farmId,
             @RequestParam(required = false) Integer cropSeasonId,
             @RequestParam(required = false) Integer zoneId,
@@ -39,7 +39,7 @@ public class FarmTaskController {
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 50, sort = "dueAt", direction = Sort.Direction.ASC) Pageable pageable) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        PageResp<FarmTaskResp> response = farmTaskService.getFarmTasks(
+        PageResp<FarmTaskRespDTO> response = farmTaskService.getFarmTasks(
                 currentUserId, farmId, cropSeasonId, zoneId, status, priority, keyword, pageable);
         return ApiResp.ok("Lấy danh sách công việc thành công.", response);
     }
@@ -47,39 +47,39 @@ public class FarmTaskController {
     @Operation(summary = "Tạo mới công việc và phân công lao động", description = "Tạo công việc mới cho nông trại và gán cho các nhân sự phụ trách.")
     @PostMapping("/api/v1/farms/{farmId}/tasks")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<FarmTaskResp> createTask(
+    public ApiResp<FarmTaskRespDTO> createTask(
             @PathVariable Integer farmId,
-            @Valid @RequestBody CreateFarmTaskReq request) {
+            @Valid @RequestBody CreateFarmTaskReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmTaskResp response = farmTaskService.createTask(currentUserId, farmId, request);
+        FarmTaskRespDTO response = farmTaskService.createTask(currentUserId, farmId, request);
         return ApiResp.ok("Tạo công việc thành công.", response);
     }
 
     @Operation(summary = "Xem chi tiết công việc", description = "Xem thông tin chi tiết một công việc theo ID.")
     @GetMapping("/api/v1/tasks/{taskId}")
-    public ApiResp<FarmTaskResp> getTaskById(@PathVariable Integer taskId) {
+    public ApiResp<FarmTaskRespDTO> getTaskById(@PathVariable Integer taskId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmTaskResp response = farmTaskService.getTaskById(currentUserId, taskId);
+        FarmTaskRespDTO response = farmTaskService.getTaskById(currentUserId, taskId);
         return ApiResp.ok("Lấy chi tiết công việc thành công.", response);
     }
 
     @Operation(summary = "Cập nhật công việc", description = "Chỉnh sửa nội dung, phân công, lịch trình của công việc.")
     @PutMapping("/api/v1/tasks/{taskId}")
-    public ApiResp<FarmTaskResp> updateTask(
+    public ApiResp<FarmTaskRespDTO> updateTask(
             @PathVariable Integer taskId,
-            @Valid @RequestBody UpdateFarmTaskReq request) {
+            @Valid @RequestBody UpdateFarmTaskReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmTaskResp response = farmTaskService.updateTask(currentUserId, taskId, request);
+        FarmTaskRespDTO response = farmTaskService.updateTask(currentUserId, taskId, request);
         return ApiResp.ok("Cập nhật công việc thành công.", response);
     }
 
     @Operation(summary = "Cập nhật trạng thái công việc", description = "Chuyển nhanh trạng thái công việc (planned -> in_progress -> completed -> cancelled).")
     @PatchMapping("/api/v1/tasks/{taskId}/status")
-    public ApiResp<FarmTaskResp> updateTaskStatus(
+    public ApiResp<FarmTaskRespDTO> updateTaskStatus(
             @PathVariable Integer taskId,
-            @Valid @RequestBody UpdateFarmTaskStatusReq request) {
+            @Valid @RequestBody UpdateFarmTaskStatusReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        FarmTaskResp response = farmTaskService.updateTaskStatus(currentUserId, taskId, request);
+        FarmTaskRespDTO response = farmTaskService.updateTaskStatus(currentUserId, taskId, request);
         return ApiResp.ok("Cập nhật trạng thái công việc thành công.", response);
     }
 

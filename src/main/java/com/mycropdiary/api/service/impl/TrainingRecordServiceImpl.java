@@ -14,7 +14,7 @@ import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.FarmWorkerRepository;
 import com.mycropdiary.api.repository.cultivation.TrainingAttendeeRepository;
 import com.mycropdiary.api.repository.cultivation.TrainingRecordRepository;
-import com.mycropdiary.api.mapper.ComplianceAndUserMapper;
+import com.mycropdiary.api.mapper.TrainingRecordMapper;
 import com.mycropdiary.api.service.cultivation.TrainingRecordService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import jakarta.persistence.criteria.Predicate;
@@ -55,7 +55,7 @@ public class TrainingRecordServiceImpl implements TrainingRecordService {
     }
 
     @Override
-    public TrainingRecordResp createTrainingRecord(Integer currentUserId, Integer farmId, CreateTrainingRecordReq request) {
+    public TrainingRecordRespDTO createTrainingRecord(Integer currentUserId, Integer farmId, CreateTrainingReqDTO request) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
 
         Farm farm = farmRepository.findById(farmId)
@@ -83,7 +83,7 @@ public class TrainingRecordServiceImpl implements TrainingRecordService {
         TrainingRecord saved = trainingRecordRepository.save(record);
 
         if (request.attendees() != null && !request.attendees().isEmpty()) {
-            for (TrainingAttendeeReq attReq : request.attendees()) {
+            for (TrainingAttendeeReqDTO attReq : request.attendees()) {
                 FarmWorker worker = farmWorkerRepository.findById(attReq.farmWorkerId())
                         .orElseThrow(() -> new ResourceNotFoundException("Công nhân id=" + attReq.farmWorkerId() + " không tồn tại"));
 
@@ -103,7 +103,7 @@ public class TrainingRecordServiceImpl implements TrainingRecordService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResp<TrainingRecordResp> getTrainingHistory(
+    public PageResp<TrainingRecordRespDTO> getTrainingHistory(
             Integer currentUserId, Integer farmId, String keyword, LocalDate fromDate, LocalDate toDate, Pageable pageable) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
 
@@ -135,7 +135,7 @@ public class TrainingRecordServiceImpl implements TrainingRecordService {
 
     @Override
     @Transactional(readOnly = true)
-    public TrainingRecordResp getTrainingRecordDetails(Integer currentUserId, Integer trainingRecordId) {
+    public TrainingRecordRespDTO getTrainingRecordDetails(Integer currentUserId, Integer trainingRecordId) {
         TrainingRecord record = trainingRecordRepository.findById(trainingRecordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hồ sơ đào tạo không tồn tại"));
 
@@ -145,7 +145,7 @@ public class TrainingRecordServiceImpl implements TrainingRecordService {
     }
 
     @Override
-    public TrainingRecordResp updateTrainingRecord(Integer currentUserId, Integer trainingRecordId, UpdateTrainingRecordReq request) {
+    public TrainingRecordRespDTO updateTrainingRecord(Integer currentUserId, Integer trainingRecordId, UpdateTrainingReqDTO request) {
         TrainingRecord record = trainingRecordRepository.findById(trainingRecordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hồ sơ đào tạo không tồn tại"));
 
@@ -177,7 +177,7 @@ public class TrainingRecordServiceImpl implements TrainingRecordService {
             record.getAttendees().clear();
             trainingRecordRepository.flush();
 
-            for (TrainingAttendeeReq attReq : request.attendees()) {
+            for (TrainingAttendeeReqDTO attReq : request.attendees()) {
                 FarmWorker worker = farmWorkerRepository.findById(attReq.farmWorkerId())
                         .orElseThrow(() -> new ResourceNotFoundException("Công nhân id=" + attReq.farmWorkerId() + " không tồn tại"));
 
@@ -204,10 +204,10 @@ public class TrainingRecordServiceImpl implements TrainingRecordService {
         trainingRecordRepository.delete(record);
     }
 
-    private final ComplianceAndUserMapper complianceAndUserMapper = new ComplianceAndUserMapper();
+    private final TrainingRecordMapper trainingRecordMapper = new TrainingRecordMapper();
 
-    private TrainingRecordResp toResponse(TrainingRecord r, boolean includeAttendees) {
-        return complianceAndUserMapper.toTrainingRecordResponse(r, includeAttendees);
+    private TrainingRecordRespDTO toResponse(TrainingRecord r, boolean includeAttendees) {
+        return trainingRecordMapper.toTrainingRecordResponse(r, includeAttendees);
     }
 }
 

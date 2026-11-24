@@ -1,28 +1,29 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.warehouse.CreateInventoryReq;
-import com.mycropdiary.api.dto.warehouse.CreateWarehouseReq;
-import com.mycropdiary.api.dto.warehouse.InventoryItemResp;
-import com.mycropdiary.api.dto.warehouse.UpdateInventoryReq;
-import com.mycropdiary.api.dto.warehouse.WarehouseResp;
+import com.mycropdiary.api.dto.warehouse.CreateWarehouseReqDTO;
+import com.mycropdiary.api.dto.warehouse.InventoryRespDTO;
+import com.mycropdiary.api.dto.warehouse.UpdateWarehouseReqDTO;
+import com.mycropdiary.api.dto.warehouse.WarehouseOverviewRespDTO;
+import com.mycropdiary.api.dto.warehouse.WarehouseRespDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.cultivation.Inventory;
-import com.mycropdiary.api.entity.cultivation.Material;
 import com.mycropdiary.api.entity.cultivation.Warehouse;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
+import com.mycropdiary.api.mapper.InventoryMapper;
+import com.mycropdiary.api.mapper.WarehouseMapper;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.InventoryRepository;
 import com.mycropdiary.api.repository.cultivation.MaterialRepository;
 import com.mycropdiary.api.repository.cultivation.WarehouseRepository;
-import com.mycropdiary.api.mapper.WarehouseMapper;
 import com.mycropdiary.api.service.cultivation.WarehouseService;
 import com.mycropdiary.api.util.FarmAccessGuard;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.mycropdiary.api.dto.warehouse.WarehouseOverviewResp;
-import java.util.Comparator;
+
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -34,38 +35,55 @@ public class WarehouseServiceImpl implements WarehouseService {
     private final MaterialRepository materialRepository;
     private final FarmRepository farmRepository;
     private final FarmAccessGuard accessGuard;
+    private final WarehouseMapper warehouseMapper;
+    private final InventoryMapper inventoryMapper;
 
-    public WarehouseServiceImpl(WarehouseRepository warehouseRepository,
+    @Autowired
+    public WarehouseServiceImpl(
+            WarehouseRepository warehouseRepository,
             InventoryRepository inventoryRepository,
             MaterialRepository materialRepository,
             FarmRepository farmRepository,
-            FarmAccessGuard accessGuard) {
+            FarmAccessGuard accessGuard,
+            WarehouseMapper warehouseMapper,
+            InventoryMapper inventoryMapper) {
         this.warehouseRepository = warehouseRepository;
         this.inventoryRepository = inventoryRepository;
         this.materialRepository = materialRepository;
         this.farmRepository = farmRepository;
         this.accessGuard = accessGuard;
+        this.warehouseMapper = warehouseMapper != null ? warehouseMapper : new WarehouseMapper();
+        this.inventoryMapper = inventoryMapper != null ? inventoryMapper : new InventoryMapper();
+    }
+
+    public WarehouseServiceImpl(
+            WarehouseRepository warehouseRepository,
+            InventoryRepository inventoryRepository,
+            MaterialRepository materialRepository,
+            FarmRepository farmRepository,
+            FarmAccessGuard accessGuard) {
+        this(warehouseRepository, inventoryRepository, materialRepository, farmRepository, accessGuard, new WarehouseMapper(), new InventoryMapper());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<WarehouseResp> getWarehousesByFarm(Integer userId, Integer farmId) {
+    public List<WarehouseRespDTO> getWarehousesByFarm(Integer userId, Integer farmId) {
         accessGuard.requireFarmAccess(userId, farmId);
         List<Warehouse> list = warehouseRepository.findByFarmIdOrderByWarehouseNameAsc(farmId);
-        return list.stream().map(this::toWarehouseResp).toList();
+        return warehouseMapper.toResponseList(list);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public WarehouseResp getWarehouseDetails(Integer userId, Integer warehouseId) {
+    public WarehouseRespDTO getWarehouseDetails(Integer userId, Integer warehouseId) {
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kho hàng ID=" + warehouseId + " không tồn tại."));
         accessGuard.requireFarmAccess(userId, warehouse.getFarm().getId());
-        return toWarehouseResp(warehouse);
+        return warehouseMapper.toResponse(warehouse);
     }
 
     @Override
-    public WarehouseResp createWarehouse(Integer userId, Integer farmId, CreateWarehouseReq request) {
+    public WarehouseRespDTO createWarehouse(Integer userId, Integer farmId, CreateWarehouseReqDTO request) {
         accessGuard.requireFarmAccess(userId, farmId);
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trang trại không tồn tại."));
@@ -80,15 +98,16 @@ public class WarehouseServiceImpl implements WarehouseService {
                 request.address() != null ? request.address().trim() : null,
                 request.imageUrl() != null ? request.imageUrl().trim() : null);
         warehouse.setWarehouseType(
-                request.warehouseType() != null && !request.warehouseType().isBlank() ? request.warehouseType().trim()
+                request.warehouseType() != null && !request.warehouseType().isBlank()
+                        ? request.warehouseType().trim()
                         : "kho_chung");
 
         Warehouse saved = warehouseRepository.save(warehouse);
-        return toWarehouseResp(saved);
+        return warehouseMapper.toResponse(saved);
     }
 
     @Override
-    public WarehouseResp updateWarehouse(Integer userId, Integer warehouseId, CreateWarehouseReq request) {
+    public WarehouseRespDTO updateWarehouse(Integer userId, Integer warehouseId, UpdateWarehouseReqDTO request) {
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kho hàng ID=" + warehouseId + " không tồn tại."));
         accessGuard.requireFarmOwner(userId, warehouse.getFarm().getId());
@@ -107,7 +126,7 @@ public class WarehouseServiceImpl implements WarehouseService {
         }
 
         Warehouse saved = warehouseRepository.save(warehouse);
-        return toWarehouseResp(saved);
+        return warehouseMapper.toResponse(saved);
     }
 
     @Override
@@ -125,132 +144,21 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<InventoryItemResp> getInventoriesByFarm(Integer userId, Integer farmId, Integer warehouseId,
-            String keyword) {
-        accessGuard.requireFarmAccess(userId, farmId);
-        List<Inventory> list;
-        if (warehouseId != null) {
-            list = inventoryRepository.findByWarehouseId(warehouseId);
-        } else {
-            list = inventoryRepository.findByFarmId(farmId);
-        }
-
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String q = keyword.trim().toLowerCase();
-            list = list.stream()
-                    .filter(i -> (i.getMaterial() != null
-                            && i.getMaterial().getMaterialName().toLowerCase().contains(q))
-                            || (i.getWarehouse() != null
-                                    && i.getWarehouse().getWarehouseName().toLowerCase().contains(q)))
-                    .toList();
-        }
-
-        return list.stream().map(this::toInventoryItemResp).toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public InventoryItemResp getInventoryDetails(Integer userId, Integer inventoryId) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Bản ghi tồn kho ID=" + inventoryId + " không tồn tại."));
-        accessGuard.requireFarmAccess(userId, inventory.getWarehouse().getFarm().getId());
-        return toInventoryItemResp(inventory);
-    }
-
-    @Override
-    public InventoryItemResp updateInventory(Integer userId, Integer inventoryId, UpdateInventoryReq request) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Bản ghi tồn kho ID=" + inventoryId + " không tồn tại."));
-        accessGuard.requireFarmOwner(userId, inventory.getWarehouse().getFarm().getId());
-
-        inventory.setQuantityOnHand(request.quantityOnHand());
-        inventory.setReorderLevel(request.reorderLevel());
-        Inventory saved = inventoryRepository.save(inventory);
-        return toInventoryItemResp(saved);
-    }
-
-    @Override
-    public InventoryItemResp createInventory(Integer userId, Integer farmId, CreateInventoryReq request) {
-        accessGuard.requireFarmOwner(userId, farmId);
-
-        Warehouse warehouse = warehouseRepository.findById(request.warehouseId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Kho hàng ID=" + request.warehouseId() + " không tồn tại."));
-        if (!warehouse.getFarm().getId().equals(farmId)) {
-            throw new BadRequestException("Kho hàng không thuộc trang trại này.");
-        }
-
-        Material material = materialRepository.findByIdAndFarmId(request.materialId(), farmId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Vật tư ID=" + request.materialId() + " không tồn tại trong trang trại."));
-
-        if (inventoryRepository.findByWarehouseIdAndMaterialId(request.warehouseId(), request.materialId())
-                .isPresent()) {
-            throw new BadRequestException(
-                    "Vật tư này đã tồn tại trong kho. Hãy cập nhật số lượng tồn thay vì thêm mới.");
-        }
-
-        Inventory inventory = new Inventory(
-                warehouse,
-                material,
-                request.quantityOnHand(),
-                request.reorderLevel());
-        Inventory saved = inventoryRepository.save(inventory);
-        return toInventoryItemResp(saved);
-    }
-
-    @Override
-    public void deleteInventory(Integer userId, Integer inventoryId) {
-        Inventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Bản ghi tồn kho ID=" + inventoryId + " không tồn tại."));
-        accessGuard.requireFarmOwner(userId, inventory.getWarehouse().getFarm().getId());
-        inventoryRepository.delete(inventory);
-    }
-
-    private final WarehouseMapper warehouseMapper = new WarehouseMapper();
-
-    private WarehouseResp toWarehouseResp(Warehouse w) {
-        return warehouseMapper.toWarehouseResp(w);
-    }
-
-    private InventoryItemResp toInventoryItemResp(Inventory i) {
-        return warehouseMapper.toInventoryItemResp(i);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public WarehouseOverviewResp getWarehouseOverview(
-            Integer currentUserId,
-            Integer warehouseId) {
-        // 1. Find the warehouse
+    public WarehouseOverviewRespDTO getWarehouseOverview(Integer currentUserId, Integer warehouseId) {
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Kho hàng ID=" + warehouseId + " không tồn tại."));
+                .orElseThrow(() -> new ResourceNotFoundException("Kho hàng ID=" + warehouseId + " không tồn tại."));
 
-        // 2. Check whether the current user can access its farm
-        accessGuard.requireFarmAccess(
-                currentUserId,
-                warehouse.getFarm().getId());
+        accessGuard.requireFarmAccess(currentUserId, warehouse.getFarm().getId());
 
-        // 3. Retrieve all inventory records in this warehouse
         List<Inventory> inventories = inventoryRepository.findByWarehouseId(warehouseId);
 
         int totalItemCount = inventories.size();
         int lowStockCount = 0;
         int outOfStockCount = 0;
 
-        // 4. Calculate inventory statistics
         for (Inventory inventory : inventories) {
-            BigDecimal quantityOnHand = inventory.getQuantityOnHand() != null
-                    ? inventory.getQuantityOnHand()
-                    : BigDecimal.ZERO;
-
-            BigDecimal reorderLevel = inventory.getReorderLevel() != null
-                    ? inventory.getReorderLevel()
-                    : BigDecimal.ZERO;
+            BigDecimal quantityOnHand = inventory.getQuantityOnHand() != null ? inventory.getQuantityOnHand() : BigDecimal.ZERO;
+            BigDecimal reorderLevel = inventory.getReorderLevel() != null ? inventory.getReorderLevel() : BigDecimal.ZERO;
 
             if (quantityOnHand.compareTo(BigDecimal.ZERO) <= 0) {
                 outOfStockCount++;
@@ -259,17 +167,13 @@ public class WarehouseServiceImpl implements WarehouseService {
             }
         }
 
-        // 5. Get the five most recently updated inventory records
-        List<InventoryItemResp> recentMaterials = inventories.stream()
-                .sorted(Comparator.comparing(
-                        Inventory::getUpdatedAt,
-                        Comparator.nullsLast(Comparator.reverseOrder())))
+        List<InventoryRespDTO> recentMaterials = inventories.stream()
+                .sorted(Comparator.comparing(Inventory::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(5)
-                .map(this::toInventoryItemResp)
+                .map(inventoryMapper::toResponse)
                 .toList();
 
-        // 6. Return the warehouse overview
-        return new WarehouseOverviewResp(
+        return new WarehouseOverviewRespDTO(
                 warehouse.getId(),
                 warehouse.getWarehouseName(),
                 warehouse.getFarm().getFarmName(),
@@ -279,5 +183,4 @@ public class WarehouseServiceImpl implements WarehouseService {
                 outOfStockCount,
                 recentMaterials);
     }
-
 }

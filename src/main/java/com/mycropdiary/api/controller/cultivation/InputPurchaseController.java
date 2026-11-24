@@ -1,10 +1,10 @@
 package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.procurement.CreateInputPurchaseReq;
-import com.mycropdiary.api.dto.procurement.InputPurchaseResp;
-import com.mycropdiary.api.dto.procurement.LinkWarehouseReceiptReq;
-import com.mycropdiary.api.dto.procurement.UpdateInputPurchaseReq;
+import com.mycropdiary.api.dto.procurement.CreatePurchaseReqDTO;
+import com.mycropdiary.api.dto.procurement.InputPurchaseRespDTO;
+import com.mycropdiary.api.dto.procurement.LinkWarehouseReceiptReqDTO;
+import com.mycropdiary.api.dto.procurement.UpdatePurchaseReqDTO;
 import com.mycropdiary.api.service.cultivation.InputPurchaseService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,51 +34,51 @@ public class InputPurchaseController {
 
     @Operation(summary = "Xem danh sách phiếu mua vật tư của trang trại (View Input Purchase List)")
     @GetMapping("/farms/{farmId}/input-purchases")
-    public ApiResp<List<InputPurchaseResp>> getInputPurchases(@PathVariable Integer farmId) {
+    public ApiResp<List<InputPurchaseRespDTO>> getInputPurchases(@PathVariable Integer farmId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<InputPurchaseResp> list = purchaseService.getInputPurchases(currentUserId, farmId);
+        List<InputPurchaseRespDTO> list = purchaseService.getInputPurchases(currentUserId, farmId);
         return ApiResp.ok("Danh sách phiếu mua vật tư", list);
     }
 
     @Operation(summary = "Xem chi tiết phiếu mua vật tư (View Input Purchase Details)")
     @GetMapping("/input-purchases/{purchaseId}")
-    public ApiResp<InputPurchaseResp> getInputPurchaseDetails(@PathVariable Integer purchaseId) {
+    public ApiResp<InputPurchaseRespDTO> getInputPurchaseDetails(@PathVariable Integer purchaseId) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        InputPurchaseResp details = purchaseService.getInputPurchaseDetails(currentUserId, purchaseId);
+        InputPurchaseRespDTO details = purchaseService.getInputPurchaseDetails(currentUserId, purchaseId);
         return ApiResp.ok("Chi tiết phiếu mua vật tư", details);
     }
 
     @Operation(summary = "Tìm kiếm & lọc phiếu mua vật tư (Search Input Purchases)")
     @GetMapping("/farms/{farmId}/input-purchases/search")
-    public ApiResp<List<InputPurchaseResp>> searchInputPurchases(
+    public ApiResp<List<InputPurchaseRespDTO>> searchInputPurchases(
             @PathVariable Integer farmId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer supplierId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        List<InputPurchaseResp> list = purchaseService.searchInputPurchases(currentUserId, farmId, keyword, supplierId, fromDate, toDate);
+        List<InputPurchaseRespDTO> list = purchaseService.searchInputPurchases(currentUserId, farmId, keyword, supplierId, fromDate, toDate);
         return ApiResp.ok("Kết quả tìm kiếm phiếu mua vật tư", list);
     }
 
     @Operation(summary = "Ghi nhận phiếu mua vật tư mới (Record Input Purchase)")
     @PostMapping("/farms/{farmId}/input-purchases")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<InputPurchaseResp> recordInputPurchase(
+    public ApiResp<InputPurchaseRespDTO> recordInputPurchase(
             @PathVariable Integer farmId,
-            @Valid @RequestBody CreateInputPurchaseReq request) {
+            @Valid @RequestBody CreatePurchaseReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        InputPurchaseResp created = purchaseService.recordInputPurchase(currentUserId, farmId, request);
+        InputPurchaseRespDTO created = purchaseService.recordInputPurchase(currentUserId, farmId, request);
         return ApiResp.ok("Ghi nhận phiếu mua vật tư thành công", created);
     }
 
     @Operation(summary = "Cập nhật phiếu mua vật tư (Update Input Purchase)")
     @PutMapping("/input-purchases/{purchaseId}")
-    public ApiResp<InputPurchaseResp> updateInputPurchase(
+    public ApiResp<InputPurchaseRespDTO> updateInputPurchase(
             @PathVariable Integer purchaseId,
-            @Valid @RequestBody UpdateInputPurchaseReq request) {
+            @Valid @RequestBody UpdatePurchaseReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        InputPurchaseResp updated = purchaseService.updateInputPurchase(currentUserId, purchaseId, request);
+        InputPurchaseRespDTO updated = purchaseService.updateInputPurchase(currentUserId, purchaseId, request);
         return ApiResp.ok("Cập nhật phiếu mua vật tư thành công", updated);
     }
 
@@ -92,11 +92,11 @@ public class InputPurchaseController {
 
     @Operation(summary = "Liên kết phiếu mua với phiếu nhập kho (Link Input Purchase to Warehouse Receipt)")
     @PostMapping("/input-purchases/{purchaseId}/link-warehouse-receipt")
-    public ApiResp<InputPurchaseResp> linkWarehouseReceipt(
+    public ApiResp<InputPurchaseRespDTO> linkWarehouseReceipt(
             @PathVariable Integer purchaseId,
-            @Valid @RequestBody LinkWarehouseReceiptReq request) {
+            @Valid @RequestBody LinkWarehouseReceiptReqDTO request) {
         Integer currentUserId = securityUtils.getRequiredCurrentUserId();
-        InputPurchaseResp response = purchaseService.linkWarehouseReceipt(currentUserId, purchaseId, request);
+        InputPurchaseRespDTO response = purchaseService.linkWarehouseReceipt(currentUserId, purchaseId, request);
         return ApiResp.ok("Liên kết phiếu nhập kho thành công", response);
     }
 }

@@ -1,8 +1,8 @@
 package com.mycropdiary.api.controller;
 
-import com.mycropdiary.api.dto.file.FileUploadResp;
+import com.mycropdiary.api.dto.file.FileUploadRespDTO;
 import com.mycropdiary.api.exception.BadRequestException;
-import com.mycropdiary.api.exception.GlobalExceptionHandler;
+import com.mycropdiary.api.exception.GlobalExHandler;
 import com.mycropdiary.api.service.CloudinaryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +39,7 @@ class FileUploadControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(fileUploadController)
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExHandler())
                 .build();
     }
 
@@ -53,7 +53,7 @@ class FileUploadControllerTest {
                 "Sample PDF content".getBytes()
         );
 
-        FileUploadResp resp = new FileUploadResp(
+        FileUploadRespDTO resp = new FileUploadRespDTO(
                 "https://res.cloudinary.com/drajm922/image/upload/v12345/vietgap_certificate.pdf",
                 "mycropdiary/evidence/vietgap_cert",
                 "vietgap_certificate.pdf",
@@ -100,8 +100,8 @@ class FileUploadControllerTest {
         MockMultipartFile file1 = new MockMultipartFile("files", "img1.png", "image/png", "img1".getBytes());
         MockMultipartFile file2 = new MockMultipartFile("files", "img2.jpg", "image/jpeg", "img2".getBytes());
 
-        FileUploadResp resp1 = new FileUploadResp("https://res.cloudinary.com/img1.png", "p1", "img1.png", "image", "png", 100L);
-        FileUploadResp resp2 = new FileUploadResp("https://res.cloudinary.com/img2.jpg", "p2", "img2.jpg", "image", "jpg", 200L);
+        FileUploadRespDTO resp1 = new FileUploadRespDTO("https://res.cloudinary.com/img1.png", "p1", "img1.png", "image", "png", 100L);
+        FileUploadRespDTO resp2 = new FileUploadRespDTO("https://res.cloudinary.com/img2.jpg", "p2", "img2.jpg", "image", "jpg", 200L);
 
         when(cloudinaryService.uploadFiles(any(), any())).thenReturn(List.of(resp1, resp2));
 

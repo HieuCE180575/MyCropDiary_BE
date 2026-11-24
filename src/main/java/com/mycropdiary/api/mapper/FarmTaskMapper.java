@@ -1,7 +1,7 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.cultivation.FarmTaskResp;
-import com.mycropdiary.api.dto.cultivation.TaskWorkerResp;
+import com.mycropdiary.api.dto.cultivation.FarmTaskRespDTO;
+import com.mycropdiary.api.dto.cultivation.TaskWorkerRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.Zone;
@@ -20,18 +20,18 @@ import java.util.List;
 @Component
 public class FarmTaskMapper {
 
-    public FarmTaskResp toResponse(FarmTask t) {
+    public FarmTaskRespDTO toResponse(FarmTask t) {
         CropSeason cs = t.getCropSeason();
         Zone z = t.getZone();
         Block b = t.getBlock();
         User u = t.getCreatedBy();
 
-        List<TaskWorkerResp> assignees = new ArrayList<>();
+        List<TaskWorkerRespDTO> assignees = new ArrayList<>();
         if (t.getAssignments() != null) {
             for (TaskAssignment a : t.getAssignments()) {
                 FarmWorker fw = a.getFarmWorker();
                 if (fw != null) {
-                    assignees.add(new TaskWorkerResp(
+                    assignees.add(new TaskWorkerRespDTO(
                             fw.getId(),
                             fw.getWorkerCode(),
                             fw.getFullName(),
@@ -43,7 +43,7 @@ public class FarmTaskMapper {
             }
         }
 
-        return new FarmTaskResp(
+        return new FarmTaskRespDTO(
                 t.getId(),
                 t.getFarm().getId(),
                 t.getFarm().getFarmName(),

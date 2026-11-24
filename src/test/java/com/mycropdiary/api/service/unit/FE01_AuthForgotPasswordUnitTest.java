@@ -1,6 +1,6 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.auth.ResetPasswordReq;
+import com.mycropdiary.api.dto.auth.ResetPasswordReqDTO;
 import com.mycropdiary.api.entity.AccountToken;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.BadRequestException;
@@ -91,7 +91,7 @@ public class FE01_AuthForgotPasswordUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC03 [Normal] - Đặt lại mật khẩu với OTP hợp lệ -> Cập nhật mật khẩu mới (Passed)")
     void UTC03_resetPassword_validOtpAndNewPassword_shouldUpdatePassword() {
-        ResetPasswordReq req = new ResetPasswordReq("farmer@example.com", "123456", "NewStrongPass123@");
+        ResetPasswordReqDTO req = new ResetPasswordReqDTO("farmer@example.com", "123456", "NewStrongPass123@");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(activeUser));
         when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(20, "password_reset"))
                 .thenReturn(Optional.of(resetToken));
@@ -108,7 +108,7 @@ public class FE01_AuthForgotPasswordUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC04 [Abnormal] - Đặt lại mật khẩu với OTP hết hạn -> Báo lỗi BadRequest (Passed)")
     void UTC04_resetPassword_expiredResetOtp_shouldThrowBadRequestException() {
-        ResetPasswordReq req = new ResetPasswordReq("farmer@example.com", "123456", "NewStrongPass123@");
+        ResetPasswordReqDTO req = new ResetPasswordReqDTO("farmer@example.com", "123456", "NewStrongPass123@");
         AccountToken expired = AccountToken.createPasswordResetOtp(activeUser, "resetHash", Instant.now().minus(1, ChronoUnit.MINUTES));
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(activeUser));
         when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(20, "password_reset"))
@@ -121,7 +121,7 @@ public class FE01_AuthForgotPasswordUnitTest {
     @DisplayName("FE01_AUT_UTC05 [Abnormal] - Mật khẩu mới trùng mật khẩu cũ -> Chặn và ném BadRequestException (Passed)")
     void UTC05_resetPassword_sameAsOldPassword_defectDF006() {
         // Verified fix for DF-006: resetPassword checks passwordEncoder.matches(newPass, oldHash)
-        ResetPasswordReq req = new ResetPasswordReq("farmer@example.com", "123456", "OldPassword123@");
+        ResetPasswordReqDTO req = new ResetPasswordReqDTO("farmer@example.com", "123456", "OldPassword123@");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(activeUser));
         when(accountTokenRepository.findFirstByUser_IdAndTokenTypeAndUsedAtIsNullOrderByCreatedAtDesc(20, "password_reset"))
                 .thenReturn(Optional.of(resetToken));
@@ -136,14 +136,14 @@ public class FE01_AuthForgotPasswordUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC06 [Boundary] - Mật khẩu mới đúng 8 ký tự -> Đạt độ dài tối thiểu (Passed)")
     void UTC06_resetPassword_exactly8Chars_shouldPassMinBoundary() {
-        ResetPasswordReq req = new ResetPasswordReq("farmer@example.com", "123456", "Pass123@");
+        ResetPasswordReqDTO req = new ResetPasswordReqDTO("farmer@example.com", "123456", "Pass123@");
         assertEquals(8, req.newPassword().length());
     }
 
     @Test
     @DisplayName("FE01_AUT_UTC07 [Boundary] - Mật khẩu mới chỉ 7 ký tự -> Không đạt độ dài tối thiểu (Passed)")
     void UTC07_resetPassword_sevenChars_shouldFailMinBoundary() {
-        ResetPasswordReq req = new ResetPasswordReq("farmer@example.com", "123456", "Pass12@");
+        ResetPasswordReqDTO req = new ResetPasswordReqDTO("farmer@example.com", "123456", "Pass12@");
         assertTrue(req.newPassword().length() < 8);
     }
 
@@ -167,7 +167,7 @@ public class FE01_AuthForgotPasswordUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC10 [Boundary] - Mật khẩu mới chứa ký tự Unicode / Emoji -> Mã hóa thành công (Passed)")
     void UTC10_resetPassword_unicodeUtf8Password_shouldEncodeCorrectly() {
-        ResetPasswordReq req = new ResetPasswordReq("farmer@example.com", "123456", "MatKhau🌾123@");
+        ResetPasswordReqDTO req = new ResetPasswordReqDTO("farmer@example.com", "123456", "MatKhau🌾123@");
         assertTrue(req.newPassword().contains("🌾"));
     }
 }

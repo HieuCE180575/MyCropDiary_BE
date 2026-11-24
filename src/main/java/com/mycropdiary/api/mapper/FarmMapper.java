@@ -15,8 +15,8 @@ public class FarmMapper {
     /**
      * Chuyển đổi Entity Farm sang FarmSummaryResp DTO (Danh sách tóm tắt).
      */
-    public FarmSummaryResp toSummary(Farm farm, String userRole) {
-        return new FarmSummaryResp(
+    public FarmSummaryRespDTO toSummary(Farm farm, String userRole) {
+        return new FarmSummaryRespDTO(
                 farm.getId(),
                 farm.getFarmName(),
                 farm.getDescription(),
@@ -27,15 +27,15 @@ public class FarmMapper {
         );
     }
 
-    public FarmSummaryResp toSummary(Farm farm) {
+    public FarmSummaryRespDTO toSummary(Farm farm) {
         return toSummary(farm, null);
     }
 
     /**
      * Chuyển đổi Entity Farm sang FarmResp DTO (Chi tiết trang trại).
      */
-    public FarmResp toResponse(Farm farm, String userRole) {
-        return new FarmResp(
+    public FarmRespDTO toResponse(Farm farm, String userRole) {
+        return new FarmRespDTO(
                 farm.getId(),
                 farm.getFarmName(),
                 farm.getDescription(),
@@ -55,8 +55,8 @@ public class FarmMapper {
     /**
      * Chuyển đổi Entity FarmMember sang FarmMemberResp DTO (Thông tin thành viên).
      */
-    public FarmMemberResp toMemberResponse(FarmMember member) {
-        return new FarmMemberResp(
+    public FarmMemberRespDTO toMemberResponse(FarmMember member) {
+        return new FarmMemberRespDTO(
                 member.getId(),
                 member.getFarm().getId(),
                 member.getUser().getId(),
@@ -72,8 +72,8 @@ public class FarmMapper {
     /**
      * Chuyển đổi Entity StaffZoneAssignment sang StaffZoneAssignmentResp DTO.
      */
-    public StaffZoneAssignmentResp toStaffZoneAssignmentResponse(StaffZoneAssignment assignment) {
-        return new StaffZoneAssignmentResp(
+    public StaffZoneAssignmentRespDTO toStaffZoneAssignmentResponse(StaffZoneAssignment assignment) {
+        return new StaffZoneAssignmentRespDTO(
                 assignment.getId(),
                 assignment.getFarmMember().getId(),
                 assignment.getZone().getId(),
@@ -88,8 +88,8 @@ public class FarmMapper {
     /**
      * Chuyển đổi Entity Zone sang ZoneResp DTO.
      */
-    public ZoneResp toZoneResponse(Zone zone) {
-        return new ZoneResp(
+    public ZoneRespDTO toZoneResponse(Zone zone) {
+        return new ZoneRespDTO(
                 zone.getId(),
                 zone.getFarm().getId(),
                 zone.getZoneName(),

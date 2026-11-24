@@ -1,9 +1,9 @@
 package com.mycropdiary.api.service;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
-import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
-import com.mycropdiary.api.dto.cultivation.UpdateMaterialUsageReq;
+import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReqDTO;
+import com.mycropdiary.api.dto.cultivation.MaterialUsageRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateMaterialUsageReqDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -159,7 +159,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thành công với vai trò OWNER")
     void createMaterialUsage_AsOwner_Success() {
-        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO request = new CreateMaterialUsageReqDTO(
                 activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("2.500"), "kg", "50g/gốc", "Rải gốc", null, "Thời tiết nắng"
         );
 
@@ -178,7 +178,7 @@ class MaterialUsageServiceTest {
 
         when(materialUsageRepository.save(any(MaterialUsage.class))).thenReturn(savedUsage);
 
-        MaterialUsageResp response = materialUsageService.createMaterialUsage(ownerUserId, request);
+        MaterialUsageRespDTO response = materialUsageService.createMaterialUsage(ownerUserId, request);
 
         assertNotNull(response);
         assertEquals(usageId, response.materialUsageId());
@@ -189,7 +189,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thất bại nếu không phải active member của farm")
     void createMaterialUsage_NotMember_ThrowsForbidden() {
-        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO request = new CreateMaterialUsageReqDTO(
                 activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
         );
 
@@ -204,7 +204,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thất bại khi Unit trong request không khớp với Material.unit (kg vs L)")
     void createMaterialUsage_UnitMismatch_ThrowsBadRequest() {
-        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO request = new CreateMaterialUsageReqDTO(
                 activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("1.000"), "L", null, null, null, null
         );
 
@@ -227,7 +227,7 @@ class MaterialUsageServiceTest {
         Material otherFarmMaterial = new Material(farmB, "Phân Farm B", "fertilizer", "kg");
         otherFarmMaterial.setId(otherMatId);
 
-        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO request = new CreateMaterialUsageReqDTO(
                 activityId, otherMatId, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
         );
 
@@ -244,7 +244,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thất bại nếu Material inactive")
     void createMaterialUsage_MaterialInactive_ThrowsBadRequest() {
-        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO request = new CreateMaterialUsageReqDTO(
                 activityId, inactiveMaterialId, null, LocalDateTime.now(), new BigDecimal("1.000"), "cái", null, null, null, null
         );
 
@@ -261,7 +261,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Tạo MaterialUsage thất bại nếu Quantity <= 0")
     void createMaterialUsage_QuantityInvalid_ThrowsBadRequest() {
-        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO request = new CreateMaterialUsageReqDTO(
                 activityId, fertilizerId, null, LocalDateTime.now(), new BigDecimal("0.000"), "kg", null, null, null, null
         );
 
@@ -283,7 +283,7 @@ class MaterialUsageServiceTest {
         closedActivity.setFarm(farm);
         closedActivity.setCropSeason(completedSeason);
 
-        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO request = new CreateMaterialUsageReqDTO(
                 closedActivity.getId(), fertilizerId, null, LocalDateTime.now(), new BigDecimal("1.000"), "kg", null, null, null, null
         );
 
@@ -312,7 +312,7 @@ class MaterialUsageServiceTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
         when(materialUsageRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(usage)));
 
-        PageResp<MaterialUsageResp> result = materialUsageService.getMaterialUsagesByActivity(ownerUserId, activityId, pageable);
+        PageResp<MaterialUsageRespDTO> result = materialUsageService.getMaterialUsagesByActivity(ownerUserId, activityId, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.content().size());
@@ -330,7 +330,7 @@ class MaterialUsageServiceTest {
         existing.setUsedBy(ownerMember);
         existing.setQuantity(new BigDecimal("2.000"));
 
-        UpdateMaterialUsageReq req = new UpdateMaterialUsageReq(
+        UpdateMaterialUsageReqDTO req = new UpdateMaterialUsageReqDTO(
                 null, LocalDateTime.now(), new BigDecimal("3.500"), "kg", "70g/gốc", "Rải đều", 3, "Đã tăng liều"
         );
 
@@ -338,7 +338,7 @@ class MaterialUsageServiceTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
         when(materialUsageRepository.save(any(MaterialUsage.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        MaterialUsageResp response = materialUsageService.updateMaterialUsage(ownerUserId, usageId, req);
+        MaterialUsageRespDTO response = materialUsageService.updateMaterialUsage(ownerUserId, usageId, req);
 
         assertNotNull(response);
         assertEquals(usageId, response.materialUsageId());
@@ -350,7 +350,7 @@ class MaterialUsageServiceTest {
     @Test
     @DisplayName("Cập nhật MaterialUsage thất bại khi không tìm thấy ID")
     void updateMaterialUsage_NotFound_ThrowsException() {
-        UpdateMaterialUsageReq req = new UpdateMaterialUsageReq(
+        UpdateMaterialUsageReqDTO req = new UpdateMaterialUsageReqDTO(
                 null, null, new BigDecimal("3.000"), null, null, null, null, null
         );
 
@@ -375,7 +375,7 @@ class MaterialUsageServiceTest {
         existing.setFarmingActivity(closedActivity);
         existing.setMaterial(fertilizerMaterial);
 
-        UpdateMaterialUsageReq req = new UpdateMaterialUsageReq(
+        UpdateMaterialUsageReqDTO req = new UpdateMaterialUsageReqDTO(
                 null, null, new BigDecimal("3.000"), null, null, null, null, null
         );
 
@@ -396,7 +396,7 @@ class MaterialUsageServiceTest {
         existing.setFarmingActivity(activity);
         existing.setMaterial(fertilizerMaterial);
 
-        UpdateMaterialUsageReq req = new UpdateMaterialUsageReq(
+        UpdateMaterialUsageReqDTO req = new UpdateMaterialUsageReqDTO(
                 null, null, new BigDecimal("-2.000"), null, null, null, null, null
         );
 
@@ -423,7 +423,7 @@ class MaterialUsageServiceTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, ownerUserId, "active")).thenReturn(Optional.of(ownerMember));
         when(materialUsageRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(usage)));
 
-        PageResp<MaterialUsageResp> result = materialUsageService.searchAndFilterMaterialUsages(
+        PageResp<MaterialUsageRespDTO> result = materialUsageService.searchAndFilterMaterialUsages(
                 ownerUserId, null, activeSeasonId, "NPK", "FERTILIZER", null, null, pageable
         );
 

@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mycropdiary.api.controller.cultivation.MaterialUsageController;
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReq;
-import com.mycropdiary.api.dto.cultivation.MaterialUsageResp;
-import com.mycropdiary.api.dto.cultivation.UpdateMaterialUsageReq;
+import com.mycropdiary.api.dto.cultivation.CreateMaterialUsageReqDTO;
+import com.mycropdiary.api.dto.cultivation.MaterialUsageRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateMaterialUsageReqDTO;
 import com.mycropdiary.api.service.cultivation.MaterialUsageService;
 import com.mycropdiary.api.util.SecurityUtils;
 
@@ -72,16 +72,16 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("POST /api/v1/material-usages -> 201 Created khi tạo thành công")
     void createMaterialUsage_Success() throws Exception {
-        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO request = new CreateMaterialUsageReqDTO(
                 farmingActivityId, materialId, null, LocalDateTime.now(), new BigDecimal("2.500"), "kg", "50g/gốc", "Rải gốc", null, "Ghi chú"
         );
 
-        MaterialUsageResp response = new MaterialUsageResp(
+        MaterialUsageRespDTO response = new MaterialUsageRespDTO(
                 materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
                 request.usedAt(), request.quantity(), "kg", "50g/gốc", "Rải gốc", null, "Ghi chú"
         );
 
-        when(materialUsageService.createMaterialUsage(eq(userId), any(CreateMaterialUsageReq.class))).thenReturn(response);
+        when(materialUsageService.createMaterialUsage(eq(userId), any(CreateMaterialUsageReqDTO.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/material-usages")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -95,7 +95,7 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("POST /api/v1/material-usages -> 400 Bad Request khi validation thất bại")
     void createMaterialUsage_ValidationFailed() throws Exception {
-        CreateMaterialUsageReq request = new CreateMaterialUsageReq(
+        CreateMaterialUsageReqDTO request = new CreateMaterialUsageReqDTO(
                 null, materialId, null, null, new BigDecimal("-1.000"), "", null, null, null, null
         );
 
@@ -108,16 +108,16 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("PUT /api/v1/material-usages/{id} -> 200 OK khi cập nhật thành công")
     void updateMaterialUsage_Success() throws Exception {
-        UpdateMaterialUsageReq request = new UpdateMaterialUsageReq(
+        UpdateMaterialUsageReqDTO request = new UpdateMaterialUsageReqDTO(
                 materialId, LocalDateTime.now(), new BigDecimal("3.000"), "kg", "60g/gốc", "Rải gốc", 5, "Cập nhật liều"
         );
 
-        MaterialUsageResp response = new MaterialUsageResp(
+        MaterialUsageRespDTO response = new MaterialUsageRespDTO(
                 materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
                 request.usedAt(), request.quantity(), "kg", "60g/gốc", "Rải gốc", 5, "Cập nhật liều"
         );
 
-        when(materialUsageService.updateMaterialUsage(eq(userId), eq(materialUsageId), any(UpdateMaterialUsageReq.class))).thenReturn(response);
+        when(materialUsageService.updateMaterialUsage(eq(userId), eq(materialUsageId), any(UpdateMaterialUsageReqDTO.class))).thenReturn(response);
 
         mockMvc.perform(put("/api/v1/material-usages/" + materialUsageId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -131,7 +131,7 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("PUT /api/v1/material-usages/{id} -> 400 Bad Request khi số lượng âm")
     void updateMaterialUsage_InvalidQuantity_ReturnsBadRequest() throws Exception {
-        UpdateMaterialUsageReq request = new UpdateMaterialUsageReq(
+        UpdateMaterialUsageReqDTO request = new UpdateMaterialUsageReqDTO(
                 null, null, new BigDecimal("-5.000"), null, null, null, null, null
         );
 
@@ -144,12 +144,12 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("GET /api/v1/material-usages?farmingActivityId=... -> 200 OK với PageResp<MaterialUsageResp>")
     void getMaterialUsagesByActivity_Success() throws Exception {
-        MaterialUsageResp response = new MaterialUsageResp(
+        MaterialUsageRespDTO response = new MaterialUsageRespDTO(
                 materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
                 LocalDateTime.now(), new BigDecimal("2.500"), "kg", null, null, null, null
         );
 
-        PageResp<MaterialUsageResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
+        PageResp<MaterialUsageRespDTO> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
 
         when(materialUsageService.searchAndFilterMaterialUsages(eq(userId), eq(farmingActivityId), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(pageResponse);
@@ -164,12 +164,12 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("GET /api/v1/material-usages với bộ lọc nâng cao -> 200 OK")
     void getMaterialUsages_WithFilters_Success() throws Exception {
-        MaterialUsageResp response = new MaterialUsageResp(
+        MaterialUsageRespDTO response = new MaterialUsageRespDTO(
                 materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
                 LocalDateTime.now(), new BigDecimal("2.500"), "kg", null, null, null, null
         );
 
-        PageResp<MaterialUsageResp> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
+        PageResp<MaterialUsageRespDTO> pageResponse = PageResp.from(new PageImpl<>(List.of(response)));
 
         when(materialUsageService.searchAndFilterMaterialUsages(eq(userId), isNull(), eq(cropSeasonId), eq("NPK"), eq("FERTILIZER"), any(), any(), any(Pageable.class)))
                 .thenReturn(pageResponse);
@@ -188,7 +188,7 @@ class MaterialUsageControllerTest {
     @Test
     @DisplayName("GET /api/v1/material-usages/{id} -> 200 OK với chi tiết vật tư")
     void getMaterialUsageById_Success() throws Exception {
-        MaterialUsageResp response = new MaterialUsageResp(
+        MaterialUsageRespDTO response = new MaterialUsageRespDTO(
                 materialUsageId, farmingActivityId, "Bón phân", cropSeasonId, materialId, "MAT01", "Phân NPK", "FERTILIZER", null, recordedByMemberId, "Chủ Nông Trại",
                 LocalDateTime.now(), new BigDecimal("2.500"), "kg", null, null, null, null
         );

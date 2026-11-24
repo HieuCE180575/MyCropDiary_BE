@@ -1,14 +1,13 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.controller.AdminChecklistRuleController;
-import com.mycropdiary.api.controller.AdminChecklistRuleController.AdminChecklistRuleReq;
-import com.mycropdiary.api.controller.AdminChecklistRuleController.AdminChecklistRuleResp;
-import com.mycropdiary.api.controller.AdminCropCategoryController;
-import com.mycropdiary.api.controller.AdminCropCategoryController.CropCategoryReq;
-import com.mycropdiary.api.dto.admin.AdminAIFeedbackResp;
-import com.mycropdiary.api.dto.admin.AdminStatisticsResp;
+import com.mycropdiary.api.controller.ChecklistRuleController;
+import com.mycropdiary.api.controller.CropCategoryController;
+import com.mycropdiary.api.dto.admin.AIFeedbackDetailRespDTO;
+import com.mycropdiary.api.dto.admin.AdminStatisticsRespDTO;
+import com.mycropdiary.api.dto.admin.*;
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.cultivation.CropCategoryResp;
+import com.mycropdiary.api.dto.cultivation.*;
+import com.mycropdiary.api.dto.cultivation.CropCategoryRespDTO;
 import com.mycropdiary.api.entity.AIFeedback;
 import com.mycropdiary.api.entity.AIMessage;
 import com.mycropdiary.api.entity.User;
@@ -23,8 +22,10 @@ import com.mycropdiary.api.repository.cultivation.ChecklistRuleRepository;
 import com.mycropdiary.api.repository.cultivation.CropCategoryRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
 import com.mycropdiary.api.repository.farmregistration.FarmRegistrationRepository;
-import com.mycropdiary.api.service.admin.impl.AdminAIFeedbackServiceImpl;
+import com.mycropdiary.api.service.admin.impl.AIFeedbackServiceImpl;
 import com.mycropdiary.api.service.admin.impl.AdminStatisticsServiceImpl;
+import com.mycropdiary.api.service.admin.impl.ChecklistRuleServiceImpl;
+import com.mycropdiary.api.service.admin.impl.CropCategoryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -70,9 +71,9 @@ public class FE13_AdminSystemManagementUnitTest {
     private ChecklistRuleRepository checklistRuleRepository;
 
     private AdminStatisticsServiceImpl adminStatisticsService;
-    private AdminAIFeedbackServiceImpl adminAIFeedbackService;
-    private AdminCropCategoryController adminCropCategoryController;
-    private AdminChecklistRuleController adminChecklistRuleController;
+    private AIFeedbackServiceImpl adminAIFeedbackService;
+    private CropCategoryController adminCropCategoryController;
+    private ChecklistRuleController adminChecklistRuleController;
 
     @BeforeEach
     void setUp() {
@@ -80,11 +81,11 @@ public class FE13_AdminSystemManagementUnitTest {
                 userRepository, farmMemberRepository, farmRegistrationRepository,
                 farmRepository, cropSeasonRepository, aiFeedbackRepository
         );
-        adminAIFeedbackService = new AdminAIFeedbackServiceImpl(
+        adminAIFeedbackService = new AIFeedbackServiceImpl(
                 aiFeedbackRepository, userRepository
         );
-        adminCropCategoryController = new AdminCropCategoryController(cropCategoryRepository);
-        adminChecklistRuleController = new AdminChecklistRuleController(checklistRuleRepository);
+        adminCropCategoryController = new CropCategoryController(new CropCategoryServiceImpl(cropCategoryRepository));
+        adminChecklistRuleController = new ChecklistRuleController(new ChecklistRuleServiceImpl(checklistRuleRepository));
     }
 
     // --- 1. Admin Statistics Tests ---
@@ -115,7 +116,7 @@ public class FE13_AdminSystemManagementUnitTest {
         when(aiFeedbackRepository.countByRepliesIsNotEmpty()).thenReturn(12L);
         when(aiFeedbackRepository.getAverageRating()).thenReturn(4.5);
 
-        AdminStatisticsResp stats = adminStatisticsService.getSystemStatistics();
+        AdminStatisticsRespDTO stats = adminStatisticsService.getSystemStatistics();
         assertNotNull(stats);
         assertEquals(100L, stats.accounts().totalUsers());
         assertEquals(90L, stats.accounts().activeUsers());
@@ -149,7 +150,7 @@ public class FE13_AdminSystemManagementUnitTest {
         when(aiFeedbackRepository.countByRepliesIsNotEmpty()).thenReturn(0L);
         when(aiFeedbackRepository.getAverageRating()).thenReturn(0.0);
 
-        AdminStatisticsResp stats = adminStatisticsService.getSystemStatistics();
+        AdminStatisticsRespDTO stats = adminStatisticsService.getSystemStatistics();
         assertNotNull(stats);
         assertEquals(0L, stats.accounts().totalUsers());
         assertEquals(0L, stats.farms().totalFarms());
@@ -172,7 +173,7 @@ public class FE13_AdminSystemManagementUnitTest {
 
         when(aiFeedbackRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(feedback));
 
-        List<AdminAIFeedbackResp> list = adminAIFeedbackService.getAllFeedbacks(null, null);
+        List<AIFeedbackDetailRespDTO> list = adminAIFeedbackService.getAllFeedbacks(null, null);
         assertNotNull(list);
         assertEquals(1, list.size());
         assertEquals("Farmer A", list.get(0).senderName());
@@ -197,7 +198,7 @@ public class FE13_AdminSystemManagementUnitTest {
         when(userRepository.findById(1)).thenReturn(Optional.of(admin));
         when(aiFeedbackRepository.save(any(AIFeedback.class))).thenReturn(feedback);
 
-        AdminAIFeedbackResp resp = adminAIFeedbackService.replyFeedback(1, 2, "Da cap nhat huong dan.");
+        AIFeedbackDetailRespDTO resp = adminAIFeedbackService.replyFeedback(1, 2, "Da cap nhat huong dan.");
         assertNotNull(resp);
         assertEquals(1, resp.replies().size());
         assertEquals("Da cap nhat huong dan.", resp.replies().get(0).replyText());
@@ -225,7 +226,7 @@ public class FE13_AdminSystemManagementUnitTest {
         when(aiFeedbackRepository.findById(3)).thenReturn(Optional.of(feedback));
         when(aiFeedbackRepository.save(any(AIFeedback.class))).thenReturn(feedback);
 
-        AdminAIFeedbackResp resp = adminAIFeedbackService.updateFeedbackStatus(1, 3, "RESOLVED");
+        AIFeedbackDetailRespDTO resp = adminAIFeedbackService.updateFeedbackStatus(1, 3, "RESOLVED");
         assertNotNull(resp);
         assertEquals("RESOLVED", resp.status());
     }
@@ -246,7 +247,7 @@ public class FE13_AdminSystemManagementUnitTest {
         cat.setImageUrl("https://example.com/melon.jpg");
         when(cropCategoryRepository.findAll()).thenReturn(List.of(cat));
 
-        ApiResp<List<CropCategoryResp>> resp = adminCropCategoryController.getCropCategories();
+        ApiResp<List<CropCategoryRespDTO>> resp = adminCropCategoryController.getCropCategories();
         assertNotNull(resp);
         assertTrue(resp.success());
         assertEquals(1, resp.data().size());
@@ -256,14 +257,14 @@ public class FE13_AdminSystemManagementUnitTest {
     @Test
     @DisplayName("FE13_SYS_UTC09 [Normal] - Admin Crop Category: Tạo mới danh mục cây trồng thành công")
     void testCreateCropCategory_success() {
-        CropCategoryReq req = new CropCategoryReq("Cà chua Cherry", "Trồng trong nhà màng", "https://example.com/tomato.jpg");
+        CreateCropCategoryReqDTO req = new CreateCropCategoryReqDTO("Cà chua Cherry", "Trồng trong nhà màng", "https://example.com/tomato.jpg");
         CropCategory saved = new CropCategory(req.categoryName(), req.description());
         saved.setId(2);
         saved.setImageUrl(req.imageUrl());
 
         when(cropCategoryRepository.save(any(CropCategory.class))).thenReturn(saved);
 
-        ApiResp<CropCategoryResp> resp = adminCropCategoryController.createCropCategory(req);
+        ApiResp<CropCategoryRespDTO> resp = adminCropCategoryController.createCropCategory(req);
         assertNotNull(resp);
         assertEquals(2, resp.data().id());
         assertEquals("Cà chua Cherry", resp.data().categoryName());
@@ -278,8 +279,8 @@ public class FE13_AdminSystemManagementUnitTest {
         when(cropCategoryRepository.findById(1)).thenReturn(Optional.of(existing));
         when(cropCategoryRepository.save(any(CropCategory.class))).thenReturn(existing);
 
-        CropCategoryReq updateReq = new CropCategoryReq("Dưa lưới Hoàng Kim", "Mô tả mới", "https://example.com/new.jpg");
-        ApiResp<CropCategoryResp> resp = adminCropCategoryController.updateCropCategory(1, updateReq);
+        UpdateCropCategoryReqDTO updateReq = new UpdateCropCategoryReqDTO("Dưa lưới Hoàng Kim", "Mô tả mới", "https://example.com/new.jpg");
+        ApiResp<CropCategoryRespDTO> resp = adminCropCategoryController.updateCropCategory(1, updateReq);
 
         assertNotNull(resp);
         assertEquals("Dưa lưới Hoàng Kim", resp.data().categoryName());
@@ -289,7 +290,7 @@ public class FE13_AdminSystemManagementUnitTest {
     @DisplayName("FE13_SYS_UTC11 [Abnormal] - Admin Crop Category: Cập nhật ID không tồn tại -> Ném ResourceNotFoundException")
     void testUpdateCropCategory_notFound_throwsResourceNotFound() {
         when(cropCategoryRepository.findById(999)).thenReturn(Optional.empty());
-        CropCategoryReq req = new CropCategoryReq("Test", "Test", null);
+        UpdateCropCategoryReqDTO req = new UpdateCropCategoryReqDTO("Test", "Test", null);
         assertThrows(ResourceNotFoundException.class, () -> adminCropCategoryController.updateCropCategory(999, req));
     }
 
@@ -306,7 +307,7 @@ public class FE13_AdminSystemManagementUnitTest {
 
         when(checklistRuleRepository.findAll()).thenReturn(List.of(rule));
 
-        ApiResp<List<AdminChecklistRuleResp>> resp = adminChecklistRuleController.getChecklistRules();
+        ApiResp<List<ChecklistRuleRespDTO>> resp = adminChecklistRuleController.getChecklistRules();
         assertNotNull(resp);
         assertEquals(1, resp.data().size());
         assertEquals("Kiểm soát nguồn nước tưới", resp.data().get(0).ruleName());
@@ -315,7 +316,7 @@ public class FE13_AdminSystemManagementUnitTest {
     @Test
     @DisplayName("FE13_SYS_UTC13 [Normal] - Admin Checklist Rule: Thêm mới quy tắc bảng kiểm thành công")
     void testCreateChecklistRule_success() {
-        AdminChecklistRuleReq req = new AdminChecklistRuleReq(
+        CreateChecklistRuleReqDTO req = new CreateChecklistRuleReqDTO(
                 "Kiểm soát dư lượng thuốc BVTV", "Không phun trước thu hoạch 14 ngày", "Hóa chất", true
         );
         ChecklistRule saved = new ChecklistRule();
@@ -327,7 +328,7 @@ public class FE13_AdminSystemManagementUnitTest {
 
         when(checklistRuleRepository.save(any(ChecklistRule.class))).thenReturn(saved);
 
-        ApiResp<AdminChecklistRuleResp> resp = adminChecklistRuleController.createChecklistRule(req);
+        ApiResp<ChecklistRuleRespDTO> resp = adminChecklistRuleController.createChecklistRule(req);
         assertNotNull(resp);
         assertEquals(11, resp.data().ruleId());
         assertEquals("Kiểm soát dư lượng thuốc BVTV", resp.data().ruleName());
@@ -345,8 +346,8 @@ public class FE13_AdminSystemManagementUnitTest {
         when(checklistRuleRepository.findById(10)).thenReturn(Optional.of(existing));
         when(checklistRuleRepository.save(any(ChecklistRule.class))).thenReturn(existing);
 
-        AdminChecklistRuleReq req = new AdminChecklistRuleReq("Quy tắc mới", "Mô tả mới", "Đất", false);
-        ApiResp<AdminChecklistRuleResp> resp = adminChecklistRuleController.updateChecklistRule(10, req);
+        UpdateChecklistRuleReqDTO req = new UpdateChecklistRuleReqDTO("Quy tắc mới", "Mô tả mới", "Đất", false);
+        ApiResp<ChecklistRuleRespDTO> resp = adminChecklistRuleController.updateChecklistRule(10, req);
 
         assertNotNull(resp);
         assertEquals("Quy tắc mới", resp.data().ruleName());
@@ -357,7 +358,7 @@ public class FE13_AdminSystemManagementUnitTest {
     @DisplayName("FE13_SYS_UTC15 [Abnormal] - Admin Checklist Rule: Cập nhật quy tắc ID không tồn tại -> Ném ResourceNotFoundException")
     void testUpdateChecklistRule_notFound_throwsResourceNotFound() {
         when(checklistRuleRepository.findById(999)).thenReturn(Optional.empty());
-        AdminChecklistRuleReq req = new AdminChecklistRuleReq("Rule", "Desc", "Cat", true);
+        UpdateChecklistRuleReqDTO req = new UpdateChecklistRuleReqDTO("Rule", "Desc", "Cat", true);
         assertThrows(ResourceNotFoundException.class, () -> adminChecklistRuleController.updateChecklistRule(999, req));
     }
 }

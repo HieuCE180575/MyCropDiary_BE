@@ -1,6 +1,6 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.auth.RegisterReq;
+import com.mycropdiary.api.dto.auth.RegisterAccReqDTO;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.repository.AccountTokenRepository;
@@ -55,7 +55,7 @@ public class FE01_AuthRegisterUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC01 [Normal] - Đăng ký hợp lệ -> Lưu user trạng thái PENDING và gửi OTP (Passed)")
     void UTC01_register_validUser_shouldSavePendingUserAndSendOtp() {
-        RegisterReq req = new RegisterReq("Farmer Nguyen", "farmer_new@test.com", "0912345678", "StrongPass123@");
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Farmer Nguyen", "farmer_new@test.com", "0912345678", "StrongPass123@");
         when(userRepository.existsByEmailIgnoreCase(req.email())).thenReturn(false);
         when(passwordEncoder.encode(req.password())).thenReturn("encodedPassword");
         when(mailSender.createMimeMessage()).thenReturn(mock(MimeMessage.class));
@@ -70,7 +70,7 @@ public class FE01_AuthRegisterUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC02 [Abnormal] - Email đã tồn tại -> Ném BadRequestException (Passed)")
     void UTC02_register_duplicateEmail_shouldThrowBadRequestException() {
-        RegisterReq req = new RegisterReq("Farmer Nguyen", "farmer@example.com", "0912345678", "StrongPass123@");
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Farmer Nguyen", "farmer@example.com", "0912345678", "StrongPass123@");
         when(userRepository.existsByEmailIgnoreCase(req.email())).thenReturn(true);
 
         assertThrows(BadRequestException.class, () -> authService.register(req));
@@ -80,7 +80,7 @@ public class FE01_AuthRegisterUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC03 [Abnormal] - Email sai định dạng -> Bị chặn tại validation (Passed)")
     void UTC03_register_invalidEmailFormat_shouldThrowValidationException() {
-        RegisterReq req = new RegisterReq("Farmer Nguyen", "invalid_email_format", "0912345678", "StrongPass123@");
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Farmer Nguyen", "invalid_email_format", "0912345678", "StrongPass123@");
         // Giả lập lỗi validation định dạng email
         assertNotNull(req);
         assertFalse(req.email().contains("@"));
@@ -89,21 +89,21 @@ public class FE01_AuthRegisterUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC04 [Boundary] - Mật khẩu dưới 8 ký tự -> Vi phạm chính sách bảo mật (Passed)")
     void UTC04_register_shortPassword_shouldFailMinBoundary() {
-        RegisterReq req = new RegisterReq("Farmer Nguyen", "farmer@test.com", "0912345678", "Pass1@");
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Farmer Nguyen", "farmer@test.com", "0912345678", "Pass1@");
         assertTrue(req.password().length() < 8);
     }
 
     @Test
     @DisplayName("FE01_AUT_UTC05 [Boundary] - Mật khẩu thiếu ký tự đặc biệt -> Vi phạm độ phức tạp (Passed)")
     void UTC05_register_simplePassword_shouldFailComplexityPolicy() {
-        RegisterReq req = new RegisterReq("Farmer Nguyen", "farmer@test.com", "0912345678", "Password123");
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Farmer Nguyen", "farmer@test.com", "0912345678", "Password123");
         assertFalse(req.password().matches(".*[!@#$%^&*()].*"));
     }
 
     @Test
     @DisplayName("FE01_AUT_UTC06 [Abnormal] - Số điện thoại trùng lặp -> Ném ngoại lệ Conflict (Passed)")
     void UTC06_register_duplicatePhoneNumber_shouldThrowConflict() {
-        RegisterReq req = new RegisterReq("Farmer Le", "farmer3@test.com", "0901234567", "StrongPass123@");
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Farmer Le", "farmer3@test.com", "0901234567", "StrongPass123@");
         assertNotNull(req.phoneNumber());
     }
 
@@ -111,7 +111,7 @@ public class FE01_AuthRegisterUnitTest {
     @DisplayName("FE01_AUT_UTC07 [Boundary] - Họ tên dài đúng 100 ký tự -> Lưu thành công (Passed)")
     void UTC07_register_fullNameExactly100Chars_shouldPassMaxBoundary() {
         String name100 = "A".repeat(100);
-        RegisterReq req = new RegisterReq(name100, "farmer4@test.com", "0987654321", "StrongPass123@");
+        RegisterAccReqDTO req = new RegisterAccReqDTO(name100, "farmer4@test.com", "0987654321", "StrongPass123@");
         when(userRepository.existsByEmailIgnoreCase(req.email())).thenReturn(false);
         when(passwordEncoder.encode(req.password())).thenReturn("encodedPassword");
         when(mailSender.createMimeMessage()).thenReturn(mock(MimeMessage.class));
@@ -124,7 +124,7 @@ public class FE01_AuthRegisterUnitTest {
     void UTC08_register_fullNameExceeds100Chars_defectDF003() {
         // Verified fix for DF-003: Column expanded to NVARCHAR(150), @Size(max=150) on DTO, and service length check
         String name151 = "A".repeat(151);
-        RegisterReq req = new RegisterReq(name151, "farmer5@test.com", "0987654322", "StrongPass123@");
+        RegisterAccReqDTO req = new RegisterAccReqDTO(name151, "farmer5@test.com", "0987654322", "StrongPass123@");
         assertThrows(BadRequestException.class, () -> authService.register(req));
         verify(userRepository, never()).save(any());
     }
@@ -132,7 +132,7 @@ public class FE01_AuthRegisterUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC09 [Normal] - Email in hoa -> Tự động chuyển thành chữ thường (Passed)")
     void UTC09_register_uppercaseEmail_shouldNormalizeLowercase() {
-        RegisterReq req = new RegisterReq("Farmer Tran", "FARMER_NEW@TEST.COM", "0987654323", "StrongPass123@");
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Farmer Tran", "FARMER_NEW@TEST.COM", "0987654323", "StrongPass123@");
         when(userRepository.existsByEmailIgnoreCase(req.email())).thenReturn(false);
         when(passwordEncoder.encode(req.password())).thenReturn("encodedPassword");
         when(mailSender.createMimeMessage()).thenReturn(mock(MimeMessage.class));
@@ -143,7 +143,7 @@ public class FE01_AuthRegisterUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC10 [Abnormal] - Gửi 2 request đăng ký cùng email -> Chặn request thứ 2 ném BadRequestException (Passed)")
     void UTC10_register_concurrentRequests_stressTest() {
-        RegisterReq req = new RegisterReq("Farmer Duplicate", "farmer_dup@test.com", "0987654329", "StrongPass123@");
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Farmer Duplicate", "farmer_dup@test.com", "0987654329", "StrongPass123@");
         when(userRepository.existsByEmailIgnoreCase(req.email())).thenReturn(true);
 
         assertThrows(BadRequestException.class, () -> authService.register(req));

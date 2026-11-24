@@ -1,9 +1,9 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.expense.CreateExpenseReq;
-import com.mycropdiary.api.dto.expense.ExpenseResp;
-import com.mycropdiary.api.dto.expense.ExpenseSummaryResp;
-import com.mycropdiary.api.dto.expense.UpdateExpenseReq;
+import com.mycropdiary.api.dto.expense.CreateExpenseReqDTO;
+import com.mycropdiary.api.dto.expense.ExpenseRespDTO;
+import com.mycropdiary.api.dto.expense.ExpenseSummaryRespDTO;
+import com.mycropdiary.api.dto.expense.UpdateExpenseReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.cultivation.CropSeason;
@@ -53,7 +53,7 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ExpenseResp> getExpenseList(
+    public List<ExpenseRespDTO> getExpenseList(
             Integer currentUserId,
             Integer farmId,
             Integer cropSeasonId,
@@ -68,21 +68,21 @@ public class ExpenseServiceImpl implements ExpenseService {
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
 
         List<Expense> list = expenseRepository.searchExpenses(farmId, cropSeasonId, trimmedCategory, startDate, endDate, trimmedKeyword);
-        return list.stream().map(ExpenseResp::fromEntity).toList();
+        return list.stream().map(ExpenseRespDTO::fromEntity).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ExpenseResp getExpenseDetails(Integer currentUserId, Integer expenseId) {
+    public ExpenseRespDTO getExpenseDetails(Integer currentUserId, Integer expenseId) {
         Expense expense = expenseRepository.findByIdWithDetails(expenseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi phí ID: " + expenseId));
 
         accessGuard.requireFarmAccess(currentUserId, expense.getFarm().getId());
-        return ExpenseResp.fromEntity(expense);
+        return ExpenseRespDTO.fromEntity(expense);
     }
 
     @Override
-    public ExpenseResp recordExpense(Integer currentUserId, Integer farmId, CreateExpenseReq request) {
+    public ExpenseRespDTO recordExpense(Integer currentUserId, Integer farmId, CreateExpenseReqDTO request) {
         accessGuard.requireFarmAccess(currentUserId, farmId);
 
         Farm farm = farmRepository.findById(farmId)
@@ -126,11 +126,11 @@ public class ExpenseServiceImpl implements ExpenseService {
         );
 
         Expense saved = expenseRepository.save(expense);
-        return ExpenseResp.fromEntity(saved);
+        return ExpenseRespDTO.fromEntity(saved);
     }
 
     @Override
-    public ExpenseResp updateExpense(Integer currentUserId, Integer expenseId, UpdateExpenseReq request) {
+    public ExpenseRespDTO updateExpense(Integer currentUserId, Integer expenseId, UpdateExpenseReqDTO request) {
         Expense expense = expenseRepository.findByIdWithDetails(expenseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi phí ID: " + expenseId));
 
@@ -179,7 +179,7 @@ public class ExpenseServiceImpl implements ExpenseService {
         }
 
         Expense updated = expenseRepository.save(expense);
-        return ExpenseResp.fromEntity(updated);
+        return ExpenseRespDTO.fromEntity(updated);
     }
 
     @Override
@@ -204,7 +204,7 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     @Transactional(readOnly = true)
-    public ExpenseSummaryResp getExpenseSummary(
+    public ExpenseSummaryRespDTO getExpenseSummary(
             Integer currentUserId,
             Integer farmId,
             Integer cropSeasonId,
@@ -241,7 +241,7 @@ public class ExpenseServiceImpl implements ExpenseService {
         }
 
         final BigDecimal finalGrandTotal = grandTotal;
-        List<ExpenseSummaryResp.ExpenseCategorySummary> byCategory = categoryAmounts.entrySet().stream().map(entry -> {
+        List<ExpenseSummaryRespDTO.ExpenseCategorySummary> byCategory = categoryAmounts.entrySet().stream().map(entry -> {
             String cat = entry.getKey();
             BigDecimal amount = entry.getValue();
             int count = categoryCounts.getOrDefault(cat, 0);
@@ -249,15 +249,15 @@ public class ExpenseServiceImpl implements ExpenseService {
             if (finalGrandTotal.compareTo(BigDecimal.ZERO) > 0) {
                 percentage = amount.multiply(BigDecimal.valueOf(100)).divide(finalGrandTotal, 2, RoundingMode.HALF_UP);
             }
-            return new ExpenseSummaryResp.ExpenseCategorySummary(cat, amount, count, percentage);
+            return new ExpenseSummaryRespDTO.ExpenseCategorySummary(cat, amount, count, percentage);
         }).toList();
 
-        List<ExpenseSummaryResp.ExpenseSeasonSummary> bySeason = seasonAmounts.entrySet().stream().map(entry -> {
+        List<ExpenseSummaryRespDTO.ExpenseSeasonSummary> bySeason = seasonAmounts.entrySet().stream().map(entry -> {
             Integer sId = entry.getKey();
             String sName = seasonNames.get(sId);
             BigDecimal amount = entry.getValue();
             int count = seasonCounts.getOrDefault(sId, 0);
-            return new ExpenseSummaryResp.ExpenseSeasonSummary(sId, sName, amount, count);
+            return new ExpenseSummaryRespDTO.ExpenseSeasonSummary(sId, sName, amount, count);
         }).toList();
 
         String seasonName = null;
@@ -265,7 +265,7 @@ public class ExpenseServiceImpl implements ExpenseService {
             seasonName = cropSeasonRepository.findById(cropSeasonId).map(CropSeason::getSeasonName).orElse(null);
         }
 
-        return new ExpenseSummaryResp(
+        return new ExpenseSummaryRespDTO(
                 farmId,
                 cropSeasonId,
                 seasonName,

@@ -1,11 +1,11 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.risk.CreateZoneRiskReq;
-import com.mycropdiary.api.dto.risk.UpdateRiskControlReq;
-import com.mycropdiary.api.dto.risk.ZoneRiskResp;
-import com.mycropdiary.api.dto.soil.CreateSoilAssessmentReq;
-import com.mycropdiary.api.dto.soil.SoilAssessmentResp;
-import com.mycropdiary.api.dto.soil.UpdateSoilAssessmentReq;
+import com.mycropdiary.api.dto.risk.CreateZoneRiskReqDTO;
+import com.mycropdiary.api.dto.risk.UpdateRiskControlReqDTO;
+import com.mycropdiary.api.dto.risk.ZoneRiskRespDTO;
+import com.mycropdiary.api.dto.soil.CreateSoilReqDTO;
+import com.mycropdiary.api.dto.soil.SoilAssessmentRespDTO;
+import com.mycropdiary.api.dto.soil.UpdateSoilReqDTO;
 import com.mycropdiary.api.entity.*;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.repository.FarmMemberRepository;
@@ -93,14 +93,14 @@ public class FE06_ZoneRiskAndSoilAssessmentUnitTest {
         saved.setId(101);
         when(riskRepository.save(any(ZoneRiskAssessment.class))).thenReturn(saved);
 
-        CreateZoneRiskReq req = new CreateZoneRiskReq(
+        CreateZoneRiskReqDTO req = new CreateZoneRiskReqDTO(
                 "Chemical Drift", "medium",
                 "Neighboring farm sprayed pesticides",
                 "Plant windbreak barrier trees",
                 null, null
         );
 
-        ZoneRiskResp resp = riskService.recordZoneRisk(5, 10, req);
+        ZoneRiskRespDTO resp = riskService.recordZoneRisk(5, 10, req);
         assertNotNull(resp);
         assertEquals(101, resp.riskId());
         assertEquals("medium", resp.riskLevel());
@@ -112,7 +112,7 @@ public class FE06_ZoneRiskAndSoilAssessmentUnitTest {
     void recordZoneRisk_invalidLevel_shouldThrowBadRequest() {
         when(accessGuard.requireZoneAccess(5, 10)).thenReturn(zone);
 
-        CreateZoneRiskReq req = new CreateZoneRiskReq(
+        CreateZoneRiskReqDTO req = new CreateZoneRiskReqDTO(
                 "Chemical Drift", "EXTREME_DANGER",
                 "Description", "Mitigation", null, null
         );
@@ -132,12 +132,12 @@ public class FE06_ZoneRiskAndSoilAssessmentUnitTest {
         when(accessGuard.requireZoneAccess(5, 10)).thenReturn(zone);
         when(riskRepository.save(any(ZoneRiskAssessment.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        UpdateRiskControlReq req = new UpdateRiskControlReq(
+        UpdateRiskControlReqDTO req = new UpdateRiskControlReqDTO(
                 "Upgraded 3m vegetative tree fence",
                 "low", "Reduced risk after fence completion", null
         );
 
-        ZoneRiskResp updated = riskService.updateRiskControlMeasures(5, 101, req);
+        ZoneRiskRespDTO updated = riskService.updateRiskControlMeasures(5, 101, req);
         assertNotNull(updated);
         assertEquals("Upgraded 3m vegetative tree fence", updated.mitigationPlan());
         assertEquals("low", updated.riskLevel());
@@ -157,12 +157,12 @@ public class FE06_ZoneRiskAndSoilAssessmentUnitTest {
         saved.setId(201);
         when(soilRepository.save(any(SoilAssessment.class))).thenReturn(saved);
 
-        CreateSoilAssessmentReq req = new CreateSoilAssessmentReq(
+        CreateSoilReqDTO req = new CreateSoilReqDTO(
                 new BigDecimal("6.50"), new BigDecimal("70.00"),
                 "{\"nitrogen\":\"optimal\"}", "Soil sample is fertile", null, null
         );
 
-        SoilAssessmentResp resp = soilService.createSoilAssessment(5, 20, req);
+        SoilAssessmentRespDTO resp = soilService.createSoilAssessment(5, 20, req);
         assertNotNull(resp);
         assertEquals(201, resp.assessmentId());
         assertEquals(new BigDecimal("6.50"), resp.soilPh());
@@ -173,7 +173,7 @@ public class FE06_ZoneRiskAndSoilAssessmentUnitTest {
     void createSoilAssessment_outOfRangePh_shouldThrowBadRequest() {
         when(accessGuard.requireBlockAccess(5, 20)).thenReturn(block);
 
-        CreateSoilAssessmentReq req = new CreateSoilAssessmentReq(
+        CreateSoilReqDTO req = new CreateSoilReqDTO(
                 new BigDecimal("15.50"), new BigDecimal("70.00"),
                 null, null, null, null
         );
@@ -193,12 +193,12 @@ public class FE06_ZoneRiskAndSoilAssessmentUnitTest {
         when(accessGuard.requireBlockAccess(5, 20)).thenReturn(block);
         when(soilRepository.save(any(SoilAssessment.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        UpdateSoilAssessmentReq req = new UpdateSoilAssessmentReq(
+        UpdateSoilReqDTO req = new UpdateSoilReqDTO(
                 new BigDecimal("6.80"), new BigDecimal("65.00"),
                 "{\"nitrogen\":\"optimal\"}", "Soil improved after organic compost", null, null
         );
 
-        SoilAssessmentResp updated = soilService.updateSoilAssessment(5, 201, req);
+        SoilAssessmentRespDTO updated = soilService.updateSoilAssessment(5, 201, req);
         assertNotNull(updated);
         assertEquals(new BigDecimal("6.80"), updated.soilPh());
         assertEquals(new BigDecimal("65.00"), updated.moisturePercent());
@@ -216,7 +216,7 @@ public class FE06_ZoneRiskAndSoilAssessmentUnitTest {
         when(soilRepository.findById(201)).thenReturn(Optional.of(existing));
         when(accessGuard.requireBlockAccess(5, 20)).thenReturn(block);
 
-        UpdateSoilAssessmentReq req = new UpdateSoilAssessmentReq(
+        UpdateSoilReqDTO req = new UpdateSoilReqDTO(
                 new BigDecimal("6.80"), new BigDecimal("-5.00"),
                 null, null, null, null
         );

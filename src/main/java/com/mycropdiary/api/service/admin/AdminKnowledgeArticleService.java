@@ -1,10 +1,10 @@
 package com.mycropdiary.api.service.admin;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.knowledge.CreateKnowledgeArticleReq;
+import com.mycropdiary.api.dto.knowledge.CreateKnowledgeArticleReqDTO;
 import com.mycropdiary.api.dto.knowledge.KnowledgeArticleRespDTO;
-import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeArticleReq;
-import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeStatusReq;
+import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeArticleReqDTO;
+import com.mycropdiary.api.dto.knowledge.UpdateKnowledgeStatusReqDTO;
 import org.springframework.data.domain.Pageable;
 
 /**
@@ -25,17 +25,17 @@ public interface AdminKnowledgeArticleService {
     /**
      * Tạo bài viết kiến thức mới.
      */
-    KnowledgeArticleRespDTO createArticle(Integer adminUserId, CreateKnowledgeArticleReq request);
+    KnowledgeArticleRespDTO createArticle(Integer adminUserId, CreateKnowledgeArticleReqDTO request);
 
     /**
      * Cập nhật thông tin bài viết kiến thức.
      */
-    KnowledgeArticleRespDTO updateArticle(Integer adminUserId, Integer id, UpdateKnowledgeArticleReq request);
+    KnowledgeArticleRespDTO updateArticle(Integer adminUserId, Integer id, UpdateKnowledgeArticleReqDTO request);
 
     /**
      * Đổi trạng thái bài viết (draft, published, archived).
      */
-    KnowledgeArticleRespDTO updateArticleStatus(Integer adminUserId, Integer id, UpdateKnowledgeStatusReq request);
+    KnowledgeArticleRespDTO updateArticleStatus(Integer adminUserId, Integer id, UpdateKnowledgeStatusReqDTO request);
 
     /**
      * Xóa bài viết kiến thức.

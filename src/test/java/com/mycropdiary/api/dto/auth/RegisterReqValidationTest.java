@@ -28,8 +28,8 @@ class RegisterReqValidationTest {
     @Test
     @DisplayName("Mật khẩu hợp lệ khi đủ từ 8-100 ký tự, có chữ hoa, thường và ký tự đặc biệt")
     void testValidPassword() {
-        RegisterReq req = new RegisterReq("Nguyen Van A", "test@gmail.com", "0912345678", "ValidPass123@");
-        Set<ConstraintViolation<RegisterReq>> violations = validator.validate(req);
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Nguyen Van A", "test@gmail.com", "0912345678", "ValidPass123@");
+        Set<ConstraintViolation<RegisterAccReqDTO>> violations = validator.validate(req);
         assertThat(violations).isEmpty();
     }
 
@@ -43,8 +43,8 @@ class RegisterReqValidationTest {
     })
     @DisplayName("Từ chối mật khẩu không thỏa mãn quy tắc mật khẩu an toàn")
     void testInvalidPasswords(String invalidPassword) {
-        RegisterReq req = new RegisterReq("Nguyen Van A", "test@gmail.com", "0912345678", invalidPassword);
-        Set<ConstraintViolation<RegisterReq>> violations = validator.validate(req);
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Nguyen Van A", "test@gmail.com", "0912345678", invalidPassword);
+        Set<ConstraintViolation<RegisterAccReqDTO>> violations = validator.validate(req);
         assertThat(violations).isNotEmpty();
         assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("password"));
     }
@@ -53,8 +53,8 @@ class RegisterReqValidationTest {
     @DisplayName("Từ chối mật khẩu quá 100 ký tự")
     void testPasswordTooLong() {
         String longPassword = "A@a" + "1".repeat(98); // 101 ký tự
-        RegisterReq req = new RegisterReq("Nguyen Van A", "test@gmail.com", "0912345678", longPassword);
-        Set<ConstraintViolation<RegisterReq>> violations = validator.validate(req);
+        RegisterAccReqDTO req = new RegisterAccReqDTO("Nguyen Van A", "test@gmail.com", "0912345678", longPassword);
+        Set<ConstraintViolation<RegisterAccReqDTO>> violations = validator.validate(req);
         assertThat(violations).isNotEmpty();
         assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("password"));
     }

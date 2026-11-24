@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.auth.AuthResp;
-import com.mycropdiary.api.dto.auth.LoginReq;
+import com.mycropdiary.api.dto.auth.AuthRespDTO;
+import com.mycropdiary.api.dto.auth.LoginReqDTO;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.repository.AccountTokenRepository;
@@ -62,12 +62,12 @@ public class FE01_AuthLoginUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC01 [Normal] - Đăng nhập với thông tin hợp lệ -> Trả về cặp JWT tokens (Passed)")
     void UTC01_login_validCredentials_shouldReturnTokens() {
-        LoginReq req = new LoginReq("farmer@example.com", "Password123@");
+        LoginReqDTO req = new LoginReqDTO("farmer@example.com", "Password123@");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(activeUser));
         when(jwtTokenProvider.generateAccessToken(any(), any(), any())).thenReturn("mock-access-token");
         when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("mock-refresh-token");
 
-        AuthResp resp = authService.login(req);
+        AuthRespDTO resp = authService.login(req);
 
         assertNotNull(resp);
         assertEquals("mock-access-token", resp.accessToken());
@@ -79,7 +79,7 @@ public class FE01_AuthLoginUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC02 [Abnormal] - Email không tồn tại trong hệ thống -> Báo lỗi BadRequestException (Passed)")
     void UTC02_login_nonExistentEmail_shouldThrowBadRequest() {
-        LoginReq req = new LoginReq("notfound@example.com", "Password123@");
+        LoginReqDTO req = new LoginReqDTO("notfound@example.com", "Password123@");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.empty());
 
         assertThrows(BadRequestException.class, () -> authService.login(req));
@@ -88,7 +88,7 @@ public class FE01_AuthLoginUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC03 [Abnormal] - Sai mật khẩu -> AuthenticationManager ném BadCredentialsException (Passed)")
     void UTC03_login_wrongPassword_shouldThrowBadCredentials() {
-        LoginReq req = new LoginReq("farmer@example.com", "WrongPassword@");
+        LoginReqDTO req = new LoginReqDTO("farmer@example.com", "WrongPassword@");
         doThrow(new BadCredentialsException("Bad credentials"))
                 .when(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
 
@@ -99,7 +99,7 @@ public class FE01_AuthLoginUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC04 [Abnormal] - Tài khoản bị vô hiệu hóa -> Ném DisabledException (Passed)")
     void UTC04_login_disabledUser_shouldThrowDisabledException() {
-        LoginReq req = new LoginReq("banned@example.com", "Password123@");
+        LoginReqDTO req = new LoginReqDTO("banned@example.com", "Password123@");
         doThrow(new DisabledException("User account is disabled"))
                 .when(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
 
@@ -109,7 +109,7 @@ public class FE01_AuthLoginUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC05 [Boundary] - Email để trống -> Ném ngoại lệ validation hoặc BadCredentials (Passed)")
     void UTC05_login_emptyEmail_shouldFailValidation() {
-        LoginReq req = new LoginReq("", "Password123@");
+        LoginReqDTO req = new LoginReqDTO("", "Password123@");
         doThrow(new BadCredentialsException("Empty email"))
                 .when(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
 
@@ -120,12 +120,12 @@ public class FE01_AuthLoginUnitTest {
     @DisplayName("FE01_AUT_UTC06 [Boundary] - Mật khẩu có khoảng trắng đầu/cuối -> Tự động trim đồng bộ và đăng nhập thành công (Passed)")
     void UTC06_login_whitespacePassword_defectDF001() {
         // Verified fix for DF-001: AuthServiceImpl trims leading/trailing whitespace symmetrically
-        LoginReq req = new LoginReq("farmer@example.com", " Password123@ ");
+        LoginReqDTO req = new LoginReqDTO("farmer@example.com", " Password123@ ");
         when(userRepository.findByEmailIgnoreCase("farmer@example.com")).thenReturn(Optional.of(activeUser));
         when(jwtTokenProvider.generateAccessToken(any(), any(), any())).thenReturn("mock-access-token");
         when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("mock-refresh-token");
 
-        AuthResp resp = authService.login(req);
+        AuthRespDTO resp = authService.login(req);
 
         assertNotNull(resp);
         assertEquals("mock-access-token", resp.accessToken());
@@ -137,12 +137,12 @@ public class FE01_AuthLoginUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC07 [Normal] - Email chữ hoa (Case-insensitive) -> Đăng nhập thành công (Passed)")
     void UTC07_login_uppercaseEmail_shouldNormalizeAndPass() {
-        LoginReq req = new LoginReq("FARMER@EXAMPLE.COM", "Password123@");
+        LoginReqDTO req = new LoginReqDTO("FARMER@EXAMPLE.COM", "Password123@");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(activeUser));
         when(jwtTokenProvider.generateAccessToken(any(), any(), any())).thenReturn("mock-access-token");
         when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("mock-refresh-token");
 
-        AuthResp resp = authService.login(req);
+        AuthRespDTO resp = authService.login(req);
 
         assertNotNull(resp);
         assertEquals("farmer@example.com", resp.email());
@@ -151,7 +151,7 @@ public class FE01_AuthLoginUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC08 [Abnormal] - SQL Injection payload trong email -> Chặn an toàn (Passed)")
     void UTC08_login_sqlInjectionPayload_shouldHandleSafely() {
-        LoginReq req = new LoginReq("' OR 1=1 --", "Password123@");
+        LoginReqDTO req = new LoginReqDTO("' OR 1=1 --", "Password123@");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.empty());
 
         assertThrows(BadRequestException.class, () -> authService.login(req));
@@ -162,7 +162,7 @@ public class FE01_AuthLoginUnitTest {
     void UTC09_login_passwordExceeds72Bytes_defectDF002() {
         // Verified fix for DF-002: LoginReq @Size(max=72) + service-level 72-byte UTF-8 check
         String longPass = "A".repeat(75) + "1@";
-        LoginReq req = new LoginReq("farmer@example.com", longPass);
+        LoginReqDTO req = new LoginReqDTO("farmer@example.com", longPass);
 
         assertThrows(BadRequestException.class, () -> authService.login(req));
         verify(authenticationManager, never()).authenticate(any());
@@ -171,12 +171,12 @@ public class FE01_AuthLoginUnitTest {
     @Test
     @DisplayName("FE01_AUT_UTC10 [Normal] - Đăng nhập với tài khoản Admin -> Trả về role admin (Passed)")
     void UTC10_login_adminUser_shouldIncludeAdminRole() {
-        LoginReq req = new LoginReq("admin@example.com", "AdminPass123@");
+        LoginReqDTO req = new LoginReqDTO("admin@example.com", "AdminPass123@");
         when(userRepository.findByEmailIgnoreCase(req.email())).thenReturn(Optional.of(adminUser));
         when(jwtTokenProvider.generateAccessToken(any(), any(), any())).thenReturn("admin-token");
         when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("admin-refresh");
 
-        AuthResp resp = authService.login(req);
+        AuthRespDTO resp = authService.login(req);
 
         assertNotNull(resp);
         assertEquals("admin", resp.systemRole());

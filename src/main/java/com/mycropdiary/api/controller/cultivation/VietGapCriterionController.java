@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller.cultivation;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.vietgap.CreateVietGapCriterionReq;
-import com.mycropdiary.api.dto.vietgap.UpdateVietGapCriterionReq;
-import com.mycropdiary.api.dto.vietgap.VietGapCriterionResp;
+import com.mycropdiary.api.dto.vietgap.CreateVietGapCriterionReqDTO;
+import com.mycropdiary.api.dto.vietgap.UpdateVietGapCriterionReqDTO;
+import com.mycropdiary.api.dto.vietgap.VietGapCriterionRespDTO;
 import com.mycropdiary.api.service.cultivation.VietGapCriterionService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,49 +31,49 @@ public class VietGapCriterionController {
 
     @Operation(summary = "View VietGAP Criterion List", description = "Xem danh sách các tiêu chuẩn đánh giá VietGAP của trang trại (hỗ trợ lọc trạng thái kích hoạt và tìm kiếm từ khóa).")
     @GetMapping("/farms/{farmId}/vietgap-criteria")
-    public ApiResp<List<VietGapCriterionResp>> getCriterionList(
+    public ApiResp<List<VietGapCriterionRespDTO>> getCriterionList(
             @PathVariable Integer farmId,
             @RequestParam(required = false) Boolean isActiveOnly,
             @RequestParam(required = false) String keyword) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        List<VietGapCriterionResp> list = criterionService.getCriterionList(currentUserId, farmId, isActiveOnly, keyword);
+        List<VietGapCriterionRespDTO> list = criterionService.getCriterionList(currentUserId, farmId, isActiveOnly, keyword);
         return ApiResp.ok("Lấy danh sách tiêu chuẩn VietGAP thành công.", list);
     }
 
     @Operation(summary = "View VietGAP Criterion Details", description = "Xem chi tiết tiêu chuẩn, mô tả chi tiết và phương pháp đánh giá.")
     @GetMapping("/vietgap-criteria/{criterionId}")
-    public ApiResp<VietGapCriterionResp> getCriterionDetails(@PathVariable Integer criterionId) {
+    public ApiResp<VietGapCriterionRespDTO> getCriterionDetails(@PathVariable Integer criterionId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        VietGapCriterionResp details = criterionService.getCriterionDetails(currentUserId, criterionId);
+        VietGapCriterionRespDTO details = criterionService.getCriterionDetails(currentUserId, criterionId);
         return ApiResp.ok("Chi tiết tiêu chuẩn VietGAP.", details);
     }
 
     @Operation(summary = "Create VietGAP Criterion from TCVN 11892-1:2017", description = "Tạo mới một tiêu chuẩn đánh giá theo quy chuẩn VietGAP TCVN 11892-1:2017.")
     @PostMapping("/farms/{farmId}/vietgap-criteria")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResp<VietGapCriterionResp> createCriterion(
+    public ApiResp<VietGapCriterionRespDTO> createCriterion(
             @PathVariable Integer farmId,
-            @Valid @RequestBody CreateVietGapCriterionReq request) {
+            @Valid @RequestBody CreateVietGapCriterionReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        VietGapCriterionResp response = criterionService.createCriterion(currentUserId, farmId, request);
+        VietGapCriterionRespDTO response = criterionService.createCriterion(currentUserId, farmId, request);
         return ApiResp.ok("Tạo tiêu chuẩn VietGAP thành công.", response);
     }
 
     @Operation(summary = "Import Full TCVN 11892-1:2017 Standard Criteria", description = "Tự động khởi tạo bộ 10 tiêu chuẩn đầy đủ theo chuẩn quốc gia VietGAP TCVN 11892-1:2017 cho trang trại.")
     @PostMapping("/farms/{farmId}/vietgap-criteria/import-tcvn")
-    public ApiResp<List<VietGapCriterionResp>> importTcvnCriteria(@PathVariable Integer farmId) {
+    public ApiResp<List<VietGapCriterionRespDTO>> importTcvnCriteria(@PathVariable Integer farmId) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        List<VietGapCriterionResp> response = criterionService.importTcvnStandardCriteria(currentUserId, farmId);
+        List<VietGapCriterionRespDTO> response = criterionService.importTcvnStandardCriteria(currentUserId, farmId);
         return ApiResp.ok("Đã khởi tạo bộ tiêu chuẩn TCVN 11892-1:2017 thành công.", response);
     }
 
     @Operation(summary = "Update VietGAP Criterion and Evaluation Method", description = "Cập nhật tên tiêu chuẩn, mô tả, thang điểm, phương pháp đánh giá và trạng thái.")
     @PutMapping("/vietgap-criteria/{criterionId}")
-    public ApiResp<VietGapCriterionResp> updateCriterion(
+    public ApiResp<VietGapCriterionRespDTO> updateCriterion(
             @PathVariable Integer criterionId,
-            @Valid @RequestBody UpdateVietGapCriterionReq request) {
+            @Valid @RequestBody UpdateVietGapCriterionReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        VietGapCriterionResp response = criterionService.updateCriterion(currentUserId, criterionId, request);
+        VietGapCriterionRespDTO response = criterionService.updateCriterion(currentUserId, criterionId, request);
         return ApiResp.ok("Cập nhật tiêu chuẩn và phương pháp đánh giá thành công.", response);
     }
 

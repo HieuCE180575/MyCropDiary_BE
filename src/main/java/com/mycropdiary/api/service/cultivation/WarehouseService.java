@@ -1,29 +1,17 @@
 package com.mycropdiary.api.service.cultivation;
 
-import com.mycropdiary.api.dto.warehouse.CreateInventoryReq;
-import com.mycropdiary.api.dto.warehouse.CreateWarehouseReq;
-import com.mycropdiary.api.dto.warehouse.InventoryItemResp;
-import com.mycropdiary.api.dto.warehouse.UpdateInventoryReq;
-import com.mycropdiary.api.dto.warehouse.WarehouseResp;
-import com.mycropdiary.api.dto.warehouse.WarehouseOverviewResp;
+import com.mycropdiary.api.dto.warehouse.CreateWarehouseReqDTO;
+import com.mycropdiary.api.dto.warehouse.UpdateWarehouseReqDTO;
+import com.mycropdiary.api.dto.warehouse.WarehouseOverviewRespDTO;
+import com.mycropdiary.api.dto.warehouse.WarehouseRespDTO;
 
 import java.util.List;
 
 public interface WarehouseService {
-    List<WarehouseResp> getWarehousesByFarm(Integer userId, Integer farmId);
-    WarehouseResp getWarehouseDetails(Integer userId, Integer warehouseId);
-    WarehouseResp createWarehouse(Integer userId, Integer farmId, CreateWarehouseReq request);
-    WarehouseResp updateWarehouse(Integer userId, Integer warehouseId, CreateWarehouseReq request);
+    List<WarehouseRespDTO> getWarehousesByFarm(Integer userId, Integer farmId);
+    WarehouseRespDTO getWarehouseDetails(Integer userId, Integer warehouseId);
+    WarehouseRespDTO createWarehouse(Integer userId, Integer farmId, CreateWarehouseReqDTO request);
+    WarehouseRespDTO updateWarehouse(Integer userId, Integer warehouseId, UpdateWarehouseReqDTO request);
     void deleteWarehouse(Integer userId, Integer warehouseId);
-
-    List<InventoryItemResp> getInventoriesByFarm(Integer userId, Integer farmId, Integer warehouseId, String keyword);
-    InventoryItemResp getInventoryDetails(Integer userId, Integer inventoryId);
-    InventoryItemResp createInventory(Integer userId, Integer farmId, CreateInventoryReq request);
-    InventoryItemResp updateInventory(Integer userId, Integer inventoryId, UpdateInventoryReq request);
-    void deleteInventory(Integer userId, Integer inventoryId);
-    WarehouseOverviewResp getWarehouseOverview(
-        Integer currentUserId,
-        Integer warehouseId
-    );
+    WarehouseOverviewRespDTO getWarehouseOverview(Integer currentUserId, Integer warehouseId);
 }
-

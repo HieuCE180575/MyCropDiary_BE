@@ -5,7 +5,7 @@ import com.mycropdiary.api.dto.cultivation.*;
 import org.springframework.data.domain.Pageable;
 
 public interface FarmTaskService {
-    PageResp<FarmTaskResp> getFarmTasks(
+    PageResp<FarmTaskRespDTO> getFarmTasks(
             Integer userId,
             Integer farmId,
             Integer cropSeasonId,
@@ -16,13 +16,13 @@ public interface FarmTaskService {
             Pageable pageable
     );
 
-    FarmTaskResp getTaskById(Integer userId, Integer taskId);
+    FarmTaskRespDTO getTaskById(Integer userId, Integer taskId);
 
-    FarmTaskResp createTask(Integer userId, Integer farmId, CreateFarmTaskReq request);
+    FarmTaskRespDTO createTask(Integer userId, Integer farmId, CreateFarmTaskReqDTO request);
 
-    FarmTaskResp updateTask(Integer userId, Integer taskId, UpdateFarmTaskReq request);
+    FarmTaskRespDTO updateTask(Integer userId, Integer taskId, UpdateFarmTaskReqDTO request);
 
-    FarmTaskResp updateTaskStatus(Integer userId, Integer taskId, UpdateFarmTaskStatusReq request);
+    FarmTaskRespDTO updateTaskStatus(Integer userId, Integer taskId, UpdateFarmTaskStatusReqDTO request);
 
     void deleteTask(Integer userId, Integer taskId);
 }

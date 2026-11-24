@@ -1,20 +1,23 @@
 package com.mycropdiary.api.mapper;
 
-import com.mycropdiary.api.dto.warehouse.InventoryItemResp;
-import com.mycropdiary.api.dto.warehouse.WarehouseResp;
-import com.mycropdiary.api.entity.cultivation.Inventory;
+import com.mycropdiary.api.dto.warehouse.WarehouseRespDTO;
 import com.mycropdiary.api.entity.cultivation.Warehouse;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
- * Lớp chuyển đổi dữ liệu (Mapper) giữa Entities Warehouse / Inventory và DTOs.
+ * Lớp chuyển đổi dữ liệu (Mapper) giữa Entity Warehouse và DTO.
  */
 @Component
 public class WarehouseMapper {
 
-    public WarehouseResp toWarehouseResp(Warehouse w) {
+    public WarehouseRespDTO toWarehouseResp(Warehouse w) {
+        if (w == null) {
+            return null;
+        }
         int count = w.getInventories() != null ? w.getInventories().size() : 0;
-        return new WarehouseResp(
+        return new WarehouseRespDTO(
                 w.getId(),
                 w.getFarm().getId(),
                 w.getFarm().getFarmName(),
@@ -27,21 +30,14 @@ public class WarehouseMapper {
         );
     }
 
-    public InventoryItemResp toInventoryItemResp(Inventory i) {
-        String matType = i.getMaterial().getMaterialType();
-        boolean lowStock = i.getQuantityOnHand().compareTo(i.getReorderLevel()) <= 0;
-        return new InventoryItemResp(
-                i.getId(),
-                i.getWarehouse().getId(),
-                i.getWarehouse().getWarehouseName(),
-                i.getMaterial().getId(),
-                i.getMaterial().getMaterialName(),
-                matType,
-                i.getMaterial().getUnit(),
-                i.getQuantityOnHand(),
-                i.getReorderLevel(),
-                lowStock,
-                i.getUpdatedAt()
-        );
+    public WarehouseRespDTO toResponse(Warehouse w) {
+        return toWarehouseResp(w);
+    }
+
+    public List<WarehouseRespDTO> toResponseList(List<Warehouse> entities) {
+        if (entities == null) {
+            return List.of();
+        }
+        return entities.stream().map(this::toWarehouseResp).toList();
     }
 }

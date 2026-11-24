@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.water.CreateWaterAssessmentReq;
-import com.mycropdiary.api.dto.water.UpdateWaterAssessmentReq;
-import com.mycropdiary.api.dto.water.WaterAssessmentResp;
+import com.mycropdiary.api.dto.water.CreateWaterReqDTO;
+import com.mycropdiary.api.dto.water.UpdateWaterReqDTO;
+import com.mycropdiary.api.dto.water.WaterAssessmentRespDTO;
 import com.mycropdiary.api.entity.*;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.WaterAssessmentRepository;
@@ -86,13 +86,13 @@ class FE06_WaterAssessmentUnitTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 1, "active")).thenReturn(Optional.of(testMember));
         when(waterRepository.save(any(WaterAssessment.class))).thenReturn(testAssessment);
 
-        CreateWaterAssessmentReq req = new CreateWaterAssessmentReq(
+        CreateWaterReqDTO req = new CreateWaterReqDTO(
                 null, "Hồ chứa lắng lọc", "Nước mặt",
                 BigDecimal.valueOf(6.8), BigDecimal.valueOf(22.0),
                 "DAT_CHUAN", "Mẫu nước đạt chuẩn", null, Instant.now()
         );
 
-        WaterAssessmentResp resp = waterService.createWaterAssessment(1, 100, req);
+        WaterAssessmentRespDTO resp = waterService.createWaterAssessment(1, 100, req);
         assertNotNull(resp);
         assertEquals(500, resp.assessmentId());
         assertEquals("DAT_CHUAN", resp.qualityStatus());
@@ -104,7 +104,7 @@ class FE06_WaterAssessmentUnitTest {
         when(accessGuard.requireBlockAccess(1, 100)).thenReturn(testBlock);
         when(waterRepository.findByBlockIdOrderByAssessedAtDesc(100)).thenReturn(List.of(testAssessment));
 
-        List<WaterAssessmentResp> list = waterService.getWaterAssessmentHistory(1, 100);
+        List<WaterAssessmentRespDTO> list = waterService.getWaterAssessmentHistory(1, 100);
         assertNotNull(list);
         assertEquals(1, list.size());
         assertEquals(BigDecimal.valueOf(6.8), list.get(0).waterPh());
@@ -116,7 +116,7 @@ class FE06_WaterAssessmentUnitTest {
         when(accessGuard.requireFarmAccess(1, 1)).thenReturn(testMember);
         when(waterRepository.findByFarmIdOrderByAssessedAtDesc(1)).thenReturn(List.of(testAssessment));
 
-        List<WaterAssessmentResp> list = waterService.getFarmWaterAssessmentHistory(1, 1);
+        List<WaterAssessmentRespDTO> list = waterService.getFarmWaterAssessmentHistory(1, 1);
         assertNotNull(list);
         assertEquals(1, list.size());
     }
@@ -128,13 +128,13 @@ class FE06_WaterAssessmentUnitTest {
         when(accessGuard.requireBlockAccess(1, 100)).thenReturn(testBlock);
         when(waterRepository.save(any(WaterAssessment.class))).thenReturn(testAssessment);
 
-        UpdateWaterAssessmentReq req = new UpdateWaterAssessmentReq(
+        UpdateWaterReqDTO req = new UpdateWaterReqDTO(
                 null, null, null,
                 BigDecimal.valueOf(7.0), BigDecimal.valueOf(23.0),
                 "DAT_CHUAN", "Cập nhật ghi chú", null, Instant.now()
         );
 
-        WaterAssessmentResp resp = waterService.updateWaterAssessment(1, 500, req);
+        WaterAssessmentRespDTO resp = waterService.updateWaterAssessment(1, 500, req);
         assertNotNull(resp);
     }
 
@@ -142,7 +142,7 @@ class FE06_WaterAssessmentUnitTest {
     @DisplayName("FE06_WTR_UTC05 [Abnormal] - Cập nhật phiếu đánh giá nước ID không tồn tại -> Ném ResourceNotFoundException (Commit c7ec0bc)")
     void updateWaterAssessment_notFound_throwsResourceNotFound() {
         when(waterRepository.findById(999)).thenReturn(Optional.empty());
-        UpdateWaterAssessmentReq req = new UpdateWaterAssessmentReq(
+        UpdateWaterReqDTO req = new UpdateWaterReqDTO(
                 null, null, null, BigDecimal.valueOf(7.0), BigDecimal.valueOf(25.0),
                 "DAT_CHUAN", "Ghi chú", null, Instant.now()
         );
@@ -165,13 +165,13 @@ class FE06_WaterAssessmentUnitTest {
         boundaryAssessment.setId(501);
         when(waterRepository.save(any(WaterAssessment.class))).thenReturn(boundaryAssessment);
 
-        CreateWaterAssessmentReq req = new CreateWaterAssessmentReq(
+        CreateWaterReqDTO req = new CreateWaterReqDTO(
                 null, "Hồ chứa", "Nước mặt",
                 BigDecimal.valueOf(6.5), BigDecimal.valueOf(20.0),
                 "DAT_CHUAN", "Ngưỡng cận dưới", null, Instant.now()
         );
 
-        WaterAssessmentResp resp = waterService.createWaterAssessment(1, 100, req);
+        WaterAssessmentRespDTO resp = waterService.createWaterAssessment(1, 100, req);
         assertNotNull(resp);
         assertEquals(BigDecimal.valueOf(6.5), resp.waterPh());
     }

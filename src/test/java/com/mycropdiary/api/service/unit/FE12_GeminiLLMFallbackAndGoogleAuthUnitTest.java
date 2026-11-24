@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.unit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycropdiary.api.dto.auth.AuthResp;
-import com.mycropdiary.api.dto.auth.GoogleAuthReq;
+import com.mycropdiary.api.dto.auth.AuthRespDTO;
+import com.mycropdiary.api.dto.auth.GoogleAuthReqDTO;
 import com.mycropdiary.api.entity.AccountToken;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.exception.BadRequestException;
@@ -166,7 +166,7 @@ public class FE12_GeminiLLMFallbackAndGoogleAuthUnitTest {
     void UTC06_loginWithGoogle_validIdToken_newUser_registeredSuccessfully() throws Exception {
         String token = createSignedGoogleIdToken("farmer.google@gmail.com", "Google Farmer",
                 "https://avatar.url/farmer.png");
-        GoogleAuthReq req = new GoogleAuthReq(token, null, null, null);
+        GoogleAuthReqDTO req = new GoogleAuthReqDTO(token, null, null, null);
 
         when(userRepository.findByEmailIgnoreCase("farmer.google@gmail.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode(any())).thenReturn("encodedBcryptPassword");
@@ -181,7 +181,7 @@ public class FE12_GeminiLLMFallbackAndGoogleAuthUnitTest {
         when(jwtTokenProvider.getRefreshTokenExpirationMs()).thenReturn(604800000L);
         when(accountTokenRepository.save(any(AccountToken.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResp resp = authService.loginWithGoogle(req);
+        AuthRespDTO resp = authService.loginWithGoogle(req);
 
         assertNotNull(resp);
         assertEquals("mockGoogleAccessToken", resp.accessToken());
@@ -195,7 +195,7 @@ public class FE12_GeminiLLMFallbackAndGoogleAuthUnitTest {
     void UTC07_loginWithGoogle_existingActiveUser_success() throws Exception {
         String token = createSignedGoogleIdToken("existing.farmer@gmail.com", "Existing Farmer",
                 "https://avatar.url/avatar.png");
-        GoogleAuthReq req = new GoogleAuthReq(token, null, null, null);
+        GoogleAuthReqDTO req = new GoogleAuthReqDTO(token, null, null, null);
 
         User existingUser = new User();
         ReflectionTestUtils.setField(existingUser, "id", 42);
@@ -211,7 +211,7 @@ public class FE12_GeminiLLMFallbackAndGoogleAuthUnitTest {
         when(jwtTokenProvider.getRefreshTokenExpirationMs()).thenReturn(604800000L);
         when(accountTokenRepository.save(any(AccountToken.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResp resp = authService.loginWithGoogle(req);
+        AuthRespDTO resp = authService.loginWithGoogle(req);
 
         assertNotNull(resp);
         assertEquals("mockAccessToken42", resp.accessToken());
@@ -222,7 +222,7 @@ public class FE12_GeminiLLMFallbackAndGoogleAuthUnitTest {
     @Test
     @DisplayName("UTC08 - Google OAuth2 login with direct email parameter succeeds")
     void UTC08_loginWithGoogle_directEmailParameter_success() {
-        GoogleAuthReq req = new GoogleAuthReq(null, "direct.farmer@gmail.com", "Direct Farmer",
+        GoogleAuthReqDTO req = new GoogleAuthReqDTO(null, "direct.farmer@gmail.com", "Direct Farmer",
                 "https://avatar.url/d.png");
 
         User existingUser = new User();
@@ -239,7 +239,7 @@ public class FE12_GeminiLLMFallbackAndGoogleAuthUnitTest {
         when(jwtTokenProvider.getRefreshTokenExpirationMs()).thenReturn(604800000L);
         when(accountTokenRepository.save(any(AccountToken.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResp resp = authService.loginWithGoogle(req);
+        AuthRespDTO resp = authService.loginWithGoogle(req);
 
         assertNotNull(resp);
         assertEquals("mockAccessToken55", resp.accessToken());
@@ -262,7 +262,7 @@ public class FE12_GeminiLLMFallbackAndGoogleAuthUnitTest {
         String signature = Base64.getUrlEncoder().withoutPadding().encodeToString(sig.sign());
         String tokenWithoutEmail = signingInput + "." + signature;
 
-        GoogleAuthReq req = new GoogleAuthReq(tokenWithoutEmail, null, null, null);
+        GoogleAuthReqDTO req = new GoogleAuthReqDTO(tokenWithoutEmail, null, null, null);
 
         assertThrows(BadRequestException.class, () -> authService.loginWithGoogle(req));
     }
@@ -279,7 +279,7 @@ public class FE12_GeminiLLMFallbackAndGoogleAuthUnitTest {
                         .getBytes(StandardCharsets.UTF_8));
         String forgedSignature = Base64.getUrlEncoder().withoutPadding()
                 .encodeToString("forged-invalid-signature".getBytes(StandardCharsets.UTF_8));
-        GoogleAuthReq forgedReq = new GoogleAuthReq(header + "." + forgedPayload + "." + forgedSignature, null, null,
+        GoogleAuthReqDTO forgedReq = new GoogleAuthReqDTO(header + "." + forgedPayload + "." + forgedSignature, null, null,
                 null);
 
         assertThrows(BadRequestException.class, () -> authService.loginWithGoogle(forgedReq));

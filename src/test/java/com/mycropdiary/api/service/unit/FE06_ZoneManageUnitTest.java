@@ -1,9 +1,9 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.farm.CreateZoneReq;
-import com.mycropdiary.api.dto.farm.UpdateZoneReq;
-import com.mycropdiary.api.dto.farm.ZoneDetailResp;
-import com.mycropdiary.api.dto.farm.ZoneResp;
+import com.mycropdiary.api.dto.farm.CreateZoneReqDTO;
+import com.mycropdiary.api.dto.farm.UpdateZoneReqDTO;
+import com.mycropdiary.api.dto.farm.ZoneDetailRespDTO;
+import com.mycropdiary.api.dto.farm.ZoneRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.Zone;
@@ -71,7 +71,7 @@ public class FE06_ZoneManageUnitTest {
     @Test
     @DisplayName("FE06_ZN_UTC01 [Normal] - Tạo phân khu hợp lệ thành công (Passed)")
     void UTC01_createZone_validInput_shouldCreateSuccessfully() {
-        CreateZoneReq req = new CreateZoneReq("Khu Vực Tây", new BigDecimal("5000.00"), "m2", "Khu trồng rau sạch", null);
+        CreateZoneReqDTO req = new CreateZoneReqDTO("Khu Vực Tây", new BigDecimal("5000.00"), "m2", "Khu trồng rau sạch", null);
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(zoneRepository.existsByFarmIdAndZoneNameIgnoreCase(1, "Khu Vực Tây")).thenReturn(false);
 
@@ -80,7 +80,7 @@ public class FE06_ZoneManageUnitTest {
         savedZone.setAreaUnit("m2");
         when(zoneRepository.save(any(Zone.class))).thenReturn(savedZone);
 
-        ZoneResp resp = zoneService.createZone(1, 1, req);
+        ZoneRespDTO resp = zoneService.createZone(1, 1, req);
 
         assertNotNull(resp);
         assertEquals(11, resp.id());
@@ -92,7 +92,7 @@ public class FE06_ZoneManageUnitTest {
     @Test
     @DisplayName("FE06_ZN_UTC02 [Abnormal] - Trang trại không tồn tại -> Báo lỗi ResourceNotFound (Passed)")
     void UTC02_createZone_nonExistentFarm_shouldThrowResourceNotFound() {
-        CreateZoneReq req = new CreateZoneReq("Khu Vực Bắc", new BigDecimal("3000.00"), "m2", "Mô tả", null);
+        CreateZoneReqDTO req = new CreateZoneReqDTO("Khu Vực Bắc", new BigDecimal("3000.00"), "m2", "Mô tả", null);
         when(farmRepository.findById(999)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> zoneService.createZone(1, 999, req));
@@ -101,7 +101,7 @@ public class FE06_ZoneManageUnitTest {
     @Test
     @DisplayName("FE06_ZN_UTC03 [Abnormal] - Tên phân khu bị trùng trong Farm -> Báo lỗi ResourceConflict (Passed)")
     void UTC03_createZone_duplicateZoneName_shouldThrowResourceConflict() {
-        CreateZoneReq req = new CreateZoneReq("Khu Vực Đông", new BigDecimal("5000.00"), "m2", "Khu lặp", null);
+        CreateZoneReqDTO req = new CreateZoneReqDTO("Khu Vực Đông", new BigDecimal("5000.00"), "m2", "Khu lặp", null);
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(zoneRepository.existsByFarmIdAndZoneNameIgnoreCase(1, "Khu Vực Đông")).thenReturn(true);
 
@@ -111,12 +111,12 @@ public class FE06_ZoneManageUnitTest {
     @Test
     @DisplayName("FE06_ZN_UTC04 [Normal] - Cập nhật thông tin phân khu thành công (Passed)")
     void UTC04_updateZone_validInput_shouldUpdateSuccessfully() {
-        UpdateZoneReq req = new UpdateZoneReq("Khu Vực Đông Cải Tạo", new BigDecimal("12000.00"), "m2", "Cải tạo đất", null);
+        UpdateZoneReqDTO req = new UpdateZoneReqDTO("Khu Vực Đông Cải Tạo", new BigDecimal("12000.00"), "m2", "Cải tạo đất", null);
         when(accessGuard.requireZoneAccess(1, 10)).thenReturn(zone);
         when(zoneRepository.existsByFarmIdAndZoneNameIgnoreCaseAndIdNot(1, "Khu Vực Đông Cải Tạo", 10)).thenReturn(false);
         when(zoneRepository.save(any(Zone.class))).thenAnswer(i -> i.getArgument(0));
 
-        ZoneResp resp = zoneService.updateZone(1, 10, req);
+        ZoneRespDTO resp = zoneService.updateZone(1, 10, req);
 
         assertNotNull(resp);
         assertEquals("Khu Vực Đông Cải Tạo", resp.zoneName());
@@ -127,7 +127,7 @@ public class FE06_ZoneManageUnitTest {
     @Test
     @DisplayName("FE06_ZN_UTC05 [Abnormal] - Cập nhật đổi tên trùng với phân khu khác -> Báo lỗi ResourceConflict (Passed)")
     void UTC05_updateZone_duplicateNameOtherZone_shouldThrowResourceConflict() {
-        UpdateZoneReq req = new UpdateZoneReq("Khu Vực Nam", new BigDecimal("10000.00"), "m2", "Mô tả", null);
+        UpdateZoneReqDTO req = new UpdateZoneReqDTO("Khu Vực Nam", new BigDecimal("10000.00"), "m2", "Mô tả", null);
         when(accessGuard.requireZoneAccess(1, 10)).thenReturn(zone);
         when(zoneRepository.existsByFarmIdAndZoneNameIgnoreCaseAndIdNot(1, "Khu Vực Nam", 10)).thenReturn(true);
 
@@ -171,7 +171,7 @@ public class FE06_ZoneManageUnitTest {
 
         when(blockRepository.findByZoneId(10)).thenReturn(List.of(b1));
 
-        ZoneDetailResp resp = zoneService.getZoneById(1, 10);
+        ZoneDetailRespDTO resp = zoneService.getZoneById(1, 10);
 
         assertNotNull(resp);
         assertEquals(10, resp.zoneId());
@@ -184,7 +184,7 @@ public class FE06_ZoneManageUnitTest {
     @DisplayName("FE06_ZN_UTC09 [Boundary] - Tạo phân khu với diện tích bằng 0 hoặc số âm bị chặn bằng validation & BusinessRuleException (Passed)")
     void UTC09_createZone_zeroOrNegativeArea_defectDF019() {
         // Verified fix for DF-019: @DecimalMin("0.01") on CreateZoneReq + service-level areaValue > 0 check
-        CreateZoneReq req = new CreateZoneReq("Khu Vực 0m2", BigDecimal.ZERO, "m2", "Không có diện tích", null);
+        CreateZoneReqDTO req = new CreateZoneReqDTO("Khu Vực 0m2", BigDecimal.ZERO, "m2", "Không có diện tích", null);
         jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
         assertFalse(validator.validate(req).isEmpty());
 

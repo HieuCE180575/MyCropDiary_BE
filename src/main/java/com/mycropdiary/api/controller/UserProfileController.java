@@ -1,9 +1,9 @@
 package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.user.ChangePasswordReq;
-import com.mycropdiary.api.dto.user.UpdateProfileReq;
-import com.mycropdiary.api.dto.user.UserProfileResp;
+import com.mycropdiary.api.dto.user.ChangePasswordReqDTO;
+import com.mycropdiary.api.dto.user.UpdateProfileReqDTO;
+import com.mycropdiary.api.dto.user.UserProfileRespDTO;
 import com.mycropdiary.api.service.UserProfileService;
 import com.mycropdiary.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,23 +28,23 @@ public class UserProfileController {
 
     @Operation(summary = "Xem thông tin hồ sơ cá nhân", description = "Lấy thông tin chi tiết tài khoản của người dùng đang đăng nhập.")
     @GetMapping("/profile")
-    public ApiResp<UserProfileResp> getProfile() {
+    public ApiResp<UserProfileRespDTO> getProfile() {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        UserProfileResp response = userProfileService.getProfile(currentUserId);
+        UserProfileRespDTO response = userProfileService.getProfile(currentUserId);
         return ApiResp.ok("Lấy thông tin tài khoản thành công.", response);
     }
 
     @Operation(summary = "Cập nhật hồ sơ cá nhân", description = "Chỉnh sửa họ tên, số điện thoại hoặc ảnh đại diện của người dùng hiện tại.")
     @PutMapping("/profile")
-    public ApiResp<UserProfileResp> updateProfile(@Valid @RequestBody UpdateProfileReq request) {
+    public ApiResp<UserProfileRespDTO> updateProfile(@Valid @RequestBody UpdateProfileReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
-        UserProfileResp response = userProfileService.updateProfile(currentUserId, request);
+        UserProfileRespDTO response = userProfileService.updateProfile(currentUserId, request);
         return ApiResp.ok("Cập nhật thông tin tài khoản thành công.", response);
     }
 
     @Operation(summary = "Đổi mật khẩu người dùng", description = "Đổi mật khẩu tài khoản người dùng đăng nhập bằng mật khẩu hiện tại và mật khẩu mới.")
     @PostMapping("/change-password")
-    public ApiResp<Void> changePassword(@Valid @RequestBody ChangePasswordReq request) {
+    public ApiResp<Void> changePassword(@Valid @RequestBody ChangePasswordReqDTO request) {
         Integer currentUserId = securityUtils.getCurrentUserId();
         userProfileService.changePassword(currentUserId, request);
         return ApiResp.ok("Đổi mật khẩu thành công. Mật khẩu mới đã được áp dụng.", null);

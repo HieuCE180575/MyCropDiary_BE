@@ -59,7 +59,7 @@ class FarmingActivityControllerTest {
     @Test
     @DisplayName("POST /api/v1/farming-activities - Tạo nhật ký thành công (201 Created)")
     void createActivity_Success() throws Exception {
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 cropSeasonId,
                 "Làm đất",
                 "Cày xới luống",
@@ -72,7 +72,7 @@ class FarmingActivityControllerTest {
                 null
         );
 
-        FarmingActivityResp resp = new FarmingActivityResp(
+        FarmingActivityRespDTO resp = new FarmingActivityRespDTO(
                 activityId,
                 cropSeasonId,
                 "Vụ Đông Xuân",
@@ -95,7 +95,7 @@ class FarmingActivityControllerTest {
         );
 
         when(securityUtils.getCurrentUserId()).thenReturn(currentUserId);
-        when(farmingActivityService.createActivity(eq(currentUserId), any(CreateFarmingActivityReq.class))).thenReturn(resp);
+        when(farmingActivityService.createActivity(eq(currentUserId), any(CreateFarmActivityReqDTO.class))).thenReturn(resp);
 
         mockMvc.perform(post("/api/v1/farming-activities")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -109,7 +109,7 @@ class FarmingActivityControllerTest {
     @Test
     @DisplayName("PUT /api/v1/farming-activities/{activityId} - Cập nhật nhật ký thành công (200 OK)")
     void updateActivity_Success() throws Exception {
-        UpdateFarmingActivityReq req = new UpdateFarmingActivityReq(
+        UpdateFarmingActivityReqDTO req = new UpdateFarmingActivityReqDTO(
                 "Tưới tiêu",
                 "Tưới nước tự động",
                 LocalDateTime.now().minusHours(3),
@@ -123,7 +123,7 @@ class FarmingActivityControllerTest {
                 List.of()
         );
 
-        FarmingActivityResp resp = new FarmingActivityResp(
+        FarmingActivityRespDTO resp = new FarmingActivityRespDTO(
                 activityId,
                 cropSeasonId,
                 "Vụ Đông Xuân",
@@ -146,7 +146,7 @@ class FarmingActivityControllerTest {
         );
 
         when(securityUtils.getCurrentUserId()).thenReturn(currentUserId);
-        when(farmingActivityService.updateActivity(eq(currentUserId), eq(activityId), any(UpdateFarmingActivityReq.class)))
+        when(farmingActivityService.updateActivity(eq(currentUserId), eq(activityId), any(UpdateFarmingActivityReqDTO.class)))
                 .thenReturn(resp);
 
         mockMvc.perform(put("/api/v1/farming-activities/" + activityId)
@@ -161,7 +161,7 @@ class FarmingActivityControllerTest {
     @Test
     @DisplayName("GET /api/v1/farming-activities - Tìm kiếm và lọc nhật ký theo mùa vụ (200 OK)")
     void getActivitiesByCropSeason_SearchAndFilter_Success() throws Exception {
-        FarmingActivitySummaryResp summaryResp = new FarmingActivitySummaryResp(
+        FarmingActivitySummaryRespDTO summaryResp = new FarmingActivitySummaryRespDTO(
                 activityId,
                 cropSeasonId,
                 "Bón phân",
@@ -174,7 +174,7 @@ class FarmingActivityControllerTest {
                 LocalDateTime.now().minusHours(5)
         );
 
-        PageResp<FarmingActivitySummaryResp> pageResp = PageResp.from(new PageImpl<>(List.of(summaryResp)));
+        PageResp<FarmingActivitySummaryRespDTO> pageResp = PageResp.from(new PageImpl<>(List.of(summaryResp)));
 
         when(securityUtils.getCurrentUserId()).thenReturn(currentUserId);
         when(farmingActivityService.searchAndFilterActivities(
@@ -195,7 +195,7 @@ class FarmingActivityControllerTest {
     @Test
     @DisplayName("GET /api/v1/farming-activities/{activityId} - Lấy chi tiết nhật ký thành công (200 OK)")
     void getActivityDetail_Success() throws Exception {
-        FarmingActivityResp resp = new FarmingActivityResp(
+        FarmingActivityRespDTO resp = new FarmingActivityRespDTO(
                 activityId,
                 cropSeasonId,
                 "Vụ Đông Xuân",

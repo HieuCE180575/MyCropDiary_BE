@@ -1,7 +1,7 @@
 package com.mycropdiary.api.controller;
 
 import com.mycropdiary.api.dto.common.ApiResp;
-import com.mycropdiary.api.dto.file.FileUploadResp;
+import com.mycropdiary.api.dto.file.FileUploadRespDTO;
 import com.mycropdiary.api.service.CloudinaryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,13 +30,13 @@ public class FileUploadController {
     )
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public ApiResp<FileUploadResp> uploadFile(
+    public ApiResp<FileUploadRespDTO> uploadFile(
             @Parameter(description = "Tập tin cần tải lên (tối đa 15MB)")
             @RequestParam("file") MultipartFile file,
             @Parameter(description = "Thư mục đích trên Cloudinary (mặc định: mycropdiary/evidence)")
             @RequestParam(value = "folder", defaultValue = "mycropdiary/evidence") String folder
     ) {
-        FileUploadResp response = cloudinaryService.uploadFile(file, folder);
+        FileUploadRespDTO response = cloudinaryService.uploadFile(file, folder);
         return ApiResp.ok("Tải lên tập tin thành công.", response);
     }
 
@@ -46,13 +46,13 @@ public class FileUploadController {
     )
     @PostMapping(value = "/upload-multiple", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public ApiResp<List<FileUploadResp>> uploadMultipleFiles(
+    public ApiResp<List<FileUploadRespDTO>> uploadMultipleFiles(
             @Parameter(description = "Danh sách tập tin cần tải lên")
             @RequestParam("files") List<MultipartFile> files,
             @Parameter(description = "Thư mục đích trên Cloudinary")
             @RequestParam(value = "folder", defaultValue = "mycropdiary/evidence") String folder
     ) {
-        List<FileUploadResp> responses = cloudinaryService.uploadFiles(files, folder);
+        List<FileUploadRespDTO> responses = cloudinaryService.uploadFiles(files, folder);
         return ApiResp.ok("Tải lên các tập tin thành công.", responses);
     }
 

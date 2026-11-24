@@ -90,7 +90,7 @@ public class FE08_FarmingActivityUnitTest {
     @DisplayName("FE08_ACT_UTC01 [Normal] - Tạo mới nhật ký canh tác hợp lệ thành công (Passed)")
     void UTC01_createActivity_validInput_shouldCreateSuccessfully() {
         LocalDateTime now = LocalDateTime.now();
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 10, "Bón phân", "Bón thúc đợt 1 phân NPK", now.minusHours(3), now,
                 "Bón đều trên các luống", "Đạt yêu cầu kỹ thuật", "Nắng ráo, nhiệt độ 28°C", null, null
         );
@@ -108,7 +108,7 @@ public class FE08_FarmingActivityUnitTest {
         saved.setEndedAt(now);
         when(farmingActivityRepository.save(any(FarmingActivity.class))).thenReturn(saved);
 
-        FarmingActivityResp resp = farmingActivityService.createActivity(5, req);
+        FarmingActivityRespDTO resp = farmingActivityService.createActivity(5, req);
 
         assertNotNull(resp);
         assertEquals(1, resp.farmingActivityId());
@@ -121,7 +121,7 @@ public class FE08_FarmingActivityUnitTest {
     @DisplayName("FE08_ACT_UTC02 [Abnormal] - Mùa vụ không tồn tại -> Báo lỗi ResourceNotFound (Passed)")
     void UTC02_createActivity_nonExistentSeason_shouldThrowResourceNotFound() {
         LocalDateTime now = LocalDateTime.now();
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 999, "Tưới nước", "Tưới phun sương", now.minusHours(1), now, null, null, null, null, null
         );
 
@@ -135,7 +135,7 @@ public class FE08_FarmingActivityUnitTest {
     void UTC03_createActivity_seasonCompletedOrCancelled_shouldThrowBadRequest() {
         activeSeason.setSeasonStatus("completed");
         LocalDateTime now = LocalDateTime.now();
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 10, "Làm cỏ", "Dọn cỏ bờ ruộng", now.minusHours(2), now, null, null, null, null, null
         );
 
@@ -148,7 +148,7 @@ public class FE08_FarmingActivityUnitTest {
     @DisplayName("FE08_ACT_UTC04 [Boundary] - Thời gian kết thúc trước thời gian bắt đầu -> Báo BadRequest (Passed)")
     void UTC04_createActivity_endedAtBeforeStartedAt_shouldThrowBadRequest() {
         LocalDateTime now = LocalDateTime.now();
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 10, "Phun thuốc", "Phun phòng rầy", now, now.minusHours(2), null, null, null, null, null
         );
 
@@ -161,7 +161,7 @@ public class FE08_FarmingActivityUnitTest {
     @DisplayName("FE08_ACT_UTC05 [Abnormal] - Người dùng không phải thành viên trang trại -> Chặn ForbiddenException (Passed)")
     void UTC05_createActivity_notFarmMember_shouldThrowForbidden() {
         LocalDateTime now = LocalDateTime.now();
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 10, "Tỉa cành", "Tỉa cành chét", now.minusHours(1), now, null, null, null, null, null
         );
 
@@ -185,7 +185,7 @@ public class FE08_FarmingActivityUnitTest {
         when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 5, "active")).thenReturn(Optional.of(supervisorMember));
         when(activityWorkerRepository.findByFarmingActivityId(55)).thenReturn(Collections.emptyList());
 
-        FarmingActivityResp resp = farmingActivityService.getActivityDetail(5, 55);
+        FarmingActivityRespDTO resp = farmingActivityService.getActivityDetail(5, 55);
 
         assertNotNull(resp);
         assertEquals(55, resp.farmingActivityId());
@@ -208,7 +208,7 @@ public class FE08_FarmingActivityUnitTest {
         when(farmingActivityRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(act1), pageable, 1));
 
-        PageResp<FarmingActivitySummaryResp> resp = farmingActivityService.getActivitiesByCropSeason(5, 10, pageable);
+        PageResp<FarmingActivitySummaryRespDTO> resp = farmingActivityService.getActivitiesByCropSeason(5, 10, pageable);
 
         assertNotNull(resp);
         assertEquals(1, resp.totalElements());
@@ -220,7 +220,7 @@ public class FE08_FarmingActivityUnitTest {
     void UTC08_createActivity_startedAtInFarFuture_defectDF022() {
         // Verified fix for DF-022: @PastOrPresent on startedAt + service-level future date guard
         LocalDateTime future = LocalDateTime.now().plusDays(30);
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 10, "Bón phân", "Hoạt động tương lai", future, future.plusHours(2), null, null, null, null, null
         );
         jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
@@ -235,11 +235,11 @@ public class FE08_FarmingActivityUnitTest {
     void UTC09_createActivity_invalidWorkerHours_defectDF023() {
         // Verified fix for DF-023: @DecimalMax("24.00") on ActivityWorkerReq.workHours + service validation
         LocalDateTime now = LocalDateTime.now();
-        ActivityWorkerReq invalidWorker = new ActivityWorkerReq(100, new BigDecimal("36.00"), "Quá giờ");
+        ActivityWorkerReqDTO invalidWorker = new ActivityWorkerReqDTO(100, new BigDecimal("36.00"), "Quá giờ");
         jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
         assertFalse(validator.validate(invalidWorker).isEmpty());
 
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 10, "Bón phân", "Ca làm 36h", now.minusHours(2), now, null, null, null, null, List.of(invalidWorker)
         );
         when(cropSeasonRepository.findById(10)).thenReturn(Optional.of(activeSeason));
@@ -260,9 +260,9 @@ public class FE08_FarmingActivityUnitTest {
         foreignWorker.setId(999);
 
         LocalDateTime now = LocalDateTime.now();
-        CreateFarmingActivityReq req = new CreateFarmingActivityReq(
+        CreateFarmActivityReqDTO req = new CreateFarmActivityReqDTO(
                 10, "Bón phân", "Gán nhân công khác trại", now.minusHours(2), now, null, null, null, null,
-                List.of(new ActivityWorkerReq(999, new BigDecimal("4.00"), null))
+                List.of(new ActivityWorkerReqDTO(999, new BigDecimal("4.00"), null))
         );
 
         when(cropSeasonRepository.findById(10)).thenReturn(Optional.of(activeSeason));

@@ -1,10 +1,10 @@
 package com.mycropdiary.api.service;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateFarmTaskReq;
-import com.mycropdiary.api.dto.cultivation.FarmTaskResp;
-import com.mycropdiary.api.dto.cultivation.UpdateFarmTaskReq;
-import com.mycropdiary.api.dto.cultivation.UpdateFarmTaskStatusReq;
+import com.mycropdiary.api.dto.cultivation.CreateFarmTaskReqDTO;
+import com.mycropdiary.api.dto.cultivation.FarmTaskRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateFarmTaskReqDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateFarmTaskStatusReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.cultivation.FarmTask;
@@ -95,7 +95,7 @@ class FarmTaskServiceTest {
         when(farmTaskRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(task)));
 
-        PageResp<FarmTaskResp> result = farmTaskService.getFarmTasks(
+        PageResp<FarmTaskRespDTO> result = farmTaskService.getFarmTasks(
                 10, 1, null, null, null, null, null, pageable);
 
         assertNotNull(result);
@@ -107,7 +107,7 @@ class FarmTaskServiceTest {
     @Test
     @DisplayName("Tạo mới công việc thành công")
     void createTask_Success() {
-        CreateFarmTaskReq req = new CreateFarmTaskReq(
+        CreateFarmTaskReqDTO req = new CreateFarmTaskReqDTO(
                 "Bón thúc phân trùn quế", "Bón phân", "high", "planned",
                 null, null, null, null,
                 LocalDateTime.now(), LocalDateTime.now().plusDays(2), "Ghi chú bón phân"
@@ -121,7 +121,7 @@ class FarmTaskServiceTest {
             return t;
         });
 
-        FarmTaskResp resp = farmTaskService.createTask(10, 1, req);
+        FarmTaskRespDTO resp = farmTaskService.createTask(10, 1, req);
 
         assertNotNull(resp);
         assertEquals(101, resp.taskId());
@@ -133,7 +133,7 @@ class FarmTaskServiceTest {
     @Test
     @DisplayName("Tạo công việc thất bại khi hạn kết thúc trước ngày bắt đầu")
     void createTask_InvalidDates_ThrowsBadRequest() {
-        CreateFarmTaskReq req = new CreateFarmTaskReq(
+        CreateFarmTaskReqDTO req = new CreateFarmTaskReqDTO(
                 "Nhiệm vụ lỗi ngày", "Chăm sóc", "normal", "planned",
                 null, null, null, null,
                 LocalDateTime.now().plusDays(2), LocalDateTime.now(), "Lỗi thời gian"
@@ -150,8 +150,8 @@ class FarmTaskServiceTest {
         when(farmTaskRepository.findById(100)).thenReturn(Optional.of(task));
         when(farmTaskRepository.save(any(FarmTask.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UpdateFarmTaskStatusReq req = new UpdateFarmTaskStatusReq("in_progress");
-        FarmTaskResp resp = farmTaskService.updateTaskStatus(10, 100, req);
+        UpdateFarmTaskStatusReqDTO req = new UpdateFarmTaskStatusReqDTO("in_progress");
+        FarmTaskRespDTO resp = farmTaskService.updateTaskStatus(10, 100, req);
 
         assertNotNull(resp);
         assertEquals("in_progress", resp.status());

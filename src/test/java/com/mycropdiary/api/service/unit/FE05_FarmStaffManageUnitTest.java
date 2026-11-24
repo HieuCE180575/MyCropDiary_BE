@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.staff.AddStaffReq;
-import com.mycropdiary.api.dto.staff.FarmMemberResp;
-import com.mycropdiary.api.dto.staff.UpdateStaffReq;
+import com.mycropdiary.api.dto.staff.CreateStaffReqDTO;
+import com.mycropdiary.api.dto.staff.FarmMemberRespDTO;
+import com.mycropdiary.api.dto.staff.UpdateStaffReqDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.User;
@@ -71,7 +71,7 @@ public class FE05_FarmStaffManageUnitTest {
     void UTC01_getStaffList_authorizedAccess_shouldReturnList() {
         when(farmMemberRepository.searchMembers(1, "active", "worker")).thenReturn(List.of(staffMember));
 
-        List<FarmMemberResp> result = farmStaffService.getStaffList(10, 1, "active", "worker");
+        List<FarmMemberRespDTO> result = farmStaffService.getStaffList(10, 1, "active", "worker");
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -81,13 +81,13 @@ public class FE05_FarmStaffManageUnitTest {
     @Test
     @DisplayName("FE05_STF_UTC02 [Normal] - Thêm nhân viên bằng email hợp lệ -> Tạo thành công (Passed)")
     void UTC02_addStaff_validEmail_shouldCreateStaffMember() {
-        AddStaffReq req = new AddStaffReq("worker@farm.com", null, "manager", "Kỹ thuật viên");
+        CreateStaffReqDTO req = new CreateStaffReqDTO("worker@farm.com", null, "manager", "Kỹ thuật viên");
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(userRepository.findByEmailIgnoreCase("worker@farm.com")).thenReturn(Optional.of(staffUser));
         when(farmMemberRepository.findByFarmIdAndUserId(1, 15)).thenReturn(Optional.empty());
         when(farmMemberRepository.save(any(FarmMember.class))).thenAnswer(i -> i.getArgument(0));
 
-        FarmMemberResp resp = farmStaffService.addStaff(10, 1, req);
+        FarmMemberRespDTO resp = farmStaffService.addStaff(10, 1, req);
 
         assertNotNull(resp);
         assertEquals("manager", resp.farmRole());
@@ -97,7 +97,7 @@ public class FE05_FarmStaffManageUnitTest {
     @Test
     @DisplayName("FE05_STF_UTC03 [Abnormal] - Thêm nhân viên vào Farm không tồn tại -> Báo lỗi ResourceNotFound (Passed)")
     void UTC03_addStaff_nonExistentFarm_shouldThrowResourceNotFound() {
-        AddStaffReq req = new AddStaffReq("worker@farm.com", null, "member", "Nhân viên");
+        CreateStaffReqDTO req = new CreateStaffReqDTO("worker@farm.com", null, "member", "Nhân viên");
         when(farmRepository.findById(999)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> farmStaffService.addStaff(10, 999, req));
@@ -106,7 +106,7 @@ public class FE05_FarmStaffManageUnitTest {
     @Test
     @DisplayName("FE05_STF_UTC04 [Abnormal] - Email nhân viên không tồn tại trên hệ thống -> Báo lỗi ResourceNotFound (Passed)")
     void UTC04_addStaff_nonExistentUser_shouldThrowResourceNotFound() {
-        AddStaffReq req = new AddStaffReq("none@farm.com", null, "member", "Nhân viên");
+        CreateStaffReqDTO req = new CreateStaffReqDTO("none@farm.com", null, "member", "Nhân viên");
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(userRepository.findByEmailIgnoreCase("none@farm.com")).thenReturn(Optional.empty());
 
@@ -119,7 +119,7 @@ public class FE05_FarmStaffManageUnitTest {
         User lockedUser = new User("locked@farm.com", "hash", "Locked", "090", "user", "suspended");
         lockedUser.setId(16);
 
-        AddStaffReq req = new AddStaffReq("locked@farm.com", null, "member", "Nhân viên");
+        CreateStaffReqDTO req = new CreateStaffReqDTO("locked@farm.com", null, "member", "Nhân viên");
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(userRepository.findByEmailIgnoreCase("locked@farm.com")).thenReturn(Optional.of(lockedUser));
 
@@ -129,7 +129,7 @@ public class FE05_FarmStaffManageUnitTest {
     @Test
     @DisplayName("FE05_STF_UTC06 [Abnormal] - Thêm user đã là thành viên đang hoạt động -> Ném ResourceConflictException (Passed)")
     void UTC06_addStaff_alreadyActiveMember_shouldThrowResourceConflict() {
-        AddStaffReq req = new AddStaffReq("worker@farm.com", null, "member", "Nhân viên");
+        CreateStaffReqDTO req = new CreateStaffReqDTO("worker@farm.com", null, "member", "Nhân viên");
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(userRepository.findByEmailIgnoreCase("worker@farm.com")).thenReturn(Optional.of(staffUser));
         when(farmMemberRepository.findByFarmIdAndUserId(1, 15)).thenReturn(Optional.of(staffMember));
@@ -140,11 +140,11 @@ public class FE05_FarmStaffManageUnitTest {
     @Test
     @DisplayName("FE05_STF_UTC07 [Normal] - Cập nhật vai trò nhân viên thành công (Passed)")
     void UTC07_updateStaff_validRole_shouldUpdateSuccessfully() {
-        UpdateStaffReq req = new UpdateStaffReq("manager", "Quản lý lô", "active");
+        UpdateStaffReqDTO req = new UpdateStaffReqDTO("manager", "Quản lý lô", "active");
         when(farmMemberRepository.findById(101)).thenReturn(Optional.of(staffMember));
         when(farmMemberRepository.save(any(FarmMember.class))).thenAnswer(i -> i.getArgument(0));
 
-        FarmMemberResp resp = farmStaffService.updateStaff(10, 1, 101, req);
+        FarmMemberRespDTO resp = farmStaffService.updateStaff(10, 1, 101, req);
 
         assertNotNull(resp);
         assertEquals("manager", staffMember.getMemberRole());
@@ -156,7 +156,7 @@ public class FE05_FarmStaffManageUnitTest {
         FarmMember ownerMember = new FarmMember(farm, staffUser, "owner", "active");
         ownerMember.setId(102);
 
-        UpdateStaffReq req = new UpdateStaffReq("member", "Nhân viên thường", "active");
+        UpdateStaffReqDTO req = new UpdateStaffReqDTO("member", "Nhân viên thường", "active");
         when(farmMemberRepository.findById(102)).thenReturn(Optional.of(ownerMember));
         when(farmMemberRepository.countByFarmIdAndFarmRoleAndStatus(1, "owner", "active")).thenReturn(1L);
 
@@ -167,7 +167,7 @@ public class FE05_FarmStaffManageUnitTest {
     @DisplayName("FE05_STF_UTC09 [Boundary] - Thêm nhân viên để trống cả email lẫn userId bị chặn bởi Bean Validation & Service (Passed)")
     void UTC09_addStaff_missingEmailAndUserId_defectDF017() {
         // Verified fix for DF-017: @AssertTrue cross-field validation on AddStaffReq
-        AddStaffReq emptyReq = new AddStaffReq(null, null, "member", null);
+        CreateStaffReqDTO emptyReq = new CreateStaffReqDTO(null, null, "member", null);
         jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
         assertFalse(validator.validate(emptyReq).isEmpty());
 

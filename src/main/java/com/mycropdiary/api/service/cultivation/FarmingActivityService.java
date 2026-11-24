@@ -1,10 +1,10 @@
 package com.mycropdiary.api.service.cultivation;
 
 import com.mycropdiary.api.dto.common.PageResp;
-import com.mycropdiary.api.dto.cultivation.CreateFarmingActivityReq;
-import com.mycropdiary.api.dto.cultivation.FarmingActivityResp;
-import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryResp;
-import com.mycropdiary.api.dto.cultivation.UpdateFarmingActivityReq;
+import com.mycropdiary.api.dto.cultivation.CreateFarmActivityReqDTO;
+import com.mycropdiary.api.dto.cultivation.FarmingActivityRespDTO;
+import com.mycropdiary.api.dto.cultivation.FarmingActivitySummaryRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateFarmingActivityReqDTO;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
@@ -21,7 +21,7 @@ public interface FarmingActivityService {
      * @param request Thông tin nhật ký mới
      * @return Chi tiết nhật ký vừa tạo
      */
-    FarmingActivityResp createActivity(Integer currentUserId, CreateFarmingActivityReq request);
+    FarmingActivityRespDTO createActivity(Integer currentUserId, CreateFarmActivityReqDTO request);
 
     /**
      * Lấy danh sách lịch sử nhật ký canh tác theo Mùa vụ (Có phân trang).
@@ -31,7 +31,7 @@ public interface FarmingActivityService {
      * @param pageable Thông tin phân trang
      * @return Danh sách tóm tắt nhật ký canh tác dạng phân trang
      */
-    PageResp<FarmingActivitySummaryResp> getActivitiesByCropSeason(Integer currentUserId, Integer cropSeasonId, Pageable pageable);
+    PageResp<FarmingActivitySummaryRespDTO> getActivitiesByCropSeason(Integer currentUserId, Integer cropSeasonId, Pageable pageable);
 
     /**
      * Lấy danh sách nhật ký canh tác theo Mùa vụ kèm tìm kiếm và lọc nâng cao (UC-23.2 & UC-23.3).
@@ -45,7 +45,7 @@ public interface FarmingActivityService {
      * @param pageable Cấu hình phân trang
      * @return Danh sách tóm tắt nhật ký canh tác dạng phân trang
      */
-    PageResp<FarmingActivitySummaryResp> searchAndFilterActivities(
+    PageResp<FarmingActivitySummaryRespDTO> searchAndFilterActivities(
             Integer currentUserId,
             Integer cropSeasonId,
             String keyword,
@@ -62,7 +62,7 @@ public interface FarmingActivityService {
      * @param activityId ID nhật ký canh tác
      * @return Chi tiết nhật ký canh tác kèm danh sách công nhân thực hiện (nếu có)
      */
-    FarmingActivityResp getActivityDetail(Integer currentUserId, Integer activityId);
+    FarmingActivityRespDTO getActivityDetail(Integer currentUserId, Integer activityId);
 
     /**
      * Cập nhật thông tin nhật ký canh tác (UC-24.3).
@@ -72,6 +72,6 @@ public interface FarmingActivityService {
      * @param request Thông tin cập nhật nhật ký
      * @return Chi tiết nhật ký sau khi cập nhật
      */
-    FarmingActivityResp updateActivity(Integer currentUserId, Integer activityId, UpdateFarmingActivityReq request);
+    FarmingActivityRespDTO updateActivity(Integer currentUserId, Integer activityId, UpdateFarmingActivityReqDTO request);
 }
 

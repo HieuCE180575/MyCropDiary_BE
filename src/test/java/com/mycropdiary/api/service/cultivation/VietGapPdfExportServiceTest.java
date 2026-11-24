@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service.cultivation;
 
-import com.mycropdiary.api.dto.vietgap.ChecklistResultItemResp;
-import com.mycropdiary.api.dto.vietgap.ChecklistRunResp;
+import com.mycropdiary.api.dto.vietgap.ChecklistResultItemRespDTO;
+import com.mycropdiary.api.dto.vietgap.ChecklistResultRespDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
@@ -101,12 +101,12 @@ class VietGapPdfExportServiceTest {
         result2.setCheckedAt(Instant.now());
         result2.setIsAutoEvaluated(true);
 
-        List<ChecklistResultItemResp> items = List.of(
-                ChecklistResultItemResp.fromEntity(result1),
-                ChecklistResultItemResp.fromEntity(result2)
+        List<ChecklistResultItemRespDTO> items = List.of(
+                ChecklistResultItemRespDTO.fromEntity(result1),
+                ChecklistResultItemRespDTO.fromEntity(result2)
         );
 
-        ChecklistRunResp runResp = ChecklistRunResp.fromEntity(run, items);
+        ChecklistResultRespDTO runResp = ChecklistResultRespDTO.fromEntity(run, items);
 
         byte[] pdfBytes = pdfExportService.generateAuditReportPdf(runResp);
 

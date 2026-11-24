@@ -5,8 +5,8 @@ import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-import com.mycropdiary.api.dto.vietgap.ChecklistResultItemResp;
-import com.mycropdiary.api.dto.vietgap.ChecklistRunResp;
+import com.mycropdiary.api.dto.vietgap.ChecklistResultItemRespDTO;
+import com.mycropdiary.api.dto.vietgap.ChecklistResultRespDTO;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
@@ -29,7 +29,7 @@ public class VietGapPdfExportService {
     private static final Color COLOR_TEXT_DARK = new Color(15, 23, 42);           // #0f172a
     private static final Color COLOR_TEXT_MUTED = new Color(71, 85, 105);         // #475569
 
-    public byte[] generateAuditReportPdf(ChecklistRunResp run) {
+    public byte[] generateAuditReportPdf(ChecklistResultRespDTO run) {
         // Khổ A4, lề chuẩn hành chính: Trái 36pt, Phải 36pt, Trên 36pt, Dưới 36pt
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -160,7 +160,7 @@ public class VietGapPdfExportService {
                 int index = 1;
                 String currentCat = "";
 
-                for (ChecklistResultItemResp item : run.results()) {
+                for (ChecklistResultItemRespDTO item : run.results()) {
                     String cat = item.category() != null ? item.category() : "TIÊU CHUẨN CHUNG";
                     if (!cat.equals(currentCat)) {
                         currentCat = cat;

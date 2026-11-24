@@ -1,18 +1,18 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.block.BlockConditionResp;
-import com.mycropdiary.api.dto.block.BlockResp;
-import com.mycropdiary.api.dto.block.CreateBlockReq;
-import com.mycropdiary.api.dto.block.RecordBlockConditionReq;
-import com.mycropdiary.api.dto.block.UpdateBlockReq;
+import com.mycropdiary.api.dto.block.BlockConRespDTO;
+import com.mycropdiary.api.dto.block.BlockRespDTO;
+import com.mycropdiary.api.dto.block.CreateBlockReqDTO;
+import com.mycropdiary.api.dto.block.RecordBlockConReqDTO;
+import com.mycropdiary.api.dto.block.UpdateBlockReqDTO;
 import com.mycropdiary.api.entity.Block;
-import com.mycropdiary.api.entity.BlockConditionObservation;
+import com.mycropdiary.api.entity.BlockCondition;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.StaffZoneAssignment;
 import com.mycropdiary.api.entity.Zone;
 import com.mycropdiary.api.exception.BusinessRuleException;
 import com.mycropdiary.api.exception.ResourceConflictException;
-import com.mycropdiary.api.repository.BlockConditionObservationRepository;
+import com.mycropdiary.api.repository.BlockConditionRepository;
 import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
@@ -42,7 +42,7 @@ public class BlockServiceImpl implements BlockService {
     private final BlockRepository blockRepository;
     private final ZoneRepository zoneRepository;
     private final StaffZoneAssignmentRepository assignmentRepository;
-    private final BlockConditionObservationRepository conditionObservationRepository;
+    private final BlockConditionRepository conditionObservationRepository;
     private final FarmMemberRepository farmMemberRepository;
     private final FarmAccessGuard accessGuard;
     private final CropSeasonBlockRepository cropSeasonBlockRepository;
@@ -51,7 +51,7 @@ public class BlockServiceImpl implements BlockService {
     public BlockServiceImpl(BlockRepository blockRepository,
                             ZoneRepository zoneRepository,
                             StaffZoneAssignmentRepository assignmentRepository,
-                            BlockConditionObservationRepository conditionObservationRepository,
+                            BlockConditionRepository conditionObservationRepository,
                             FarmMemberRepository farmMemberRepository,
                             FarmAccessGuard accessGuard) {
         this(blockRepository, zoneRepository, assignmentRepository, conditionObservationRepository, farmMemberRepository, accessGuard, null);
@@ -61,7 +61,7 @@ public class BlockServiceImpl implements BlockService {
     public BlockServiceImpl(BlockRepository blockRepository,
                             ZoneRepository zoneRepository,
                             StaffZoneAssignmentRepository assignmentRepository,
-                            BlockConditionObservationRepository conditionObservationRepository,
+                            BlockConditionRepository conditionObservationRepository,
                             FarmMemberRepository farmMemberRepository,
                             FarmAccessGuard accessGuard,
                             CropSeasonBlockRepository cropSeasonBlockRepository) {
@@ -75,7 +75,7 @@ public class BlockServiceImpl implements BlockService {
     }
 
     @Override
-    public BlockResp createBlock(Integer currentUserId, Integer zoneId, CreateBlockReq request) {
+    public BlockRespDTO createBlock(Integer currentUserId, Integer zoneId, CreateBlockReqDTO request) {
         // Business Rule: Kiểm tra quyền truy cập khu vực (chỉ Owner hoặc Staff được phân công khu vực này)
         Zone zone = accessGuard.requireZoneAccess(currentUserId, zoneId);
 
@@ -105,7 +105,7 @@ public class BlockServiceImpl implements BlockService {
     }
 
     @Override
-    public BlockResp updateBlock(Integer currentUserId, Integer blockId, UpdateBlockReq request) {
+    public BlockRespDTO updateBlock(Integer currentUserId, Integer blockId, UpdateBlockReqDTO request) {
         // Business Rule: Kiểm tra quyền truy cập thửa đất
         Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
         Zone zone = block.getZone();
@@ -139,7 +139,7 @@ public class BlockServiceImpl implements BlockService {
 
     @Override
     @Transactional(readOnly = true)
-    public BlockResp getBlockById(Integer currentUserId, Integer blockId) {
+    public BlockRespDTO getBlockById(Integer currentUserId, Integer blockId) {
         // Business Rule: Kiểm tra quyền truy cập thửa đất
         Block block = accessGuard.requireBlockAccess(currentUserId, blockId);
         return toBlockResponse(block);
@@ -147,7 +147,7 @@ public class BlockServiceImpl implements BlockService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BlockResp> searchBlocks(Integer currentUserId, Integer farmId, Integer zoneId, String status, String keyword) {
+    public List<BlockRespDTO> searchBlocks(Integer currentUserId, Integer farmId, Integer zoneId, String status, String keyword) {
         // Business Rule: Kiểm tra quyền truy cập vào trang trại
         FarmMember currentMember = accessGuard.requireFarmMember(currentUserId, farmId);
 
@@ -201,7 +201,7 @@ public class BlockServiceImpl implements BlockService {
     }
 
     @Override
-    public BlockConditionResp recordBlockCondition(Integer currentUserId, Integer blockId, RecordBlockConditionReq request) {
+    public BlockConRespDTO recordBlockCondition(Integer currentUserId, Integer blockId, RecordBlockConReqDTO request) {
         if (request.observedAt() != null && request.observedAt().isAfter(Instant.now().plusSeconds(60))) {
             throw new BusinessRuleException("Thời điểm quan sát tình trạng lô đất không được ở tương lai.");
         }
@@ -209,7 +209,7 @@ public class BlockServiceImpl implements BlockService {
         Integer farmId = block.getZone().getFarm().getId();
         FarmMember recorder = farmMemberRepository.findByFarmIdAndUserIdAndStatus(farmId, currentUserId, "active").orElse(null);
 
-        BlockConditionObservation observation = new BlockConditionObservation(
+        BlockCondition observation = new BlockCondition(
                 block,
                 recorder,
                 request.conditionType(),
@@ -218,15 +218,15 @@ public class BlockServiceImpl implements BlockService {
                 request.observedAt() != null ? request.observedAt() : Instant.now()
         );
 
-        BlockConditionObservation saved = conditionObservationRepository.save(observation);
+        BlockCondition saved = conditionObservationRepository.save(observation);
         return toBlockConditionResponse(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<BlockConditionResp> getBlockConditions(Integer currentUserId, Integer blockId) {
+    public List<BlockConRespDTO> getBlockConditions(Integer currentUserId, Integer blockId) {
         accessGuard.requireBlockAccess(currentUserId, blockId);
-        List<BlockConditionObservation> list = conditionObservationRepository.findByBlockIdOrderByObservedAtDesc(blockId);
+        List<BlockCondition> list = conditionObservationRepository.findByBlockIdOrderByObservedAtDesc(blockId);
         return list.stream().map(this::toBlockConditionResponse).toList();
     }
 
@@ -253,11 +253,11 @@ public class BlockServiceImpl implements BlockService {
         }
     }
 
-    private BlockResp toBlockResponse(Block b) {
+    private BlockRespDTO toBlockResponse(Block b) {
         return blockMapper.toBlockResponse(b);
     }
 
-    private BlockConditionResp toBlockConditionResponse(BlockConditionObservation obs) {
+    private BlockConRespDTO toBlockConditionResponse(BlockCondition obs) {
         return blockMapper.toBlockConditionResponse(obs);
     }
 }

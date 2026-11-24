@@ -79,7 +79,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
     @Override
     @Transactional
-    public FarmingActivityResp createActivity(Integer currentUserId, CreateFarmingActivityReq request) {
+    public FarmingActivityRespDTO createActivity(Integer currentUserId, CreateFarmActivityReqDTO request) {
         CropSeason cropSeason = cropSeasonRepository.findById(request.cropSeasonId())
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại."));
 
@@ -136,29 +136,29 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
         FarmingActivity savedActivity = farmingActivityRepository.save(activity);
 
-        List<ActivityWorkerResp> workerResponses = saveValidatedActivityWorkers(
+        List<ActivityWorkerRespDTO> workerResponses = saveValidatedActivityWorkers(
                 savedActivity, cropSeason.getFarm().getId(), request.workers());
 
         return mapToResponse(savedActivity, workerResponses, supervisor);
     }
 
-    private List<ActivityWorkerResp> saveValidatedActivityWorkers(
+    private List<ActivityWorkerRespDTO> saveValidatedActivityWorkers(
             FarmingActivity savedActivity,
             Integer farmId,
-            List<ActivityWorkerReq> workers) {
-        List<ActivityWorkerResp> workerResponses = new ArrayList<>();
+            List<ActivityWorkerReqDTO> workers) {
+        List<ActivityWorkerRespDTO> workerResponses = new ArrayList<>();
         if (workers == null || workers.isEmpty()) {
             return workerResponses;
         }
         BigDecimal maxDailyHours = new BigDecimal("24.00");
-        for (ActivityWorkerReq w : workers) {
+        for (ActivityWorkerReqDTO w : workers) {
             if (w.workHours() != null && (w.workHours().compareTo(BigDecimal.ZERO) < 0 || w.workHours().compareTo(maxDailyHours) > 0)) {
                 throw new BadRequestException("Số giờ làm việc của công nhân phải nằm trong khoảng 0 đến 24 giờ/ngày.");
             }
         }
 
         List<Integer> workerIds = workers.stream()
-                .map(ActivityWorkerReq::workerId)
+                .map(ActivityWorkerReqDTO::workerId)
                 .distinct()
                 .toList();
 
@@ -179,11 +179,11 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
                 .collect(Collectors.toMap(FarmWorker::getId, w -> w));
 
         List<ActivityWorker> activityWorkers = new ArrayList<>();
-        for (ActivityWorkerReq workerReq : workers) {
+        for (ActivityWorkerReqDTO workerReq : workers) {
             FarmWorker fw = workerMap.get(workerReq.workerId());
             ActivityWorker aw = new ActivityWorker(savedActivity, fw, workerReq.workHours(), workerReq.notes());
             activityWorkers.add(aw);
-            workerResponses.add(new ActivityWorkerResp(
+            workerResponses.add(new ActivityWorkerRespDTO(
                     fw.getId(),
                     fw.getWorkerCode(),
                     fw.getFullName(),
@@ -197,13 +197,13 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
     @Override
     @Transactional
-    public PageResp<FarmingActivitySummaryResp> getActivitiesByCropSeason(Integer currentUserId, Integer cropSeasonId, Pageable pageable) {
+    public PageResp<FarmingActivitySummaryRespDTO> getActivitiesByCropSeason(Integer currentUserId, Integer cropSeasonId, Pageable pageable) {
         return searchAndFilterActivities(currentUserId, cropSeasonId, null, null, null, null, pageable);
     }
 
     @Override
     @Transactional
-    public PageResp<FarmingActivitySummaryResp> searchAndFilterActivities(
+    public PageResp<FarmingActivitySummaryRespDTO> searchAndFilterActivities(
             Integer currentUserId,
             Integer cropSeasonId,
             String keyword,
@@ -293,7 +293,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
     @Override
     @Transactional
-    public FarmingActivityResp updateActivity(Integer currentUserId, Integer activityId, UpdateFarmingActivityReq request) {
+    public FarmingActivityRespDTO updateActivity(Integer currentUserId, Integer activityId, UpdateFarmingActivityReqDTO request) {
         FarmingActivity activity = farmingActivityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Nhật ký canh tác không tồn tại."));
 
@@ -330,7 +330,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
         FarmingActivity savedActivity = farmingActivityRepository.save(activity);
 
-        List<ActivityWorkerResp> workerResponses = new ArrayList<>();
+        List<ActivityWorkerRespDTO> workerResponses = new ArrayList<>();
 
         if (request.workers() != null) {
             activityWorkerRepository.deleteByFarmingActivityId(savedActivity.getId());
@@ -340,7 +340,7 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         } else {
             List<ActivityWorker> existingWorkers = activityWorkerRepository.findByFarmingActivityId(savedActivity.getId());
             for (ActivityWorker aw : existingWorkers) {
-                workerResponses.add(new ActivityWorkerResp(
+                workerResponses.add(new ActivityWorkerRespDTO(
                         aw.getFarmWorker().getId(),
                         aw.getFarmWorker().getWorkerCode(),
                         aw.getFarmWorker().getFullName(),
@@ -355,15 +355,15 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
     @Override
     @Transactional(readOnly = true)
-    public FarmingActivityResp getActivityDetail(Integer currentUserId, Integer activityId) {
+    public FarmingActivityRespDTO getActivityDetail(Integer currentUserId, Integer activityId) {
         FarmingActivity activity = farmingActivityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Nhật ký canh tác không tồn tại."));
 
         FarmMember member = validateAndGetActiveMember(currentUserId, activity.getCropSeason());
 
         List<ActivityWorker> workers = activityWorkerRepository.findByFarmingActivityId(activityId);
-        List<ActivityWorkerResp> workerResponses = workers.stream()
-                .map(aw -> new ActivityWorkerResp(
+        List<ActivityWorkerRespDTO> workerResponses = workers.stream()
+                .map(aw -> new ActivityWorkerRespDTO(
                         aw.getFarmWorker().getId(),
                         aw.getFarmWorker().getWorkerCode(),
                         aw.getFarmWorker().getFullName(),
@@ -377,11 +377,11 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
 
     private final FarmingActivityMapper farmingActivityMapper = new FarmingActivityMapper();
 
-    private FarmingActivityResp mapToResponse(FarmingActivity act, List<ActivityWorkerResp> workers, FarmMember supervisor) {
+    private FarmingActivityRespDTO mapToResponse(FarmingActivity act, List<ActivityWorkerRespDTO> workers, FarmMember supervisor) {
         return farmingActivityMapper.toResponse(act, workers, supervisor);
     }
 
-    private FarmingActivitySummaryResp mapToSummaryResponse(FarmingActivity act, FarmMember supervisor) {
+    private FarmingActivitySummaryRespDTO mapToSummaryResponse(FarmingActivity act, FarmMember supervisor) {
         List<ActivityWorker> workers = activityWorkerRepository.findByFarmingActivityId(act.getId());
         return farmingActivityMapper.toSummaryResponse(act, supervisor, workers.size());
     }

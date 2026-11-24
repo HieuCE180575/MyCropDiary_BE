@@ -1,6 +1,6 @@
 package com.mycropdiary.api.service;
 
-import com.mycropdiary.api.dto.file.FileUploadResp;
+import com.mycropdiary.api.dto.file.FileUploadRespDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -14,7 +14,7 @@ public interface CloudinaryService {
      * @param folder Thư mục lưu trữ trên Cloudinary (vd: "mycropdiary/evidence")
      * @return Thông tin URL và metadata của file đã lưu
      */
-    FileUploadResp uploadFile(MultipartFile file, String folder);
+    FileUploadRespDTO uploadFile(MultipartFile file, String folder);
 
     /**
      * Tải nhiều file lên Cloudinary cùng lúc.
@@ -23,7 +23,7 @@ public interface CloudinaryService {
      * @param folder Thư mục lưu trữ trên Cloudinary
      * @return Danh sách thông tin URL và metadata
      */
-    List<FileUploadResp> uploadFiles(List<MultipartFile> files, String folder);
+    List<FileUploadRespDTO> uploadFiles(List<MultipartFile> files, String folder);
 
     /**
      * Xóa file khỏi Cloudinary theo publicId.

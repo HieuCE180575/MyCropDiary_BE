@@ -1,8 +1,8 @@
 package com.mycropdiary.api.service.impl;
 
-import com.mycropdiary.api.dto.cultivation.AssignCropSeasonBlockReq;
-import com.mycropdiary.api.dto.cultivation.CropSeasonBlockResp;
-import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonBlockReq;
+import com.mycropdiary.api.dto.cultivation.AssignCropSeasonBlockReqDTO;
+import com.mycropdiary.api.dto.cultivation.CropSeasonBlockRespDTO;
+import com.mycropdiary.api.dto.cultivation.UpdateCropSeasonBlockReqDTO;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.cultivation.CropSeason;
 import com.mycropdiary.api.entity.cultivation.CropSeasonBlock;
@@ -52,7 +52,7 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
     }
 
     @Override
-    public CropSeasonBlockResp assignBlockToSeason(Integer userId, Integer cropSeasonId, AssignCropSeasonBlockReq request) {
+    public CropSeasonBlockRespDTO assignBlockToSeason(Integer userId, Integer cropSeasonId, AssignCropSeasonBlockReqDTO request) {
         CropSeason season = cropSeasonRepository.findById(cropSeasonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại ID: " + cropSeasonId));
 
@@ -101,7 +101,7 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CropSeasonBlockResp> getBlocksBySeason(Integer userId, Integer cropSeasonId) {
+    public List<CropSeasonBlockRespDTO> getBlocksBySeason(Integer userId, Integer cropSeasonId) {
         CropSeason season = cropSeasonRepository.findById(cropSeasonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại ID: " + cropSeasonId));
 
@@ -114,7 +114,7 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
 
     @Override
     @Transactional(readOnly = true)
-    public CropSeasonBlockResp getBlockInSeason(Integer userId, Integer cropSeasonId, Integer blockId) {
+    public CropSeasonBlockRespDTO getBlockInSeason(Integer userId, Integer cropSeasonId, Integer blockId) {
         CropSeasonBlock csb = cropSeasonBlockRepository.findByCropSeasonIdAndBlockIdWithDetails(cropSeasonId, blockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lô đất ID " + blockId + " chưa được gán vào mùa vụ ID " + cropSeasonId));
 
@@ -124,7 +124,7 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
     }
 
     @Override
-    public CropSeasonBlockResp updateBlockInSeason(Integer userId, Integer cropSeasonId, Integer blockId, UpdateCropSeasonBlockReq request) {
+    public CropSeasonBlockRespDTO updateBlockInSeason(Integer userId, Integer cropSeasonId, Integer blockId, UpdateCropSeasonBlockReqDTO request) {
         CropSeasonBlock csb = cropSeasonBlockRepository.findByCropSeasonIdAndBlockIdWithDetails(cropSeasonId, blockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lô đất ID " + blockId + " chưa được gán vào mùa vụ ID " + cropSeasonId));
 
@@ -243,7 +243,7 @@ public class CropSeasonBlockServiceImpl implements CropSeasonBlockService {
 
     private final CropSeasonMapper cropSeasonMapper = new CropSeasonMapper();
 
-    private CropSeasonBlockResp mapToResponse(CropSeasonBlock csb) {
+    private CropSeasonBlockRespDTO mapToResponse(CropSeasonBlock csb) {
         return cropSeasonMapper.toBlockResponse(csb);
     }
 }

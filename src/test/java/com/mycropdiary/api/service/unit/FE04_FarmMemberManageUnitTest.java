@@ -1,7 +1,7 @@
 package com.mycropdiary.api.service.unit;
 
-import com.mycropdiary.api.dto.farm.AddFarmMemberReq;
-import com.mycropdiary.api.dto.farm.FarmMemberResp;
+import com.mycropdiary.api.dto.farm.AddFarmMemberReqDTO;
+import com.mycropdiary.api.dto.farm.FarmMemberRespDTO;
 import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.User;
@@ -72,7 +72,7 @@ public class FE04_FarmMemberManageUnitTest {
     @Test
     @DisplayName("FE04_MEM_UTC01 [Normal] - Thêm thành viên mới hợp lệ vào Farm -> Thành công (Passed)")
     void UTC01_addMember_validStaff_shouldAddMemberSuccessfully() {
-        AddFarmMemberReq req = new AddFarmMemberReq("staff@farm.com", "staff", "Kỹ sư nông nghiệp");
+        AddFarmMemberReqDTO req = new AddFarmMemberReqDTO("staff@farm.com", "staff", "Kỹ sư nông nghiệp");
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(userRepository.findByEmailIgnoreCase("staff@farm.com")).thenReturn(Optional.of(newStaffUser));
         when(farmMemberRepository.existsByFarmIdAndUserId(1, 20)).thenReturn(false);
@@ -81,7 +81,7 @@ public class FE04_FarmMemberManageUnitTest {
         saved.setId(100);
         when(farmMemberRepository.save(any(FarmMember.class))).thenReturn(saved);
 
-        FarmMemberResp resp = farmService.addMember(10, 1, req);
+        FarmMemberRespDTO resp = farmService.addMember(10, 1, req);
 
         assertNotNull(resp);
         verify(farmAccessGuard).requireOwnerOrAdmin(10, 1);
@@ -91,7 +91,7 @@ public class FE04_FarmMemberManageUnitTest {
     @Test
     @DisplayName("FE04_MEM_UTC02 [Abnormal] - Thêm thành viên vào Farm không tồn tại -> Báo lỗi ResourceNotFound (Passed)")
     void UTC02_addMember_nonExistentFarm_shouldThrowResourceNotFound() {
-        AddFarmMemberReq req = new AddFarmMemberReq("staff@farm.com", "staff", "Kỹ sư");
+        AddFarmMemberReqDTO req = new AddFarmMemberReqDTO("staff@farm.com", "staff", "Kỹ sư");
         when(farmRepository.findById(999)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> farmService.addMember(10, 999, req));
@@ -100,7 +100,7 @@ public class FE04_FarmMemberManageUnitTest {
     @Test
     @DisplayName("FE04_MEM_UTC03 [Abnormal] - Người không có quyền thêm thành viên -> Ném AccessDeniedException (Passed)")
     void UTC03_addMember_userNotOwnerOrAdmin_shouldThrowAccessDenied() {
-        AddFarmMemberReq req = new AddFarmMemberReq("staff@farm.com", "staff", "Kỹ sư");
+        AddFarmMemberReqDTO req = new AddFarmMemberReqDTO("staff@farm.com", "staff", "Kỹ sư");
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         doThrow(new AccessDeniedException("Access Denied")).when(farmAccessGuard).requireOwnerOrAdmin(99, 1);
 
@@ -110,7 +110,7 @@ public class FE04_FarmMemberManageUnitTest {
     @Test
     @DisplayName("FE04_MEM_UTC04 [Abnormal] - Email thành viên chưa đăng ký tài khoản -> Báo lỗi ResourceNotFound (Passed)")
     void UTC04_addMember_nonExistentUserEmail_shouldThrowResourceNotFound() {
-        AddFarmMemberReq req = new AddFarmMemberReq("unknown@farm.com", "staff", "Kỹ sư");
+        AddFarmMemberReqDTO req = new AddFarmMemberReqDTO("unknown@farm.com", "staff", "Kỹ sư");
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(userRepository.findByEmailIgnoreCase("unknown@farm.com")).thenReturn(Optional.empty());
 
@@ -120,7 +120,7 @@ public class FE04_FarmMemberManageUnitTest {
     @Test
     @DisplayName("FE04_MEM_UTC05 [Abnormal] - Thêm user đã là thành viên của Farm -> Báo lỗi trùng lặp (Passed)")
     void UTC05_addMember_userAlreadyMember_shouldThrowIllegalArgument() {
-        AddFarmMemberReq req = new AddFarmMemberReq("staff@farm.com", "staff", "Kỹ sư");
+        AddFarmMemberReqDTO req = new AddFarmMemberReqDTO("staff@farm.com", "staff", "Kỹ sư");
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(userRepository.findByEmailIgnoreCase("staff@farm.com")).thenReturn(Optional.of(newStaffUser));
         when(farmMemberRepository.existsByFarmIdAndUserId(1, 20)).thenReturn(true);
@@ -131,7 +131,7 @@ public class FE04_FarmMemberManageUnitTest {
     @Test
     @DisplayName("FE04_MEM_UTC06 [Abnormal] - Thêm vai trò OWNER khi Farm đã có OWNER đang hoạt động -> Chặn vi phạm (Passed)")
     void UTC06_addMember_duplicateActiveOwner_shouldThrowBusinessRule() {
-        AddFarmMemberReq req = new AddFarmMemberReq("staff@farm.com", "owner", "Đồng sở hữu");
+        AddFarmMemberReqDTO req = new AddFarmMemberReqDTO("staff@farm.com", "owner", "Đồng sở hữu");
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(farmMemberRepository.existsByFarmIdAndFarmRoleAndStatus(1, "owner", "active")).thenReturn(true);
 
@@ -146,7 +146,7 @@ public class FE04_FarmMemberManageUnitTest {
                 new FarmMember(farm, newStaffUser, "staff", "active")
         ));
 
-        List<FarmMemberResp> list = farmService.getFarmMembers(10, 1);
+        List<FarmMemberRespDTO> list = farmService.getFarmMembers(10, 1);
 
         assertNotNull(list);
         assertEquals(2, list.size());
@@ -172,7 +172,7 @@ public class FE04_FarmMemberManageUnitTest {
     void UTC09_addMember_emailExceeds255Chars_defectDF016() {
         // Verified fix for DF-016: @Size(max=255) on AddFarmMemberReq + service length check
         String longEmail = "a".repeat(250) + "@test.com";
-        AddFarmMemberReq req = new AddFarmMemberReq(longEmail, "STAFF", "Kỹ sư");
+        AddFarmMemberReqDTO req = new AddFarmMemberReqDTO(longEmail, "STAFF", "Kỹ sư");
         jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
         assertFalse(validator.validate(req).isEmpty());
 

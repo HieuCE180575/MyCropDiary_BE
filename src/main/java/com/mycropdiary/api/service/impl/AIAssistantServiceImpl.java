@@ -65,7 +65,7 @@ public class AIAssistantServiceImpl implements AIAssistantService {
 
     @Override
     @Transactional
-    public AIConversationResp createConversation(Integer userId, CreateAIConversationReq req) {
+    public AIConversationRespDTO createConversation(Integer userId, CreateAIConversationReqDTO req) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng ID: " + userId));
         Farm farm = req.farmId() != null ? farmRepository.findById(req.farmId()).orElse(null) : null;
@@ -82,7 +82,7 @@ public class AIAssistantServiceImpl implements AIAssistantService {
         );
         messageRepository.save(welcomeMsg);
 
-        return new AIConversationResp(
+        return new AIConversationRespDTO(
                 saved.getId(),
                 saved.getConversationTitle(),
                 saved.getConversationStatus(),
@@ -95,7 +95,7 @@ public class AIAssistantServiceImpl implements AIAssistantService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AIConversationResp> getMyConversations(Integer userId, String keyword) {
+    public List<AIConversationRespDTO> getMyConversations(Integer userId, String keyword) {
         List<AIConversation> list;
         if (keyword != null && !keyword.trim().isEmpty()) {
             list = conversationRepository.searchByUserIdAndKeyword(userId, keyword.trim());
@@ -103,7 +103,7 @@ public class AIAssistantServiceImpl implements AIAssistantService {
             list = conversationRepository.findByUserIdOrderByUpdatedAtDesc(userId);
         }
 
-        List<AIConversationResp> result = new ArrayList<>();
+        List<AIConversationRespDTO> result = new ArrayList<>();
         for (AIConversation conv : list) {
             long count = messageRepository.countByConversationId(conv.getId());
             String lastSnippet = messageRepository.findTopByConversationIdOrderByCreatedAtDesc(conv.getId())
@@ -112,7 +112,7 @@ public class AIAssistantServiceImpl implements AIAssistantService {
                         return txt.length() > 80 ? txt.substring(0, 77) + "..." : txt;
                     })
                     .orElse("Chưa có tin nhắn");
-            result.add(new AIConversationResp(
+            result.add(new AIConversationRespDTO(
                     conv.getId(),
                     conv.getConversationTitle(),
                     conv.getConversationStatus(),
@@ -127,16 +127,16 @@ public class AIAssistantServiceImpl implements AIAssistantService {
 
     @Override
     @Transactional(readOnly = true)
-    public AIConversationDetailResp getConversationDetail(Integer userId, Integer conversationId) {
+    public AIConversationDetailRespDTO getConversationDetail(Integer userId, Integer conversationId) {
         AIConversation conversation = conversationRepository.findByIdAndUserId(conversationId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cuộc hội thoại hoặc bạn không có quyền truy cập."));
 
         List<AIMessage> messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
-        List<AIMessageResp> messageResps = messages.stream()
-                .map(m -> AIMessageResp.fromEntity(m, extractSources(m.getMessageText(), m.getSenderType())))
+        List<AIMessageRespDTO> messageResps = messages.stream()
+                .map(m -> AIMessageRespDTO.fromEntity(m, extractSources(m.getMessageText(), m.getSenderType())))
                 .toList();
 
-        return new AIConversationDetailResp(
+        return new AIConversationDetailRespDTO(
                 conversation.getId(),
                 conversation.getConversationTitle(),
                 conversation.getConversationStatus(),
@@ -148,7 +148,7 @@ public class AIAssistantServiceImpl implements AIAssistantService {
 
     @Override
     @Transactional
-    public AIMessageResp askAIAssistant(Integer userId, AskAIQuestionReq req) {
+    public AIMessageRespDTO askAIAssistant(Integer userId, AskAIQuestionReqDTO req) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng ID: " + userId));
 
@@ -235,7 +235,7 @@ public class AIAssistantServiceImpl implements AIAssistantService {
         conversation.setUpdatedAt(Instant.now());
         conversationRepository.save(conversation);
 
-        return AIMessageResp.fromEntity(assistantMsg, sources);
+        return AIMessageRespDTO.fromEntity(assistantMsg, sources);
     }
 
     /**
@@ -375,60 +375,6 @@ public class AIAssistantServiceImpl implements AIAssistantService {
 
     @Override
     @Transactional
-    public AIFeedbackResp reportAIMessage(Integer userId, Integer messageId, ReportAIMessageReq req) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng ID: " + userId));
-        AIMessage message = messageRepository.findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tin nhắn AI ID: " + messageId));
-
-        if (!"assistant".equalsIgnoreCase(message.getSenderType())) {
-            throw new BadRequestException("Chỉ có thể phản hồi hoặc báo cáo các câu trả lời từ AI.");
-        }
-
-        AIFeedback feedback = feedbackRepository.findByMessageIdAndUserId(messageId, userId)
-                .orElseGet(() -> new AIFeedback(message, user, req.rating(), req.reason().trim()));
-        feedback.setRating(req.rating());
-        feedback.setFeedbackText(req.reason().trim());
-
-        AIFeedback saved = feedbackRepository.save(feedback);
-
-        // Tự động phản hồi cảm ơn và tiếp nhận
-        if (saved.getReplies().isEmpty()) {
-            AIFeedbackReply acknowledgment = new AIFeedbackReply(
-                    saved,
-                    null,
-                    "Ban cố vấn chuyên gia VietGAP của MyCropDiary đã tiếp nhận phản hồi của bạn để kiểm định lại dữ liệu tri thức. Cảm ơn đóng góp của bạn!"
-            );
-            saved.getReplies().add(acknowledgment);
-            saved = feedbackRepository.save(saved);
-        }
-
-        return AIFeedbackResp.fromEntity(saved);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<AIFeedbackResp> getMyFeedbackHistory(Integer userId) {
-        List<AIFeedback> list = feedbackRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        return list.stream().map(AIFeedbackResp::fromEntity).toList();
-    }
-
-    @Override
-    @Transactional
-    public AIFeedbackResp updateFeedback(Integer userId, Integer feedbackId, ReportAIMessageReq req) {
-        AIFeedback feedback = feedbackRepository.findById(feedbackId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phản hồi ID: " + feedbackId));
-        if (!feedback.getUser().getId().equals(userId)) {
-            throw new BadRequestException("Bạn không có quyền chỉnh sửa phản hồi này.");
-        }
-        feedback.setRating(req.rating());
-        feedback.setFeedbackText(req.reason().trim());
-        AIFeedback saved = feedbackRepository.save(feedback);
-        return AIFeedbackResp.fromEntity(saved);
-    }
-
-    @Override
-    @Transactional
     public void deleteConversation(Integer userId, Integer conversationId) {
         AIConversation conversation = conversationRepository.findByIdAndUserId(conversationId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cuộc hội thoại ID: " + conversationId));
@@ -497,10 +443,10 @@ public class AIAssistantServiceImpl implements AIAssistantService {
     }
 
     @Override
-    public VoiceActivityParseResp parseVoiceActivity(VoiceActivityParseReq req) {
+    public FarmingDraftRespDTO parseVoiceActivity(GenerateDraftReqDTO req) {
         String text = req.text() != null ? req.text().trim() : "";
         if (text.isEmpty()) {
-            return new VoiceActivityParseResp("Other", "Hoạt động canh tác", null, "", "Trời nắng nhẹ", "");
+            return new FarmingDraftRespDTO("Other", "Hoạt động canh tác", null, "", "Trời nắng nhẹ", "");
         }
 
         List<String> blocks = req.availableBlocks() != null ? req.availableBlocks() : List.of();
@@ -531,7 +477,7 @@ public class AIAssistantServiceImpl implements AIAssistantService {
                     String weather = root.hasNonNull("weatherNotes") ? root.get("weatherNotes").asText() : "Trời nắng nhẹ";
                     String result = root.hasNonNull("resultNotes") ? root.get("resultNotes").asText() : "";
 
-                    return new VoiceActivityParseResp(actType, actName, matchedBlock, desc, weather, result);
+                    return new FarmingDraftRespDTO(actType, actName, matchedBlock, desc, weather, result);
                 }
             } catch (Exception e) {
                 log.warn("[AI Voice Parser] Lỗi phân tích bằng AI, fallback sang heuristic regex: {}", e.getMessage());
@@ -577,6 +523,6 @@ public class AIAssistantServiceImpl implements AIAssistantService {
         else if (lower.contains("nắng")) weather = "Trời nắng ráo, thông thoáng";
         else if (lower.contains("âm u") || lower.contains("mát")) weather = "Trời râm mát";
 
-        return new VoiceActivityParseResp(actType, actName, matchedBlock, text, weather, "Ghi nhận nhanh qua giọng nói");
+        return new FarmingDraftRespDTO(actType, actName, matchedBlock, text, weather, "Ghi nhận nhanh qua giọng nói");
     }
 }
