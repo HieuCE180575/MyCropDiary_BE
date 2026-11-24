@@ -90,7 +90,7 @@ class UserProfileControllerTest {
     @DisplayName("POST /api/v1/user/change-password -> 200 OK")
     void changePassword_Success() throws Exception {
         when(securityUtils.getCurrentUserId()).thenReturn(userId);
-        ChangePasswordReq req = new ChangePasswordReq("OldPass123", "NewPass123", "NewPass123");
+        ChangePasswordReq req = new ChangePasswordReq("OldPass@123", "NewPass@123", "NewPass@123");
 
         mockMvc.perform(post("/api/v1/user/change-password")
                         .contentType(MediaType.APPLICATION_JSON)
