@@ -27,8 +27,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
             "jpg", "jpeg", "png", "webp", "gif", "bmp", "svg",
-            "pdf", "doc", "docx", "xls", "xlsx"
-    );
+            "pdf", "doc", "docx", "xls", "xlsx");
 
     private final Cloudinary cloudinary;
 
@@ -122,7 +121,8 @@ public class CloudinaryServiceImpl implements CloudinaryService {
 
         String extension = getFileExtension(originalFilename).toLowerCase();
         if (extension.isEmpty() || !ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new BadRequestException("Định dạng tập tin (." + extension + ") không được hỗ trợ. Vui lòng chỉ tải lên hình ảnh (JPG, PNG, WEBP) hoặc tài liệu (PDF, DOCX).");
+            throw new BadRequestException("Định dạng tập tin (." + extension
+                    + ") không được hỗ trợ. Vui lòng chỉ tải lên hình ảnh (JPG, PNG, WEBP) hoặc tài liệu (PDF, DOCX).");
         }
 
         try {
@@ -136,26 +136,33 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         if (bytes == null || bytes.length < 2) {
             return;
         }
-        // Block Windows PE/EXE (MZ), ELF binaries, Mach-O executables, and Shebang scripts regardless of extension
+        // Block Windows PE/EXE (MZ), ELF binaries, Mach-O executables, and Shebang
+        // scripts regardless of extension
         boolean isPeExe = bytes[0] == 'M' && bytes[1] == 'Z';
         boolean isElf = bytes.length >= 4 && bytes[0] == 0x7F && bytes[1] == 'E' && bytes[2] == 'L' && bytes[3] == 'F';
         boolean isShebang = bytes[0] == '#' && bytes[1] == '!';
-        boolean isMachO = bytes.length >= 4 && (
-                (bytes[0] == (byte) 0xFE && bytes[1] == (byte) 0xED && bytes[2] == (byte) 0xFA && (bytes[3] == (byte) 0xCE || bytes[3] == (byte) 0xCF)) ||
-                (bytes[0] == (byte) 0xCF && bytes[1] == (byte) 0xFA && bytes[2] == (byte) 0xED && bytes[3] == (byte) 0xFE) ||
-                (bytes[0] == (byte) 0xCA && bytes[1] == (byte) 0xFE && bytes[2] == (byte) 0xBA && bytes[3] == (byte) 0xBE)
-        );
+        boolean isMachO = bytes.length >= 4 && ((bytes[0] == (byte) 0xFE && bytes[1] == (byte) 0xED
+                && bytes[2] == (byte) 0xFA && (bytes[3] == (byte) 0xCE || bytes[3] == (byte) 0xCF)) ||
+                (bytes[0] == (byte) 0xCF && bytes[1] == (byte) 0xFA && bytes[2] == (byte) 0xED
+                        && bytes[3] == (byte) 0xFE)
+                ||
+                (bytes[0] == (byte) 0xCA && bytes[1] == (byte) 0xFE && bytes[2] == (byte) 0xBA
+                        && bytes[3] == (byte) 0xBE));
         if (isPeExe || isElf || isShebang || isMachO) {
-            throw new BadRequestException("Nội dung tập tin (." + extension + ") chứa mã thực thi nhị phân không hợp lệ.");
+            throw new BadRequestException(
+                    "Nội dung tập tin (." + extension + ") chứa mã thực thi nhị phân không hợp lệ.");
         }
 
         // Block HTML/script payloads disguised as images or documents
-        String head = new String(bytes, 0, Math.min(bytes.length, 64), java.nio.charset.StandardCharsets.UTF_8).trim().toLowerCase();
+        String head = new String(bytes, 0, Math.min(bytes.length, 64), java.nio.charset.StandardCharsets.UTF_8).trim()
+                .toLowerCase();
         if (head.startsWith("<script") || head.startsWith("<!doctype html") || head.startsWith("<html")) {
-            throw new BadRequestException("Nội dung tập tin (." + extension + ") không hợp lệ (ngụy trang HTML/Script).");
+            throw new BadRequestException(
+                    "Nội dung tập tin (." + extension + ") không hợp lệ (ngụy trang HTML/Script).");
         }
 
-        // Block mismatched container signatures (e.g., ZIP/DOCX disguised as image/pdf, or PDF disguised as image)
+        // Block mismatched container signatures (e.g., ZIP/DOCX disguised as image/pdf,
+        // or PDF disguised as image)
         boolean isZip = bytes.length >= 4 && bytes[0] == 'P' && bytes[1] == 'K' && bytes[2] == 0x03 && bytes[3] == 0x04;
         boolean isPdf = bytes.length >= 4 && bytes[0] == '%' && bytes[1] == 'P' && bytes[2] == 'D' && bytes[3] == 'F';
         if (isZip && !Set.of("docx", "xlsx").contains(extension)) {
@@ -197,8 +204,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
                     originalFilename,
                     format.equalsIgnoreCase("pdf") ? "raw" : "image",
                     format,
-                    file.getSize()
-            );
+                    file.getSize());
         } catch (IOException ioException) {
             log.error("Error saving file locally: {}", ioException.getMessage(), ioException);
             throw new BadRequestException("Không thể lưu tập tin: " + ioException.getMessage());
