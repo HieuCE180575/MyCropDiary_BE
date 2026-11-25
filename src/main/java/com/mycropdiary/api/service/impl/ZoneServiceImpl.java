@@ -23,6 +23,7 @@ import com.mycropdiary.api.mapper.BlockMapper;
 import com.mycropdiary.api.mapper.ZoneMapper;
 import com.mycropdiary.api.service.ZoneService;
 import com.mycropdiary.api.util.FarmAccessGuard;
+import com.mycropdiary.api.util.GeoAreaUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +68,7 @@ public class ZoneServiceImpl implements ZoneService {
         if (request.areaValue() != null && request.areaValue().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessRuleException("Diện tích phân khu phải lớn hơn 0.");
         }
+        validateFarmAreaCapacity(farm, request.areaValue(), request.areaUnit(), null);
 
         Zone zone = new Zone(farm, zoneName, request.areaValue(), request.description());
         if (request.areaUnit() != null) {
@@ -94,13 +96,21 @@ public class ZoneServiceImpl implements ZoneService {
             throw new BusinessRuleException("Diện tích phân khu phải lớn hơn 0.");
         }
 
-        // Business Rule: Diện tích phân khu mới không được nhỏ hơn tổng diện tích các lô đất hiện có trực thuộc
+        String effectiveUnit = request.areaUnit() != null ? request.areaUnit() : zone.getAreaUnit();
+        validateFarmAreaCapacity(zone.getFarm(), request.areaValue(), effectiveUnit, zoneId);
+
+        // Business Rule: Diện tích phân khu mới không được nhỏ hơn tổng diện tích các lô đất hiện có trực thuộc (quy đổi m²)
         if (request.areaValue() != null && request.areaValue().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal currentBlocksTotal = blockRepository.sumAreaValueByZoneId(zoneId, null);
-            if (currentBlocksTotal != null && currentBlocksTotal.compareTo(request.areaValue()) > 0) {
-                String unit = request.areaUnit() != null ? request.areaUnit() : zone.getAreaUnit();
-                throw new BusinessRuleException("Diện tích phân khu mới (" + request.areaValue() + " " + unit +
-                        ") không được nhỏ hơn tổng diện tích các lô đất hiện có (" + currentBlocksTotal + " " + zone.getAreaUnit() + ")");
+            BigDecimal newZoneAreaM2 = GeoAreaUtils.toSquareMeters(request.areaValue(), effectiveUnit);
+            List<Block> existingBlocks = blockRepository.findByZoneId(zoneId);
+            BigDecimal currentBlocksTotalM2 = existingBlocks != null
+                    ? existingBlocks.stream()
+                        .map(b -> GeoAreaUtils.toSquareMeters(b.getAreaValue(), b.getAreaUnit()))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    : BigDecimal.ZERO;
+            if (currentBlocksTotalM2.compareTo(newZoneAreaM2) > 0) {
+                throw new BusinessRuleException("Diện tích phân khu mới (" + newZoneAreaM2.stripTrailingZeros().toPlainString()
+                        + " m²) không được nhỏ hơn tổng diện tích các lô đất hiện có (" + currentBlocksTotalM2.stripTrailingZeros().toPlainString() + " m²).");
             }
         }
 
@@ -186,6 +196,29 @@ public class ZoneServiceImpl implements ZoneService {
     @Transactional(readOnly = true)
     public ZoneDetailRespDTO getAssignedZoneDetail(Integer currentUserId, Integer zoneId) {
         return getZoneById(currentUserId, zoneId);
+    }
+
+    private void validateFarmAreaCapacity(Farm farm, BigDecimal newZoneArea, String newZoneUnit, Integer excludeZoneId) {
+        if (farm == null || newZoneArea == null || newZoneArea.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        double farmAreaM2 = GeoAreaUtils.calculatePolygonAreaM2(farm.getBoundaryCoordinates());
+        if (farmAreaM2 <= 0.0) {
+            return;
+        }
+        List<Zone> farmZones = zoneRepository.findByFarmId(farm.getId());
+        BigDecimal existingZonesM2 = farmZones != null
+                ? farmZones.stream()
+                    .filter(z -> excludeZoneId == null || !excludeZoneId.equals(z.getId()))
+                    .map(z -> GeoAreaUtils.toSquareMeters(z.getAreaValue(), z.getAreaUnit()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                : BigDecimal.ZERO;
+        BigDecimal newZoneM2 = GeoAreaUtils.toSquareMeters(newZoneArea, newZoneUnit);
+        BigDecimal totalZonesM2 = existingZonesM2.add(newZoneM2);
+        if (totalZonesM2.compareTo(BigDecimal.valueOf(farmAreaM2)) > 0) {
+            throw new BusinessRuleException("Tổng diện tích các phân khu (" + totalZonesM2.stripTrailingZeros().toPlainString()
+                    + " m²) không được vượt quá diện tích trang trại (" + Math.round(farmAreaM2) + " m²).");
+        }
     }
 
     private final ZoneMapper zoneMapper = new ZoneMapper();

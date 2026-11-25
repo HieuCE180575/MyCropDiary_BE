@@ -1,4 +1,4 @@
--- MyCropDiary database schema derived from the conceptual ERDs
+﻿-- MyCropDiary database schema derived from the conceptual ERDs
 -- Target: Microsoft SQL Server 2019+
 -- Notes:
 -- 1) Table names follow the ERD entity labels; join tables were added for many-to-many relations.
@@ -36,7 +36,7 @@ CREATE TABLE [User] (
     password_hash NVARCHAR(MAX) NOT NULL,
     avatar_url NVARCHAR(MAX),
     system_role NVARCHAR(20) NOT NULL DEFAULT 'user'
-        CHECK (system_role IN ('user','admin')),
+        CHECK (system_role IN ('user','owner','staff','admin')),
     account_status NVARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (account_status IN ('active','pending','locked','disabled')),
     email_verified_at DATETIME2(0),
@@ -687,10 +687,24 @@ CREATE TABLE [HazardousWasteLog] (
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
--- Mục 4.9: Bảo dưỡng, Vệ sinh thiết bị / Bình phun thuốc
+-- Mục 4.9 (UC-46): Danh mục Thiết bị / Bình phun của Trang trại (Owner quản lý CUD)
+CREATE TABLE [FarmEquipment] (
+    equipment_id INT IDENTITY(1,1) PRIMARY KEY,
+    farm_id INT NOT NULL REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
+    equipment_code NVARCHAR(60) NOT NULL,
+    equipment_name NVARCHAR(160) NOT NULL,
+    equipment_type NVARCHAR(60) NOT NULL, -- 'sprayer', 'scale', 'irrigation', 'machinery', 'other'
+    status NVARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- 'ACTIVE', 'MAINTENANCE', 'INACTIVE'
+    notes NVARCHAR(MAX),
+    created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
+    UNIQUE (farm_id, equipment_code)
+);
+
+-- Mục 4.9 (UC-46): Bảo dưỡng, Vệ sinh thiết bị / Bình phun thuốc (Staff & Owner ghi nhận)
 CREATE TABLE [EquipmentMaintenanceLog] (
     maintenance_id INT IDENTITY(1,1) PRIMARY KEY,
     farm_id INT NOT NULL REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
+    equipment_id INT REFERENCES [FarmEquipment](equipment_id) ON DELETE NO ACTION,
     equipment_name NVARCHAR(160) NOT NULL,
     equipment_code NVARCHAR(60),
     action_type NVARCHAR(50) NOT NULL, -- 'rinse_cleaning', 'maintenance_repair', 'calibration'
@@ -1511,13 +1525,22 @@ VALUES
 SET IDENTITY_INSERT [HazardousWasteLog] OFF;
 GO
 
--- 42.2 Equipment Maintenance & Cleaning Logs (Mục 4.9)
-SET IDENTITY_INSERT [EquipmentMaintenanceLog] ON;
-INSERT INTO [EquipmentMaintenanceLog] (maintenance_id, farm_id, equipment_name, equipment_code, action_type, action_date, performer_name, rinse_water_handling, is_safe_for_use, notes, created_at)
+-- 42.2 Farm Equipments & Maintenance Logs (Mục 4.9 - UC-46)
+SET IDENTITY_INSERT [FarmEquipment] ON;
+INSERT INTO [FarmEquipment] (equipment_id, farm_id, equipment_code, equipment_name, equipment_type, status, notes, created_at)
 VALUES
-(1, 1, N'Bình phun áp lực cao Stihl SR-420', 'BP-01', 'rinse_cleaning', '2026-04-12', N'Lê Hoàng Nam', 'holding_tank', 1, N'Súc rửa 3 lần bằng nước sạch sau đợt phun phòng ngừa nấm lá; nước rửa gom vào bể chứa chuyên dụng xử lý vi sinh', SYSUTCDATETIME()),
-(2, 1, N'Cân điện tử chuẩn VietGAP 150kg', 'CAN-02', 'calibration', '2026-04-01', N'Trần Minh Tâm', 'diluted_field', 1, N'Hiệu chuẩn sai số định kỳ đầu vụ với quả cân chuẩn, sai số dưới 0.1%', SYSUTCDATETIME()),
-(3, 1, N'Hệ thống châm phân tự động Venturi Block A1', 'VT-A1', 'maintenance_repair', '2026-04-18', N'Lê Hoàng Nam', 'holding_tank', 1, N'Thông rửa ống hút định lượng và van một chiều, kiểm tra áp suất hoạt động ổn định', SYSUTCDATETIME());
+(1, 1, 'BP-01', N'Bình phun áp lực cao Stihl SR-420', 'sprayer', 'ACTIVE', N'Bình phun thuốc sinh học chuyên dụng cho khu nhà màng A', SYSUTCDATETIME()),
+(2, 1, 'CAN-02', N'Cân điện tử chuẩn VietGAP 150kg', 'scale', 'ACTIVE', N'Cân thu hoạch và đóng gói nông sản tại nhà sơ chế', SYSUTCDATETIME()),
+(3, 1, 'VT-A1', N'Hệ thống châm phân tự động Venturi Block A1', 'irrigation', 'ACTIVE', N'Hệ thống châm phân nhỏ giọt tự động cho lô A1', SYSUTCDATETIME());
+SET IDENTITY_INSERT [FarmEquipment] OFF;
+GO
+
+SET IDENTITY_INSERT [EquipmentMaintenanceLog] ON;
+INSERT INTO [EquipmentMaintenanceLog] (maintenance_id, farm_id, equipment_id, equipment_name, equipment_code, action_type, action_date, performer_name, rinse_water_handling, is_safe_for_use, notes, created_at)
+VALUES
+(1, 1, 1, N'Bình phun áp lực cao Stihl SR-420', 'BP-01', 'rinse_cleaning', '2026-04-12', N'Lê Hoàng Nam', 'holding_tank', 1, N'Súc rửa 3 lần bằng nước sạch sau đợt phun phòng ngừa nấm lá; nước rửa gom vào bể chứa chuyên dụng xử lý vi sinh', SYSUTCDATETIME()),
+(2, 1, 2, N'Cân điện tử chuẩn VietGAP 150kg', 'CAN-02', 'calibration', '2026-04-01', N'Trần Minh Tâm', 'diluted_field', 1, N'Hiệu chuẩn sai số định kỳ đầu vụ với quả cân chuẩn, sai số dưới 0.1%', SYSUTCDATETIME()),
+(3, 1, 3, N'Hệ thống châm phân tự động Venturi Block A1', 'VT-A1', 'maintenance_repair', '2026-04-18', N'Lê Hoàng Nam', 'holding_tank', 1, N'Thông rửa ống hút định lượng và van một chiều, kiểm tra áp suất hoạt động ổn định', SYSUTCDATETIME());
 SET IDENTITY_INSERT [EquipmentMaintenanceLog] OFF;
 GO
 

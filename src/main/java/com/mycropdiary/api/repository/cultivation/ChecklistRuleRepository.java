@@ -20,6 +20,9 @@ public interface ChecklistRuleRepository extends JpaRepository<ChecklistRule, In
     @Query("SELECT r FROM ChecklistRule r WHERE r.farm IS NULL AND r.isActive = true ORDER BY r.id ASC")
     List<ChecklistRule> findSystemMasterRules();
 
+    @Query("SELECT r FROM ChecklistRule r WHERE r.farm IS NULL ORDER BY r.id ASC")
+    List<ChecklistRule> findAllSystemMasterRules();
+
     @Query("SELECT r FROM ChecklistRule r WHERE r.farm IS NULL AND r.ruleCode = :ruleCode")
     java.util.Optional<ChecklistRule> findMasterRuleByCode(@Param("ruleCode") String ruleCode);
 

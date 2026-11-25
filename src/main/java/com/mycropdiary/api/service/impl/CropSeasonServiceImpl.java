@@ -69,6 +69,9 @@ public class CropSeasonServiceImpl implements CropSeasonService {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trang trại không tồn tại ID: " + farmId));
 
+        if (request.startDate() != null && request.startDate().isBefore(LocalDate.now())) {
+            throw new BadRequestException("Ngày bắt đầu mùa vụ không được chọn trong quá khứ.");
+        }
         if (request.endDate() != null && request.endDate().isBefore(request.startDate())) {
             throw new BadRequestException("Ngày kết thúc vụ không thể trước ngày bắt đầu vụ.");
         }
@@ -117,6 +120,9 @@ public class CropSeasonServiceImpl implements CropSeasonService {
             throw new BadRequestException("Không thể chỉnh sửa thông tin mùa vụ đã kết thúc hoặc đã hủy.");
         }
 
+        if (request.startDate() != null && !request.startDate().equals(season.getStartDate()) && request.startDate().isBefore(LocalDate.now())) {
+            throw new BadRequestException("Ngày bắt đầu mùa vụ không được chọn trong quá khứ.");
+        }
         if (request.endDate() != null && request.endDate().isBefore(request.startDate())) {
             throw new BadRequestException("Ngày kết thúc vụ không thể trước ngày bắt đầu vụ.");
         }
@@ -207,6 +213,11 @@ public class CropSeasonServiceImpl implements CropSeasonService {
                 .orElseThrow(() -> new ResourceNotFoundException("Mùa vụ canh tác không tồn tại ID: " + cropSeasonId));
 
         farmAccessGuard.requireOwnerOrAdmin(userId, season.getFarm().getId());
+
+        String status = season.getSeasonStatus();
+        if ("active".equalsIgnoreCase(status) || "in_progress".equalsIgnoreCase(status)) {
+            throw new BadRequestException("Không thể xóa mùa vụ đang diễn ra. Vui lòng hoàn thành hoặc hủy mùa vụ trước.");
+        }
 
         boolean hasActivities = farmingActivityRepository.existsByCropSeasonId(cropSeasonId);
         boolean hasHarvests = harvestRecordRepository.existsByCropSeasonId(cropSeasonId);

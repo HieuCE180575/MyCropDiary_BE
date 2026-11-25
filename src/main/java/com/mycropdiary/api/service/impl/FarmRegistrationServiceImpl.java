@@ -110,6 +110,14 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
             Integer currentUserId, FarmRegistrationReqDTO request) {
         User applicantUser = validateAndGetActiveUser(currentUserId);
 
+        if (request.boundaryCoordinates() != null && !request.boundaryCoordinates().isBlank()) {
+            double areaM2 = com.mycropdiary.api.util.GeoAreaUtils.calculatePolygonAreaM2(request.boundaryCoordinates());
+            if (areaM2 <= 0.0) {
+                throw new com.mycropdiary.api.exception.BusinessRuleException(
+                        "Diện tích vùng ranh giới trang trại trên bản đồ phải lớn hơn 0 m² (cần ít nhất 3 điểm hợp lệ).");
+            }
+        }
+
         FarmRegistration registration = new FarmRegistration();
         registration.setUser(applicantUser);
         registration.setFarmName(request.farmName().trim());

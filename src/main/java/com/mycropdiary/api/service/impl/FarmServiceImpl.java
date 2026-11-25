@@ -19,6 +19,7 @@ import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
 import com.mycropdiary.api.service.FarmService;
 import com.mycropdiary.api.util.FarmAccessGuard;
+import com.mycropdiary.api.util.GeoAreaUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -98,9 +99,30 @@ public class FarmServiceImpl implements FarmService {
         }
     }
 
+    private void validateBoundaryArea(String boundaryCoordinates, Integer existingFarmId) {
+        if (boundaryCoordinates == null || boundaryCoordinates.isBlank()) {
+            return;
+        }
+        double areaM2 = GeoAreaUtils.calculatePolygonAreaM2(boundaryCoordinates);
+        if (areaM2 <= 0.0) {
+            throw new BusinessRuleException("Diện tích vùng ranh giới trang trại trên bản đồ phải lớn hơn 0 m² (cần ít nhất 3 điểm hợp lệ).");
+        }
+        if (existingFarmId != null) {
+            List<Zone> zones = zoneRepository.findByFarmId(existingFarmId);
+            BigDecimal totalZonesM2 = zones.stream()
+                    .map(z -> GeoAreaUtils.toSquareMeters(z.getAreaValue(), z.getAreaUnit()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (totalZonesM2.compareTo(BigDecimal.valueOf(areaM2)) > 0) {
+                throw new BusinessRuleException("Diện tích trang trại trên bản đồ (" + Math.round(areaM2)
+                        + " m²) không được nhỏ hơn tổng diện tích các phân khu hiện có (" + totalZonesM2.stripTrailingZeros().toPlainString() + " m²).");
+            }
+        }
+    }
+
     @Override
     public FarmRespDTO createFarm(Integer currentUserId, CreateFarmReqDTO request) {
         validateCoordinates(request.latitude(), request.longitude());
+        validateBoundaryArea(request.boundaryCoordinates(), null);
 
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
@@ -198,6 +220,9 @@ public class FarmServiceImpl implements FarmService {
 
         farmAccessGuard.requireOwnerOrAdmin(currentUserId, farmId);
         validateCoordinates(request.latitude(), request.longitude());
+        if (request.boundaryCoordinates() != null && !request.boundaryCoordinates().isBlank()) {
+            validateBoundaryArea(request.boundaryCoordinates(), farmId);
+        }
 
         if (request.farmName() != null && !request.farmName().isBlank()) {
             farm.setFarmName(request.farmName());

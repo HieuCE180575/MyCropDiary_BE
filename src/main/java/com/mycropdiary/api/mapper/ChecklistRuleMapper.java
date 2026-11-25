@@ -16,9 +16,12 @@ public class ChecklistRuleMapper {
         }
         return new ChecklistRuleRespDTO(
                 r.getId(),
+                r.getRuleCode(),
                 r.getRuleName(),
                 r.getDescription(),
                 r.getCategory(),
+                r.getRuleLevel() != null ? r.getRuleLevel() : "MUST",
+                r.getTargetCropType() != null ? r.getTargetCropType() : "ALL",
                 r.getIsActive(),
                 r.getCreatedAt()
         );

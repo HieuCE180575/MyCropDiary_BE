@@ -16,9 +16,12 @@ import com.mycropdiary.api.repository.BlockRepository;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
+import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.repository.cultivation.CropCategoryRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
+import com.mycropdiary.api.util.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -45,6 +48,12 @@ public class AdminFarmDirectoryController {
     private final StaffZoneAssignmentRepository staffZoneAssignmentRepository;
     private final CropSeasonRepository cropSeasonRepository;
     private final CropCategoryRepository cropCategoryRepository;
+
+    @Autowired(required = false)
+    private UserRepository userRepository;
+
+    @Autowired(required = false)
+    private SecurityUtils securityUtils;
 
     public AdminFarmDirectoryController(
             FarmRepository farmRepository,
@@ -96,6 +105,53 @@ public class AdminFarmDirectoryController {
                 .toList();
 
         return ResponseEntity.ok(ApiResp.ok("Danh sách trang trại toàn hệ thống", result));
+    }
+
+    @PostMapping("/farms")
+    @Transactional
+    @Operation(summary = "Tạo trang trại mới trực tiếp bởi Admin")
+    public ResponseEntity<ApiResp<Map<String, Object>>> createFarm(@RequestBody Map<String, Object> body) {
+        String farmName = str(body.get("farmName"), str(body.get("name"), null));
+        if (farmName == null || farmName.isBlank()) {
+            throw new BadRequestException("Vui lòng nhập tên trang trại.");
+        }
+        String address = str(body.get("address"), "");
+        String description = str(body.get("description"), "");
+        String ownerEmail = str(body.get("ownerEmail"), null);
+
+        User ownerUser = null;
+        if (userRepository != null) {
+            if (ownerEmail != null && !ownerEmail.isBlank()) {
+                ownerUser = userRepository.findByEmailIgnoreCase(ownerEmail.trim()).orElse(null);
+            }
+            if (ownerUser == null && securityUtils != null) {
+                Integer currentUserId = securityUtils.getCurrentUserId();
+                if (currentUserId != null) {
+                    ownerUser = userRepository.findById(currentUserId).orElse(null);
+                }
+            }
+        }
+
+        Farm farm = new Farm();
+        farm.setFarmName(farmName.trim());
+        farm.setAddress(address.trim());
+        farm.setDescription(description.trim());
+        farm.setFarmStatus("active");
+        if (ownerUser != null) {
+            farm.setCreatedBy(ownerUser);
+        }
+        Farm saved = farmRepository.save(farm);
+
+        List<FarmMember> members = new ArrayList<>();
+        if (ownerUser != null) {
+            FarmMember ownerMember = new FarmMember(saved, ownerUser, "owner", "active");
+            members.add(farmMemberRepository.save(ownerMember));
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResp.ok(
+                "Đã tạo trang trại mới thành công",
+                buildFarmMap(saved, Collections.emptyList(), Collections.emptyList(), members)
+        ));
     }
 
     @PutMapping("/farms/{id}")

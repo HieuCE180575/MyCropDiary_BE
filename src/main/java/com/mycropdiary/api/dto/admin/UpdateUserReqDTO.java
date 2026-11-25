@@ -11,7 +11,7 @@ public record UpdateUserReqDTO(
         String fullName,
 
         @Schema(description = "Số điện thoại liên hệ", example = "0912345678")
-        @Pattern(regexp = "^(0\\d{9,10})?$", message = "Số điện thoại phải bắt đầu bằng số 0 và có 10 hoặc 11 chữ số")
+        @Pattern(regexp = "^([+0-9 .\\-()]{8,20})?$", message = "Số điện thoại không hợp lệ")
         String phone,
 
         @Schema(description = "Vai trò hệ thống (USER, OWNER, STAFF, ADMIN)", example = "OWNER")
