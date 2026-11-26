@@ -171,7 +171,7 @@ class FarmCoreAndStaffServiceTest {
 
         FarmMemberRespDTO resp = farmStaffService.addStaff(ownerUser.getId(), farm.getId(), request);
         assertNotNull(resp.id());
-        assertEquals("staff", resp.farmRole());
+        assertEquals("member", resp.farmRole());
         assertEquals(outsiderUser.getEmail(), resp.email());
     }
 

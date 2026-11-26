@@ -102,7 +102,7 @@ public class FarmStaffServiceImpl implements FarmStaffService {
             throw new BusinessRuleException("Tài khoản người dùng chưa được kích hoạt hoặc đang bị khóa (trạng thái: " + user.getAccountStatus() + ")");
         }
 
-        String role = (request.farmRole() != null && !request.farmRole().isBlank()) ? request.farmRole().toLowerCase() : "member";
+        String role = FarmMember.normalizeMemberRole(request.farmRole());
 
         Optional<FarmMember> existingMemberOpt = farmMemberRepository.findByFarmIdAndUserId(farmId, user.getId());
         FarmMember member;
@@ -115,7 +115,20 @@ public class FarmStaffServiceImpl implements FarmStaffService {
             member.setMemberRole(role);
             member.setJoinedAt(Instant.now());
         } else {
-            member = new FarmMember(farm, user, role, "invited");
+            member = new FarmMember(farm, user, role, "active");
+        }
+        if (request.jobTitle() != null && !request.jobTitle().isBlank()) {
+            member.setJobTitle(request.jobTitle().trim());
+        }
+
+        // Sync User.system_role if currently basic 'user' (or upgrading 'staff' to 'owner')
+        String currentSysRole = user.getSystemRole() != null ? user.getSystemRole().toLowerCase() : "user";
+        if ("owner".equals(role) && ("user".equals(currentSysRole) || "staff".equals(currentSysRole))) {
+            user.setSystemRole("owner");
+            userRepository.save(user);
+        } else if (!"owner".equals(role) && "user".equals(currentSysRole)) {
+            user.setSystemRole("staff");
+            userRepository.save(user);
         }
 
         FarmMember saved = farmMemberRepository.save(member);
@@ -138,9 +151,9 @@ public class FarmStaffServiceImpl implements FarmStaffService {
             if (activeOwners <= 1) {
                 throw new BusinessRuleException("Không thể hạ quyền Chủ trang trại duy nhất còn lại của trang trại");
             }
-            member.setMemberRole(request.farmRole().toLowerCase());
+            member.setMemberRole(FarmMember.normalizeMemberRole(request.farmRole()));
         } else if (request.farmRole() != null) {
-            member.setMemberRole(request.farmRole().toLowerCase());
+            member.setMemberRole(FarmMember.normalizeMemberRole(request.farmRole()));
         }
 
         if (request.status() != null && !request.status().equalsIgnoreCase(member.getMembershipStatus())) {

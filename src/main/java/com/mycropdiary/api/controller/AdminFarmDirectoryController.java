@@ -20,6 +20,7 @@ import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.repository.cultivation.CropCategoryRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
+import com.mycropdiary.api.util.GeoAreaUtils;
 import com.mycropdiary.api.util.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
@@ -109,43 +110,71 @@ public class AdminFarmDirectoryController {
 
     @PostMapping("/farms")
     @Transactional
-    @Operation(summary = "Tạo trang trại mới trực tiếp bởi Admin")
+    @Operation(summary = "Tạo trang trại mới trực tiếp bởi Admin (đầy đủ tọa độ, ranh giới, tài liệu, Owner & Staff)")
     public ResponseEntity<ApiResp<Map<String, Object>>> createFarm(@RequestBody Map<String, Object> body) {
         String farmName = str(body.get("farmName"), str(body.get("name"), null));
         if (farmName == null || farmName.isBlank()) {
             throw new BadRequestException("Vui lòng nhập tên trang trại.");
         }
-        String address = str(body.get("address"), "");
+        String address = composeFullAddress(
+                str(body.get("address"), ""),
+                str(body.get("ward"), ""),
+                str(body.get("district"), ""),
+                str(body.get("province"), "")
+        );
+        if (address.isBlank()) {
+            throw new BadRequestException("Vui lòng nhập địa chỉ trang trại.");
+        }
         String description = str(body.get("description"), "");
-        String ownerEmail = str(body.get("ownerEmail"), null);
-
-        User ownerUser = null;
-        if (userRepository != null) {
-            if (ownerEmail != null && !ownerEmail.isBlank()) {
-                ownerUser = userRepository.findByEmailIgnoreCase(ownerEmail.trim()).orElse(null);
-            }
-            if (ownerUser == null && securityUtils != null) {
-                Integer currentUserId = securityUtils.getCurrentUserId();
-                if (currentUserId != null) {
-                    ownerUser = userRepository.findById(currentUserId).orElse(null);
-                }
+        BigDecimal latitude = toDecimal(body.get("latitude"));
+        BigDecimal longitude = toDecimal(body.get("longitude"));
+        String boundaryCoordinates = str(body.get("boundaryCoordinates"), null);
+        if (boundaryCoordinates != null && !boundaryCoordinates.isBlank()) {
+            double areaM2 = GeoAreaUtils.calculatePolygonAreaM2(boundaryCoordinates);
+            if (areaM2 <= 0) {
+                throw new BadRequestException("Ranh giới bản đồ không hợp lệ hoặc diện tích phải lớn hơn 0 m².");
             }
         }
+        String coverImageUrl = str(body.get("coverImageUrl"), null);
+        String farmMapUrl = str(body.get("farmMapUrl"), str(body.get("documentUrl"), null));
+        String status = str(body.get("status"), "active").toLowerCase();
+        if (!List.of("active", "inactive", "archived").contains(status)) {
+            status = "active";
+        }
+
+        User ownerUser = resolveTargetOwner(body, true);
 
         Farm farm = new Farm();
         farm.setFarmName(farmName.trim());
-        farm.setAddress(address.trim());
+        farm.setAddress(address);
         farm.setDescription(description.trim());
-        farm.setFarmStatus("active");
+        farm.setLatitude(latitude);
+        farm.setLongitude(longitude);
+        farm.setBoundaryCoordinates(boundaryCoordinates != null && !boundaryCoordinates.isBlank() ? boundaryCoordinates.trim() : null);
+        farm.setCoverImageUrl(coverImageUrl != null && !coverImageUrl.isBlank() ? coverImageUrl.trim() : null);
+        farm.setFarmMapUrl(farmMapUrl != null && !farmMapUrl.isBlank() ? farmMapUrl.trim() : null);
+        farm.setFarmStatus(status);
         if (ownerUser != null) {
             farm.setCreatedBy(ownerUser);
         }
         Farm saved = farmRepository.save(farm);
 
         List<FarmMember> members = new ArrayList<>();
+        Set<Integer> addedUserIds = new HashSet<>();
         if (ownerUser != null) {
+            upgradeUserSystemRoleIfNeeded(ownerUser, "owner");
             FarmMember ownerMember = new FarmMember(saved, ownerUser, "owner", "active");
             members.add(farmMemberRepository.save(ownerMember));
+            addedUserIds.add(ownerUser.getId());
+        }
+
+        for (User staffUser : resolveStaffUsers(body)) {
+            if (staffUser.getId() != null && !addedUserIds.contains(staffUser.getId())) {
+                upgradeUserSystemRoleIfNeeded(staffUser, "staff");
+                FarmMember staffMember = new FarmMember(saved, staffUser, "member", "active");
+                members.add(farmMemberRepository.save(staffMember));
+                addedUserIds.add(staffUser.getId());
+            }
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResp.ok(
@@ -156,7 +185,7 @@ public class AdminFarmDirectoryController {
 
     @PutMapping("/farms/{id}")
     @Transactional
-    @Operation(summary = "Cập nhật thông tin trang trại (Admin)")
+    @Operation(summary = "Cập nhật thông tin trang trại, chủ sở hữu và nhân sự (Admin)")
     public ResponseEntity<ApiResp<Map<String, Object>>> updateFarm(
             @PathVariable Integer id,
             @RequestBody Map<String, Object> body
@@ -168,8 +197,16 @@ public class AdminFarmDirectoryController {
         if (farmName != null && !farmName.isBlank()) {
             farm.setFarmName(farmName.trim());
         }
-        if (body.containsKey("address")) {
-            farm.setAddress(str(body.get("address"), ""));
+        if (body.containsKey("address") || body.containsKey("province") || body.containsKey("district") || body.containsKey("ward")) {
+            String composed = composeFullAddress(
+                    str(body.get("address"), farm.getAddress() != null ? farm.getAddress() : ""),
+                    str(body.get("ward"), ""),
+                    str(body.get("district"), ""),
+                    str(body.get("province"), "")
+            );
+            if (!composed.isBlank()) {
+                farm.setAddress(composed);
+            }
         }
         if (body.containsKey("description")) {
             farm.setDescription(str(body.get("description"), ""));
@@ -185,10 +222,79 @@ public class AdminFarmDirectoryController {
             farm.setLongitude(toDecimal(body.get("longitude")));
         }
         if (body.containsKey("boundaryCoordinates")) {
-            farm.setBoundaryCoordinates(str(body.get("boundaryCoordinates"), null));
+            String bc = str(body.get("boundaryCoordinates"), null);
+            if (bc != null && !bc.isBlank()) {
+                double areaM2 = GeoAreaUtils.calculatePolygonAreaM2(bc);
+                if (areaM2 <= 0) {
+                    throw new BadRequestException("Ranh giới bản đồ không hợp lệ hoặc diện tích phải lớn hơn 0 m².");
+                }
+                farm.setBoundaryCoordinates(bc.trim());
+            } else {
+                farm.setBoundaryCoordinates(null);
+            }
+        }
+        if (body.containsKey("coverImageUrl")) {
+            String cover = str(body.get("coverImageUrl"), null);
+            farm.setCoverImageUrl(cover != null && !cover.isBlank() ? cover.trim() : null);
+        }
+        if (body.containsKey("farmMapUrl") || body.containsKey("documentUrl")) {
+            String mapUrl = str(body.get("farmMapUrl"), str(body.get("documentUrl"), null));
+            farm.setFarmMapUrl(mapUrl != null && !mapUrl.isBlank() ? mapUrl.trim() : null);
         }
 
         Farm saved = farmRepository.save(farm);
+
+        // Update owner if ownerId / ownerUserId / ownerEmail provided
+        if (body.containsKey("ownerId") || body.containsKey("ownerUserId") || body.containsKey("ownerEmail")) {
+            User newOwner = resolveTargetOwner(body, false);
+            if (newOwner != null) {
+                upgradeUserSystemRoleIfNeeded(newOwner, "owner");
+                List<FarmMember> existingMembers = farmMemberRepository.findByFarmId(saved.getId());
+                for (FarmMember m : existingMembers) {
+                    if (m.isOwner() && m.getUser() != null && !m.getUser().getId().equals(newOwner.getId())) {
+                        m.setMemberRole("member");
+                        farmMemberRepository.save(m);
+                    }
+                }
+                Optional<FarmMember> existingOwnerOpt = farmMemberRepository.findByFarmIdAndUserId(saved.getId(), newOwner.getId());
+                FarmMember ownerMember = existingOwnerOpt.orElseGet(() -> new FarmMember(saved, newOwner, "owner", "active"));
+                ownerMember.setMemberRole("owner");
+                ownerMember.setMembershipStatus("active");
+                farmMemberRepository.save(ownerMember);
+            }
+        }
+
+        // Sync staff list if staffUserIds or staffEmails explicitly provided
+        if (body.containsKey("staffUserIds") || body.containsKey("staffEmails")) {
+            List<User> targetStaff = resolveStaffUsers(body);
+            Set<Integer> targetStaffIds = targetStaff.stream()
+                    .map(User::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            List<FarmMember> existingMembers = farmMemberRepository.findByFarmId(saved.getId());
+            for (FarmMember m : existingMembers) {
+                if (!m.isOwner() && m.isActive() && m.getUser() != null && !targetStaffIds.contains(m.getUser().getId())) {
+                    m.setMembershipStatus("left");
+                    farmMemberRepository.save(m);
+                }
+            }
+            for (User staffUser : targetStaff) {
+                Optional<FarmMember> existingOpt = farmMemberRepository.findByFarmIdAndUserId(saved.getId(), staffUser.getId());
+                if (existingOpt.isPresent()) {
+                    FarmMember fm = existingOpt.get();
+                    if (!fm.isOwner()) {
+                        fm.setMemberRole("member");
+                        fm.setMembershipStatus("active");
+                        farmMemberRepository.save(fm);
+                        upgradeUserSystemRoleIfNeeded(staffUser, "staff");
+                    }
+                } else {
+                    upgradeUserSystemRoleIfNeeded(staffUser, "staff");
+                    farmMemberRepository.save(new FarmMember(saved, staffUser, "member", "active"));
+                }
+            }
+        }
+
         List<Zone> zones = zoneRepository.findByFarmId(saved.getId());
         List<Block> blocks = blockRepository.findByZoneFarmId(saved.getId());
         List<FarmMember> members = farmMemberRepository.findByFarmId(saved.getId());
@@ -197,6 +303,80 @@ public class AdminFarmDirectoryController {
                 "Cập nhật thông tin trang trại thành công.",
                 buildFarmMap(saved, zones, blocks, members)
         ));
+    }
+
+    private User resolveTargetOwner(Map<String, Object> body, boolean fallbackToCurrentAdmin) {
+        if (userRepository == null) return null;
+        Integer ownerIdRaw = toInt(body.get("ownerUserId"));
+        final Integer ownerId = ownerIdRaw != null ? ownerIdRaw : toInt(body.get("ownerId"));
+        String ownerEmail = str(body.get("ownerEmail"), null);
+
+        if (ownerId != null) {
+            return userRepository.findById(ownerId)
+                    .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản chủ sở hữu với ID: " + ownerId));
+        }
+        if (ownerEmail != null && !ownerEmail.isBlank()) {
+            return userRepository.findByEmailIgnoreCase(ownerEmail.trim())
+                    .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản chủ sở hữu với email: " + ownerEmail.trim()));
+        }
+        if (fallbackToCurrentAdmin && securityUtils != null) {
+            Integer currentUserId = securityUtils.getCurrentUserId();
+            if (currentUserId != null) {
+                return userRepository.findById(currentUserId).orElse(null);
+            }
+        }
+        return null;
+    }
+
+    private List<User> resolveStaffUsers(Map<String, Object> body) {
+        if (userRepository == null) return Collections.emptyList();
+        Map<Integer, User> resolved = new LinkedHashMap<>();
+
+        Object rawIds = body.get("staffUserIds");
+        if (rawIds instanceof Collection<?> col) {
+            for (Object item : col) {
+                Integer uid = toInt(item);
+                if (uid != null) {
+                    userRepository.findById(uid).ifPresent(u -> resolved.put(u.getId(), u));
+                }
+            }
+        }
+        Object rawEmails = body.get("staffEmails");
+        if (rawEmails instanceof Collection<?> col) {
+            for (Object item : col) {
+                String em = str(item, null);
+                if (em != null && !em.isBlank()) {
+                    userRepository.findByEmailIgnoreCase(em.trim()).ifPresent(u -> resolved.put(u.getId(), u));
+                }
+            }
+        }
+        return new ArrayList<>(resolved.values());
+    }
+
+    private void upgradeUserSystemRoleIfNeeded(User user, String targetRole) {
+        if (user == null || userRepository == null) return;
+        String current = user.getSystemRole() != null ? user.getSystemRole().toLowerCase() : "user";
+        if ("owner".equals(targetRole) && ("user".equals(current) || "staff".equals(current))) {
+            user.setSystemRole("owner");
+            userRepository.save(user);
+        } else if ("staff".equals(targetRole) && "user".equals(current)) {
+            user.setSystemRole("staff");
+            userRepository.save(user);
+        }
+    }
+
+    private static String composeFullAddress(String address, String ward, String district, String province) {
+        List<String> parts = new ArrayList<>();
+        String base = address != null ? address.trim() : "";
+        if (!base.isEmpty()) parts.add(base);
+        String baseLower = base.toLowerCase();
+        for (String extra : List.of(ward, district, province)) {
+            String trimmed = extra != null ? extra.trim() : "";
+            if (!trimmed.isEmpty() && !baseLower.contains(trimmed.toLowerCase())) {
+                parts.add(trimmed);
+            }
+        }
+        return String.join(", ", parts);
     }
 
     @GetMapping("/zones")
@@ -612,11 +792,16 @@ public class AdminFarmDirectoryController {
         map.put("longitude", farm.getLongitude());
         map.put("boundaryCoordinates", farm.getBoundaryCoordinates());
         map.put("coverImageUrl", farm.getCoverImageUrl());
+        map.put("farmMapUrl", farm.getFarmMapUrl());
         map.put("status", farm.getStatus() != null ? farm.getStatus().toUpperCase() : "ACTIVE");
         map.put("ownerId", owner != null ? owner.getId() : null);
         map.put("ownerName", owner != null ? owner.getFullName() : "Chưa xác định");
         map.put("ownerEmail", owner != null ? owner.getEmail() : "—");
         map.put("ownerPhone", owner != null && owner.getPhone() != null ? owner.getPhone() : "—");
+        map.put("staffIds", activeStaff.stream()
+                .map(m -> m.getUser() != null ? m.getUser().getId() : null)
+                .filter(Objects::nonNull)
+                .toList());
         map.put("zoneCount", zones.size());
         map.put("blockCount", blocks.size());
         map.put("memberCount", members.size());

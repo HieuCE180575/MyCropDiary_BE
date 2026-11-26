@@ -47,13 +47,23 @@ public class FarmMember {
     public FarmMember(Farm farm, User user, String memberRole, String membershipStatus) {
         this.farm = farm;
         this.user = user;
-        if (memberRole != null) {
-            this.memberRole = memberRole.toLowerCase();
-        }
+        this.memberRole = normalizeMemberRole(memberRole);
         if (membershipStatus != null) {
             this.membershipStatus = membershipStatus.toLowerCase();
         }
         this.joinedAt = Instant.now();
+    }
+
+    public static String normalizeMemberRole(String rawRole) {
+        if (rawRole == null || rawRole.isBlank()) {
+            return "member";
+        }
+        String normalized = rawRole.trim().toLowerCase();
+        return switch (normalized) {
+            case "owner", "admin", "manager", "member" -> normalized;
+            case "staff", "technician", "worker" -> "member";
+            default -> "member";
+        };
     }
 
     public Integer getId() { return id; }
@@ -67,7 +77,7 @@ public class FarmMember {
 
     public String getMemberRole() { return memberRole; }
     public void setMemberRole(String memberRole) {
-        this.memberRole = memberRole != null ? memberRole.toLowerCase() : "member";
+        this.memberRole = normalizeMemberRole(memberRole);
     }
 
     // Alias for farmRole
