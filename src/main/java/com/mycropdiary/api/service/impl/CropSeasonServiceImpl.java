@@ -116,8 +116,10 @@ public class CropSeasonServiceImpl implements CropSeasonService {
         farmAccessGuard.requireOwnerOrAdmin(userId, farmId);
 
         String currentStatus = season.getSeasonStatus();
-        if ("completed".equalsIgnoreCase(currentStatus) || "cancelled".equalsIgnoreCase(currentStatus)) {
-            throw new BadRequestException("Không thể chỉnh sửa thông tin mùa vụ đã kết thúc hoặc đã hủy.");
+        if ("active".equalsIgnoreCase(currentStatus)
+                || "completed".equalsIgnoreCase(currentStatus)
+                || "cancelled".equalsIgnoreCase(currentStatus)) {
+            throw new BadRequestException("Không thể chỉnh sửa mùa vụ đang diễn ra, đã kết thúc hoặc đã hủy.");
         }
 
         if (request.startDate() != null && !request.startDate().equals(season.getStartDate()) && request.startDate().isBefore(LocalDate.now())) {
