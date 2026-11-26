@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.Map;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -63,6 +64,16 @@ public class AdminFarmRegController {
     public ApiResp<AdminFarmRegRespDTO> getRegistrationById(@PathVariable Integer registrationId) {
         AdminFarmRegRespDTO response = farmRegistrationService.getRegistrationById(registrationId);
         return ApiResp.ok("Chi tiết đơn đăng ký trang trại", response);
+    }
+
+    @Operation(summary = "Cập nhật thông tin đơn đăng ký trang trại (Admin)",
+            description = "Admin chỉnh sửa thông tin hồ sơ đăng ký trang trại (tên, địa chỉ, tỉnh/huyện/xã, mô tả).")
+    @PutMapping("/{registrationId}")
+    public ApiResp<AdminFarmRegRespDTO> updateRegistration(
+            @PathVariable Integer registrationId,
+            @RequestBody Map<String, Object> updates) {
+        AdminFarmRegRespDTO response = farmRegistrationService.updateRegistration(registrationId, updates);
+        return ApiResp.ok("Đã cập nhật hồ sơ đăng ký trang trại thành công.", response);
     }
 
     /**

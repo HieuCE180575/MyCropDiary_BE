@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -99,6 +100,44 @@ public class AdminFarmRegServiceImpl implements AdminFarmRegService {
 
     @Override
     @Transactional
+    public AdminFarmRegRespDTO updateRegistration(Integer registrationId, Map<String, Object> updates) {
+        FarmRegistration registration = farmRegistrationRepository.findById(registrationId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy đơn đăng ký trang trại với ID: " + registrationId));
+
+        if (updates != null) {
+            Object farmName = updates.get("farmName") != null ? updates.get("farmName") : updates.get("name");
+            if (farmName != null && !String.valueOf(farmName).isBlank()) {
+                registration.setFarmName(String.valueOf(farmName).trim());
+            }
+            Object address = updates.get("addressLine") != null ? updates.get("addressLine") : updates.get("address");
+            if (address != null && !String.valueOf(address).isBlank()) {
+                registration.setAddress(String.valueOf(address).trim());
+            }
+            if (updates.containsKey("province")) {
+                Object v = updates.get("province");
+                registration.setProvince(v != null && !String.valueOf(v).isBlank() ? String.valueOf(v).trim() : null);
+            }
+            if (updates.containsKey("district")) {
+                Object v = updates.get("district");
+                registration.setDistrict(v != null && !String.valueOf(v).isBlank() ? String.valueOf(v).trim() : null);
+            }
+            if (updates.containsKey("ward")) {
+                Object v = updates.get("ward");
+                registration.setWard(v != null && !String.valueOf(v).isBlank() ? String.valueOf(v).trim() : null);
+            }
+            if (updates.containsKey("description") || updates.containsKey("registrationNote")) {
+                Object v = updates.get("description") != null ? updates.get("description") : updates.get("registrationNote");
+                registration.setRegistrationNote(v != null ? String.valueOf(v).trim() : null);
+            }
+        }
+
+        FarmRegistration saved = farmRegistrationRepository.save(registration);
+        return adminFarmRegMapper.toAdminResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public AdminFarmRegRespDTO handleRegistration(Integer adminUserId, Integer registrationId, HandleFarmRegReqDTO request) {
         User adminUser = userRepository.findById(adminUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản admin với ID: " + adminUserId));
@@ -126,19 +165,34 @@ public class AdminFarmRegServiceImpl implements AdminFarmRegService {
     }
 
     private AdminFarmRegRespDTO handleApproval(FarmRegistration registration, User adminUser) {
-        Farm farm = new Farm();
+        Farm farm;
+        boolean isUpdateRequest = registration.getResultingFarmId() != null;
+        if (isUpdateRequest) {
+            farm = farmRepository.findById(registration.getResultingFarmId()).orElseGet(Farm::new);
+        } else {
+            farm = new Farm();
+            farm.setCreatedBy(registration.getUser());
+        }
         farm.setFarmName(registration.getFarmName());
         farm.setAddress(registration.getAddress());
-        farm.setDescription(registration.getRegistrationNote());
+        String note = registration.getRegistrationNote();
+        if (note != null) {
+            note = note.replaceFirst("^\\[Cập nhật trang trại #\\d+\\]\\s*", "");
+        }
+        farm.setDescription(note);
         farm.setLatitude(registration.getLatitude());
         farm.setLongitude(registration.getLongitude());
         farm.setBoundaryCoordinates(registration.getBoundaryCoordinates());
-        farm.setCreatedBy(registration.getUser());
+        if (registration.getDocumentUrl() != null && !registration.getDocumentUrl().isBlank()) {
+            farm.setFarmMapUrl(registration.getDocumentUrl());
+        }
         farm.setFarmStatus("active");
         farm = farmRepository.save(farm);
 
-        FarmMember ownerMember = new FarmMember(farm, registration.getUser(), "owner", "active");
-        farmMemberRepository.save(ownerMember);
+        if (!isUpdateRequest || farmMemberRepository.findByFarmIdAndUserId(farm.getId(), registration.getUser().getId()).isEmpty()) {
+            FarmMember ownerMember = new FarmMember(farm, registration.getUser(), "owner", "active");
+            farmMemberRepository.save(ownerMember);
+        }
 
         User applicant = registration.getUser();
         if (applicant != null && "user".equalsIgnoreCase(applicant.getSystemRole())) {

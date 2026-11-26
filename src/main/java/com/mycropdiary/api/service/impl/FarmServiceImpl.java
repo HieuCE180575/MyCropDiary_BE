@@ -8,6 +8,7 @@ import com.mycropdiary.api.entity.StaffZoneAssignment;
 import com.mycropdiary.api.entity.User;
 import com.mycropdiary.api.entity.Zone;
 import com.mycropdiary.api.entity.cultivation.CropSeason;
+import com.mycropdiary.api.entity.farmregistration.FarmRegistration;
 import com.mycropdiary.api.exception.BusinessRuleException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.mapper.FarmMapper;
@@ -17,6 +18,7 @@ import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
+import com.mycropdiary.api.repository.farmregistration.FarmRegistrationRepository;
 import com.mycropdiary.api.service.FarmService;
 import com.mycropdiary.api.util.FarmAccessGuard;
 import com.mycropdiary.api.util.GeoAreaUtils;
@@ -48,6 +50,9 @@ public class FarmServiceImpl implements FarmService {
     private final FarmAccessGuard farmAccessGuard;
     private final NotificationService notificationService;
     private final CropSeasonRepository cropSeasonRepository;
+
+    @Autowired(required = false)
+    private FarmRegistrationRepository farmRegistrationRepository;
 
     public FarmServiceImpl(
             FarmRepository farmRepository,
@@ -253,6 +258,41 @@ public class FarmServiceImpl implements FarmService {
         }
 
         Farm updatedFarm = farmRepository.save(farm);
+
+        // When an Owner edits farm info, create a pending review request for Admin approval
+        User actor = userRepository.findById(currentUserId).orElse(null);
+        if (actor != null && !"admin".equalsIgnoreCase(actor.getSystemRole()) && farmRegistrationRepository != null) {
+            FarmRegistration reviewReq = new FarmRegistration();
+            reviewReq.setUser(actor);
+            reviewReq.setFarmName(updatedFarm.getFarmName());
+            reviewReq.setAddress(updatedFarm.getAddress() != null ? updatedFarm.getAddress() : "");
+            reviewReq.setLatitude(updatedFarm.getLatitude());
+            reviewReq.setLongitude(updatedFarm.getLongitude());
+            reviewReq.setBoundaryCoordinates(updatedFarm.getBoundaryCoordinates());
+            reviewReq.setDocumentUrl(updatedFarm.getFarmMapUrl());
+            String baseDesc = updatedFarm.getDescription() != null ? updatedFarm.getDescription() : "";
+            reviewReq.setRegistrationNote("[Cập nhật trang trại #" + updatedFarm.getId() + "] " + baseDesc);
+            reviewReq.setRegistrationStatus("pending");
+            reviewReq.setResultingFarmId(updatedFarm.getId());
+            farmRegistrationRepository.save(reviewReq);
+
+            if (notificationService != null) {
+                try {
+                    userRepository.findAll().stream()
+                            .filter(u -> "admin".equalsIgnoreCase(u.getSystemRole()))
+                            .forEach(admin -> notificationService.createNotification(
+                                    admin.getId(),
+                                    "Yêu cầu duyệt cập nhật trang trại",
+                                    "Chủ trang trại " + actor.getFullName() + " vừa chỉnh sửa thông tin trang trại \"" + updatedFarm.getFarmName() + "\". Vui lòng kiểm tra và phê duyệt.",
+                                    "FARM_REGISTRATION",
+                                    "/admin/registrations"
+                            ));
+                } catch (Exception ignored) {
+                    // Best-effort admin notification
+                }
+            }
+        }
+
         String userRole = farmAccessGuard.getUserRoleInFarm(currentUserId, farmId);
         return farmMapper.toResponse(updatedFarm, userRole);
     }

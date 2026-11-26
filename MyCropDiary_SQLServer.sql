@@ -1,4 +1,4 @@
-﻿-- MyCropDiary database schema derived from the conceptual ERDs
+-- MyCropDiary database schema derived from the conceptual ERDs
 -- Target: Microsoft SQL Server 2019+
 -- Notes:
 -- 1) Table names follow the ERD entity labels; join tables were added for many-to-many relations.
