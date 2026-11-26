@@ -229,6 +229,68 @@ public class FarmServiceImpl implements FarmService {
             validateBoundaryArea(request.boundaryCoordinates(), farmId);
         }
 
+        // When an Owner (non-admin) edits farm info, do NOT overwrite the live farm immediately.
+        // Submit (or update) a pending FarmRegistration request for Admin approval instead;
+        // changes will be applied to the Farm once Admin approves the request.
+        User actor = userRepository.findById(currentUserId).orElse(null);
+        if (actor != null && !"admin".equalsIgnoreCase(actor.getSystemRole()) && farmRegistrationRepository != null) {
+            FarmRegistration reviewReq = farmRegistrationRepository
+                    .findFirstByResultingFarmIdAndRegistrationStatusIgnoreCaseOrderByIdDesc(farm.getId(), "pending")
+                    .orElseGet(FarmRegistration::new);
+
+            String proposedName = (request.farmName() != null && !request.farmName().isBlank())
+                    ? request.farmName().trim()
+                    : farm.getFarmName();
+            String proposedAddress = request.address() != null
+                    ? request.address().trim()
+                    : (farm.getAddress() != null ? farm.getAddress() : "");
+            String proposedDesc = request.description() != null
+                    ? request.description().trim()
+                    : (farm.getDescription() != null ? farm.getDescription() : "");
+            BigDecimal proposedLat = request.latitude() != null ? request.latitude() : farm.getLatitude();
+            BigDecimal proposedLng = request.longitude() != null ? request.longitude() : farm.getLongitude();
+            String proposedBoundary = request.boundaryCoordinates() != null
+                    ? request.boundaryCoordinates()
+                    : farm.getBoundaryCoordinates();
+            String proposedDocUrl = (request.farmMapUrl() != null && !request.farmMapUrl().isBlank())
+                    ? request.farmMapUrl().trim()
+                    : farm.getFarmMapUrl();
+
+            reviewReq.setUser(actor);
+            reviewReq.setFarmName(proposedName);
+            reviewReq.setAddress(proposedAddress);
+            reviewReq.setLatitude(proposedLat);
+            reviewReq.setLongitude(proposedLng);
+            reviewReq.setBoundaryCoordinates(proposedBoundary);
+            reviewReq.setDocumentUrl(proposedDocUrl);
+            reviewReq.setRegistrationNote("[Cập nhật trang trại #" + farm.getId() + "] " + proposedDesc);
+            reviewReq.setRegistrationStatus("pending");
+            reviewReq.setResultingFarmId(farm.getId());
+            reviewReq.setReviewedBy(null);
+            reviewReq.setReviewedAt(null);
+            reviewReq.setRejectionReason(null);
+            farmRegistrationRepository.save(reviewReq);
+
+            if (notificationService != null) {
+                try {
+                    userRepository.findAll().stream()
+                            .filter(u -> "admin".equalsIgnoreCase(u.getSystemRole()))
+                            .forEach(admin -> notificationService.createNotification(
+                                    admin.getId(),
+                                    "Yêu cầu duyệt cập nhật trang trại",
+                                    "Chủ trang trại " + actor.getFullName() + " vừa gửi yêu cầu chỉnh sửa thông tin trang trại \"" + proposedName + "\". Vui lòng kiểm tra và phê duyệt.",
+                                    "FARM_REGISTRATION",
+                                    "/admin/registrations"
+                            ));
+                } catch (Exception ignored) {
+                    // Best-effort admin notification
+                }
+            }
+
+            String userRole = farmAccessGuard.getUserRoleInFarm(currentUserId, farmId);
+            return farmMapper.toResponse(farm, userRole);
+        }
+
         if (request.farmName() != null && !request.farmName().isBlank()) {
             farm.setFarmName(request.farmName());
         }
@@ -258,41 +320,6 @@ public class FarmServiceImpl implements FarmService {
         }
 
         Farm updatedFarm = farmRepository.save(farm);
-
-        // When an Owner edits farm info, create a pending review request for Admin approval
-        User actor = userRepository.findById(currentUserId).orElse(null);
-        if (actor != null && !"admin".equalsIgnoreCase(actor.getSystemRole()) && farmRegistrationRepository != null) {
-            FarmRegistration reviewReq = new FarmRegistration();
-            reviewReq.setUser(actor);
-            reviewReq.setFarmName(updatedFarm.getFarmName());
-            reviewReq.setAddress(updatedFarm.getAddress() != null ? updatedFarm.getAddress() : "");
-            reviewReq.setLatitude(updatedFarm.getLatitude());
-            reviewReq.setLongitude(updatedFarm.getLongitude());
-            reviewReq.setBoundaryCoordinates(updatedFarm.getBoundaryCoordinates());
-            reviewReq.setDocumentUrl(updatedFarm.getFarmMapUrl());
-            String baseDesc = updatedFarm.getDescription() != null ? updatedFarm.getDescription() : "";
-            reviewReq.setRegistrationNote("[Cập nhật trang trại #" + updatedFarm.getId() + "] " + baseDesc);
-            reviewReq.setRegistrationStatus("pending");
-            reviewReq.setResultingFarmId(updatedFarm.getId());
-            farmRegistrationRepository.save(reviewReq);
-
-            if (notificationService != null) {
-                try {
-                    userRepository.findAll().stream()
-                            .filter(u -> "admin".equalsIgnoreCase(u.getSystemRole()))
-                            .forEach(admin -> notificationService.createNotification(
-                                    admin.getId(),
-                                    "Yêu cầu duyệt cập nhật trang trại",
-                                    "Chủ trang trại " + actor.getFullName() + " vừa chỉnh sửa thông tin trang trại \"" + updatedFarm.getFarmName() + "\". Vui lòng kiểm tra và phê duyệt.",
-                                    "FARM_REGISTRATION",
-                                    "/admin/registrations"
-                            ));
-                } catch (Exception ignored) {
-                    // Best-effort admin notification
-                }
-            }
-        }
-
         String userRole = farmAccessGuard.getUserRoleInFarm(currentUserId, farmId);
         return farmMapper.toResponse(updatedFarm, userRole);
     }

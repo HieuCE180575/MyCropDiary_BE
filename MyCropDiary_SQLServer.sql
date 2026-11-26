@@ -111,7 +111,10 @@ CREATE TABLE [FarmMember] (
 
 CREATE TABLE [FarmWorker] (
     farm_worker_id INT IDENTITY(1,1) PRIMARY KEY,
-    farm_member_id INT NOT NULL UNIQUE REFERENCES [FarmMember](farm_member_id) ON DELETE NO ACTION,
+    farm_id INT NULL REFERENCES [Farm](farm_id) ON DELETE NO ACTION,
+    farm_member_id INT NULL REFERENCES [FarmMember](farm_member_id) ON DELETE NO ACTION,
+    full_name NVARCHAR(120) NULL,
+    phone_number NVARCHAR(30) NULL,
     worker_code NVARCHAR(40),
     job_title NVARCHAR(100),
     employment_status NVARCHAR(20) NOT NULL DEFAULT 'active'
@@ -119,6 +122,10 @@ CREATE TABLE [FarmWorker] (
     hired_at DATE,
     notes NVARCHAR(MAX)
 );
+GO
+CREATE UNIQUE INDEX UQ_FarmWorker_FarmMember_NotNull
+    ON [FarmWorker](farm_member_id)
+    WHERE farm_member_id IS NOT NULL;
 
 -- ============================================================================
 -- 2. ZONES, BLOCKS, CROPS, SEASONS, TASKS AND ACTIVITIES
@@ -910,12 +917,12 @@ GO
 -- ============================================================================
 PRINT N'--> Seeding Farm Workers...';
 SET IDENTITY_INSERT [FarmWorker] ON;
-INSERT INTO [FarmWorker] (farm_worker_id, farm_member_id, worker_code, job_title, employment_status, hired_at, notes)
+INSERT INTO [FarmWorker] (farm_worker_id, farm_id, farm_member_id, worker_code, job_title, employment_status, hired_at, notes)
 VALUES
-(1, 2, 'WK-GV-001', N'Senior Agronomist & Fertigation Engineer', 'active', '2025-01-01', N'Responsible for A+B hydroponic stock solution formula, EC/pH targets, and fertigation schedules.'),
-(2, 5, 'WK-GV-002', N'Greenhouse Automation Technician', 'active', '2025-02-15', N'Specializes in climate sensors, irrigation solenoids, misting lines, and nutrient injection pumps.'),
-(3, 6, 'WK-GV-003', N'Crop Training & Pollination Specialist', 'active', '2025-03-01', N'Skilled in lateral shoot pruning, trellis wire training, hand pollination, and fruit thinning.'),
-(4, 3, 'WK-GV-004', N'Quality Control & Post-Harvest Lead', 'active', '2025-01-10', N'Oversees VietGAP field harvesting standards, sorting tolerances, brix testing, and cold storage.');
+(1, 1, 2, 'WK-GV-001', N'Senior Agronomist & Fertigation Engineer', 'active', '2025-01-01', N'Responsible for A+B hydroponic stock solution formula, EC/pH targets, and fertigation schedules.'),
+(2, 1, 5, 'WK-GV-002', N'Greenhouse Automation Technician', 'active', '2025-02-15', N'Specializes in climate sensors, irrigation solenoids, misting lines, and nutrient injection pumps.'),
+(3, 1, 6, 'WK-GV-003', N'Crop Training & Pollination Specialist', 'active', '2025-03-01', N'Skilled in lateral shoot pruning, trellis wire training, hand pollination, and fruit thinning.'),
+(4, 1, 3, 'WK-GV-004', N'Quality Control & Post-Harvest Lead', 'active', '2025-01-10', N'Oversees VietGAP field harvesting standards, sorting tolerances, brix testing, and cold storage.');
 SET IDENTITY_INSERT [FarmWorker] OFF;
 GO
 

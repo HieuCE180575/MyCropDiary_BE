@@ -3,15 +3,18 @@ package com.mycropdiary.api.service.impl;
 import com.mycropdiary.api.dto.worker.CreateWorkerReqDTO;
 import com.mycropdiary.api.dto.worker.UpdateWorkerReqDTO;
 import com.mycropdiary.api.dto.worker.FarmWorkerRespDTO;
+import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.cultivation.FarmWorker;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.mapper.FarmWorkerMapper;
 import com.mycropdiary.api.repository.FarmMemberRepository;
+import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.FarmWorkerRepository;
 import com.mycropdiary.api.service.cultivation.FarmWorkerService;
 import com.mycropdiary.api.util.FarmAccessGuard;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +28,9 @@ public class FarmWorkerServiceImpl implements FarmWorkerService {
     private final FarmMemberRepository farmMemberRepository;
     private final FarmAccessGuard accessGuard;
     private final FarmWorkerMapper farmWorkerMapper = new FarmWorkerMapper();
+
+    @Autowired(required = false)
+    private FarmRepository farmRepository;
 
     public FarmWorkerServiceImpl(FarmWorkerRepository farmWorkerRepository,
                                  FarmMemberRepository farmMemberRepository,
@@ -72,15 +78,28 @@ public class FarmWorkerServiceImpl implements FarmWorkerService {
     public FarmWorkerRespDTO createWorker(Integer userId, Integer farmId, CreateWorkerReqDTO req) {
         accessGuard.requireFarmAccess(userId, farmId);
 
-        FarmMember member = farmMemberRepository.findById(req.farmMemberId())
-                .orElseThrow(() -> new ResourceNotFoundException("Thành viên trang trại ID=" + req.farmMemberId() + " không tồn tại."));
+        FarmMember member = null;
+        Farm farm = null;
+        if (req.farmMemberId() != null && req.farmMemberId() > 0) {
+            member = farmMemberRepository.findById(req.farmMemberId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Thành viên trang trại ID=" + req.farmMemberId() + " không tồn tại."));
 
-        if (!member.getFarm().getId().equals(farmId)) {
-            throw new BadRequestException("Thành viên không thuộc trang trại này.");
-        }
+            if (!member.getFarm().getId().equals(farmId)) {
+                throw new BadRequestException("Thành viên không thuộc trang trại này.");
+            }
 
-        if (farmWorkerRepository.findByFarmMemberId(req.farmMemberId()).isPresent()) {
-            throw new BadRequestException("Thành viên này đã có hồ sơ công nhân lao động.");
+            if (farmWorkerRepository.findByFarmMemberId(req.farmMemberId()).isPresent()) {
+                throw new BadRequestException("Thành viên này đã có hồ sơ công nhân lao động.");
+            }
+            farm = member.getFarm();
+        } else {
+            if (req.fullName() == null || req.fullName().isBlank()) {
+                throw new BadRequestException("Vui lòng nhập họ tên công nhân hoặc chọn thành viên trang trại.");
+            }
+            if (farmRepository != null) {
+                farm = farmRepository.findById(farmId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Trang trại ID=" + farmId + " không tồn tại."));
+            }
         }
 
         String code = req.workerCode().trim();
@@ -88,8 +107,18 @@ public class FarmWorkerServiceImpl implements FarmWorkerService {
             throw new BadRequestException("Mã công nhân '" + code + "' đã tồn tại trong trang trại.");
         }
 
+        String resolvedFullName = (req.fullName() != null && !req.fullName().isBlank())
+                ? req.fullName().trim()
+                : (member != null && member.getUser() != null ? member.getUser().getFullName() : null);
+        String resolvedPhone = (req.phoneNumber() != null && !req.phoneNumber().isBlank())
+                ? req.phoneNumber().trim()
+                : (member != null && member.getUser() != null ? member.getUser().getPhone() : null);
+
         FarmWorker worker = new FarmWorker(
+                farm,
                 member,
+                resolvedFullName,
+                resolvedPhone,
                 code,
                 req.jobTitle() != null ? req.jobTitle().trim() : null,
                 req.employmentStatus() != null ? req.employmentStatus().trim() : "active",
@@ -114,6 +143,12 @@ public class FarmWorkerServiceImpl implements FarmWorkerService {
             throw new BadRequestException("Mã công nhân '" + code + "' đã tồn tại trong trang trại.");
         }
 
+        if (req.fullName() != null && !req.fullName().isBlank()) {
+            worker.setFullName(req.fullName().trim());
+        }
+        if (req.phoneNumber() != null) {
+            worker.setPhoneNumber(req.phoneNumber().isBlank() ? null : req.phoneNumber().trim());
+        }
         worker.setWorkerCode(code);
         worker.setJobTitle(req.jobTitle() != null ? req.jobTitle().trim() : null);
         if (req.employmentStatus() != null) {

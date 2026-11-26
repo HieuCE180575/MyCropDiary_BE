@@ -208,11 +208,14 @@ public class AdminFarmRegServiceImpl implements AdminFarmRegService {
 
         sendUserNotification(
                 registration.getUser().getId(),
-                "Đăng ký trang trại được phê duyệt",
-                "Chúc mừng! Trang trại " + farm.getFarmName()
-                        + " của bạn đã được phê duyệt. Bạn hiện có thể bắt đầu quản lý trang trại.",
+                isUpdateRequest ? "Yêu cầu cập nhật trang trại được phê duyệt" : "Đăng ký trang trại được phê duyệt",
+                isUpdateRequest
+                        ? "Yêu cầu chỉnh sửa thông tin trang trại \"" + farm.getFarmName()
+                                + "\" của bạn đã được phê duyệt và áp dụng."
+                        : "Chúc mừng! Trang trại " + farm.getFarmName()
+                                + " của bạn đã được phê duyệt. Bạn hiện có thể bắt đầu quản lý trang trại.",
                 "FARM_REGISTRATION",
-                "/dashboard");
+                isUpdateRequest ? "/farms/" + farm.getId() : "/dashboard");
 
         sendApprovalEmail(registration, farm);
         return adminFarmRegMapper.toAdminResponse(registration);
@@ -233,13 +236,17 @@ public class AdminFarmRegServiceImpl implements AdminFarmRegService {
         registration.setRejectionReason(trimmedReason);
         farmRegistrationRepository.save(registration);
 
+        boolean isUpdateRequest = registration.getResultingFarmId() != null;
         sendUserNotification(
                 registration.getUser().getId(),
-                "Đăng ký trang trại bị từ chối",
-                "Yêu cầu đăng ký trang trại " + registration.getFarmName()
-                        + " đã bị từ chối. Lý do: " + trimmedReason,
+                isUpdateRequest ? "Yêu cầu cập nhật trang trại bị từ chối" : "Đăng ký trang trại bị từ chối",
+                isUpdateRequest
+                        ? "Yêu cầu chỉnh sửa thông tin trang trại \"" + registration.getFarmName()
+                                + "\" đã bị từ chối. Lý do: " + trimmedReason
+                        : "Yêu cầu đăng ký trang trại " + registration.getFarmName()
+                                + " đã bị từ chối. Lý do: " + trimmedReason,
                 "FARM_REGISTRATION",
-                "/farm-registrations/" + registration.getId());
+                "/farms/registrations/" + registration.getId());
 
         sendRejectionEmail(registration, trimmedReason);
         return adminFarmRegMapper.toAdminResponse(registration);
