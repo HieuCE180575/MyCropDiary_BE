@@ -7,7 +7,7 @@ import java.time.LocalDate;
 
 /**
  * Entity biểu diễn bảng [FarmWorker] (Hồ sơ công nhân lao động trang trại).
- * Liên kết 1-1 với FarmMember.
+ * Hỗ trợ cả công nhân bên ngoài (không cần tài khoản hệ thống) và liên kết tùy chọn với FarmMember.
  */
 @Entity
 @Table(name = "FarmWorker")
@@ -18,9 +18,19 @@ public class FarmWorker {
     @Column(name = "farm_worker_id", updatable = false, nullable = false)
     private Integer id;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "farm_member_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "farm_id")
+    private Farm farm;
+
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "farm_member_id", nullable = true)
     private FarmMember farmMember;
+
+    @Column(name = "full_name", length = 120)
+    private String fullName;
+
+    @Column(name = "phone_number", length = 30)
+    private String phoneNumber;
 
     @Column(name = "worker_code", length = 40)
     private String workerCode;
@@ -40,7 +50,14 @@ public class FarmWorker {
     public FarmWorker() { }
 
     public FarmWorker(FarmMember farmMember, String workerCode, String jobTitle, String employmentStatus, LocalDate hiredAt, String notes) {
+        this(farmMember != null ? farmMember.getFarm() : null, farmMember, null, null, workerCode, jobTitle, employmentStatus, hiredAt, notes);
+    }
+
+    public FarmWorker(Farm farm, FarmMember farmMember, String fullName, String phoneNumber, String workerCode, String jobTitle, String employmentStatus, LocalDate hiredAt, String notes) {
+        this.farm = farm != null ? farm : (farmMember != null ? farmMember.getFarm() : null);
         this.farmMember = farmMember;
+        this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
         this.workerCode = workerCode;
         this.jobTitle = jobTitle;
         if (employmentStatus != null) {
@@ -53,8 +70,13 @@ public class FarmWorker {
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
+    public void setFarm(Farm farm) { this.farm = farm; }
+
     public FarmMember getFarmMember() { return farmMember; }
     public void setFarmMember(FarmMember farmMember) { this.farmMember = farmMember; }
+
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
     public String getWorkerCode() { return workerCode; }
     public void setWorkerCode(String workerCode) { this.workerCode = workerCode; }
@@ -75,14 +97,20 @@ public class FarmWorker {
 
     // --- Compatibility helper methods ---
     public Farm getFarm() {
-        return farmMember != null ? farmMember.getFarm() : null;
+        return farm != null ? farm : (farmMember != null ? farmMember.getFarm() : null);
     }
 
     public String getFullName() {
+        if (fullName != null && !fullName.isBlank()) {
+            return fullName;
+        }
         return farmMember != null && farmMember.getUser() != null ? farmMember.getUser().getFullName() : null;
     }
 
     public String getPhoneNumber() {
+        if (phoneNumber != null && !phoneNumber.isBlank()) {
+            return phoneNumber;
+        }
         return farmMember != null && farmMember.getUser() != null ? farmMember.getUser().getPhone() : null;
     }
 

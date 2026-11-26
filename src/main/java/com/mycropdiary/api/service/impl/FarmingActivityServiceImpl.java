@@ -166,9 +166,8 @@ public class FarmingActivityServiceImpl implements FarmingActivityService {
         if (farmWorkers.size() != workerIds.size()) {
             for (Integer wid : workerIds) {
                 FarmWorker existing = farmWorkerRepository.findById(wid).orElse(null);
-                if (existing != null && existing.getFarmMember() != null
-                        && existing.getFarmMember().getFarm() != null
-                        && !existing.getFarmMember().getFarm().getId().equals(farmId)) {
+                if (existing != null && existing.getFarm() != null
+                        && !existing.getFarm().getId().equals(farmId)) {
                     throw new ForbiddenException("Không có quyền phân công công nhân từ trang trại khác.");
                 }
             }

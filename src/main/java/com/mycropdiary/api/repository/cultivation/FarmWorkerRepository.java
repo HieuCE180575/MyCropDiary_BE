@@ -12,15 +12,17 @@ import java.util.Optional;
 
 @Repository
 public interface FarmWorkerRepository extends JpaRepository<FarmWorker, Integer> {
-    @Query("SELECT fw FROM FarmWorker fw WHERE fw.farmMember.farm.id = :farmId")
+    @Query("SELECT fw FROM FarmWorker fw LEFT JOIN fw.farm f LEFT JOIN fw.farmMember fm LEFT JOIN fm.farm fmf WHERE f.id = :farmId OR fmf.id = :farmId")
     List<FarmWorker> findByFarmId(@Param("farmId") Integer farmId);
 
-    @Query("SELECT fw FROM FarmWorker fw WHERE fw.id IN :ids AND fw.farmMember.farm.id = :farmId")
+    @Query("SELECT fw FROM FarmWorker fw LEFT JOIN fw.farm f LEFT JOIN fw.farmMember fm LEFT JOIN fm.farm fmf WHERE fw.id IN :ids AND (f.id = :farmId OR fmf.id = :farmId)")
     List<FarmWorker> findByIdInAndFarmId(@Param("ids") Collection<Integer> ids, @Param("farmId") Integer farmId);
 
-    Optional<FarmWorker> findByIdAndFarmMemberFarmId(Integer id, Integer farmId);
+    @Query("SELECT fw FROM FarmWorker fw LEFT JOIN fw.farm f LEFT JOIN fw.farmMember fm LEFT JOIN fm.farm fmf WHERE fw.id = :id AND (f.id = :farmId OR fmf.id = :farmId)")
+    Optional<FarmWorker> findByIdAndFarmMemberFarmId(@Param("id") Integer id, @Param("farmId") Integer farmId);
 
     Optional<FarmWorker> findByFarmMemberId(Integer farmMemberId);
 
-    boolean existsByFarmMemberFarmIdAndWorkerCodeIgnoreCase(Integer farmId, String workerCode);
+    @Query("SELECT CASE WHEN COUNT(fw) > 0 THEN true ELSE false END FROM FarmWorker fw LEFT JOIN fw.farm f LEFT JOIN fw.farmMember fm LEFT JOIN fm.farm fmf WHERE (f.id = :farmId OR fmf.id = :farmId) AND LOWER(fw.workerCode) = LOWER(:workerCode)")
+    boolean existsByFarmMemberFarmIdAndWorkerCodeIgnoreCase(@Param("farmId") Integer farmId, @Param("workerCode") String workerCode);
 }

@@ -38,4 +38,9 @@ public interface FarmRegistrationRepository extends JpaRepository<FarmRegistrati
     Optional<FarmRegistration> findByIdAndApplicantUserId(@Param("id") Integer id, @Param("userId") Integer userId);
 
     long countByRegistrationStatusIgnoreCase(String registrationStatus);
+
+    Optional<FarmRegistration> findFirstByResultingFarmIdAndRegistrationStatusIgnoreCaseOrderByIdDesc(
+            Integer resultingFarmId,
+            String registrationStatus
+    );
 }
