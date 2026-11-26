@@ -345,7 +345,7 @@ public class FarmServiceImpl implements FarmService {
             throw new IllegalArgumentException("User is already a member of this farm");
         }
 
-        FarmMember newMember = new FarmMember(farm, targetUser, role, "active");
+        FarmMember newMember = new FarmMember(farm, targetUser, role, "invited");
         if (request.jobTitle() != null && !request.jobTitle().isBlank()) {
             newMember.setJobTitle(request.jobTitle());
         }
@@ -355,10 +355,10 @@ public class FarmServiceImpl implements FarmService {
         if (notificationService != null) {
             notificationService.createNotification(
                     targetUser.getId(),
-                    "Added to a farm",
-                    "You have been added to the farm: " + farm.getFarmName(),
-                    "FARM_MEMBER_ADDED",
-                    "/farms/" + farmId);
+                    "Lời mời tham gia trang trại",
+                    "Bạn được mời tham gia trang trại \"" + farm.getFarmName() + "\". Vui lòng vào Quản lý trang trại để Đồng ý hoặc Từ chối.",
+                    "FARM_INVITATION",
+                    "/farms");
         }
 
         return farmMapper.toMemberResponse(savedMember);

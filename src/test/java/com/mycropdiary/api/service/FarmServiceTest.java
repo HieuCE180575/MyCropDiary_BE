@@ -26,6 +26,9 @@ class FarmServiceTest {
     private FarmService farmService;
 
     @Autowired
+    private FarmStaffService farmStaffService;
+
+    @Autowired
     private UserRepository userRepository;
 
     private User ownerUser;
@@ -121,9 +124,10 @@ class FarmServiceTest {
         CreateZoneReqDTO area2Req = new CreateZoneReqDTO("Zone B", new BigDecimal("5000.00"), "Zone B notes");
         farmService.createZone(ownerUser.getId(), farm.id(), area2Req);
 
-        // Add staff member and assign to Area 1 only
+        // Add staff member and accept invitation before assigning to Area 1
         AddFarmMemberReqDTO addStaffReq = new AddFarmMemberReqDTO("staff@example.com", "STAFF", "Worker");
         FarmMemberRespDTO staffMember = farmService.addMember(ownerUser.getId(), farm.id(), addStaffReq);
+        farmStaffService.respondInvitation(staffUser.getId(), staffMember.id(), "approve");
 
         AssignStaffZoneReqDTO assignReq = new AssignStaffZoneReqDTO(area1.id());
         farmService.assignStaffToZone(ownerUser.getId(), farm.id(), staffMember.id(), assignReq);
@@ -147,9 +151,10 @@ class FarmServiceTest {
         );
         FarmRespDTO farm = farmService.createFarm(ownerUser.getId(), farmReq);
 
-        // Add staff member
+        // Add staff member and accept invitation
         AddFarmMemberReqDTO addMemberReq = new AddFarmMemberReqDTO("staff@example.com", "STAFF", "Field Technician");
         FarmMemberRespDTO addedMember = farmService.addMember(ownerUser.getId(), farm.id(), addMemberReq);
+        farmStaffService.respondInvitation(staffUser.getId(), addedMember.id(), "approve");
 
         assertEquals("MEMBER", addedMember.farmRole().toUpperCase());
         assertEquals("Field Technician", addedMember.jobTitle());
