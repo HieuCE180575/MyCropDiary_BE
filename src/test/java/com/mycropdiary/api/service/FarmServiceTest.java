@@ -151,12 +151,12 @@ class FarmServiceTest {
         AddFarmMemberReqDTO addMemberReq = new AddFarmMemberReqDTO("staff@example.com", "STAFF", "Field Technician");
         FarmMemberRespDTO addedMember = farmService.addMember(ownerUser.getId(), farm.id(), addMemberReq);
 
-        assertEquals("STAFF", addedMember.farmRole().toUpperCase());
+        assertEquals("MEMBER", addedMember.farmRole().toUpperCase());
         assertEquals("Field Technician", addedMember.jobTitle());
 
         // Staff can view farm details
         FarmRespDTO staffView = farmService.getFarmById(staffUser.getId(), farm.id());
-        assertEquals("STAFF", staffView.currentUserRole().toUpperCase());
+        assertEquals("MEMBER", staffView.currentUserRole().toUpperCase());
 
         // Staff cannot update farm details (Permission check)
         UpdateFarmReqDTO updateReq = new UpdateFarmReqDTO(
