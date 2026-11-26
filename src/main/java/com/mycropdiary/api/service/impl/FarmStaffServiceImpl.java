@@ -23,7 +23,9 @@ import com.mycropdiary.api.repository.StaffZoneAssignmentRepository;
 import com.mycropdiary.api.repository.UserRepository;
 import com.mycropdiary.api.mapper.FarmStaffMapper;
 import com.mycropdiary.api.service.FarmStaffService;
+import com.mycropdiary.api.service.NotificationService;
 import com.mycropdiary.api.util.FarmAccessGuard;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,9 @@ public class FarmStaffServiceImpl implements FarmStaffService {
     private final UserRepository userRepository;
     private final StaffZoneAssignmentRepository assignmentRepository;
     private final FarmAccessGuard accessGuard;
+
+    @Autowired(required = false)
+    private NotificationService notificationService;
 
     public FarmStaffServiceImpl(FarmMemberRepository farmMemberRepository,
                                 FarmRepository farmRepository,
@@ -111,27 +116,31 @@ public class FarmStaffServiceImpl implements FarmStaffService {
             if (member.isActive()) {
                 throw new ResourceConflictException("Người dùng (" + user.getEmail() + ") đã là thành viên active trong trang trại này");
             }
-            member.setMembershipStatus("active");
+            if ("invited".equalsIgnoreCase(member.getMembershipStatus())) {
+                throw new ResourceConflictException("Người dùng (" + user.getEmail() + ") đã có lời mời đang chờ xác nhận trong trang trại này");
+            }
+            member.setMembershipStatus("invited");
             member.setMemberRole(role);
             member.setJoinedAt(Instant.now());
         } else {
-            member = new FarmMember(farm, user, role, "active");
+            member = new FarmMember(farm, user, role, "invited");
         }
         if (request.jobTitle() != null && !request.jobTitle().isBlank()) {
             member.setJobTitle(request.jobTitle().trim());
         }
 
-        // Sync User.system_role if currently basic 'user' (or upgrading 'staff' to 'owner')
-        String currentSysRole = user.getSystemRole() != null ? user.getSystemRole().toLowerCase() : "user";
-        if ("owner".equals(role) && ("user".equals(currentSysRole) || "staff".equals(currentSysRole))) {
-            user.setSystemRole("owner");
-            userRepository.save(user);
-        } else if (!"owner".equals(role) && "user".equals(currentSysRole)) {
-            user.setSystemRole("staff");
-            userRepository.save(user);
+        FarmMember saved = farmMemberRepository.save(member);
+
+        if (notificationService != null) {
+            notificationService.createNotification(
+                    user.getId(),
+                    "Lời mời tham gia trang trại",
+                    "Bạn được mời tham gia trang trại \"" + farm.getFarmName() + "\". Vui lòng vào Quản lý trang trại để Đồng ý hoặc Từ chối.",
+                    "FARM_INVITATION",
+                    "/farms"
+            );
         }
 
-        FarmMember saved = farmMemberRepository.save(member);
         return toResponse(saved, 0);
     }
 
@@ -300,6 +309,17 @@ public class FarmStaffServiceImpl implements FarmStaffService {
             member.setMembershipStatus("active");
             member.setJoinedAt(Instant.now());
             farmMemberRepository.save(member);
+
+            User user = member.getUser();
+            String role = member.getMemberRole() != null ? member.getMemberRole().toLowerCase() : "member";
+            String currentSysRole = user.getSystemRole() != null ? user.getSystemRole().toLowerCase() : "user";
+            if ("owner".equals(role) && ("user".equals(currentSysRole) || "staff".equals(currentSysRole))) {
+                user.setSystemRole("owner");
+                userRepository.save(user);
+            } else if (!"owner".equals(role) && "user".equals(currentSysRole)) {
+                user.setSystemRole("staff");
+                userRepository.save(user);
+            }
         } else if ("reject".equalsIgnoreCase(action)) {
             member.setMembershipStatus("left");
             farmMemberRepository.save(member);
