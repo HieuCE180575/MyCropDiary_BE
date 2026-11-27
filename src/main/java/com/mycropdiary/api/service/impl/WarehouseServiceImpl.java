@@ -84,7 +84,7 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public WarehouseRespDTO createWarehouse(Integer userId, Integer farmId, CreateWarehouseReqDTO request) {
-        accessGuard.requireFarmAccess(userId, farmId);
+        accessGuard.requireFarmOwner(userId, farmId);
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trang trại không tồn tại."));
 
