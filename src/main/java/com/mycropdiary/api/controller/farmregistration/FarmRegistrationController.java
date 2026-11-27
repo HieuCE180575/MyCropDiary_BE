@@ -78,6 +78,16 @@ public class FarmRegistrationController {
         return ApiResp.ok("Chi tiết yêu cầu đăng ký trang trại.", response);
     }
 
+    @Operation(summary = "Chỉnh sửa yêu cầu đăng ký trang trại", description = "Người dùng chỉnh sửa thông tin yêu cầu đăng ký trang trại của chính mình khi đang ở trạng thái PENDING.")
+    @PutMapping("/{registrationId}")
+    public ApiResp<FarmRegistrationRespDTO> updateRegistration(
+            @PathVariable Integer registrationId,
+            @Valid @RequestBody FarmRegistrationReqDTO request) {
+        Integer currentUserId = securityUtils.getCurrentUserId();
+        FarmRegistrationRespDTO response = farmRegistrationService.updateRegistration(currentUserId, registrationId, request);
+        return ApiResp.ok("Cập nhật yêu cầu đăng ký trang trại thành công.", response);
+    }
+
     /**
      * Hủy yêu cầu đăng ký trang trại của chính mình khi trạng thái là PENDING.
      *

@@ -182,6 +182,50 @@ public class FarmRegistrationServiceImpl implements FarmRegistrationService {
 
     @Override
     @Transactional
+    public com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO updateRegistration(
+            Integer currentUserId, Integer registrationId, FarmRegistrationReqDTO request) {
+        validateAndGetActiveUser(currentUserId);
+        FarmRegistration registration = farmRegistrationRepository
+                .findByIdAndApplicantUserId(registrationId, currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Yêu cầu đăng ký trang trại không tồn tại."));
+
+        if (!"pending".equalsIgnoreCase(registration.getRegistrationStatus())) {
+            throw new BadRequestException("Chỉ có thể chỉnh sửa yêu cầu đăng ký trang trại đang ở trạng thái chờ duyệt (PENDING).");
+        }
+
+        if (request.boundaryCoordinates() != null && !request.boundaryCoordinates().isBlank()) {
+            double areaM2 = com.mycropdiary.api.util.GeoAreaUtils.calculatePolygonAreaM2(request.boundaryCoordinates());
+            if (areaM2 <= 0.0) {
+                throw new com.mycropdiary.api.exception.BusinessRuleException(
+                        "Diện tích vùng ranh giới trang trại trên bản đồ phải lớn hơn 0 m² (cần ít nhất 3 điểm hợp lệ).");
+            }
+        }
+
+        registration.setFarmName(request.farmName().trim());
+        registration.setAddress(request.addressLine().trim());
+        registration.setProvince(
+                request.province() != null && !request.province().isBlank() ? request.province().trim() : null);
+        registration.setDistrict(
+                request.district() != null && !request.district().isBlank() ? request.district().trim() : null);
+        registration.setWard(
+                request.ward() != null && !request.ward().isBlank() ? request.ward().trim() : null);
+        registration.setRegistrationNote(
+                request.description() != null && !request.description().isBlank() ? request.description().trim() : null);
+        registration.setDocumentUrl(
+                request.documentUrl() != null && !request.documentUrl().isBlank() ? request.documentUrl().trim() : null);
+        registration.setLatitude(request.latitude());
+        registration.setLongitude(request.longitude());
+        registration.setBoundaryCoordinates(
+                request.boundaryCoordinates() != null && !request.boundaryCoordinates().isBlank()
+                        ? request.boundaryCoordinates().trim()
+                        : null);
+
+        FarmRegistration updated = farmRegistrationRepository.save(registration);
+        return mapToUserResponse(updated);
+    }
+
+    @Override
+    @Transactional
     public com.mycropdiary.api.dto.farmregistration.FarmRegistrationRespDTO cancelRegistration(
             Integer currentUserId, Integer registrationId) {
         validateAndGetActiveUser(currentUserId);

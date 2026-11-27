@@ -17,5 +17,7 @@ public interface FarmRegistrationService {
 
     FarmRegistrationRespDTO getMyRegistrationDetail(Integer currentUserId, Integer registrationId);
 
+    FarmRegistrationRespDTO updateRegistration(Integer currentUserId, Integer registrationId, FarmRegistrationReqDTO request);
+
     FarmRegistrationRespDTO cancelRegistration(Integer currentUserId, Integer registrationId);
 }
