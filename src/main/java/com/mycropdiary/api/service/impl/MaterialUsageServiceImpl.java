@@ -44,6 +44,9 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
     private final CropSeasonRepository cropSeasonRepository;
     private final FarmRepository farmRepository;
 
+    @Autowired(required = false)
+    private InventoryRepository inventoryRepository;
+
     public MaterialUsageServiceImpl(
             MaterialUsageRepository materialUsageRepository,
             MaterialRepository materialRepository,
@@ -167,6 +170,7 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         usage.setSafetyIntervalDays(request.safetyIntervalDays());
 
         MaterialUsage savedUsage = materialUsageRepository.save(usage);
+        deductInventoryStock(farm.getId(), material.getId(), convertedQuantity);
         return mapToResponse(savedUsage);
     }
 
@@ -197,6 +201,8 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
 
         Farm farm = season != null ? season.getFarm() : activity.getFarm();
         Material currentMaterial = usage.getMaterial();
+        Integer oldMaterialId = currentMaterial != null ? currentMaterial.getId() : null;
+        BigDecimal oldQuantity = usage.getQuantity();
 
         // 3. Nếu cập nhật vật tư (materialId)
         if (request.materialId() != null && (currentMaterial == null || !request.materialId().equals(currentMaterial.getId()))) {
@@ -275,6 +281,14 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
         }
 
         MaterialUsage savedUsage = materialUsageRepository.save(usage);
+        if (farm != null) {
+            if (oldMaterialId != null && oldQuantity != null) {
+                restoreInventoryStock(farm.getId(), oldMaterialId, oldQuantity);
+            }
+            if (savedUsage.getMaterial() != null && savedUsage.getQuantity() != null) {
+                deductInventoryStock(farm.getId(), savedUsage.getMaterial().getId(), savedUsage.getQuantity());
+            }
+        }
         return mapToResponse(savedUsage);
     }
 
@@ -389,7 +403,61 @@ public class MaterialUsageServiceImpl implements MaterialUsageService {
                     .orElseThrow(() -> new ForbiddenException("Bạn không có quyền thao tác trên trang trại này."));
         }
 
+        Integer restoreFarmId = usage.getFarm() != null
+                ? usage.getFarm().getId()
+                : (activity != null && activity.getCropSeason() != null && activity.getCropSeason().getFarm() != null
+                        ? activity.getCropSeason().getFarm().getId()
+                        : null);
+        Integer restoreMaterialId = usage.getMaterial() != null ? usage.getMaterial().getId() : null;
+        BigDecimal restoreQuantity = usage.getQuantity();
+
         materialUsageRepository.delete(usage);
+
+        if (restoreFarmId != null && restoreMaterialId != null && restoreQuantity != null) {
+            restoreInventoryStock(restoreFarmId, restoreMaterialId, restoreQuantity);
+        }
+    }
+
+    private void deductInventoryStock(Integer farmId, Integer materialId, BigDecimal amount) {
+        if (inventoryRepository == null || farmId == null || materialId == null || amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        List<Inventory> candidates = inventoryRepository.findByFarmId(farmId).stream()
+                .filter(inv -> inv.getMaterial() != null && materialId.equals(inv.getMaterial().getId()))
+                .sorted((a, b) -> {
+                    BigDecimal qa = a.getQuantityOnHand() != null ? a.getQuantityOnHand() : BigDecimal.ZERO;
+                    BigDecimal qb = b.getQuantityOnHand() != null ? b.getQuantityOnHand() : BigDecimal.ZERO;
+                    return qb.compareTo(qa);
+                })
+                .toList();
+        BigDecimal remaining = amount;
+        for (Inventory inv : candidates) {
+            if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
+            BigDecimal current = inv.getQuantityOnHand() != null ? inv.getQuantityOnHand() : BigDecimal.ZERO;
+            if (current.compareTo(BigDecimal.ZERO) <= 0) continue;
+            if (current.compareTo(remaining) >= 0) {
+                inv.setQuantityOnHand(current.subtract(remaining));
+                remaining = BigDecimal.ZERO;
+            } else {
+                remaining = remaining.subtract(current);
+                inv.setQuantityOnHand(BigDecimal.ZERO);
+            }
+            inventoryRepository.save(inv);
+        }
+    }
+
+    private void restoreInventoryStock(Integer farmId, Integer materialId, BigDecimal amount) {
+        if (inventoryRepository == null || farmId == null || materialId == null || amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        inventoryRepository.findByFarmId(farmId).stream()
+                .filter(inv -> inv.getMaterial() != null && materialId.equals(inv.getMaterial().getId()))
+                .findFirst()
+                .ifPresent(inv -> {
+                    BigDecimal current = inv.getQuantityOnHand() != null ? inv.getQuantityOnHand() : BigDecimal.ZERO;
+                    inv.setQuantityOnHand(current.add(amount));
+                    inventoryRepository.save(inv);
+                });
     }
 
     @Override
