@@ -26,6 +26,7 @@ import com.mycropdiary.api.repository.cultivation.ChecklistRuleRepository;
 import com.mycropdiary.api.repository.cultivation.CropCategoryRepository;
 import com.mycropdiary.api.repository.cultivation.CropSeasonRepository;
 import com.mycropdiary.api.repository.farmregistration.FarmRegistrationRepository;
+import com.mycropdiary.api.service.NotificationService;
 import com.mycropdiary.api.service.admin.impl.ChecklistRuleServiceImpl;
 import com.mycropdiary.api.service.impl.FarmStaffServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
@@ -68,6 +69,7 @@ public class FE13_AdminFarmCreateAuditUnitTest {
     @Mock private FarmRegistrationRepository registrationRepository;
     @Mock private ChecklistRuleRepository checklistRuleRepository;
     @Mock private FarmAccessGuard farmAccessGuard;
+    @Mock private NotificationService notificationService;
 
     private AdminFarmDirectoryController adminFarmController;
     private AdminAuditLogController adminAuditLogController;
@@ -94,6 +96,7 @@ public class FE13_AdminFarmCreateAuditUnitTest {
         farmStaffService = new FarmStaffServiceImpl(
                 farmMemberRepository, farmRepository, userRepository, staffZoneAssignmentRepository, farmAccessGuard
         );
+        ReflectionTestUtils.setField(farmStaffService, "notificationService", notificationService);
 
         checklistRuleService = new ChecklistRuleServiceImpl(
                 checklistRuleRepository, farmRepository, new ChecklistRuleMapper()
@@ -139,8 +142,8 @@ public class FE13_AdminFarmCreateAuditUnitTest {
     }
 
     @Test
-    @DisplayName("FE13_AUD_UTC03 [Normal] - FarmStaffServiceImpl.addStaff tạo thành viên trạng thái active & tự động nâng systemRole user -> staff / owner")
-    void UTC03_addStaff_setsActiveStatusAndSyncsUserSystemRole() {
+    @DisplayName("FE13_AUD_UTC03 [Normal] - FarmStaffServiceImpl.addStaff gửi lời mời (invited) & thông báo, chưa nâng systemRole cho đến khi xác nhận")
+    void UTC03_addStaff_setsInvitedStatusAndNotifiesCandidate() {
         when(farmRepository.findById(50)).thenReturn(Optional.of(sampleFarm));
         when(userRepository.findByEmailIgnoreCase("staff.new@farm.vn")).thenReturn(Optional.of(staffCandidate));
         when(farmMemberRepository.findByFarmIdAndUserId(50, 21)).thenReturn(Optional.empty());
@@ -151,9 +154,41 @@ public class FE13_AdminFarmCreateAuditUnitTest {
 
         assertNotNull(resp);
         assertEquals("member", resp.farmRole());
-        assertEquals("active", resp.status());
+        assertEquals("invited", resp.status());
+        assertEquals("user", staffCandidate.getSystemRole());
+        verify(userRepository, never()).save(staffCandidate);
+        verify(notificationService).createNotification(
+                eq(21), contains("Lời mời"), contains("Nông trại ĐBSCL"), eq("FARM_INVITATION"), eq("/farms"));
+    }
+
+    @Test
+    @DisplayName("FE13_AUD_UTC11 [Normal] - Người được mời chấp nhận lời mời (approve) -> Chuyển trạng thái active & nâng systemRole user -> staff")
+    void UTC11_respondInvitation_approveActivatesMembershipAndUpgradesRole() {
+        FarmMember invited = new FarmMember(sampleFarm, staffCandidate, "member", "invited");
+        invited.setId(90);
+        when(farmMemberRepository.findById(90)).thenReturn(Optional.of(invited));
+        when(farmMemberRepository.save(any(FarmMember.class))).thenAnswer(i -> i.getArgument(0));
+
+        farmStaffService.respondInvitation(21, 90, "approve");
+
+        assertEquals("active", invited.getMembershipStatus());
         assertEquals("staff", staffCandidate.getSystemRole());
         verify(userRepository).save(staffCandidate);
+    }
+
+    @Test
+    @DisplayName("FE13_AUD_UTC12 [Normal] - Người được mời từ chối lời mời (reject) -> Chuyển trạng thái left & giữ nguyên systemRole")
+    void UTC12_respondInvitation_rejectMarksLeftWithoutRoleUpgrade() {
+        FarmMember invited = new FarmMember(sampleFarm, staffCandidate, "member", "invited");
+        invited.setId(91);
+        when(farmMemberRepository.findById(91)).thenReturn(Optional.of(invited));
+        when(farmMemberRepository.save(any(FarmMember.class))).thenAnswer(i -> i.getArgument(0));
+
+        farmStaffService.respondInvitation(21, 91, "reject");
+
+        assertEquals("left", invited.getMembershipStatus());
+        assertEquals("user", staffCandidate.getSystemRole());
+        verify(userRepository, never()).save(staffCandidate);
     }
 
     @Test

@@ -106,7 +106,7 @@ public class FE04_FarmReApprovalAndAdminEditUnitTest {
     }
 
     @Test
-    @DisplayName("FE04_REAPP_UTC01 [Normal] - Owner chỉnh sửa trang trại -> Tự động tạo đơn duyệt lại PENDING & gửi thông báo cho Admin")
+    @DisplayName("FE04_REAPP_UTC01 [Normal] - Owner chỉnh sửa trang trại -> Giữ nguyên Farm live, tạo đơn duyệt lại PENDING & gửi thông báo cho Admin")
     void UTC01_ownerUpdateFarm_createsPendingReApprovalAndNotifiesAdmins() {
         UpdateFarmReqDTO req = new UpdateFarmReqDTO(
                 "Nông trại Cần Thơ Mở Rộng", "Mô tả mới", "Cái Răng, Cần Thơ",
@@ -115,18 +115,25 @@ public class FE04_FarmReApprovalAndAdminEditUnitTest {
         );
         when(farmRepository.findById(10)).thenReturn(Optional.of(existingFarm));
         when(zoneRepository.findByFarmId(10)).thenReturn(List.of());
-        when(farmRepository.save(any(Farm.class))).thenAnswer(i -> i.getArgument(0));
         when(userRepository.findById(30)).thenReturn(Optional.of(ownerUser));
+        when(farmRegistrationRepository.findFirstByResultingFarmIdAndRegistrationStatusIgnoreCaseOrderByIdDesc(10, "pending"))
+                .thenReturn(Optional.empty());
         when(userRepository.findAll()).thenReturn(List.of(ownerUser, adminUser));
         when(farmAccessGuard.getUserRoleInFarm(30, 10)).thenReturn("owner");
 
         FarmRespDTO resp = farmService.updateFarm(30, 10, req);
 
         assertNotNull(resp);
-        assertEquals("Nông trại Cần Thơ Mở Rộng", resp.farmName());
+        // Deferred approval (645e148): live farm keeps original values until Admin approves
+        assertEquals("Nông trại Cần Thơ", resp.farmName());
+        assertEquals("Nông trại Cần Thơ", existingFarm.getFarmName());
+        verify(farmRepository, never()).save(any(Farm.class));
+
         ArgumentCaptor<FarmRegistration> regCaptor = ArgumentCaptor.forClass(FarmRegistration.class);
         verify(farmRegistrationRepository).save(regCaptor.capture());
         FarmRegistration reviewReq = regCaptor.getValue();
+        assertEquals("Nông trại Cần Thơ Mở Rộng", reviewReq.getFarmName());
+        assertEquals("Cái Răng, Cần Thơ", reviewReq.getAddress());
         assertEquals("pending", reviewReq.getRegistrationStatus());
         assertEquals(10, reviewReq.getResultingFarmId());
         assertTrue(reviewReq.getRegistrationNote().startsWith("[Cập nhật trang trại #10]"));
@@ -251,7 +258,7 @@ public class FE04_FarmReApprovalAndAdminEditUnitTest {
     }
 
     @Test
-    @DisplayName("FE04_REAPP_UTC08 [Boundary] - Cập nhật ranh giới trang trại lớn hơn tổng diện tích phân khu hiện có -> Lưu thành công")
+    @DisplayName("FE04_REAPP_UTC08 [Boundary] - Cập nhật ranh giới trang trại lớn hơn tổng diện tích phân khu hiện có -> Ghi nhận yêu cầu duyệt lại thành công")
     void UTC08_updateFarm_boundaryCoversExistingZones_succeeds() {
         Zone smallZone = new Zone(existingFarm, "Phân khu Nhỏ", new BigDecimal("0.5"), "0.5 ha = 5,000 m²");
         smallZone.setAreaUnit("ha");
@@ -262,13 +269,15 @@ public class FE04_FarmReApprovalAndAdminEditUnitTest {
         );
         when(farmRepository.findById(10)).thenReturn(Optional.of(existingFarm));
         when(zoneRepository.findByFarmId(10)).thenReturn(List.of(smallZone));
-        when(farmRepository.save(any(Farm.class))).thenAnswer(i -> i.getArgument(0));
         when(userRepository.findById(30)).thenReturn(Optional.of(ownerUser));
+        when(farmRegistrationRepository.findFirstByResultingFarmIdAndRegistrationStatusIgnoreCaseOrderByIdDesc(10, "pending"))
+                .thenReturn(Optional.empty());
         when(farmAccessGuard.getUserRoleInFarm(30, 10)).thenReturn("owner");
 
         FarmRespDTO resp = farmService.updateFarm(30, 10, req);
 
         assertNotNull(resp);
+        verify(farmRepository, never()).save(any(Farm.class));
         verify(farmRegistrationRepository).save(any(FarmRegistration.class));
     }
 
@@ -292,8 +301,9 @@ public class FE04_FarmReApprovalAndAdminEditUnitTest {
                 new BigDecimal("10.0"), new BigDecimal("105.78"), null, "active"
         );
         when(farmRepository.findById(10)).thenReturn(Optional.of(existingFarm));
-        when(farmRepository.save(any(Farm.class))).thenAnswer(i -> i.getArgument(0));
         when(userRepository.findById(30)).thenReturn(Optional.of(ownerUser));
+        when(farmRegistrationRepository.findFirstByResultingFarmIdAndRegistrationStatusIgnoreCaseOrderByIdDesc(10, "pending"))
+                .thenReturn(Optional.empty());
         when(userRepository.findAll()).thenReturn(List.of(adminUser));
         doThrow(new RuntimeException("Notification broker offline"))
                 .when(notificationService).createNotification(any(), any(), any(), any(), any());
@@ -302,6 +312,38 @@ public class FE04_FarmReApprovalAndAdminEditUnitTest {
         FarmRespDTO resp = farmService.updateFarm(30, 10, req);
 
         assertNotNull(resp);
+        verify(farmRepository, never()).save(any(Farm.class));
         verify(farmRegistrationRepository).save(any(FarmRegistration.class));
+    }
+
+    @Test
+    @DisplayName("FE04_REAPP_UTC11 [Normal] - Owner chỉnh sửa lần 2 khi đã có đơn chờ duyệt -> Cập nhật đè lên đơn PENDING hiện có, không tạo bản ghi trùng")
+    void UTC11_ownerUpdateFarm_reusesExistingPendingRegistration() {
+        FarmRegistration existingPending = new FarmRegistration();
+        existingPending.setId(777);
+        existingPending.setResultingFarmId(10);
+        existingPending.setRegistrationStatus("pending");
+        existingPending.setFarmName("Tên đề xuất lần 1");
+
+        UpdateFarmReqDTO req = new UpdateFarmReqDTO(
+                "Tên đề xuất lần 2", "Mô tả lần 2", "Ô Môn, Cần Thơ",
+                new BigDecimal("10.01"), new BigDecimal("105.79"), null, "active"
+        );
+        when(farmRepository.findById(10)).thenReturn(Optional.of(existingFarm));
+        when(userRepository.findById(30)).thenReturn(Optional.of(ownerUser));
+        when(farmRegistrationRepository.findFirstByResultingFarmIdAndRegistrationStatusIgnoreCaseOrderByIdDesc(10, "pending"))
+                .thenReturn(Optional.of(existingPending));
+        when(userRepository.findAll()).thenReturn(List.of(adminUser));
+        when(farmAccessGuard.getUserRoleInFarm(30, 10)).thenReturn("owner");
+
+        FarmRespDTO resp = farmService.updateFarm(30, 10, req);
+
+        assertNotNull(resp);
+        assertEquals("Nông trại Cần Thơ", resp.farmName());
+        assertEquals(777, existingPending.getId());
+        assertEquals("Tên đề xuất lần 2", existingPending.getFarmName());
+        assertEquals("Ô Môn, Cần Thơ", existingPending.getAddress());
+        verify(farmRegistrationRepository).save(existingPending);
+        verify(farmRepository, never()).save(any(Farm.class));
     }
 }
