@@ -5,19 +5,24 @@ import com.mycropdiary.api.entity.Farm;
 import com.mycropdiary.api.entity.FarmMember;
 import com.mycropdiary.api.entity.cultivation.InputPurchase;
 import com.mycropdiary.api.entity.cultivation.InputPurchaseItem;
+import com.mycropdiary.api.entity.cultivation.Inventory;
 import com.mycropdiary.api.entity.cultivation.Material;
 import com.mycropdiary.api.entity.cultivation.Supplier;
+import com.mycropdiary.api.entity.cultivation.Warehouse;
 import com.mycropdiary.api.exception.BadRequestException;
 import com.mycropdiary.api.exception.ResourceNotFoundException;
 import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.cultivation.InputPurchaseItemRepository;
 import com.mycropdiary.api.repository.cultivation.InputPurchaseRepository;
+import com.mycropdiary.api.repository.cultivation.InventoryRepository;
 import com.mycropdiary.api.repository.cultivation.MaterialRepository;
 import com.mycropdiary.api.repository.cultivation.MaterialUsageRepository;
 import com.mycropdiary.api.repository.cultivation.SupplierRepository;
+import com.mycropdiary.api.repository.cultivation.WarehouseRepository;
 import com.mycropdiary.api.service.cultivation.InputPurchaseService;
 import com.mycropdiary.api.util.FarmAccessGuard;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +43,12 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
     private final FarmRepository farmRepository;
     private final FarmMemberRepository farmMemberRepository;
     private final FarmAccessGuard accessGuard;
+
+    @Autowired(required = false)
+    private InventoryRepository inventoryRepository;
+
+    @Autowired(required = false)
+    private WarehouseRepository warehouseRepository;
 
     public InputPurchaseServiceImpl(InputPurchaseRepository inputPurchaseRepository,
                                     InputPurchaseItemRepository inputPurchaseItemRepository,
@@ -148,6 +159,8 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
             InputPurchaseItem persistedItem = inputPurchaseItemRepository.save(item);
             savedItems.add(persistedItem);
 
+            adjustInventoryStock(farmId, material, itemReq.warehouseId(), itemReq.quantity());
+
             calculatedTotal = calculatedTotal.add(itemReq.quantity().multiply(itemReq.unitCost()));
         }
 
@@ -181,6 +194,13 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
         if (request.notes() != null) purchase.setNotes(request.notes().trim());
 
         if (request.items() != null && !request.items().isEmpty()) {
+            List<InputPurchaseItem> oldItems = inputPurchaseItemRepository.findByInputPurchaseIdWithMaterial(purchaseId);
+            for (InputPurchaseItem oldItem : oldItems) {
+                if (oldItem.getMaterial() != null && oldItem.getQuantity() != null) {
+                    adjustInventoryStock(farmId, oldItem.getMaterial(), oldItem.getWarehouseId(), oldItem.getQuantity().negate());
+                }
+            }
+
             inputPurchaseItemRepository.deleteByInputPurchaseId(purchaseId);
             BigDecimal newTotal = BigDecimal.ZERO;
             List<InputPurchaseItem> newItems = new ArrayList<>();
@@ -197,6 +217,7 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
                         itemReq.unitCost()
                 );
                 newItems.add(inputPurchaseItemRepository.save(item));
+                adjustInventoryStock(farmId, material, itemReq.warehouseId(), itemReq.quantity());
                 newTotal = newTotal.add(itemReq.quantity().multiply(itemReq.unitCost()));
             }
             purchase.setTotalAmount(newTotal);
@@ -225,8 +246,59 @@ public class InputPurchaseServiceImpl implements InputPurchaseService {
             }
         }
 
+        Integer farmId = purchase.getFarm().getId();
+        for (InputPurchaseItem item : items) {
+            if (item.getMaterial() != null && item.getQuantity() != null) {
+                adjustInventoryStock(farmId, item.getMaterial(), item.getWarehouseId(), item.getQuantity().negate());
+            }
+        }
+
         inputPurchaseItemRepository.deleteByInputPurchaseId(purchaseId);
         inputPurchaseRepository.delete(purchase);
+    }
+
+    private void adjustInventoryStock(Integer farmId, Material material, Integer warehouseId, BigDecimal delta) {
+        if (inventoryRepository == null || farmId == null || material == null || delta == null || delta.compareTo(BigDecimal.ZERO) == 0) {
+            return;
+        }
+
+        Inventory targetInventory = null;
+        if (warehouseId != null) {
+            targetInventory = inventoryRepository.findByWarehouseIdAndMaterialId(warehouseId, material.getId()).orElse(null);
+        }
+        if (targetInventory == null) {
+            targetInventory = inventoryRepository.findByFarmId(farmId).stream()
+                    .filter(inv -> inv.getMaterial() != null && material.getId().equals(inv.getMaterial().getId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (targetInventory != null) {
+            BigDecimal current = targetInventory.getQuantityOnHand() != null ? targetInventory.getQuantityOnHand() : BigDecimal.ZERO;
+            BigDecimal updated = current.add(delta);
+            if (updated.compareTo(BigDecimal.ZERO) < 0) {
+                updated = BigDecimal.ZERO;
+            }
+            targetInventory.setQuantityOnHand(updated);
+            inventoryRepository.save(targetInventory);
+        } else if (delta.compareTo(BigDecimal.ZERO) > 0 && warehouseRepository != null) {
+            Warehouse targetWarehouse = null;
+            if (warehouseId != null) {
+                targetWarehouse = warehouseRepository.findById(warehouseId)
+                        .filter(w -> w.getFarm() != null && farmId.equals(w.getFarm().getId()))
+                        .orElse(null);
+            }
+            if (targetWarehouse == null) {
+                List<Warehouse> warehouses = warehouseRepository.findByFarmIdOrderByWarehouseNameAsc(farmId);
+                if (!warehouses.isEmpty()) {
+                    targetWarehouse = warehouses.get(0);
+                }
+            }
+            if (targetWarehouse != null) {
+                Inventory newInv = new Inventory(targetWarehouse, material, delta, BigDecimal.ZERO);
+                inventoryRepository.save(newInv);
+            }
+        }
     }
 
     @Override
