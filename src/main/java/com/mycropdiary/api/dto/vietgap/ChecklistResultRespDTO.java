@@ -18,6 +18,7 @@ public record ChecklistResultRespDTO(
         String blockName,
         Integer assignedToMemberId,
         String assignedToName,
+        String checklistVersion,
         String runStatus,
         Instant scheduledAt,
         Instant completedAt,
@@ -30,6 +31,38 @@ public record ChecklistResultRespDTO(
         Integer missingEvidenceCount,
         List<ChecklistResultItemRespDTO> results
 ) {
+    public ChecklistResultRespDTO(
+            Integer runId,
+            Integer checklistRuleId,
+            String ruleName,
+            String ruleCategory,
+            Integer farmId,
+            Integer cropSeasonId,
+            String seasonName,
+            Integer blockId,
+            String blockName,
+            Integer assignedToMemberId,
+            String assignedToName,
+            String runStatus,
+            Instant scheduledAt,
+            Instant completedAt,
+            Instant createdAt,
+            Integer totalItems,
+            Integer passedItems,
+            Integer failedItems,
+            Integer naItems,
+            Double compliancePercent,
+            Integer missingEvidenceCount,
+            List<ChecklistResultItemRespDTO> results
+    ) {
+        this(
+                runId, checklistRuleId, ruleName, ruleCategory, farmId,
+                cropSeasonId, seasonName, blockId, blockName, assignedToMemberId, assignedToName,
+                "V1", runStatus, scheduledAt, completedAt, createdAt,
+                totalItems, passedItems, failedItems, naItems, compliancePercent, missingEvidenceCount, results
+        );
+    }
+
     public static ChecklistResultRespDTO fromEntity(ChecklistRun entity, List<ChecklistResultItemRespDTO> itemResps) {
         if (entity == null) return null;
 
@@ -71,6 +104,10 @@ public record ChecklistResultRespDTO(
             pct = Math.round(((double) passed / (total - na) * 100.0) * 10.0) / 10.0;
         }
 
+        String checklistVersion = entity.getChecklistVersion() != null && !entity.getChecklistVersion().isBlank()
+                ? entity.getChecklistVersion()
+                : "V1";
+
         return new ChecklistResultRespDTO(
                 entity.getId(),
                 ruleId,
@@ -83,6 +120,7 @@ public record ChecklistResultRespDTO(
                 blockName,
                 memberId,
                 memberName,
+                checklistVersion,
                 entity.getRunStatus(),
                 entity.getScheduledAt(),
                 entity.getCompletedAt(),

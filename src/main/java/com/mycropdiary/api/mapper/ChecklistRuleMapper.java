@@ -22,6 +22,7 @@ public class ChecklistRuleMapper {
                 r.getCategory(),
                 r.getRuleLevel() != null ? r.getRuleLevel() : "MUST",
                 r.getTargetCropType() != null ? r.getTargetCropType() : "ALL",
+                r.getVersionNumber() != null && r.getVersionNumber() > 0 ? r.getVersionNumber() : 1,
                 r.getIsActive(),
                 r.getCreatedAt()
         );

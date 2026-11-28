@@ -28,5 +28,8 @@ public interface ChecklistRuleRepository extends JpaRepository<ChecklistRule, In
 
     @Query("SELECT r FROM ChecklistRule r WHERE (r.farm IS NULL OR r.farm.id = :farmId) AND r.isActive = true ORDER BY r.category ASC, r.id ASC")
     List<ChecklistRule> findAvailableRulesForFarm(@Param("farmId") Integer farmId);
+
+    @Query("SELECT COALESCE(MAX(r.versionNumber), 1) FROM ChecklistRule r WHERE r.farm IS NULL")
+    Integer findMaxSystemMasterVersion();
 }
 

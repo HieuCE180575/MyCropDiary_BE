@@ -40,6 +40,9 @@ public class ChecklistRun {
     @JoinColumn(name = "assigned_to")
     private FarmMember assignedTo;
 
+    @Column(name = "checklist_version", nullable = false, length = 20)
+    private String checklistVersion = "V1";
+
     @Column(name = "run_status", nullable = false, length = 20)
     private String runStatus = "open"; // 'open','in_progress','completed','cancelled'
 
@@ -74,6 +77,9 @@ public class ChecklistRun {
     void onCreate() {
         if (this.createdAt == null) {
             this.createdAt = Instant.now();
+        }
+        if (this.checklistVersion == null || this.checklistVersion.isBlank()) {
+            this.checklistVersion = "V1";
         }
         if (this.runStatus == null || this.runStatus.isBlank()) {
             this.runStatus = "open";
@@ -189,6 +195,14 @@ public class ChecklistRun {
 
     public void setRunStatus(String runStatus) {
         this.runStatus = runStatus;
+    }
+
+    public String getChecklistVersion() {
+        return checklistVersion;
+    }
+
+    public void setChecklistVersion(String checklistVersion) {
+        this.checklistVersion = checklistVersion;
     }
 
     public Instant getScheduledAt() {

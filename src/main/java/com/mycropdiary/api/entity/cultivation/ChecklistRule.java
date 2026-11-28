@@ -43,6 +43,9 @@ public class ChecklistRule {
     @Column(name = "target_crop_type", length = 50)
     private String targetCropType = "ALL";
 
+    @Column(name = "version_number", nullable = false)
+    private Integer versionNumber = 1;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
@@ -56,6 +59,9 @@ public class ChecklistRule {
         }
         if (this.isActive == null) {
             this.isActive = true;
+        }
+        if (this.versionNumber == null || this.versionNumber < 1) {
+            this.versionNumber = 1;
         }
         if (this.ruleLevel == null || this.ruleLevel.isBlank()) {
             this.ruleLevel = "MUST";
@@ -156,6 +162,14 @@ public class ChecklistRule {
 
     public void setTargetCropType(String targetCropType) {
         this.targetCropType = targetCropType;
+    }
+
+    public Integer getVersionNumber() {
+        return versionNumber;
+    }
+
+    public void setVersionNumber(Integer versionNumber) {
+        this.versionNumber = versionNumber;
     }
 
     public Boolean getIsActive() {

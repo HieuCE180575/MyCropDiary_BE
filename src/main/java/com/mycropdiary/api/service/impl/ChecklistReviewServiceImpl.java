@@ -123,6 +123,7 @@ public class ChecklistReviewServiceImpl implements ChecklistReviewService {
         run.setCropSeason(season);
         run.setBlock(block);
         run.setAssignedTo(assignedMember);
+        run.setChecklistVersion(resolveCurrentChecklistVersion(masterRules));
         run.setRunStatus("in_progress");
         run.setScheduledAt(request.scheduledAt() != null ? request.scheduledAt() : Instant.now());
         run.setCreatedAt(Instant.now());
@@ -231,6 +232,7 @@ public class ChecklistReviewServiceImpl implements ChecklistReviewService {
                 completedAt
         );
         run.setFarm(farm);
+        run.setChecklistVersion(resolveCurrentChecklistVersion(List.of(rule)));
 
         ChecklistRun savedRun = checklistRunRepository.save(run);
 
@@ -859,5 +861,21 @@ public class ChecklistReviewServiceImpl implements ChecklistReviewService {
             return run.getCropSeason().getFarm().getId();
         }
         return null;
+    }
+
+    private String resolveCurrentChecklistVersion(List<ChecklistRule> rules) {
+        Integer maxVersion = checklistRuleRepository.findMaxSystemMasterVersion();
+        int version = (maxVersion != null && maxVersion > 0) ? maxVersion : 0;
+        if (rules != null) {
+            for (ChecklistRule r : rules) {
+                if (r != null && r.getVersionNumber() != null && r.getVersionNumber() > version) {
+                    version = r.getVersionNumber();
+                }
+            }
+        }
+        if (version < 1) {
+            version = 1;
+        }
+        return "V" + version;
     }
 }

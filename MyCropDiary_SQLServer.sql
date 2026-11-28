@@ -495,6 +495,7 @@ CREATE TABLE [ChecklistRule] (
     category NVARCHAR(80),
     rule_level NVARCHAR(20) DEFAULT 'MUST',
     target_crop_type NVARCHAR(50) DEFAULT 'ALL',
+    version_number INT NOT NULL DEFAULT 1,
     is_active BIT NOT NULL DEFAULT 1,
     created_at DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME()
 );
@@ -506,6 +507,7 @@ CREATE TABLE [ChecklistRun] (
     crop_season_id INT REFERENCES [CropSeason](crop_season_id) ON DELETE NO ACTION,
     block_id INT REFERENCES [Block](block_id) ON DELETE NO ACTION,
     assigned_to INT REFERENCES [FarmMember](farm_member_id) ON DELETE NO ACTION,
+    checklist_version NVARCHAR(20) NOT NULL DEFAULT N'V1',
     run_status NVARCHAR(20) NOT NULL DEFAULT 'open'
         CHECK (run_status IN ('open','in_progress','completed','cancelled')),
     total_items INT,

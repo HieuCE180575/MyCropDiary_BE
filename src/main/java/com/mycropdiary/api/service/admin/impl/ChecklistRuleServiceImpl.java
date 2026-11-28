@@ -62,6 +62,7 @@ public class ChecklistRuleServiceImpl implements ChecklistRuleService {
         rule.setRuleLevel(normalizeRuleLevel(req.ruleLevel()));
         rule.setTargetCropType(req.targetCropType() != null && !req.targetCropType().isBlank() ? req.targetCropType().trim().toUpperCase() : "ALL");
         rule.setIsActive(req.isActive() != null ? req.isActive() : true);
+        rule.setVersionNumber(resolveNextMasterVersion());
 
         ChecklistRule saved = checklistRuleRepository.save(rule);
         return checklistRuleMapper.toResponse(saved);
@@ -71,29 +72,64 @@ public class ChecklistRuleServiceImpl implements ChecklistRuleService {
     public ChecklistRuleRespDTO updateChecklistRule(Integer id, UpdateChecklistRuleReqDTO req) {
         ChecklistRule rule = checklistRuleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy quy tắc ID: " + id));
+        boolean changed = false;
         if (req.ruleCode() != null && !req.ruleCode().isBlank()) {
-            rule.setRuleCode(req.ruleCode().trim().toUpperCase());
+            String nextCode = req.ruleCode().trim().toUpperCase();
+            if (!nextCode.equals(rule.getRuleCode())) {
+                rule.setRuleCode(nextCode);
+                changed = true;
+            }
         }
         if (req.ruleName() != null && !req.ruleName().isBlank()) {
-            rule.setRuleName(req.ruleName().trim());
+            String nextName = req.ruleName().trim();
+            if (!nextName.equals(rule.getRuleName())) {
+                rule.setRuleName(nextName);
+                changed = true;
+            }
         }
         if (req.description() != null) {
-            rule.setDescription(req.description().trim());
+            String nextDesc = req.description().trim();
+            if (!nextDesc.equals(rule.getDescription())) {
+                rule.setDescription(nextDesc);
+                changed = true;
+            }
         }
         if (req.category() != null && !req.category().isBlank()) {
-            rule.setCategory(req.category().trim());
+            String nextCategory = req.category().trim();
+            if (!nextCategory.equals(rule.getCategory())) {
+                rule.setCategory(nextCategory);
+                changed = true;
+            }
         }
         if (req.ruleLevel() != null && !req.ruleLevel().isBlank()) {
-            rule.setRuleLevel(normalizeRuleLevel(req.ruleLevel()));
+            String nextLevel = normalizeRuleLevel(req.ruleLevel());
+            if (!nextLevel.equals(rule.getRuleLevel())) {
+                rule.setRuleLevel(nextLevel);
+                changed = true;
+            }
         }
         if (req.targetCropType() != null && !req.targetCropType().isBlank()) {
-            rule.setTargetCropType(req.targetCropType().trim().toUpperCase());
+            String nextTarget = req.targetCropType().trim().toUpperCase();
+            if (!nextTarget.equals(rule.getTargetCropType())) {
+                rule.setTargetCropType(nextTarget);
+                changed = true;
+            }
         }
-        if (req.isActive() != null) {
+        if (req.isActive() != null && !req.isActive().equals(rule.getIsActive())) {
             rule.setIsActive(req.isActive());
+            changed = true;
+        }
+        if (changed) {
+            rule.setVersionNumber(resolveNextMasterVersion());
         }
         ChecklistRule saved = checklistRuleRepository.save(rule);
         return checklistRuleMapper.toResponse(saved);
+    }
+
+    private int resolveNextMasterVersion() {
+        Integer currentMax = checklistRuleRepository.findMaxSystemMasterVersion();
+        int base = (currentMax != null && currentMax > 0) ? currentMax : 1;
+        return base + 1;
     }
 
     private String normalizeRuleLevel(String level) {

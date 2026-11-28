@@ -131,10 +131,16 @@ public class VietGapPdfExportService {
                     : (run.scheduledAt() != null ? DATE_FMT.format(run.scheduledAt())
                     : (run.createdAt() != null ? DATE_FMT.format(run.createdAt()) : "........................."));
 
+            String checklistVersion = run.checklistVersion() != null && !run.checklistVersion().isBlank()
+                    ? run.checklistVersion()
+                    : "V1";
+
             addMetaLine(metaTable, "Thông tin về cơ sở / người sản xuất:", farmInfo, fontInfoBold, fontInfo);
             addMetaLine(metaTable, "Địa điểm / Lô sản xuất:", blockInfo, fontInfoBold, fontInfo);
             addMetaLine(metaTable, "Thông tin về Tổ kiểm tra:", inspectorInfo, fontInfoBold, fontInfo);
             addMetaLine(metaTable, "Ngày đánh giá:", auditDate, fontInfoBold, fontInfo);
+            addMetaLine(metaTable, "Phiên bản bộ tiêu chí:", checklistVersion, fontInfoBold, fontInfo);
+            addMetaLine(metaTable, "Mã đợt đánh giá:", run.runId() != null ? ("#" + run.runId()) : "-", fontInfoBold, fontInfo);
 
             document.add(metaTable);
 

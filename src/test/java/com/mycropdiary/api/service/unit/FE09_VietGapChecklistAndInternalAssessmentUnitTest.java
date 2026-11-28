@@ -1,5 +1,7 @@
 package com.mycropdiary.api.service.unit;
 
+import com.mycropdiary.api.dto.admin.ChecklistRuleRespDTO;
+import com.mycropdiary.api.dto.admin.UpdateChecklistRuleReqDTO;
 import com.mycropdiary.api.dto.vietgap.*;
 import com.mycropdiary.api.entity.Block;
 import com.mycropdiary.api.entity.Farm;
@@ -12,6 +14,7 @@ import com.mycropdiary.api.repository.FarmMemberRepository;
 import com.mycropdiary.api.repository.FarmRepository;
 import com.mycropdiary.api.repository.ZoneRepository;
 import com.mycropdiary.api.repository.cultivation.*;
+import com.mycropdiary.api.service.admin.impl.ChecklistRuleServiceImpl;
 import com.mycropdiary.api.service.impl.InternalAssessmentServiceImpl;
 import com.mycropdiary.api.service.impl.ChecklistReviewServiceImpl;
 import com.mycropdiary.api.util.FarmAccessGuard;
@@ -228,6 +231,123 @@ public class FE09_VietGapChecklistAndInternalAssessmentUnitTest {
         );
 
         assertThrows(BadRequestException.class, () -> assessmentService.conductInternalAssessment(10, 1, req));
+    }
+
+    @Test
+    @DisplayName("FE-09 Checklist Version Preservation: V1 run stays locked with V1 snapshot after Admin updates criteria to V2; reassessment creates separate V2 run")
+    void checklistVersionLifecycle_v1Completed_adminUpdatesToV2_reassessmentCreatesSeparateRun() {
+        CropSeason season = new CropSeason();
+        season.setId(20);
+        season.setFarm(farm);
+        season.setSeasonName("Autumn-Winter 2026");
+
+        ChecklistRule masterRule = new ChecklistRule(
+                null, user, "VG-100", "Initial V1 Criterion", "Original V1 description",
+                "RECORDS_AND_TRAINING", "MUST", "ALL", true
+        );
+        masterRule.setId(300);
+        masterRule.setVersionNumber(1);
+
+        ChecklistRuleServiceImpl ruleService = new ChecklistRuleServiceImpl(checklistRuleRepository);
+
+        when(accessGuard.requireFarmAccess(10, 1)).thenReturn(member);
+        when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
+        when(cropSeasonRepository.findById(20)).thenReturn(Optional.of(season));
+        when(farmMemberRepository.findByFarmIdAndUserIdAndStatus(1, 10, "active")).thenReturn(Optional.of(member));
+        when(checklistRuleRepository.findSystemMasterRules()).thenReturn(List.of(masterRule));
+        when(checklistRuleRepository.findById(300)).thenReturn(Optional.of(masterRule));
+        when(checklistRuleRepository.save(any(ChecklistRule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(checklistRuleRepository.findMaxSystemMasterVersion()).thenAnswer(inv -> masterRule.getVersionNumber());
+
+        java.util.concurrent.atomic.AtomicInteger runSeq = new java.util.concurrent.atomic.AtomicInteger(900);
+        java.util.concurrent.atomic.AtomicInteger resultSeq = new java.util.concurrent.atomic.AtomicInteger(1000);
+        java.util.Map<Integer, ChecklistRun> runStore = new java.util.HashMap<>();
+        java.util.Map<Integer, java.util.List<ChecklistResult>> resultStore = new java.util.HashMap<>();
+
+        when(checklistRunRepository.save(any(ChecklistRun.class))).thenAnswer(inv -> {
+            ChecklistRun r = inv.getArgument(0);
+            if (r.getId() == null) {
+                r.setId(runSeq.incrementAndGet());
+            }
+            runStore.put(r.getId(), r);
+            return r;
+        });
+        when(checklistRunRepository.findByIdWithDetails(anyInt())).thenAnswer(inv ->
+                Optional.ofNullable(runStore.get(inv.getArgument(0, Integer.class)))
+        );
+        when(checklistResultRepository.save(any(ChecklistResult.class))).thenAnswer(inv -> {
+            ChecklistResult res = inv.getArgument(0);
+            if (res.getId() == null) {
+                res.setId(resultSeq.incrementAndGet());
+            }
+            resultStore.computeIfAbsent(res.getChecklistRun().getId(), k -> new java.util.ArrayList<>());
+            java.util.List<ChecklistResult> list = resultStore.get(res.getChecklistRun().getId());
+            if (list.stream().noneMatch(existing -> existing.getId().equals(res.getId()))) {
+                list.add(res);
+            }
+            return res;
+        });
+        when(checklistResultRepository.findByRunIdWithDetails(anyInt())).thenAnswer(inv ->
+                resultStore.getOrDefault(inv.getArgument(0, Integer.class), List.of())
+        );
+        when(checklistResultRepository.findById(anyInt())).thenAnswer(inv -> {
+            Integer id = inv.getArgument(0, Integer.class);
+            return resultStore.values().stream()
+                    .flatMap(java.util.Collection::stream)
+                    .filter(r -> id.equals(r.getId()))
+                    .findFirst();
+        });
+
+        // 1. Create Run #1 under V1
+        Instant v1ScheduledDate = Instant.parse("2026-10-01T08:00:00Z");
+        ChecklistResultRespDTO v1Init = checklistService.initVietGapAuditRun(
+                10, 1, new InitVietGapAuditRunReqDTO(20, null, null, v1ScheduledDate, "V1 assessment")
+        );
+        assertEquals(901, v1Init.runId());
+        assertEquals("V1", v1Init.checklistVersion());
+        assertEquals(1, v1Init.results().size());
+        assertEquals("Initial V1 Criterion", v1Init.results().get(0).ruleName());
+
+        // Mark V1 item as pass and complete Run #1
+        Integer v1ResultId = v1Init.results().get(0).resultId();
+        checklistService.updateChecklistItem(
+                10, 1, 901, v1ResultId,
+                new UpdateChecklistItemReqDTO("pass", "Passed under V1", "https://img.com/v1.jpg", null, null)
+        );
+        ChecklistResultRespDTO v1Completed = checklistService.completeChecklistRun(10, 1, 901);
+        assertEquals("completed", v1Completed.runStatus());
+        assertEquals("V1", v1Completed.checklistVersion());
+        assertNotNull(v1Completed.completedAt());
+        Instant originalCompletedAt = v1Completed.completedAt();
+
+        // 2. Admin updates criteria -> bumps checklist version to V2
+        ChecklistRuleRespDTO updatedRule = ruleService.updateChecklistRule(
+                300,
+                new UpdateChecklistRuleReqDTO("VG-100", "Revised V2 Criterion", "Updated V2 description", "RECORDS_AND_TRAINING", "MUST", "ALL", true)
+        );
+        assertEquals(2, updatedRule.versionNumber());
+
+        // 3. Re-open Run #1 -> original assessment retains results, date, snapshot, and checklistVersion V1, and stays locked
+        ChecklistResultRespDTO reopenedV1 = checklistService.getChecklistResult(10, 901);
+        assertEquals(901, reopenedV1.runId());
+        assertEquals("V1", reopenedV1.checklistVersion());
+        assertEquals(originalCompletedAt, reopenedV1.completedAt());
+        assertEquals("pass", reopenedV1.results().get(0).resultStatus());
+        assertEquals("Initial V1 Criterion", reopenedV1.results().get(0).ruleName());
+        assertThrows(BadRequestException.class, () -> checklistService.updateChecklistItem(
+                10, 1, 901, v1ResultId,
+                new UpdateChecklistItemReqDTO("fail", "Attempted edit after lock", null, null, null)
+        ));
+
+        // 4. Reassess under revised V2 criteria -> creates a separate assessment record with V2
+        ChecklistResultRespDTO v2Reassessment = checklistService.initVietGapAuditRun(
+                10, 1, new InitVietGapAuditRunReqDTO(20, null, null, Instant.parse("2026-10-15T08:00:00Z"), "V2 reassessment")
+        );
+        assertNotEquals(reopenedV1.runId(), v2Reassessment.runId());
+        assertEquals(902, v2Reassessment.runId());
+        assertEquals("V2", v2Reassessment.checklistVersion());
+        assertEquals("Revised V2 Criterion", v2Reassessment.results().get(0).ruleName());
+        assertEquals(2, runStore.size());
     }
 }
 
